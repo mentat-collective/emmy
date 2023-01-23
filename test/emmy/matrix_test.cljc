@@ -6,7 +6,6 @@
             [clojure.test.check.generators :as gen]
             [clojure.test.check.properties :as prop]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
-            [same :refer [ish?]]
             [emmy.function :as f]
             [emmy.generators :as sg]
             [emmy.generic :as g]
@@ -15,7 +14,8 @@
             [emmy.structure :as s]
             [emmy.structure-test :refer [<l|:inner:|r>]]
             [emmy.util.aggregate :as ua]
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [same :refer [ish?]]))
 
 (deftest value-protocol-tests
   (testing "zero?"
@@ -819,7 +819,6 @@
                   (= M (g/make-rectangular
                         (g/real-part M)
                         (g/imag-part M))))))
-
 
 (defspec pq*r=p*qr
   (gen/let [n (gen/choose 1 10)]

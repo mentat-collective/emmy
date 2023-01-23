@@ -92,14 +92,14 @@
   [prefix]
   (let [count (atom -1)]
     (fn [] (symbol
-           #?(:clj
-              (format "%s%016x" prefix (swap! count inc))
+            #?(:clj
+               (format "%s%016x" prefix (swap! count inc))
 
-              :cljs
-              (let [i (swap! count inc)
-                    suffix (-> (.toString i 16)
-                               (.padStart 16 "0"))]
-                (str prefix suffix)))))))
+               :cljs
+               (let [i (swap! count inc)
+                     suffix (-> (.toString i 16)
+                                (.padStart 16 "0"))]
+                 (str prefix suffix)))))))
 
 (defprotocol ICanonicalize
   "[[ICanonicalize]] captures the methods exposed by a Emmy analyzer backend."
@@ -180,8 +180,7 @@
                  (reset! compare-fn vcompare))
                (ianalyze expr))
 
-
-             ;; NOTE: use `doall` to force the variable-binding side effects
+;; NOTE: use `doall` to force the variable-binding side effects
              ;; of `base-simplify`.
              (new-kernels [expr]
                (let [simplified-expr (doall (map base-simplify expr))

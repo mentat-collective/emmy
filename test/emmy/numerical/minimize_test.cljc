@@ -2,9 +2,9 @@
 
 (ns emmy.numerical.minimize-test
   (:require [clojure.test :refer [is deftest testing]]
-            [same :refer [ish? with-comparator] :include-macros true]
             [emmy.numerical.minimize :as m]
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [same :refer [ish? with-comparator] :include-macros true]))
 
 (def ^:private near (v/within 1e-5))
 

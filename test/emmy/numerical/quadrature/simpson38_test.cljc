@@ -3,14 +3,14 @@
 (ns emmy.numerical.quadrature.simpson38-test
   (:refer-clojure :exclude [+ - * /])
   (:require [clojure.test :refer [is deftest testing use-fixtures]]
-            [same :refer [ish?]]
             [emmy.abstract.function :as f]
             [emmy.generic :as g :refer [+ - * /]]
             [emmy.numerical.quadrature.simpson38 :as qs38]
             [emmy.numerical.quadrature.trapezoid :as qt]
             [emmy.numsymb]
             [emmy.simplify :as s :refer [hermetic-simplify-fixture]]
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [same :refer [ish?]]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 

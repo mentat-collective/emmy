@@ -2,7 +2,6 @@
 
 (ns emmy.numerical.quadrature.riemann-test
   (:require [clojure.test :refer [is deftest testing]]
-            [same :refer [ish?]]
             [emmy.generic :as g]
             [emmy.numbers]
             [emmy.numerical.quadrature.riemann :as qr]
@@ -10,7 +9,8 @@
             [emmy.util :as u]
             [emmy.util.aggregate :as ua]
             [emmy.util.stream :as us]
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [same :refer [ish?]]))
 
 (deftest windowed-sum-tests
   (testing "windowed-sum makes for inefficient integrals, but they're

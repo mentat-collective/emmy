@@ -460,7 +460,6 @@
 ;;
 ;; The next few functions define this explicit `failure` singleton.
 
-
 (defrecord Failure [])
 
 (def ^{:doc "Singleton object representing the failure of a matcher to match its
@@ -537,8 +536,8 @@
   [pattern f]
   (let [match (pattern->combinators pattern)
         cont (fn ([frame]
-                 (f frame)
-                 false)
+                  (f frame)
+                  false)
                ([frame xs]
                 (f frame xs)
                 false))]

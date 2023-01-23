@@ -4,12 +4,12 @@
   (:require [clojure.test :refer [is deftest testing]]
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
-            [same :refer [ish? with-comparator] :include-macros true]
             [emmy.function :as f]
             [emmy.generators :as sg]
             [emmy.generic :as g]
             [emmy.numbers]
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [same :refer [ish? with-comparator] :include-macros true]))
 
 (deftest value-protocol-tests
   (testing "v/zero? returns false for fns"
@@ -145,7 +145,6 @@
             ([x] (inc x))
             ([x y z & _xs] (* x y z)))))
       "Adding a variadic triggers :at-least...")
-
 
   (is (= [:exactly 1]
          (f/arity (fn ([] 10)

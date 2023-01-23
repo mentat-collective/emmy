@@ -111,7 +111,7 @@
                    (fn [t] (+ a (Math/pow t inner-pow)))
                    (fn [t] (- b (Math/pow t inner-pow))))
            f' (fn [t] (* (Math/pow t gamma-pow)
-                        (f (t->t' t))))]
+                         (f (t->t' t))))]
        (-> (integrate f' a' b' opts)
            (update :result (partial * inner-pow)))))))
 
@@ -211,6 +211,6 @@
     ([f a b opts]
      {:pre [(g/infinite? b)]}
      (let [f' (fn [t] (* (f (- (Math/log t)))
-                        (/ 1 t)))
+                         (/ 1 t)))
            opts (qc/update-interval opts qc/flip)]
        (integrate f' 0 (Math/exp (- a)) opts)))))

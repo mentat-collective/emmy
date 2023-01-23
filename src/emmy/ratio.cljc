@@ -12,13 +12,13 @@
   (:refer-clojure :exclude [ratio? numerator denominator rationalize])
   (:require #?(:clj [clojure.core :as core])
             #?(:clj [clojure.edn] :cljs [cljs.reader])
+            #?(:cljs ["fraction.js/bigfraction.js" :as Fraction])
+            #?(:cljs [emmy.complex :as c])
             #?(:cljs [goog.array :as garray])
             #?(:cljs [goog.object :as obj])
-            #?(:cljs [emmy.complex :as c])
             [emmy.generic :as g]
             [emmy.util :as u]
-            [emmy.value :as v]
-            #?(:cljs ["fraction.js/bigfraction.js" :as Fraction]))
+            [emmy.value :as v])
   #?(:clj (:import (clojure.lang Ratio))))
 
 (def ^:no-doc ratiotype

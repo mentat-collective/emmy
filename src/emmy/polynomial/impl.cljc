@@ -204,11 +204,11 @@
     (let [t (nth v i nil)]
       (if (nil? t)
         (persistent! acc)
-	      (let [[tags1 coeff1] t]
-	        (recur (conj! acc (make-term
-		                         (xpt/mul tags tags1)
-		                         (g/mul coeff coeff1)))
-		             (inc i)))))))
+        (let [[tags1 coeff1] t]
+          (recur (conj! acc (make-term
+                             (xpt/mul tags tags1)
+                             (g/mul coeff coeff1)))
+                 (inc i)))))))
 
 (defn mul
   "Returns the product of the two polynomial term vectors `u` and `v`."
@@ -218,7 +218,7 @@
               (if (nil? x)
                 []
                 (add (t*ts x v)
-	                   (call (inc i))))))]
+                     (call (inc i))))))]
     (call 0)))
 
 ;; Division works by examining each term of `u` (in descending order) and

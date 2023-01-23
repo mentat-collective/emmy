@@ -2,10 +2,10 @@
 
 (ns emmy.numerical.quadrature.infinite-test
   (:require [clojure.test :refer [is deftest testing]]
-            [same :refer [ish? zeroish?] :include-macros true]
             [emmy.numerical.quadrature.adaptive :as qa]
             [emmy.numerical.quadrature.bulirsch-stoer :as bs]
-            [emmy.numerical.quadrature.infinite :as qi]))
+            [emmy.numerical.quadrature.infinite :as qi]
+            [same :refer [ish? zeroish?] :include-macros true]))
 
 (def ^:private integrator
   (qa/adaptive bs/open-integral
@@ -16,7 +16,7 @@
     (testing "Euler's constant"
       ;; https://en.wikipedia.org/wiki/Euler%E2%80%93Mascheroni_constant
       (let [f (fn [x] (* (Math/log x)
-                        (Math/exp (- x))))]
+                         (Math/exp (- x))))]
         (is (ish? {:converged? true
                    :result -0.5772156418405041}
                   ((qi/improper integrator) f 0 ##Inf))

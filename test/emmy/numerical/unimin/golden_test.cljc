@@ -4,11 +4,11 @@
   (:require [clojure.test :refer [is deftest testing]]
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
-            [same :refer [ish? zeroish? with-comparator] :include-macros true]
             [emmy.generic :as g]
             [emmy.numerical.unimin.bracket :as b]
             [emmy.numerical.unimin.golden :as ug]
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [same :refer [ish? zeroish? with-comparator] :include-macros true]))
 
 (deftest golden-ratio-tests
   (testing "constants work as defined"

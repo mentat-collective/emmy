@@ -35,12 +35,10 @@
   phi
   (/ (+ (g/sqrt 5) 1) 2))
 
-
 (def ^{:doc "$1 \\over \\phi$. Multiply by this to scale some distance down to the
 larger-sized golden ratio piece."}
   inv-phi
   (/ (- (g/sqrt 5) 1) 2))
-
 
 (def ^{:doc "$1 \\over \\phi^2$. Scales down twice, compared to [[inv-phi]]."}
   inv-phi2

@@ -2,14 +2,14 @@
 
 (ns emmy.simplify.rules-test
   (:require [clojure.test :refer [is deftest testing]]
-            [pattern.rule :as pr :refer [rule-simplifier template]]
             [emmy.complex :as c]
             [emmy.generic :as g]
             [emmy.numbers]
             [emmy.ratio]
             [emmy.simplify :as s]
             [emmy.simplify.rules :as r]
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [pattern.rule :as pr :refer [rule-simplifier template]]))
 
 (deftest algebraic-tests
   (testing "unary elimination"

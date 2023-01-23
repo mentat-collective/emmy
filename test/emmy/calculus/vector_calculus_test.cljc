@@ -108,134 +108,134 @@
 (deftest vector-operator-tests
   (let [spherical m/R3-rect]
     (let-coordinates [[r theta phi] spherical]
-      (let [spherical-point ((m/point spherical) (up 'r 'theta 'phi))
-            spherical-basis (b/coordinate-system->basis spherical)
-            spherical-metric (fn [v1 v2]
-                               (+ (* (dr v1) (dr v2))
-                                  (* (g/square r)
-                                     (+ (* (dtheta v1) (dtheta v2))
-                                        (* (g/expt (sin theta) 2)
-                                           (dphi v1) (dphi v2))))))
+                     (let [spherical-point ((m/point spherical) (up 'r 'theta 'phi))
+                           spherical-basis (b/coordinate-system->basis spherical)
+                           spherical-metric (fn [v1 v2]
+                                              (+ (* (dr v1) (dr v2))
+                                                 (* (g/square r)
+                                                    (+ (* (dtheta v1) (dtheta v2))
+                                                       (* (g/expt (sin theta) 2)
+                                                          (dphi v1) (dphi v2))))))
 
             ;; normalized spherical basis
-            e_0 d:dr
-            e_1 (* (/ 1 r) d:dtheta)
-            e_2 (* (/ 1 (* r (sin theta))) d:dphi)
+                           e_0 d:dr
+                           e_1 (* (/ 1 r) d:dtheta)
+                           e_2 (* (/ 1 (* r (sin theta))) d:dphi)
 
-            orthonormal-spherical-vector-basis (down e_0 e_1 e_2)
+                           orthonormal-spherical-vector-basis (down e_0 e_1 e_2)
 
-            orthonormal-spherical-oneform-basis
-            (b/vector-basis->dual orthonormal-spherical-vector-basis
-                                  spherical)
+                           orthonormal-spherical-oneform-basis
+                           (b/vector-basis->dual orthonormal-spherical-vector-basis
+                                                 spherical)
 
-            orthonormal-spherical-basis
-            (b/make-basis orthonormal-spherical-vector-basis
-                          orthonormal-spherical-oneform-basis)
+                           orthonormal-spherical-basis
+                           (b/make-basis orthonormal-spherical-vector-basis
+                                         orthonormal-spherical-oneform-basis)
 
-            v (+ (* (m/literal-manifold-function 'v↑0 spherical) e_0)
-                 (* (m/literal-manifold-function 'v↑1 spherical) e_1)
-                 (* (m/literal-manifold-function 'v↑2 spherical) e_2))]
+                           v (+ (* (m/literal-manifold-function 'v↑0 spherical) e_0)
+                                (* (m/literal-manifold-function 'v↑1 spherical) e_1)
+                                (* (m/literal-manifold-function 'v↑2 spherical) e_2))]
 
-        (testing "testing that basis is normalized"
-          (is (= 1 ((spherical-metric e_0 e_0) spherical-point)))
-          (is (= 1 (simplify
-                    ((spherical-metric e_1 e_1) spherical-point))))
-          (is (= 1 (simplify
-                    ((spherical-metric e_2 e_2) spherical-point))))
+                       (testing "testing that basis is normalized"
+                         (is (= 1 ((spherical-metric e_0 e_0) spherical-point)))
+                         (is (= 1 (simplify
+                                   ((spherical-metric e_1 e_1) spherical-point))))
+                         (is (= 1 (simplify
+                                   ((spherical-metric e_2 e_2) spherical-point))))
 
-          (is (= 0 ((spherical-metric e_0 e_1) spherical-point)))
-          (is (= 0 ((spherical-metric e_0 e_2) spherical-point)))
-          (is (= 0 ((spherical-metric e_1 e_2) spherical-point))))
+                         (is (= 0 ((spherical-metric e_0 e_1) spherical-point)))
+                         (is (= 0 ((spherical-metric e_0 e_2) spherical-point)))
+                         (is (= 0 ((spherical-metric e_1 e_2) spherical-point))))
 
-        (testing "Test of gradient"
-          (is (= '(up (((partial 0) f) (up r theta phi))
-                      (/ (((partial 1) f) (up r theta phi)) r)
-                      (/ (((partial 2) f) (up r theta phi)) (* r (sin theta))))
-                 (simplify
-                  ((orthonormal-spherical-oneform-basis
-                    ((vc/gradient spherical-metric spherical-basis)
-                     (m/literal-manifold-function 'f spherical)))
-                   spherical-point)))))
+                       (testing "Test of gradient"
+                         (is (= '(up (((partial 0) f) (up r theta phi))
+                                     (/ (((partial 1) f) (up r theta phi)) r)
+                                     (/ (((partial 2) f) (up r theta phi)) (* r (sin theta))))
+                                (simplify
+                                 ((orthonormal-spherical-oneform-basis
+                                   ((vc/gradient spherical-metric spherical-basis)
+                                    (m/literal-manifold-function 'f spherical)))
+                                  spherical-point)))))
 
-        (testing "curl"
-          (is (= '(up (/ (+ (* (sin theta) (((partial 1) v↑2) (up r theta phi)))
-                            (* (v↑2 (up r theta phi)) (cos theta))
-                            (* -1 (((partial 2) v↑1) (up r theta phi))))
-                         (* r (sin theta)))
-                      (/ (+ (* -1 r (sin theta) (((partial 0) v↑2) (up r theta phi)))
-                            (* -1 (sin theta) (v↑2 (up r theta phi)))
-                            (((partial 2) v↑0) (up r theta phi)))
-                         (* r (sin theta)))
-                      (/ (+ (* r (((partial 0) v↑1) (up r theta phi)))
-                            (v↑1 (up r theta phi))
-                            (* -1 (((partial 1) v↑0) (up r theta phi))))
-                         r))
-                 (simplify
-                  ((orthonormal-spherical-oneform-basis
-                    ((vc/curl spherical-metric orthonormal-spherical-basis) v))
-                   spherical-point)))))
+                       (testing "curl"
+                         (is (= '(up (/ (+ (* (sin theta) (((partial 1) v↑2) (up r theta phi)))
+                                           (* (v↑2 (up r theta phi)) (cos theta))
+                                           (* -1 (((partial 2) v↑1) (up r theta phi))))
+                                        (* r (sin theta)))
+                                     (/ (+ (* -1 r (sin theta) (((partial 0) v↑2) (up r theta phi)))
+                                           (* -1 (sin theta) (v↑2 (up r theta phi)))
+                                           (((partial 2) v↑0) (up r theta phi)))
+                                        (* r (sin theta)))
+                                     (/ (+ (* r (((partial 0) v↑1) (up r theta phi)))
+                                           (v↑1 (up r theta phi))
+                                           (* -1 (((partial 1) v↑0) (up r theta phi))))
+                                        r))
+                                (simplify
+                                 ((orthonormal-spherical-oneform-basis
+                                   ((vc/curl spherical-metric orthonormal-spherical-basis) v))
+                                  spherical-point)))))
 
-        (testing "divergence"
-          (is (= '(/ (+ (* r (sin theta) (((partial 0) v↑0) (up r theta phi)))
-                        (* 2 (sin theta) (v↑0 (up r theta phi)))
-                        (* (sin theta) (((partial 1) v↑1) (up r theta phi)))
-                        (* (cos theta) (v↑1 (up r theta phi)))
-                        (((partial 2) v↑2) (up r theta phi)))
-                     (* r (sin theta)))
-                 (simplify
-                  (((vc/divergence spherical-metric orthonormal-spherical-basis) v)
-                   spherical-point)))))
+                       (testing "divergence"
+                         (is (= '(/ (+ (* r (sin theta) (((partial 0) v↑0) (up r theta phi)))
+                                       (* 2 (sin theta) (v↑0 (up r theta phi)))
+                                       (* (sin theta) (((partial 1) v↑1) (up r theta phi)))
+                                       (* (cos theta) (v↑1 (up r theta phi)))
+                                       (((partial 2) v↑2) (up r theta phi)))
+                                    (* r (sin theta)))
+                                (simplify
+                                 (((vc/divergence spherical-metric orthonormal-spherical-basis) v)
+                                  spherical-point)))))
 
-        (let [phi (m/literal-manifold-function 'phi spherical)]
-          (testing "laplacian"
-            (is (= '(/ (+ (* (expt r 2) (expt (sin theta) 2) (((expt (partial 0) 2) phi) (up r theta phi)))
-                          (* 2 r (expt (sin theta) 2) (((partial 0) phi) (up r theta phi)))
-                          (* (expt (sin theta) 2) (((expt (partial 1) 2) phi) (up r theta phi)))
-                          (* (sin theta) (cos theta) (((partial 1) phi) (up r theta phi)))
-                          (((expt (partial 2) 2) phi) (up r theta phi)))
-                       (* (expt r 2) (expt (sin theta) 2)))
-                   (simplify
-                    (((vc/Laplacian spherical-metric orthonormal-spherical-basis)
-                      phi)
-                     spherical-point))))))))))
+                       (let [phi (m/literal-manifold-function 'phi spherical)]
+                         (testing "laplacian"
+                           (is (= '(/ (+ (* (expt r 2) (expt (sin theta) 2) (((expt (partial 0) 2) phi) (up r theta phi)))
+                                         (* 2 r (expt (sin theta) 2) (((partial 0) phi) (up r theta phi)))
+                                         (* (expt (sin theta) 2) (((expt (partial 1) 2) phi) (up r theta phi)))
+                                         (* (sin theta) (cos theta) (((partial 1) phi) (up r theta phi)))
+                                         (((expt (partial 2) 2) phi) (up r theta phi)))
+                                      (* (expt r 2) (expt (sin theta) 2)))
+                                  (simplify
+                                   (((vc/Laplacian spherical-metric orthonormal-spherical-basis)
+                                     phi)
+                                    spherical-point))))))))))
 
 (deftest wave-equation-tests
   (testing "Obtaining the wave equation."
     (let [SR m/R4-rect]
       (let-coordinates [[t x y z] SR]
-        (let [c 'c
-              an-event ((m/point SR) (up 't0 'x0 'y0 'z0))
-              g-Minkowski (fn [u v]
-                            (+ (* -1 (g/square c) (dt u) (dt v))
-                               (* (dx u) (dx v))
-                               (* (dy u) (dy v))
-                               (* (dz u) (dz v))))
-              SR-vector-basis
-              (down (* (/ 1 c) d:dt) d:dx d:dy d:dz)
+                       (let [c 'c
+                             an-event ((m/point SR) (up 't0 'x0 'y0 'z0))
+                             g-Minkowski (fn [u v]
+                                           (+ (* -1 (g/square c) (dt u) (dt v))
+                                              (* (dx u) (dx v))
+                                              (* (dy u) (dy v))
+                                              (* (dz u) (dz v))))
+                             SR-vector-basis
+                             (down (* (/ 1 c) d:dt) d:dx d:dy d:dz)
 
-              SR-oneform-basis
-              (up (* c dt) dx dy dz)
+                             SR-oneform-basis
+                             (up (* c dt) dx dy dz)
 
-              SR-basis
-              (b/make-basis SR-vector-basis
-                            SR-oneform-basis)]
-          (is (= '(down (down -1 0 0 0)
-                        (down  0 1 0 0)
-                        (down  0 0 1 0)
-                        (down  0 0 0 1))
-                 (simplify
-                  (s/mapr
-                   (fn [u]
-                     (s/mapr (fn [v]
-                               ((g-Minkowski u v) an-event))
-                             SR-vector-basis))
-                   SR-vector-basis))))
+                             SR-basis
+                             (b/make-basis SR-vector-basis
+                                           SR-oneform-basis)]
+                         (is (= '(down (down -1 0 0 0)
+                                       (down  0 1 0 0)
+                                       (down  0 0 1 0)
+                                       (down  0 0 0 1))
+                                (simplify
+                                 (s/mapr
+                                  (fn [u]
+                                    (s/mapr (fn [v]
+                                              ((g-Minkowski u v) an-event))
+                                            SR-vector-basis))
+                                  SR-vector-basis))))
 
-          (let [phi (m/literal-manifold-function 'phi SR)]
-            (is (= '(/ (+ (* -1 (expt c 2) (((expt (partial 1) 2) phi) (up t0 x0 y0 z0)))
-                          (* -1 (expt c 2) (((expt (partial 2) 2) phi) (up t0 x0 y0 z0)))
-                          (* -1 (expt c 2) (((expt (partial 3) 2) phi) (up t0 x0 y0 z0)))
-                          (((expt (partial 0) 2) phi) (up t0 x0 y0 z0)))
-                       (expt c 2))
-                   (simplify
-                    (((vc/Laplacian g-Minkowski SR-basis) phi) an-event))))))))))
+                         (let [phi (m/literal-manifold-function 'phi SR)]
+                           (is (= '(/ (+ (* -1 (expt c 2) (((expt (partial 1) 2) phi) (up t0 x0 y0 z0)))
+                                         (* -1 (expt c 2) (((expt (partial 2) 2) phi) (up t0 x0 y0 z0)))
+                                         (* -1 (expt c 2) (((expt (partial 3) 2) phi) (up t0 x0 y0 z0)))
+                                         (((expt (partial 0) 2) phi) (up t0 x0 y0 z0)))
+                                      (expt c 2))
+                                  (simplify
+                                   (((vc/Laplacian g-Minkowski SR-basis) phi) an-event))))))))))

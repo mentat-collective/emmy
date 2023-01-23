@@ -128,7 +128,7 @@
          (o/operator? a) (o/make-operator
                           (f/compose #(apply ref % ks) (o/procedure a))
                           `(~'compose (~'component ~@ks)
-                            ~(o/name a)))
+                                      ~(o/name a)))
          :else (if (and (associative? a)
                         (every? v/integral? ks))
                  (if (matrix/matrix? a)

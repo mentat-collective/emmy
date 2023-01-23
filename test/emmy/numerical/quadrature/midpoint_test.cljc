@@ -2,11 +2,11 @@
 
 (ns emmy.numerical.quadrature.midpoint-test
   (:require [clojure.test :refer [is deftest testing]]
-            [same :refer [ish?]]
             [emmy.numerical.quadrature.midpoint :as qm]
             [emmy.numerical.quadrature.riemann :as qr]
             [emmy.numsymb]
-            [emmy.util :as u]))
+            [emmy.util :as u]
+            [same :refer [ish?]]))
 
 (deftest midpoint-tests
   (testing "midpoint-sum does the job"
@@ -34,9 +34,9 @@
 (deftest api-tests
   (testing "midpoint integrator never evaluates the endpoints"
     (let [f (fn [x] (condp = x
-                     0 (u/illegal "Zero!!")
-                     1 (u/illegal "One!")
-                     (/ 4 (+ 1 (* x x)))))]
+                      0 (u/illegal "Zero!!")
+                      1 (u/illegal "One!")
+                      (/ 4 (+ 1 (* x x)))))]
       (is (ish? {:converged? true
                  :terms-checked 9
                  :result 3.141592655525674}

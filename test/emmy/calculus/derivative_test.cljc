@@ -3,7 +3,6 @@
 (ns emmy.calculus.derivative-test
   (:refer-clojure :exclude [+ - * / partial])
   (:require [clojure.test :refer [is deftest testing use-fixtures]]
-            [same :refer [ish? with-comparator] :include-macros true]
             [emmy.abstract.function :as af]
             [emmy.abstract.number :refer [literal-number]]
             [emmy.calculus.derivative :as d :refer [D partial]]
@@ -12,8 +11,8 @@
             [emmy.expression :as x]
             [emmy.function :as f]
             [emmy.generic :as g :refer [acos asin atan cos sin tan
-                                             cot sec csc
-                                             log exp expt + - * /]]
+                                        cot sec csc
+                                        log exp expt + - * /]]
             [emmy.matrix :as matrix]
             [emmy.mechanics.hamilton :as h]
             [emmy.operator :as o]
@@ -21,7 +20,8 @@
             [emmy.simplify :refer [hermetic-simplify-fixture]]
             [emmy.structure :as s]
             [emmy.util :as u]
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [same :refer [ish? with-comparator] :include-macros true]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 
@@ -240,10 +240,8 @@
                    (* (η t) ((D g) (q t))))
                (simplify (((δη (+ F G)) q) 't)))))
 
-
       (testing "scalar product rule for variation: δ(cF) = cδF"
         (is (= '(* c (η t) ((D f) (q t))) (simplify (((δη (* 'c F)) q) 't)))))
-
 
       (testing "product rule for variation: δ(FG) = δF G + F δG"
         (is (= (simplify (+ (* (((δη F) q) 't) ((G q) 't))
@@ -694,8 +692,8 @@
 
     (testing "f -> Series"
       (let [F (fn [k] (series/series
-                      (fn [t] (g/* k t))
-                      (fn [t] (g/* k k t))))]
+                       (fn [t] (g/* k t))
+                       (fn [t] (g/* k k t))))]
         (is (= '((* q z) (* (expt q 2) z) 0 0) (simp4 ((F 'q) 'z))))
         (is (= '(z (* 2 q z) 0 0) (simp4 (((D F) 'q) 'z)))))))
 
@@ -778,7 +776,6 @@
   (let [odear (fn [z] ((D (f/compose sin cos)) z))]
     (is (= '(* -1 (cos (cos x)) (sin x)) (simplify (odear 'x))))))
 
-
 ;; Tests from the refman that came about while implementing various derivative
 ;; and operator functions.
 
@@ -857,7 +854,7 @@
          (simplify
           (((D (fn [eps]
                  (fn [t]
-	                 ((d/D (g/* g/cos eps)) t))))
+                   ((d/D (g/* g/cos eps)) t))))
             'e)
            't)))
       "another nesting test from deriv.scm."))
@@ -1190,8 +1187,7 @@
             (wrap2-result [f]
               (fn [x] (wrap2 (f x))))]
 
-      (let [
-            ;; R -> ((R->R) -> (R->R)))
+      (let [;; R -> ((R->R) -> (R->R)))
             s (fn [x]
                 (fn [g]
                   (fn [y]
@@ -1210,8 +1206,7 @@
 
   (testing "D on a higher-order function responds differently to evaluations
   inside the 'body' of the multi-argument version of the function, vs outside."
-    (let [
-          ;; Make some literal function that takes TWO inputs:
+    (let [;; Make some literal function that takes TWO inputs:
           a (af/literal-function 'a '(-> (X Real Real) Real))
 
           ;; (D f) returns a function that takes a continuation that received
@@ -1314,7 +1309,7 @@
                  (fn [g]
                    (fn [z] (g (+ x z)))))))]
       (is (ish? ((fn [y] (+ (* 3 (cos (* 3 y)))
-                           (* y (cos (* 3 y)))))
+                            (* y (cos (* 3 y)))))
                  (+ 3 Math/PI))
                 (((D f) 3)
                  (fn [g-hat f-hat]
@@ -1579,9 +1574,9 @@
       differential instances.")
 
   (testing "compare, one stays symbolic:"
-    (letfn[(f [[a b]]
-             (* (sin (* 3 a))
-                (cos (* 4 b))))]
+    (letfn [(f [[a b]]
+              (* (sin (* 3 a))
+                 (cos (* 4 b))))]
 
       (is (ish? [-0.020532965943782493
                  (s/down 0.4321318251769156 -0.558472974950351)]

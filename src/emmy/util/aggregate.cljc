@@ -191,19 +191,19 @@
 ;; generate n-arity versions of those functions.
 
 (defn- combiner
-"If `stop?` is false, returns `f`. Else, returns a binary reducing function that
+  "If `stop?` is false, returns `f`. Else, returns a binary reducing function that
   returns a `reduced` value if its left argument returns `true` for `stop?`,
   else aggregates with `f`."
-[f stop?]
-(if stop?
-  (fn [l r]
-    (if (stop? l)
-      (reduced l)
-      (f l r)))
-  f))
+  [f stop?]
+  (if stop?
+    (fn [l r]
+      (if (stop? l)
+        (reduced l)
+        (f l r)))
+    f))
 
 (defn monoid
-"Accepts a binary (associative) aggregation function `plus` and an identity
+  "Accepts a binary (associative) aggregation function `plus` and an identity
   element `id` and returns a multi-arity function that will combine its
   arguments via `plus`. A 0-arity call returns `id`.
 

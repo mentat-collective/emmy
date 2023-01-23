@@ -4,9 +4,9 @@
   (:require [clojure.test :as t :refer [is deftest testing]]
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
+            [emmy.ratio]
             [pattern.match :as m]
-            [pattern.rule :as r :refer [=> !=>]]
-            [emmy.ratio]))
+            [pattern.rule :as r :refer [=> !=>]]))
 
 (deftest consequence-tests
   (testing "consequence preserves empty containers with correct type"
@@ -169,7 +169,7 @@
     (let [z 2
           R (r/rule
              (~(m/eq '+) () ~(m/match-when odd? (m/bind '?a))
-              ?a ??b)
+                         ?a ??b)
              => (* ~@[z] ?a ??b))]
       (is (= '(* 2 3 y z)
              (R '(+ () 3 3 y z)))))
@@ -206,8 +206,7 @@
 
     (is (r/failed?
          ((r/rule (+ ?a ?b) => ~r/failure) '(+ 1 2)))
-        "Or if you splice in failure and return it!")
-    )
+        "Or if you splice in failure and return it!"))
 
   (testing "new syntax"
     (let [R (r/rule (?a ?b ??cs) => (a b c ?a ?b y z))]

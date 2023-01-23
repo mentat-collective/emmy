@@ -2,14 +2,14 @@
 
 (ns emmy.numerical.derivative-test
   (:require [clojure.test :refer [is deftest testing]]
-            [same :refer [ish? with-comparator] :include-macros true]
             [emmy.calculus.derivative :as cd]
             [emmy.generic :as g]
             [emmy.numerical.derivative :as d]
             [emmy.polynomial.richardson :as r]
             [emmy.util :as u]
             [emmy.util.stream :as us]
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [same :refer [ish? with-comparator] :include-macros true]))
 
 (deftest derivative-tests
   (let [f         g/sqrt

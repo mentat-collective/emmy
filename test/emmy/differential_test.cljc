@@ -1,17 +1,17 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
 (ns emmy.differential-test
-  (:require [clojure.test :refer [is deftest testing use-fixtures]]
+  (:require #?(:cljs [emmy.util :as u])
+            [clojure.test :refer [is deftest testing use-fixtures]]
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
-            [same :refer [ish? with-comparator] :include-macros true]
             [emmy.differential :as d]
             [emmy.generators :as sg]
             [emmy.generic :as g]
             [emmy.numerical.derivative :refer [D-numeric]]
             [emmy.simplify :refer [hermetic-simplify-fixture]]
-            #?(:cljs [emmy.util :as u])
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [same :refer [ish? with-comparator] :include-macros true]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 
@@ -65,7 +65,7 @@
 
   (testing "terms:+ removes zero coefs"
     (let [l [(d/make-term [1] 5)]
-          r[(d/make-term [1] -5)]]
+          r [(d/make-term [1] -5)]]
       (is (= [] (#'d/terms:+ l r)))))
 
   (checking "terms:* returns sorted, well-formed terms" 500
@@ -142,7 +142,6 @@
         (is (v/identity? (d/from-terms {[] 1})))
         (is (v/identity? (d/from-terms {[] 1 [1] 0})))
         (is (not (v/identity? (d/from-terms {[] 1 [1] 1})))))
-
 
       (checking "*-like works" 100 [diff real-diff-gen]
                 (is (v/zero? (v/zero-like diff)))

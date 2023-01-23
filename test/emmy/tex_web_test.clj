@@ -3,11 +3,11 @@
 #_{:clj-kondo/ignore [:refer-all]}
 (ns emmy.tex-web-test
   (:refer-clojure :exclude [+ - * / = compare ref partial zero? numerator denominator])
-  (:require [nextjournal.clerk :as clerk]
-            [emmy.env :as e :refer :all]
+  (:require [emmy.env :as e :refer :all]
             [emmy.examples.central-potential :as central]
             [emmy.examples.double-pendulum :as double]
-            [emmy.examples.driven-pendulum :as driven]))
+            [emmy.examples.driven-pendulum :as driven]
+            [nextjournal.clerk :as clerk]))
 
 ;; ## Showing Off Renderers
 

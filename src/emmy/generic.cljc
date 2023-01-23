@@ -197,7 +197,7 @@
   {:name '/
    :dfdx (fn [_ y] (div 1 y))
    :dfdy (fn [x y] (div (negate x)
-                       (square y)))})
+                        (square y)))})
 
 (defmethod div :default [a b]
   (if *in-default-invert*

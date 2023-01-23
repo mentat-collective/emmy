@@ -31,8 +31,8 @@
                            (let [vectors (into [] vectors)]
                              (assert (= k (count vectors))
                                      `(~'≠ ~k ~(count vectors)
-                                       ~@vectors
-                                       ~@(map meta vectors)))
+                                           ~@vectors
+                                           ~@(map meta vectors)))
                              (g/- ((g/Lie-derivative X) (apply Y vectors))
                                   (ua/generic-sum
                                    (fn [i]

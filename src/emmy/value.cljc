@@ -9,13 +9,13 @@
   for a detailed discussion of how to use and extend the generic operations
   defined in [[emmy.generic]] and [[emmy.value]]."
   (:refer-clojure :exclude [zero? number? = compare])
-  (:require [clojure.core :as core]
-            [emmy.util :as u]
-            #?@(:cljs [["complex.js" :as Complex]
+  (:require #?@(:cljs [["complex.js" :as Complex]
                        ["fraction.js/bigfraction.js" :as Fraction]
                        [goog.array :as garray]
                        [goog.math.Long]
-                       [goog.math.Integer]]))
+                       [goog.math.Integer]])
+            [clojure.core :as core]
+            [emmy.util :as u])
   #?(:clj
      (:import
       (clojure.lang BigInt Sequential Var)
@@ -213,8 +213,8 @@
 
   nil
   (zero? [_] true)
-  (one?[_] false)
-  (identity?[_] false)
+  (one? [_] false)
+  (identity? [_] false)
   (zero-like [_] (u/unsupported "nil doesn't support zero-like."))
   (one-like [_] (u/unsupported "nil doesn't support one-like."))
   (identity-like [_] (u/unsupported "nil doesn't support identity-like."))
@@ -224,8 +224,8 @@
 
   Var
   (zero? [_] false)
-  (one?[_] false)
-  (identity?[_] false)
+  (one? [_] false)
+  (identity? [_] false)
   (zero-like [v] (u/unsupported (str "zero-like: " v)))
   (one-like [v] (u/unsupported (str "one-like: " v)))
   (identity-like [v] (u/unsupported (str "identity-like: " v)))

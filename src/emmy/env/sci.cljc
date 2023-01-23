@@ -2,10 +2,10 @@
 
 (ns emmy.env.sci
   (:refer-clojure :exclude [ns-map])
-  (:require [sci.core :as sci]
-            [emmy.env]
+  (:require [emmy.env]
             [emmy.env.sci.macros :as macros]
-            [emmy.util :as u]))
+            [emmy.util :as u]
+            [sci.core :as sci]))
 
 (def macro? (comp :macro meta))
 (def dynamic? (comp :dynamic meta))

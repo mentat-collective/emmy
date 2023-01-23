@@ -75,7 +75,6 @@
                    (* (((partial 2 1) minus-P) s) pyd)))
              minus-F0))))))
 
-
 (defn Routhian->state-derivative
   ([R]
    (fn [[_ _ [vx] :as s]]
@@ -91,8 +90,7 @@
                   (+ (((partial 0) minus-P) s)
                      (* (((partial 1 0) minus-P) s) vx)
                      (* (((partial 1 1) minus-P) s) vy)
-                     (* (((partial 2 1) minus-P) s) pyd)
-                     )))
+                     (* (((partial 2 1) minus-P) s) pyd))))
             pyd)))))
   ([R dissipation-fn]
    (fn [[t q [vx] :as s]]
@@ -111,8 +109,7 @@
                      (+ (((partial 0) minus-P) s)
                         (* (((partial 1 0) minus-P) s) vx)
                         (* (((partial 1 1) minus-P) s) vy)
-                        (* (((partial 2 1) minus-P) s) pyd)
-                        ))
+                        (* (((partial 2 1) minus-P) s) pyd)))
                   minus-F0))
             pyd))))))
 

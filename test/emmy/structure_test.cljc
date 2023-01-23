@@ -5,8 +5,6 @@
   (:require [clojure.test :refer [is deftest testing]]
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
-            [pattern.match :as pm]
-            [same :refer [ish? with-comparator] :include-macros true]
             [emmy.abstract.number]
             [emmy.complex :as c]
             [emmy.expression :as x]
@@ -17,7 +15,9 @@
             [emmy.structure :as s]
             [emmy.util :as u]
             [emmy.util.aggregate :as ua]
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [pattern.match :as pm]
+            [same :refer [ish? with-comparator] :include-macros true]))
 
 (deftest interface-tests
   (checking "Clojure interface definitions" 100

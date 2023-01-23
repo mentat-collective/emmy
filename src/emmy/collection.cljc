@@ -122,9 +122,9 @@
 
 (defn- combine [f m1 m2 l-default]
   (letfn [(merge-entry [m e]
-			      (let [k (key e)
+            (let [k (key e)
                   v (val e)]
-			        (assoc m k (f (get m k l-default) v))))]
+              (assoc m k (f (get m k l-default) v))))]
     (reduce merge-entry m1 (seq m2))))
 
 (defmethod g/make-rectangular [::map ::map] [m1 m2]
@@ -187,7 +187,6 @@
        ;; simple representation for some other type, like a manifold point.
        (u/unsupported (str "`extract-tangent` not supported for type " t "."))
        (u/map-vals #(d/extract-tangent % tag) m)))))
-
 
 ;; ## Sets
 ;;

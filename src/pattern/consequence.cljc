@@ -6,8 +6,8 @@
   transformation (or a failure!).
 
   See [[pattern.rule]] for a detailed treatment."
-  (:require [pattern.syntax :as ps]
-            [emmy.util :as u]))
+  (:require [emmy.util :as u]
+            [pattern.syntax :as ps]))
 
 ;; ## Consequence Functions
 ;;

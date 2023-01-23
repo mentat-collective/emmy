@@ -1,10 +1,10 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
 (ns emmy.value-test
-  (:require [clojure.test :refer [is deftest testing]]
+  (:require #?(:cljs [cljs.reader :refer [read-string]])
+            [clojure.test :refer [is deftest testing]]
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
-            #?(:cljs [cljs.reader :refer [read-string]])
             [emmy.generators :as sg]
             [emmy.util :as u]
             [emmy.value :as v])

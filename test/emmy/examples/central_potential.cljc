@@ -2,11 +2,11 @@
 
 (ns emmy.examples.central-potential
   (:refer-clojure :exclude [+ - * /])
-  (:require [emmy.env :as e :refer [abs square up + - * /]]
-            #?@(:clj
+  (:require #?@(:clj
                 [[taoensso.timbre :as log]
                  [hiccup.core :refer [html]]
-                 [hiccup.page :refer [html5]]])))
+                 [hiccup.page :refer [html5]]])
+            [emmy.env :as e :refer [abs square up + - * /]]))
 
 (defn- pairs
   "Return a sequence of pairs of different elements from the given sequence."
@@ -82,8 +82,7 @@
     ;;[:circle {:fill "green" :stroke "none" :r 5 :cx 20 :cy 0}]
     ;;[:circle {:fill "green" :stroke "none" :r 5 :cx 0 :cy 20}]
     (for [[_ x y _ _] evolution]
-      [:circle {:fill "orange" :stroke "none" :r 1 :cx x :cy y}]
-      )
+      [:circle {:fill "orange" :stroke "none" :r 1 :cx x :cy y}])
     (for [[_ _ _ X Y] evolution]
       [:circle {:fill "green" :stroke "none" :r 1 :cx X :cy Y}])]])
 

@@ -120,8 +120,8 @@
           δ_η (δ η)
           φ (fn [f] (fn [q] (fn [t] (φ ((f q) t)))))
           test-path (fn [t] (up (+ 'a0 (* 'a t))
-                               (+ 'b0 (* 'b t))
-                               (+ 'c0 (* 'c t))))
+                                (+ 'b0 (* 'b t))
+                                (+ 'c0 (* 'c t))))
           proposed-solution (fn [t] (* 'a (cos (+ (* 'ω t) 'φ))))]
 
       ;; p. 29
@@ -140,7 +140,6 @@
              (simplify (((Lagrange-equations (L/L-free-particle 'm)) x) 't))))
       (is (= '(+ (* -1 a m (expt ω 2) (cos (+ (* t ω) φ))) (* a k (cos (+ (* t ω) φ))))
              (simplify (((Lagrange-equations (L/L-harmonic 'm 'k)) proposed-solution) 't)))))))
-
 
 (deftest section-1-6
   (e/with-literal-functions [x y r θ φ U y_s]

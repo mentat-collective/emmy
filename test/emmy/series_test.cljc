@@ -4,14 +4,14 @@
   (:require [clojure.test :refer [is deftest testing use-fixtures]]
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
-            [same :refer [ish? with-comparator] :include-macros true]
             [emmy.calculus.derivative]
             [emmy.function :as f]
             [emmy.generators :as sg]
             [emmy.generic :as g]
             [emmy.series :as s]
             [emmy.simplify :refer [hermetic-simplify-fixture]]
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [same :refer [ish? with-comparator] :include-macros true]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 
@@ -368,7 +368,7 @@
                (take 10 (series 2)))
             "Applying a number to a `Series` of functions that return
         `series?`-true objects returns a running sum across the diagonal of the
-        first test's return value.") ))
+        first test's return value.")))
 
     (testing "inflate"
       (is (= [0 0 0 1 0]

@@ -54,7 +54,7 @@
         arity     (if b [:between a b] [:exactly a])
         docstring (if (string? (first options))
                     (str "generic " f ".\n\n" (first options))
-                    (str "generic " f ))
+                    (str "generic " f))
         options   (if (string? (first options))
                     (next options)
                     options)

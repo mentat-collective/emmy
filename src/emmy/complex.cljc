@@ -7,11 +7,11 @@
 
   For other numeric extensions, see [[emmy.ratio]]
   and [[emmy.numbers]]."
-  (:require [emmy.generic :as g]
-            [emmy.util :as u]
-            [emmy.value :as v]
+  (:require #?(:cljs ["complex.js" :as Complex])
             #?(:cljs [goog.object :as obj])
-            #?(:cljs ["complex.js" :as Complex]))
+            [emmy.generic :as g]
+            [emmy.util :as u]
+            [emmy.value :as v])
   #?(:clj
      (:import (org.apache.commons.math3.complex Complex ComplexFormat))))
 

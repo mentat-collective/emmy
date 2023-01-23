@@ -8,9 +8,9 @@
   For other numeric extensions, see [[emmy.ratio]]
   and [[emmy.complex]]."
   (:refer-clojure :exclude [zero? / + - *])
-  (:require [clojure.core :as core]
+  (:require #?(:cljs [emmy.ratio :as r])
+            [clojure.core :as core]
             [emmy.complex :refer [complex]]
-            #?(:cljs [emmy.ratio :as r])
 
             ;; Required to enable the generic gcd implementation.
             [emmy.euclid]
@@ -255,7 +255,7 @@
        (defmethod g/gcd [::v/native-integral js/BigInt] [a b]
          (bigint-gcd (js/BigInt a) b))
 
-       (defmethod g/gcd [ js/BigInt ::v/native-integral] [a b]
+       (defmethod g/gcd [js/BigInt ::v/native-integral] [a b]
          (bigint-gcd a (js/BigInt b))))
 
      (defmethod g/expt [::v/native-integral ::v/native-integral] [a b]

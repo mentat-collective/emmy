@@ -3,12 +3,12 @@
 (ns emmy.env.sci-test
   (:refer-clojure :exclude [eval])
   (:require [clojure.test :refer [is deftest testing use-fixtures]]
-            [sci.core :as sci]
             [emmy.env :as e]
             [emmy.env.sci :as es]
             [emmy.operator :as o]
             [emmy.simplify :refer [hermetic-simplify-fixture]]
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [sci.core :as sci]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 
@@ -78,11 +78,11 @@
     (is (= [true true true true]
            (eval '(let-coordinates [[x y]     R2-rect
                                     [r theta] R2-polar]
-                    (let [p ((point R2-rect) (up 1 2))]
-                      [(= 1 (x p))
-                       (= 2 (y p))
-                       (= (sqrt 5) (r p))
-                       (= (atan 2) (theta p))]))))
+                                   (let [p ((point R2-rect) (up 1 2))]
+                                     [(= 1 (x p))
+                                      (= 2 (y p))
+                                      (= (sqrt 5) (r p))
+                                      (= (atan 2) (theta p))]))))
         "let-coordinates macro works")
 
     (is (= [true true]

@@ -4,14 +4,14 @@
   (:require [clojure.test :refer [is deftest testing]]
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
-            [same :refer [ish? with-comparator] :include-macros true]
             [emmy.complex :as c]
             [emmy.generators :as sg]
             [emmy.generic :as g]
             [emmy.generic-test :as gt]
             [emmy.laws :as l]
             [emmy.util :as u]
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [same :refer [ish? with-comparator] :include-macros true]))
 
 (def near (v/within 1e-12))
 

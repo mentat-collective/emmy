@@ -2,8 +2,8 @@
 
 (ns emmy.simplify-test
   (:refer-clojure :exclude [=])
-  (:require [clojure.test :refer [is deftest testing use-fixtures]]
-            #?(:cljs [goog.string :refer [format]])
+  (:require #?(:cljs [goog.string :refer [format]])
+            [clojure.test :refer [is deftest testing use-fixtures]]
             [emmy.complex :as c]
             [emmy.expression.analyze :as a]
             [emmy.generic :as g]
@@ -78,7 +78,7 @@
              (g/simplify (m/characteristic-polynomial C 'y))))
 
       (is ((v/within 1e-12) 0.0
-           (g/simplify (m/characteristic-polynomial A (g/divide (g/- 5 (g/sqrt 33)) 2))))))))
+                            (g/simplify (m/characteristic-polynomial A (g/divide (g/- 5 (g/sqrt 33)) 2))))))))
 
 (deftest native-clojure-things
   (is (= "foo" (g/simplify "foo")))

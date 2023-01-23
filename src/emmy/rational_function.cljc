@@ -42,8 +42,6 @@
   (numerator [_] u)
   (denominator [_] v)
 
-
-
   v/Value
   (zero? [_] (v/zero? u))
   (one? [_] (and (v/one? u) (v/one? v)))
@@ -512,8 +510,6 @@
   (cond (v/zero? r) s
         (v/zero? s) r
         :else (binary-combine r s p/add uv:+)))
-
-
 
 (defn sub
   "Returns the difference of rational functions `r` and `s`, with appropriate

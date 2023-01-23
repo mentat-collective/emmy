@@ -6,11 +6,11 @@
   (:require [clojure.test :refer [is deftest testing]]
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
-            [same :refer [ish?] :include-macros true]
             [emmy.generators :as sg]
             [emmy.generic :as g]
             [emmy.numbers]
-            [emmy.util.stream :as us]))
+            [emmy.util.stream :as us]
+            [same :refer [ish?] :include-macros true]))
 
 (deftest zeno-powers-tests
   (testing "zeno streams"
@@ -34,7 +34,7 @@
                 "use generate to rebuild."))
 
   (checking "separatev" 100 [v (gen/vector gen/nat)]
-            (let[[evens odds] (us/separatev even? v)]
+            (let [[evens odds] (us/separatev even? v)]
               (is (= [(filterv even? v)
                       (filterv odd? v)]
                      [evens odds])

@@ -7,7 +7,6 @@
   (:require #?(:cljs [goog.string :refer [format]])
             [clojure.set :as set]
             [clojure.walk :as w]
-            [sci.core :as sci]
             [emmy.expression :as x]
             [emmy.expression.analyze :as a]
             [emmy.function :as f]
@@ -16,6 +15,7 @@
             [emmy.util :as u]
             [emmy.util.stopwatch :as us]
             [emmy.value :as v]
+            [sci.core :as sci]
             [taoensso.timbre :as log]))
 
 ;; # Function Compilation
@@ -26,21 +26,19 @@
 ;; 1. Pass symbols like `'x` in for all arguments. This will cause the function
 ;;    to return a "numerical expression", a syntax tree representing the
 ;;    function's body:
-#_
-(let [f (fn [x] (g/sqrt
-                (g/+ (g/square (g/sin x))
-                     (g/square (g/cos x)))))]
-(= '(sqrt (+ (expt (sin x) 2) (expt (cos x) 2)))
-   (x/expression-of (f 'x))))
+#_(let [f (fn [x] (g/sqrt
+                   (g/+ (g/square (g/sin x))
+                        (g/square (g/cos x)))))]
+    (= '(sqrt (+ (expt (sin x) 2) (expt (cos x) 2)))
+       (x/expression-of (f 'x))))
 
 ;; 2. `g/simplify` the new function body. Sometimes this results in large
 ;;    simplifications:
 
-#_
-(let [f (fn [x] (g/sqrt
-                (g/+ (g/square (g/sin x))
-                     (g/square (g/cos x)))))]
-  (v/= 1 (g/simplify (f 'x))))
+#_(let [f (fn [x] (g/sqrt
+                   (g/+ (g/square (g/sin x))
+                        (g/square (g/cos x)))))]
+    (v/= 1 (g/simplify (f 'x))))
 
 ;; 3. Apply "common subexpression elimination". Any subexpression inside the
 ;;    new, simplified body that appears more than once gets extracted out into a
@@ -234,10 +232,9 @@
 ;; This is important, as it forces us to consider smaller subexpressions first.
 ;; Consider some expression like:
 
-#_
-(+ (* (sin x) (cos x))
-   (* (sin x) (cos x))
-   (* (sin x) (cos x)))
+#_(+ (* (sin x) (cos x))
+     (* (sin x) (cos x))
+     (* (sin x) (cos x)))
 
 ;; At first pass, we have three repeated subexpressions:
 ;;
@@ -249,8 +246,7 @@
 ;; before the larger term that contains them both. And in fact the returned pair
 ;; looks like:
 
-#_
-[(+ g3 g3 g3) ([g1 (sin x)] [g2 (cos x)] [g3 (* g1 g2)])]
+#_[(+ g3 g3 g3) ([g1 (sin x)] [g2 (cos x)] [g3 (* g1 g2)])]
 
 ;; NOTE also that:
 ;;
@@ -443,14 +439,12 @@
 ;;
 ;; The compiled version of a state function like
 
-#_
-(fn [mass g]
-  (fn [q] ,,,))
+#_(fn [mass g]
+    (fn [q]))
 
 ;; Has a signature like
 
-#_
-(fn [q [mass g]] ,,,)
+#_(fn [q [mass g]])
 
 ;; IE, first the structure, then a vector of the original function's arguments.
 

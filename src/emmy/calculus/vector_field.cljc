@@ -139,7 +139,7 @@
   {:pre [(vector-field? vf)]}
   (o/make-operator vf:zero
                    'vf:zero
-	                 (o/context vf)))
+                   (o/context vf)))
 
 (defn- vf:zero?
   "Returns true if the supplied vector field `vf` is a vector field with a
@@ -250,13 +250,13 @@
              (let [applied (vector-basis f)]
                (fn [point]
                  (g/* (applied point)
-	                    (components point)))))
+                      (components point)))))
         name `(~'+ ~@(map (fn [component basis-element]
-		                        `(~'*
+                            `(~'*
                               ~(v/freeze component)
-		                          ~(v/freeze basis-element)))
-	                        (flatten components)
-	                        (flatten vector-basis)))]
+                              ~(v/freeze basis-element)))
+                          (flatten components)
+                          (flatten vector-basis)))]
     (procedure->vector-field op name)))
 
 ;; And the inverse:

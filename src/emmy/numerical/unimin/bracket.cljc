@@ -60,8 +60,8 @@
   the function."
   [f {:keys [grow-limit] :or {grow-limit 110.0}}]
   (fn [a
-      [xb fb :as b]
-      [xc fc :as c]]
+       [xb fb :as b]
+       [xc fc :as c]]
     (let [;; If f(c) is < f(b) the minimum of the parabola will be far
           ;; outside the bounds. This is a bound on how far we're allowed to
           ;; jump in a single step.

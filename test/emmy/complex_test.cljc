@@ -1,17 +1,17 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
 (ns emmy.complex-test
-  (:require [clojure.test :refer [is deftest testing]]
-            #?(:cljs [cljs.reader :refer [read-string]])
+  (:require #?(:cljs [cljs.reader :refer [read-string]])
+            [clojure.test :refer [is deftest testing]]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
-            [same :refer [ish? with-comparator] :include-macros true]
             [emmy.complex :as c]
             [emmy.generators :as sg]
             [emmy.generic :as g]
             [emmy.generic-test :as gt]
             [emmy.laws :as l]
             [emmy.numbers]
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [same :refer [ish? with-comparator] :include-macros true]))
 
 (defn ^:private near [w z]
   (< (g/abs (g/- w z)) 1e-10))
@@ -177,7 +177,6 @@
     (testing "div in either order"
       (is (= (c/complex 0 -1) (g/div 1 c/I)))
       (is (= (c/complex 2 2) (g/div (c/complex 4 4) 2))))
-
 
     (testing "modulo examples"
       ;; https://stackoverflow.com/questions/54553489/how-to-calculate-a-modulo-of-complex-numbers

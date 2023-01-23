@@ -1,15 +1,15 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
 (ns emmy.expression.compile-test
-  (:require [clojure.test :refer [is deftest testing]]
+  (:require #?(:cljs [goog.string :refer [format]])
+            [clojure.test :refer [is deftest testing]]
             [clojure.walk :as w]
-            #?(:cljs [goog.string :refer [format]])
-            [same :refer [ish?]]
             [emmy.abstract.number]
             [emmy.expression.compile :as c]
             [emmy.generic :as g]
             [emmy.structure :refer [up down]]
-            [emmy.value :as v])
+            [emmy.value :as v]
+            [same :refer [ish?]])
   #?(:clj
      (:import (clojure.lang ExceptionInfo))))
 

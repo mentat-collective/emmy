@@ -236,16 +236,16 @@
   [metric-tensor basis]
   (let [gi (invert metric-tensor basis)]
     (fn [tensor02]
-      (letfn[(v2 [omega1 omega2]
-               (b/contract
-                (fn [e1 w1]
-                  (b/contract
-                   (fn [e2 w2]
-                     (g/* (gi omega1 w1)
-                          (tensor02 e1 e2)
-                          (gi w2 omega2)))
-                   basis))
-                basis))]
+      (letfn [(v2 [omega1 omega2]
+                (b/contract
+                 (fn [e1 w1]
+                   (b/contract
+                    (fn [e2 w2]
+                      (g/* (gi omega1 w1)
+                           (tensor02 e1 e2)
+                           (gi w2 omega2)))
+                    basis))
+                 basis))]
         (ci/with-argument-types
           v2
           [::ff/oneform-field
@@ -284,19 +284,18 @@
         f
         [::v/function]))))
 
-
 ;; Unfortunately raise is very expensive because the matrix is
 ;; inverted for each manifold point.
 
 (defn sharpen [metric basis m]
   (let [g-ij ((metric->inverse-components metric basis) m)
-	      vector-basis (b/basis->vector-basis basis)]
+        vector-basis (b/basis->vector-basis basis)]
     (fn sharp [oneform-field]
       (let [oneform-coeffs
-	          (s/mapr (fn [ei] ((oneform-field ei) m))
-		                vector-basis)
+            (s/mapr (fn [ei] ((oneform-field ei) m))
+                    vector-basis)
             vector-coeffs (g/* g-ij oneform-coeffs)]
-	      (s/sumr g/* vector-coeffs vector-basis)))))
+        (s/sumr g/* vector-coeffs vector-basis)))))
 
 ;; ## Useful metrics
 
@@ -305,8 +304,8 @@
         [dtheta dphi] (ff/coordinate-system->oneform-basis m/S2-spherical)]
     (-> (fn the-metric [v1 v2]
           (g/+ (g/* (dtheta v1) (dtheta v2))
-	             (g/* (g/expt (g/sin theta) 2)
-	                  (dphi v1) (dphi v2))))
+               (g/* (g/expt (g/sin theta) 2)
+                    (dphi v1) (dphi v2))))
         (ci/with-argument-types
           [::vf/vector-field
            ::vf/vector-field]))))

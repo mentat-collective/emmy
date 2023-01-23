@@ -866,7 +866,7 @@
    (dec (num-rows m))
    (dec (num-cols m))
    (mapv #(delete % j)
-         (delete (matrix->vector m) i))) )
+         (delete (matrix->vector m) i))))
 
 (defn- checkerboard-negate [s i j]
   (if (even? (+ i j))
@@ -972,10 +972,10 @@
           (->Matrix 1 1 [[(div (core/get-in A [0 0]))]])
           (let* [d  (det A)
                  -d (sub d)]
-            (generate dim dim
-                      (fn [i j]
-                        (let [denom (if (even? (+ i j)) d -d)]
-                          (div (det (without A j i)) denom))))))))))
+                (generate dim dim
+                          (fn [i j]
+                            (let [denom (if (even? (+ i j)) d -d)]
+                              (div (det (without A j i)) denom))))))))))
 
 (def ^{:doc "Returns the inverse of the supplied square matrix `m`."
        :arglists '([A])}

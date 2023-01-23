@@ -160,7 +160,7 @@
   endpoints."
   [f a b]
   (-> (fn [l r] (* (- r l)
-                  (max (f l) (f r))))
+                   (max (f l) (f r))))
       (windowed-sum a b)))
 
 ;; Similarly, the lower Riemann sum uses the /minimum/ of $f(x_l)$ and $f(x_r)$:
@@ -174,7 +174,7 @@
   endpoints."
   [f a b]
   (-> (fn [l r] (* (- r l)
-                  (min (f l) (f r))))
+                   (min (f l) (f r))))
       (windowed-sum a b)))
 
 ;; ## Estimating Integrals with Riemann Sums

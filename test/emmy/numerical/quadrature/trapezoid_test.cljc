@@ -2,7 +2,6 @@
 
 (ns emmy.numerical.quadrature.trapezoid-test
   (:require [clojure.test :refer [is deftest testing]]
-            [same :refer [ish?]]
             [emmy.generic :as g]
             [emmy.numerical.quadrature.riemann :as qr]
             [emmy.numerical.quadrature.trapezoid :as qt]
@@ -10,7 +9,8 @@
             [emmy.polynomial.richardson :as pr]
             [emmy.util :as u]
             [emmy.util.stream :as us]
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [same :refer [ish?]]))
 
 ;; The tests on Pi estimation come from Sussman's ["Abstraction in Numerical
 ;; Methods"](https://dspace.mit.edu/bitstream/handle/1721.1/6060/AIM-997.pdf?sequence=2).

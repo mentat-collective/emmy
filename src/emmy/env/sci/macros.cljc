@@ -3,16 +3,16 @@
 (ns emmy.env.sci.macros
   "This namespace contains reimplementations of various macros from emmy,
   defined in the form required by SCI."
-  (:require [pattern.consequence :as pc]
-            [pattern.rule :as r]
-            [pattern.syntax :as ps]
-            [emmy.abstract.function :as af]
+  (:require [emmy.abstract.function :as af]
             [emmy.algebra.fold :as fold]
             [emmy.calculus.coordinate :as cc]
             [emmy.calculus.form-field :as ff]
             [emmy.calculus.manifold :as m]
             [emmy.calculus.vector-field :as vf]
-            [emmy.util :as u]))
+            [emmy.util :as u]
+            [pattern.consequence :as pc]
+            [pattern.rule :as r]
+            [pattern.syntax :as ps]))
 
 ;; ## Pattern Matching Macros
 

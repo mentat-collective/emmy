@@ -5,11 +5,11 @@
   matcher combinators declared in [[pattern.match]], along with a series of
   combinators for building advanced term-rewriting systems."
   (:refer-clojure :exclude [replace while])
-  (:require [pattern.consequence :as c]
+  (:require [emmy.util :as u]
+            [emmy.util.def :refer [import-def]]
+            [pattern.consequence :as c]
             [pattern.match :as m]
-            [pattern.syntax :as ps]
-            [emmy.util :as u]
-            [emmy.util.def :refer [import-def]])
+            [pattern.syntax :as ps])
   #?(:cljs
      (:require-macros [pattern.rule])))
 

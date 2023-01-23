@@ -4,7 +4,6 @@
   "This namespace contains functions for factoring polynomials and symbolic
   expressions."
   (:require [clojure.walk :as w]
-            [pattern.rule :as r :refer [=> rule-simplifier]]
             [emmy.expression :as x]
             [emmy.expression.analyze :as a]
             [emmy.numsymb :as sym]
@@ -13,6 +12,7 @@
             [emmy.simplify.rules :as rules]
             [emmy.util.logic :as ul]
             [emmy.value :as v]
+            [pattern.rule :as r :refer [=> rule-simplifier]]
             [taoensso.timbre :as log])
   #?(:clj
      (:import (java.util.concurrent TimeoutException))))

@@ -1,7 +1,7 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
 (ns emmy.series.impl-test
-  (:require [clojure.test :refer [is deftest testing ]]
+  (:require [clojure.test :refer [is deftest testing]]
             [emmy.series.impl :as i]
             [emmy.value :as v]))
 

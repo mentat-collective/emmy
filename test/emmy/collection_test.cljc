@@ -4,7 +4,6 @@
   (:require [clojure.test :refer [is deftest testing]]
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
-            [same :refer [ish?]]
             [emmy.calculus.derivative :refer [D]]
             [emmy.collection :as collection]
             [emmy.complex :refer [complex I]]
@@ -14,7 +13,8 @@
             [emmy.generic :as g]
             [emmy.laws :as laws]
             [emmy.util :as u]
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [same :refer [ish?]]))
 
 (deftest vector-tests
   (testing "Vector protocol implementations"
