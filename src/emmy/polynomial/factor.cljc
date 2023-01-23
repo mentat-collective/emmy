@@ -12,7 +12,7 @@
             [emmy.simplify.rules :as rules]
             [emmy.util.logic :as ul]
             [emmy.value :as v]
-            [pattern.rule :as r :refer [=> rule-simplifier]]
+            [emmy.pattern.rule :as r :refer [=> rule-simplifier]]
             [taoensso.timbre :as log])
   #?(:clj
      (:import (java.util.concurrent TimeoutException))))

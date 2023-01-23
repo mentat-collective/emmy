@@ -11,7 +11,7 @@
             [emmy.ratio :as r]
             [emmy.util :as u]
             [emmy.value :as v]
-            [pattern.rule :as R :refer [=>]]))
+            [emmy.pattern.rule :as R :refer [=>]]))
 
 (defn- make-symbol-generator [p]
   (let [i (atom 0)]

@@ -1,17 +1,17 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
-(ns pattern.rule
+(ns emmy.pattern.rule
   "This namespace provides an API for building rules out of the matchers and
-  matcher combinators declared in [[pattern.match]], along with a series of
+  matcher combinators declared in [[emmy.pattern.match]], along with a series of
   combinators for building advanced term-rewriting systems."
   (:refer-clojure :exclude [replace while])
   (:require [emmy.util :as u]
             [emmy.util.def :refer [import-def]]
-            [pattern.consequence :as c]
-            [pattern.match :as m]
-            [pattern.syntax :as ps])
+            [emmy.pattern.consequence :as c]
+            [emmy.pattern.match :as m]
+            [emmy.pattern.syntax :as ps])
   #?(:cljs
-     (:require-macros [pattern.rule])))
+     (:require-macros [emmy.pattern.rule])))
 
 ;; ## Rules
 ;;
@@ -60,7 +60,7 @@
   "Builds the pattern portion of a rule from the supplied pattern form or matcher
   combinator and optional predicate `pred`.
 
-  See [[pattern.syntax]] for the allowed syntax pattern, or [[pattern.match]]
+  See [[emmy.pattern.syntax]] for the allowed syntax pattern, or [[emmy.pattern.match]]
   for details on matcher combinators.
 
   See [[match/matcher]] for more detailed documentation."
@@ -165,7 +165,7 @@
 (defmacro rule
   "Accepts either:
 
-  - A pattern written using the syntax from `pattern.syntax` and a consequence
+  - A pattern written using the syntax from `emmy.pattern.syntax` and a consequence
     function from binding map => failure or return form, or
   - A pattern, predicate and a consequence _skeleton_,
 

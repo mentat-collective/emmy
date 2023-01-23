@@ -1,12 +1,12 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
-(ns pattern.rule-test
+(ns emmy.pattern.rule-test
   (:require [clojure.test :as t :refer [is deftest testing]]
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
             [emmy.ratio]
-            [pattern.match :as m]
-            [pattern.rule :as r :refer [=> !=>]]))
+            [emmy.pattern.match :as m]
+            [emmy.pattern.rule :as r :refer [=> !=>]]))
 
 (deftest consequence-tests
   (testing "consequence preserves empty containers with correct type"

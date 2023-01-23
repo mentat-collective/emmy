@@ -1,20 +1,20 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
-(ns pattern.match
-  "Implementation of a pattern matching system inspired by [Gerald Jay Sussman's
+(ns emmy.pattern.match
+  "Implementation of a emmy.pattern.matching system inspired by [Gerald Jay Sussman's
   lecture notes for MIT
   6.945](http://groups.csail.mit.edu/mac/users/gjs/6.945/).
-  See [[pattern.rule]] for a higher-level API.
+  See [[emmy.pattern.rule]] for a higher-level API.
 
-  [[pattern.match]] and [[pattern.rule]] are spiritually similar to Alexey
+  [[emmy.pattern.match]] and [[emmy.pattern.rule]] are spiritually similar to Alexey
   Radul's [Rules](https://github.com/axch/rules) library for Scheme, and the
-  pattern matching system described in GJS and Hanson's [Software Design for
+  emmy.pattern.matching system described in GJS and Hanson's [Software Design for
   Flexibility](https://mitpress.mit.edu/books/software-design-flexibility)."
   (:refer-clojure :exclude [sequence or and not])
   (:require [clojure.core :as core]
-            [pattern.syntax :as s]))
+            [emmy.pattern.syntax :as s]))
 
-;; # Pattern Matching
+;; # Emmy.Pattern.Matching
 ;;
 ;; The library is built out of a few stacked ideas: matcher combinators,
 ;; matchers, consequences and rules.
@@ -60,15 +60,15 @@
 ;;
 ;; ## Combinators
 
-;; `pattern.match` contains many matcher combinators. These are either functions
+;; `emmy.pattern.match` contains many matcher combinators. These are either functions
 ;; with the contract described above, or functions that take one or more
 ;; combinators and return a new combinator with the same contract. Examples
 ;; are [[or]], [[not]], [[and]], [[match-when]] and more below.
 ;;
-;; `pattern.rule` contains many rule combinators, which are either primitive
+;; `emmy.pattern.rule` contains many rule combinators, which are either primitive
 ;; rules or functions from zero or more rules to a new rule.
 ;;
-;; Finally, `pattern.syntax` defines a small pattern language. Any matcher
+;; Finally, `emmy.pattern.syntax` defines a small pattern language. Any matcher
 ;; combinator that take another matcher can take a pattern instead.
 ;;
 ;;
@@ -159,7 +159,7 @@
 ;; combinators out of the primitive matcher combinators defined above.
 ;;
 ;; Each of the following functions can take EITHER a matcher combinator or
-;; a "pattern". The pattern syntax is described in `pattern.syntax`.
+;; a "pattern". The emmy.pattern.syntax is described in `emmy.pattern.syntax`.
 ;;
 ;; As an example, you might provide the symbol `'?x` instead of an
 ;; explicit `(bind '?x)`:
@@ -401,16 +401,16 @@
   [& patterns]
   (sequence* patterns))
 
-;; ## Pattern Matching Compiler
+;; ## Emmy.Pattern.Matching Compiler
 ;;
-;; The next function transforms a pattern (as defined by `pattern.syntax`) into
+;; The next function transforms a pattern (as defined by `emmy.pattern.syntax`) into
 ;; a matcher combinator. Any function you pass to [[pattern->combinators]] is
 ;; returned, so it's appropriate to pass other matcher combinators as pattern
 ;; elements.
 
 (defn pattern->combinators
   "Given a pattern (built using the syntax elements described in
-  `pattern.syntax`), returns a matcher combinator that will successfully match
+  `emmy.pattern.syntax`), returns a matcher combinator that will successfully match
   data structures described by the input pattern, and fail otherwise."
   [pattern]
   (cond (fn? pattern) pattern

@@ -13,7 +13,7 @@
             [emmy.numsymb :as sym]
             [emmy.simplify :as simpl]
             [emmy.value :as v]
-            [pattern.rule :as rule :refer [=>]]
+            [emmy.pattern.rule :as rule :refer [=>]]
             [same :refer [ish?]]))
 
 (def gen-literal-element

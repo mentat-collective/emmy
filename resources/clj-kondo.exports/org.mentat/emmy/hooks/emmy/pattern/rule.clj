@@ -1,4 +1,4 @@
-(ns hooks.pattern.rule
+(ns hooks.emmy.pattern.rule
   (:require [clj-kondo.hooks-api :as api]))
 
 ;; ## Pattern Linting
@@ -162,7 +162,7 @@ forms (`:unquote` or `:unquote-splicing`, false otherwise.)"}
        to-check))))
 
 (defn pattern
-  "Converts a node representing an invocation of the [[pattern.rule/pattern]]
+  "Converts a node representing an invocation of the [[emmy.pattern.rule/pattern]]
   macro into a vector-node of all lintable forms.
 
   As a side effect, registers any issue with binding forms encountered in the
@@ -229,7 +229,7 @@ forms (`:unquote` or `:unquote-splicing`, false otherwise.)"}
     (walk-node f form)))
 
 (defn consequence
-  "Converts a node representing an invocation of the [[pattern.rule/consequence]]
+  "Converts a node representing an invocation of the [[emmy.pattern.rule/consequence]]
   macro into a vector-node of all lintable forms.
 
   As a side effect, registers any issue with binding forms encountered in the
@@ -241,7 +241,7 @@ forms (`:unquote` or `:unquote-splicing`, false otherwise.)"}
       (consequence-vec form))}))
 
 (defn template
-  "Converts a node representing an invocation of the [[pattern.rule/template]]
+  "Converts a node representing an invocation of the [[emmy.pattern.rule/template]]
   macro into a vector-node of all lintable forms.
 
   These include the optional first argument `m` and anything returned
@@ -256,7 +256,7 @@ forms (`:unquote` or `:unquote-splicing`, false otherwise.)"}
         (consequence-vec m-or-form)))}))
 
 (defn- process-rule
-  "Given the 2- or 3- arguments supplied to the [[pattern.rule/rule]] macro,
+  "Given the 2- or 3- arguments supplied to the [[emmy.pattern.rule/rule]] macro,
   returns an `api/vector-node` of all lintable forms.
 
   The `pattern` argument is processed using [[pattern-vec]], while the
@@ -284,14 +284,14 @@ forms (`:unquote` or `:unquote-splicing`, false otherwise.)"}
     (throw (ex-info "wrong number of arguments for rule" {}))))
 
 (defn rule
-  "Converts a node representing an invocation of the [[pattern.rule/rule]] macro
+  "Converts a node representing an invocation of the [[emmy.pattern.rule/rule]] macro
   into a vector-node of all lintable forms."
   [{:keys [node]}]
   {:node (process-rule
           (rest (:children node)))})
 
 (defn ruleset
-  "Converts a node representing an invocation of the [[pattern.rule/ruleset]]
+  "Converts a node representing an invocation of the [[emmy.pattern.rule/ruleset]]
   macro into a vector-node of all lintable forms."
   [{:keys [node]}]
   (let [binding-count (dec (count (:children node)))]
@@ -301,7 +301,7 @@ forms (`:unquote` or `:unquote-splicing`, false otherwise.)"}
               :message
               (str "ruleset requires bindings in groups of 3. Received "
                    binding-count " bindings.")
-              :type :emmy.pattern/ruleset-args))))
+              :type :emmy.emmy.pattern.ruleset-args))))
   (let [inputs (partition 3 (rest (:children node)))
         rules  (map process-rule inputs)]
     {:node (api/vector-node rules)}))

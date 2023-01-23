@@ -1,11 +1,11 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
-(ns pattern.match-test
+(ns emmy.pattern.match-test
   (:require [clojure.test :refer [is deftest testing]]
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
-            [pattern.match :as m]
-            [pattern.syntax :as ps]))
+            [emmy.pattern.match :as m]
+            [emmy.pattern.syntax :as ps]))
 
 (def gen-frame
   (gen/map gen/keyword

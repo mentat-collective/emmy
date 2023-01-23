@@ -10,7 +10,7 @@
             [emmy.simplify.rules :as rules]
             [emmy.util :as u]
             [emmy.value :as v]
-            [pattern.rule :refer [rule-simplifier]])
+            [emmy.pattern.rule :refer [rule-simplifier]])
   #?(:clj
      (:import (clojure.lang IFn ILookup IObj))))
 

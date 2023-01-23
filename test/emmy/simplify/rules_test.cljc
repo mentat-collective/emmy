@@ -9,7 +9,7 @@
             [emmy.simplify :as s]
             [emmy.simplify.rules :as r]
             [emmy.value :as v]
-            [pattern.rule :as pr :refer [rule-simplifier template]]))
+            [emmy.pattern.rule :as pr :refer [rule-simplifier template]]))
 
 (deftest algebraic-tests
   (testing "unary elimination"

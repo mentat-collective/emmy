@@ -22,8 +22,8 @@
             [emmy.numsymb :as sym]
             [emmy.util.logic :as ul]
             [emmy.value :as v]
-            [pattern.match :as pm]
-            [pattern.rule :as r :refer [=> ruleset rule-simplifier]]))
+            [emmy.pattern.match :as pm]
+            [emmy.pattern.rule :as r :refer [=> ruleset rule-simplifier]]))
 
 ;; ## Simplifier Configuration Variables
 ;;
