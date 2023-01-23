@@ -125,7 +125,7 @@
 
 ;; We /should/ get equivalent results from mapping `g/-` over both sequences,
 ;; and in almost all cases we do... but until we understand and fix this bug
-;; https://github.com/emmy/emmy/issues/151 that method would
+;; https://github.com/mentat-collective/emmy/issues/151 that method would
 ;; return different results.
 
 ;; Subtract a constant from a sequence by subtracting it from the first element:

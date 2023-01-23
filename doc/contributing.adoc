@@ -98,7 +98,7 @@ clj-kondo --lint src:test
 
 https://github.com/cloverage/cloverage[Cloverage] generates coverage reports for
 every pull request and the main branch in the repository. Coverage reports live
-at https://codecov.io/github/emmy/emmy[codecov.io].
+at https://codecov.io/github/mentat-collective/emmy[codecov.io].
 
 To invoke cloverage, call
 

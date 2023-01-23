@@ -10,7 +10,7 @@ title: "Emmy: Functional Computer Algebra in Clojure"
 version: 0.23.0
 date-released: 2016
 type: software
-url: "https://github.com/emmy/emmy"
+url: "https://github.com/mentat-collective/emmy"
 license: GPL-3.0
 license-url: "https://www.gnu.org/licenses/gpl-3.0.en.html"
-repository-code: "https://github.com/emmy/emmy"
+repository-code: "https://github.com/mentat-collective/emmy"

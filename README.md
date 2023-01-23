@@ -6,25 +6,25 @@ for math and physics investigations in the Clojure and ClojureScript languages.
 Emmy provides facilities for
 
 - [symbolic
-  computation](https://cljdoc.org/d/emmy/emmy/CURRENT/doc/data-types/symbolic-expressions),
+  computation](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/data-types/symbolic-expressions),
   including state of the art TeX rendering and [expression
-  simplification](https://cljdoc.org/d/emmy/emmy/CURRENT/doc/simplification)
-- [automatic](https://cljdoc.org/d/emmy/emmy/CURRENT/doc/calculus/automatic-differentiation),
-  [numerical](https://cljdoc.org/d/emmy/emmy/CURRENT/doc/numerical-methods/numerical-derivative)
+  simplification](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/simplification)
+- [automatic](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/calculus/automatic-differentiation),
+  [numerical](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/numerical-methods/numerical-derivative)
   and
-  [symbolic](https://cljdoc.org/d/emmy/emmy/CURRENT/doc/calculus/automatic-differentiation)
+  [symbolic](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/calculus/automatic-differentiation)
   differentiation
 - [numerical integration and
-  optimization](https://cljdoc.org/d/emmy/emmy/CURRENT/doc/numerical-methods)
+  optimization](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/numerical-methods)
 - investigations in [differential
-  geometry](https://cljdoc.org/d/emmy/emmy/CURRENT/doc/textbooks/functional-differential-geometry)
+  geometry](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/textbooks/functional-differential-geometry)
   and [Lagrangian and Hamiltonian
-  mechanics](https://cljdoc.org/d/emmy/emmy/CURRENT/doc/textbooks/structure-and-interpretation-of-classical-mechanics)
+  mechanics](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/textbooks/structure-and-interpretation-of-classical-mechanics)
 
 And implementations of many different [mathematical
-objects](https://cljdoc.org/d/emmy/emmy/CURRENT/doc/data-types), all
+objects](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/data-types), all
 built on a tower of [generic, extensible mathematical
-operations](https://cljdoc.org/d/emmy/emmy/CURRENT/doc/basics/generics).
+operations](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/basics/generics).
 
 Scmutils is extensively used in the textbooks [The Structure and Interpretation
 of Classical Mechanics][SICM] and [Functional Differential Geometry][FDG] by
@@ -35,24 +35,24 @@ G.J. Sussman and J. Wisdom.
 > Slack](http://clojurians.net/) in
 > [#emmy](https://clojurians.slack.com/archives/C01ECA9AA74).
 
-[![Build Status](https://github.com/emmy/emmy/workflows/Clojure%20CI/badge.svg?branch=main)](https://github.com/emmy/emmy/actions?query=workflow%3A%22Clojure+CI%22)
-[![License](https://img.shields.io/badge/license-GPLv3-brightgreen.svg)](https://github.com/emmy/emmy/blob/main/LICENSE)
-[![Codecov branch](https://img.shields.io/codecov/c/github/emmy/emmy/main.svg?maxAge=3600)](https://codecov.io/github/emmy/emmy)
-[![cljdoc badge](https://cljdoc.org/badge/emmy/emmy)](https://cljdoc.org/d/emmy/emmy/CURRENT)
-[![Clojars Project](https://img.shields.io/clojars/v/emmy/emmy.svg)](https://clojars.org/emmy/emmy)
+[![Build Status](https://github.com/mentat-collective/emmy/workflows/Clojure%20CI/badge.svg?branch=main)](https://github.com/mentat-collective/emmy/actions?query=workflow%3A%22Clojure+CI%22)
+[![License](https://img.shields.io/badge/license-GPLv3-brightgreen.svg)](https://github.com/mentat-collective/emmy/blob/main/LICENSE)
+[![Codecov branch](https://img.shields.io/codecov/c/github/mentat-collective/emmy/main.svg?maxAge=3600)](https://codecov.io/github/mentat-collective/emmy)
+[![cljdoc badge](https://cljdoc.org/badge/org.mentat/emmy)](https://cljdoc.org/d/org.mentat/emmy/CURRENT)
+[![Clojars Project](https://img.shields.io/clojars/v/org.mentat/emmy.svg)](https://clojars.org/org.mentat/emmy)
 
 ## Quickstart
 
 > Emmy is best experienced in an interactive environment like the
 > [REPL](https://clojure.org/guides/repl/introduction). We [support many
-> environments](https://cljdoc.org/d/emmy/emmy/CURRENT/doc/basics/how-to-use-emmy)
+> environments](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/basics/how-to-use-emmy)
 > with rich support for [TeX](https://en.wikipedia.org/wiki/TeX) rendering and
 > plotting.
 
 Install Emmy into your Clojure(script) project using the instructions at
 its Clojars page:
 
-[![Clojars Project](https://img.shields.io/clojars/v/emmy/emmy.svg)](https://clojars.org/emmy/emmy)
+[![Clojars Project](https://img.shields.io/clojars/v/org.mentat/emmy.svg)](https://clojars.org/org.mentat/emmy)
 
 Initialize the `emmy.env` "Batteries Included" environment at the REPL:
 
@@ -71,10 +71,10 @@ examples below in your browser with no setup required:
 <img width="1152" alt="nje" src="https://user-images.githubusercontent.com/462255/109587851-9e1be280-7abc-11eb-9369-6d56519fb3cd.png">
 
 Math works as expected (see
-[Generics](https://cljdoc.org/d/emmy/emmy/CURRENT/doc/basics/generics)
+[Generics](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/basics/generics)
 for the full menu of operations), but notice that the numeric tower includes
 [complex
-numbers](https://cljdoc.org/d/emmy/emmy/CURRENT/doc/data-types/complex),
+numbers](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/data-types/complex),
 and proper ratios in ClojureScript:
 
 ```clojure
@@ -87,9 +87,9 @@ and proper ratios in ClojureScript:
 
 Symbols are interpreted as abstract complex numbers, and arithmetic on them
 generates symbolic expressions. You can render these with
-[`->TeX`](https://cljdoc.org/d/emmy/emmy/CURRENT/api/emmy.expression.render#->TeX)
+[`->TeX`](https://cljdoc.org/d/org.mentat/emmy/CURRENT/api/emmy.expression.render#->TeX)
 and
-[`->infix`](https://cljdoc.org/d/emmy/emmy/CURRENT/api/emmy.expression.render#->infix):
+[`->infix`](https://cljdoc.org/d/org.mentat/emmy/CURRENT/api/emmy.expression.render#->infix):
 
 ```clojure
 (def render (comp ->infix simplify))
@@ -102,11 +102,11 @@ and
 ```
 
 Use the
-[`D`](https://cljdoc.org/d/emmy/emmy/CURRENT/api/emmy.calculus.derivative#D)
+[`D`](https://cljdoc.org/d/org.mentat/emmy/CURRENT/api/emmy.calculus.derivative#D)
 operator to perform [forward-mode automatic
-differentiation](https://cljdoc.org/d/emmy/emmy/CURRENT/doc/calculus/automatic-differentiation)
+differentiation](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/calculus/automatic-differentiation)
 and
-[`simplify`](https://cljdoc.org/d/emmy/emmy/CURRENT/doc/simplification)
+[`simplify`](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/simplification)
 to collapse symbolic expressions into tidy form:
 
 ```clojure
@@ -212,7 +212,7 @@ author = {Ritchie, Sam and Smith, Colin},
 license = {GPL-3.0},
 month = {4},
 title = {{Emmy: Functional Computer Algebra in Clojure}},
-url = {https://github.com/emmy/emmy},
+url = {https://github.com/mentat-collective/emmy},
 version = {0.23.0},
 year = {2016}
 ```
@@ -225,12 +225,12 @@ open-source release.
 
 [GPL v3](LICENSE).
 
-[CLJDOCS]: https://cljdoc.org/d/emmy/emmy/CURRENT
+[CLJDOCS]: https://cljdoc.org/d/org.mentat/emmy/CURRENT
 [SICM]: https://mitpress.mit.edu/books/structure-and-interpretation-classical-mechanics-second-edition
 [FDG]: http://mitpress.mit.edu/books/functional-differential-geometry
 [SICP]: http://mitpress.mit.edu/sicp/
 [GSCM]: http://www.cs.rochester.edu/~gildea/guile-scmutils/
-[REFMAN]: https://cljdoc.org/d/emmy/emmy/CURRENT/doc/reference-manual
+[REFMAN]: https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/reference-manual
 [PHYSICS_IN_CLOJURE]: https://www.youtube.com/watch?v=7PoajCqNKpg
 
 Copyright © 2016 Colin Smith

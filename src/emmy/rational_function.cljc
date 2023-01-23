@@ -815,7 +815,7 @@
 ;;
 ;; TODO: `g/quotient`, `g/remainder` and `g/lcm` feel like valid methods to
 ;; install for [[RationalFunction]] instances.
-;; Close [#365](https://github.com/emmy/emmy/issues/365) when these
+;; Close [#365](https://github.com/mentat-collective/emmy/issues/365) when these
 ;; are implemented.
 
 (defn ^:no-doc defbinary

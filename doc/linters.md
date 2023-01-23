@@ -34,14 +34,14 @@ repo](https://github.com/clj-kondo/clj-kondo/blob/master/doc/config.md#importing
 
 To install the exported linter configuration:
 
-1. Install the Emmy dependency into your project using the appropriate
-   entry listed at [Clojars](https://clojars.org/emmy). For example, If you
+1. Install the Emmy dependency into your project using the appropriate entry
+   listed at [Clojars](https://clojars.org/org.mentat/emmy). For example, If you
    are using `deps.edn`, add the project to the map under `:deps`:
 
 ```clj
-;; See https://clojars.org/emmy to pick an explicit version!
+;; See https://clojars.org/org.mentat/emmy to pick an explicit version!
 {:deps
- {emmy/emmy {:mvn/version "RELEASE"}}
+ {org.mentat/emmy {:mvn/version "RELEASE"}}
 ```
 
 2. Install clj-kondo using [these
@@ -63,17 +63,18 @@ mkdir .clj-kondo
 ```shellsession
 # If you're using Leiningen:
 $ clj-kondo --copy-configs --dependencies --lint "$(lein classpath)"
-Imported config to .clj-kondo/emmy/emmy. To activate, add "emmy/emmy" to :config-paths in .clj-kondo/config.edn.
+Imported config to .clj-kondo/org.mentat/emmy. To activate, add "org.mentat/emmy" to :config-paths in .clj-kondo/config.edn.
 
 # If you're using deps.edn:
 $ clj-kondo --copy-configs --dependencies --lint "$(clojure -Spath)"
-Imported config to .clj-kondo/emmy/emmy. To activate, add "emmy/emmy" to :config-paths in .clj-kondo/config.edn.
+Imported config to .clj-kondo/org.mentat/emmy. To activate, add "org.mentat/emmy" to :config-paths in .clj-kondo/config.edn.
 ```
 
-5. As instructed, either create or edit `.clj-kondo/config.edn` so that it contains a `:config-paths` entry with `"emmy/emmy"`:
+5. As instructed, either create or edit `.clj-kondo/config.edn` so that it
+   contains a `:config-paths` entry with `"org.mentat/emmy"`:
 
 ```clj
-{:config-paths ["emmy/emmy"]}
+{:config-paths ["org.mentat/emmy"]}
 ```
 
 6. Check the imported files into source control in your project.

@@ -5,7 +5,7 @@
   Emmy. The bulk of the others live in [[emmy.generic]].
 
   See [the `Generics`
-  cljdocs](https://cljdoc.org/d/emmy/emmy/CURRENT/doc/basics/generics)
+  cljdocs](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/basics/generics)
   for a detailed discussion of how to use and extend the generic operations
   defined in [[emmy.generic]] and [[emmy.value]]."
   (:refer-clojure :exclude [zero? number? = compare])

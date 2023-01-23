@@ -149,6 +149,6 @@ negate, invert, +, -, *, /, expt
 
 NOTE: `emmy.series` has many more operations than this that aren't
 registered in the generic system. See the
-https://github.com/emmy/emmy/blob/main/src/emmy/series.cljc[`emmy.series`]
+https://github.com/mentat-collective/emmy/blob/main/src/emmy/series.cljc[`emmy.series`]
 namespace for a Literate Programming-style exposition of the capabilities
 Emmy affords for series and power series.

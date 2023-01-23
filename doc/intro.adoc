@@ -20,17 +20,17 @@ TIP: Need help getting started? Say hi on https://twitter.com/sritchie[Twitter]
 or http://clojurians.net/[Clojurians Slack] in
 https://clojurians.slack.com/archives/C01ECA9AA74[#emmy].
 
-image:https://github.com/emmy/emmy/workflows/Clojure%20CI/badge.svg?branch=main[Build Status, link=https://github.com/emmy/emmy/actions?query=workflow%3A%22Clojure+CI%22]
-image:https://img.shields.io/codecov/c/github/emmy/emmy/main.svg?maxAge=3600[Codecov branch, link=https://codecov.io/github/emmy/emmy]
-image:https://cljdoc.org/badge/emmy/emmy[cljdoc badge, link=https://cljdoc.org/d/emmy/emmy/CURRENT]
-image:https://img.shields.io/clojars/v/emmy/emmy.svg[Clojars Project, link=https://clojars.org/emmy/emmy]
+image:https://github.com/mentat-collective/emmy/workflows/Clojure%20CI/badge.svg?branch=main[Build Status, link=https://github.com/mentat-collective/emmy/actions?query=workflow%3A%22Clojure+CI%22]
+image:https://img.shields.io/codecov/c/github/mentat-collective/emmy/main.svg?maxAge=3600[Codecov branch, link=https://codecov.io/github/mentat-collective/emmy]
+image:https://cljdoc.org/badge/org.mentat/emmy[cljdoc badge, link=https://cljdoc.org/d/org.mentat/emmy/CURRENT]
+image:https://img.shields.io/clojars/v/org.mentat/emmy.svg[Clojars Project, link=https://clojars.org/org.mentat/emmy]
 
 == Quickstart
 
 Install Emmy into your Clojure(script) project using the instructions at
 its Clojars page:
 
-image::https://img.shields.io/clojars/v/emmy/emmy.svg[Clojars Project, link=https://clojars.org/emmy/emmy]
+image::https://img.shields.io/clojars/v/org.mentat/emmy.svg[Clojars Project, link=https://clojars.org/org.mentat/emmy]
 
 Initialize a REPL and simplify a trigonometric identity:
 

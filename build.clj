@@ -4,7 +4,7 @@
 
 ;; ## Variables
 
-(def lib 'emmy/emmy)
+(def lib 'org.mentat/emmy)
 (def version (slurp "resources/EMMY_VERSION"))
 
 (defn- ->version

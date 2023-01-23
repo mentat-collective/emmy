@@ -5,7 +5,7 @@
   the others live in [[emmy.value]].
 
   See [the `Generics`
-  cljdocs](https://cljdoc.org/d/emmy/emmy/CURRENT/doc/basics/generics)
+  cljdocs](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/basics/generics)
   for a detailed discussion of how to use and extend the generic operations
   defined in [[emmy.generic]] and [[emmy.value]]."
   (:refer-clojure :exclude [/ + - * divide infinite? abs])
@@ -375,7 +375,7 @@
   "Returns the largest integer less than or equal to `a`.
 
   Extensions beyond real numbers may behave differently; see the [Documentation
-  site](https://cljdoc.org/d/emmy/emmy/CURRENT/doc/basics/generics)
+  site](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/basics/generics)
   for more detail.")
 
 (defmethod floor :default [a]
@@ -387,7 +387,7 @@
   "Returns the result of rounding `a` up to the next largest integer.
 
   Extensions beyond real numbers may behave differently; see the [Documentation
-  site](https://cljdoc.org/d/emmy/emmy/CURRENT/doc/basics/generics)
+  site](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/basics/generics)
   for more detail.")
 
 (defmethod ceiling :default [a]

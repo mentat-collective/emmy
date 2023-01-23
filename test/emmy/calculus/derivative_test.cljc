@@ -941,7 +941,7 @@
       ;; RETURNS a function with a captured tag (say, `0`). The buggy approach
       ;; to a functional return value was to re-wrap the returned function in a
       ;; new function that extracted the original tag. That code
-      ;; lived [here](https://github.com/emmy/emmy/blob/9b4f9c5983cd0f9b209ef27036bc2dbb8f7ffb1c/src/emmy/calculus/derivative.cljc#L233).
+      ;; lived [here](https://github.com/mentat-collective/emmy/blob/9b4f9c5983cd0f9b209ef27036bc2dbb8f7ffb1c/src/emmy/calculus/derivative.cljc#L233).
       ;;
       ;; The reason this is a bug is that both instances of `f-hat` attempted to
       ;; extract the same tag `0`. The outer call saw no tangent associated with

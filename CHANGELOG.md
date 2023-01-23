@@ -1068,7 +1068,7 @@ into shape.
 ## 0.19.0
 
 > (If you have any questions about how to use any of the following, please ask us
-> at our [Github Discussions](https://github.com/emmy/emmy/discussions)
+> at our [Github Discussions](https://github.com/mentat-collective/emmy/discussions)
 > page!)
 
 This release focused on improving the expressiveness and performance of the
@@ -1381,7 +1381,7 @@ for the detailed notes, and enjoy version 0.19.0!
   - Expands the `emmy.expression.analyze` API with the functions
     `default-simplifier`, `expression-simplifier`, `initializer`,
     `expression-analyzer` and `auxiliary-variable-fetcher`. See the [API
-    documentation](https://cljdoc.org/d/emmy/emmy/CURRENT/api/emmy.expression.analyze)
+    documentation](https://cljdoc.org/d/org.mentat/emmy/CURRENT/api/emmy.expression.analyze)
     for detailed notes on how to do interactive expression analysis and
     simplification with these new tools.
 
@@ -1461,7 +1461,7 @@ for the detailed notes, and enjoy version 0.19.0!
 ## 0.18.0
 
 > (If you have any questions about how to use any of the following, please ask us
-> at our [Github Discussions](https://github.com/emmy/emmy/discussions)
+> at our [Github Discussions](https://github.com/mentat-collective/emmy/discussions)
 > page!)
 
 This release focused on porting over all of the material required to run every
@@ -1496,7 +1496,7 @@ Notable changes from the rest of the library:
 The next major change will be an overhaul of the simplifier to make it work fast
 enough to solve Einstein's field equations in a reasonable amount of time, maybe
 even in the browser. Polynomial GCD is slow, but
-[#341](https://github.com/emmy/emmy/pull/341) will make it fast.
+[#341](https://github.com/mentat-collective/emmy/pull/341) will make it fast.
 
 On to the detailed notes!
 
@@ -1761,7 +1761,7 @@ On to the detailed notes!
 ## 0.17.0
 
 > (If you have any questions about how to use any of the following, please ask us
-> at our [Github Discussions](https://github.com/emmy/emmy/discussions)
+> at our [Github Discussions](https://github.com/mentat-collective/emmy/discussions)
 > page!)
 
 This release starts the work of porting all of GJS and JW's "Functional
@@ -2036,7 +2036,7 @@ emmy.env> (series/exp-series D)
 ## 0.16.0
 
 > (If you have any questions about how to use any of the following, please ask us
-> at our [Github Discussions](https://github.com/emmy/emmy/discussions)
+> at our [Github Discussions](https://github.com/mentat-collective/emmy/discussions)
 > page!)
 
 This release contains a few correctness fixes, a number of new
@@ -2247,7 +2247,7 @@ Detailed release notes:
 ## 0.15.0
 
 > (If you have any questions about how to use any of the following, please ask us
-> at our [Github Discussions](https://github.com/emmy/emmy/discussions)
+> at our [Github Discussions](https://github.com/mentat-collective/emmy/discussions)
 > page!)
 
 This release was focused on a small number of themes:
@@ -2276,7 +2276,7 @@ New `Div`, `Grad`, `Curl` and `Lap` operators build on this foundation.
 To support safe execution inside of a browser-based Notebook or REPL
 environment, Emmy now has full support for @borkdude's
 [SCI](https://github.com/borkdude/sci), the Small Clojure Interpreter, via the
-[emmy.sci](https://github.com/emmy/emmy/blob/master/src/emmy/env/sci.cljc)
+[emmy.sci](https://github.com/mentat-collective/emmy/blob/master/src/emmy/env/sci.cljc)
 namespace. Every function and macro in the library now works in SCI. (Thanks for
 @borkdude and @mk for your help and contributions.
 
@@ -2326,7 +2326,7 @@ On to the detailed release notes:
     extend the Automatic Differentiation (AD) system to be able to handle
     different Functor-shaped return values, like Java or JS lists and objects.
     See the [cljdoc page on Automatic
-    Differentiation](https://cljdoc.org/d/emmy/emmy/CURRENT/doc/calculus/automatic-differentiation)
+    Differentiation](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/calculus/automatic-differentiation)
     for more detail.
 
     - #222 implements `d/IPerturbed` for Clojure maps, vectors and sequences;
@@ -2597,33 +2597,33 @@ On to the detailed release notes:
 
 - After the work below, `v/nullity?` renamed to `v/zero?`, and `v/unity?`
   renamed to `v/one?`
-  ([#180](https://github.com/emmy/emmy/pull/180)). This
+  ([#180](https://github.com/mentat-collective/emmy/pull/180)). This
   affects the names listed in the CHANGELOG entries below.
 
 ### Miscellaneous
 
 - expose `bootstrap-repl!` to ClojureScript, so that this is available in
-  self-hosted CLJS (https://github.com/emmy/emmy/pull/157)
+  self-hosted CLJS (https://github.com/mentat-collective/emmy/pull/157)
 
 - modified `infix.cljc` to wrap forms in `displaystyle` and add proper carriage
   returns inside structures
-  (https://github.com/emmy/emmy/pull/157)
+  (https://github.com/mentat-collective/emmy/pull/157)
 
 - add `multidimensional-minimize` to the `emmy.env` namespace
-  (https://github.com/emmy/emmy/pull/157)
+  (https://github.com/mentat-collective/emmy/pull/157)
 
 - add more `sqrt` simplification rules to allow square roots to cancel out
   across a division boundary, with or without products in the numerator and
-  denominator (https://github.com/emmy/emmy/pull/160)
+  denominator (https://github.com/mentat-collective/emmy/pull/160)
 
 - fix NPE bug that appears in nelder-mead, when callback isn't supplied
-  (https://github.com/emmy/emmy/pull/162)
+  (https://github.com/mentat-collective/emmy/pull/162)
 
 - Add `sqrt-expand` and `sqrt-contract`, to allow simplifications to push inside
-  of square roots (https://github.com/emmy/emmy/pull/163)
+  of square roots (https://github.com/mentat-collective/emmy/pull/163)
 
 - speed up power series multiplication by skipping work when either head term is
-  zero (https://github.com/emmy/emmy/pull/166)
+  zero (https://github.com/mentat-collective/emmy/pull/166)
 
 - File moves:
   - `emmy.polynomial-gcd`    => `emmy.polynomial.gcd`
@@ -2634,56 +2634,56 @@ On to the detailed release notes:
   - `emmy.numerical.compile` => `emmy.expression.compile`
 
 - `emmy.env/one?` now exposes/aliases `emmy.value/unity?`
-  [#154](https://github.com/emmy/emmy/pull/154)
+  [#154](https://github.com/mentat-collective/emmy/pull/154)
 
-- Fixed [#93](https://github.com/emmy/emmy/issues/93) by
+- Fixed [#93](https://github.com/mentat-collective/emmy/issues/93) by
   adding an explicit `g/invert` implementation for polynomials in the rational
   fn namespace. The fix lives in
-  [#169](https://github.com/emmy/emmy/pull/169).
+  [#169](https://github.com/mentat-collective/emmy/pull/169).
 
 - added `emmy.value/sqrt-machine-epsilon`
-  ([#170](https://github.com/emmy/emmy/pull/170))
+  ([#170](https://github.com/mentat-collective/emmy/pull/170))
 
 - fixed issues in `function.cljc` and `operator.cljc` where the ClojureScript
   `IFn` `-invoke` arguments shadowed either the `this` operator, or some
   parameter name in the deftype
-  ([#169](https://github.com/emmy/emmy/pull/169))
+  ([#169](https://github.com/mentat-collective/emmy/pull/169))
 
 - `g/sqrt` now maintains precision with ClojureScript's rational numbers.
   `(g/sqrt #sicm/ratio 9/4)` for example returns `#sicm/ratio 3/2`.
-  ([#168](https://github.com/emmy/emmy/pull/168))
+  ([#168](https://github.com/mentat-collective/emmy/pull/168))
 
 - `g/determinant` and `g/transpose` now act as identity for everything in the
   numeric tower, plus symbolic expressions
-  ([#168](https://github.com/emmy/emmy/pull/168))
+  ([#168](https://github.com/mentat-collective/emmy/pull/168))
 
 - `emmy.expression.Expression` is now `emmy.expression.Literal`; it
   has a new `meta` field, and is a `deftype` instead of a `defrecord`.
-  ([#168](https://github.com/emmy/emmy/pull/168))
+  ([#168](https://github.com/mentat-collective/emmy/pull/168))
   - To get the internal expression, use `x/expression-of` instead of
     `:expression`.
   - to access the `type` field, use `x/literal-type` instead of `:type`
 
 - 2-arity `g/atan`, `g/cross-product` and `g/gcd` now work for functions
-  ([#168](https://github.com/emmy/emmy/pull/168))
+  ([#168](https://github.com/mentat-collective/emmy/pull/168))
 
 - `Literal` now responds appropriately to `v/unity?` and `v/nullity?` if it
   wraps a numerical "0" or "1". `v/exact?` now returns true if the literal wraps
-  an exact number ([#168](https://github.com/emmy/emmy/pull/168))
+  an exact number ([#168](https://github.com/mentat-collective/emmy/pull/168))
 
 - `x/variables-in` now works with wrapped expressions; no more need to
   explicitly unwrap
-  ([#168](https://github.com/emmy/emmy/pull/168))
+  ([#168](https://github.com/mentat-collective/emmy/pull/168))
 
 - `x/walk-expression` renamed `x/evaluate`
-  ([#168](https://github.com/emmy/emmy/pull/168))
+  ([#168](https://github.com/mentat-collective/emmy/pull/168))
 
 - The new `x/substitute` performs substitutions on an _unwrapped_ expression
-  ([#168](https://github.com/emmy/emmy/pull/168))
+  ([#168](https://github.com/mentat-collective/emmy/pull/168))
 
 -  `x/compare` returns a comparator that works with unwrapped symbolic
    expression trees
-   ([#168](https://github.com/emmy/emmy/pull/168)). The rules
+   ([#168](https://github.com/mentat-collective/emmy/pull/168)). The rules
    are that that types have the following ordering:
   - empty sequence is < anything (except another empty seq)
   - real < symbol < string < sequence
@@ -2699,11 +2699,11 @@ On to the detailed release notes:
 ```
 
 - added `g/determinant` implementation to functions
-  ([#171](https://github.com/emmy/emmy/pull/171))
+  ([#171](https://github.com/mentat-collective/emmy/pull/171))
 
 - Moved all `literal-function` machinery and definitions to
   `emmy.abstract.function`
-  ([#171](https://github.com/emmy/emmy/pull/171)).
+  ([#171](https://github.com/mentat-collective/emmy/pull/171)).
   `emmy.function` now contains only the generic method implementations for
   clojure functions and multimethods.
 
@@ -2711,63 +2711,63 @@ On to the detailed release notes:
   `:emmy.abstract.function/function` (used to be
   `:emmy.function/function`) now inherits from `::v/function` instead of
   the other way around.
-  ([#171](https://github.com/emmy/emmy/pull/171))
+  ([#171](https://github.com/mentat-collective/emmy/pull/171))
 
 - Enhanced the `g/simplify` behavior for core functions that overlap with
   generic functions (`+`, `-`, `*`, `/`, `mod`, `quot`, `rem`, `neg?`). These
   now freeze to the same symbols as their generic counterparts.
-  ([#173](https://github.com/emmy/emmy/pull/173))
+  ([#173](https://github.com/mentat-collective/emmy/pull/173))
 
 - Add support for the hyperbolic trig functions `sinh`, `cosh`, `tanh`, `atanh`,
   `asinh` and `acosh` to `emmy.expression.render/->Javascript`.
-  ([#174](https://github.com/emmy/emmy/pull/174))
+  ([#174](https://github.com/mentat-collective/emmy/pull/174))
 
 - Add support for the hyperbolic trig functions `atanh`, `asinh` and `acosh` to
   `emmy.expression.compile`.
-  ([#175](https://github.com/emmy/emmy/pull/175))
+  ([#175](https://github.com/mentat-collective/emmy/pull/175))
 
 - `matrix.cljc` gains `m/nth-col` and `m/diagonal`
-  ([#178](https://github.com/emmy/emmy/pull/178) introduces:)
+  ([#178](https://github.com/mentat-collective/emmy/pull/178) introduces:)
 
-- As of [#178](https://github.com/emmy/emmy/pull/178)
+- As of [#178](https://github.com/mentat-collective/emmy/pull/178)
   introduces:, we have three new kinds for matrices. Square matrices return
   `::m/square-matrix`, and columns and rows return `::m/column-matrix` and
   `::row-matrix` respectively. These all derive from `::m/matrix`. This makes it
   easier to register methods or test specifically for these cases. We've also
   added `m/column?` and `m/row?` predicates to check for these cases.
 
-- [#185](https://github.com/emmy/emmy/pull/185) specializes
+- [#185](https://github.com/mentat-collective/emmy/pull/185) specializes
   all matrix operations that return power series (trig operations and `g/exp` to
   `::square-matrix`).
 
-- [#184](https://github.com/emmy/emmy/pull/184) modifies
+- [#184](https://github.com/mentat-collective/emmy/pull/184) modifies
   `v/exact?` on functions; `((v/exact? f) x) == (v/exact? (f x))` now, instead
   of false as before. `literal-function` forms now have a correct `v/one-like`
   implementation.
 
 - clojure Vars now respond to function algebra
-  ([#184](https://github.com/emmy/emmy/pull/184)). All
+  ([#184](https://github.com/mentat-collective/emmy/pull/184)). All
   functions implement `g/negative?`, `g/abs`, `g/quotient`, `g/remainder`,
   `g/modulo`, `g/dimension` and `g/exact-divide`, responding to the appropriate
   arities.
 
 - `emmy.complex/complex` can now take any real type in its constructor, vs
   only numbers
-  ([#184](https://github.com/emmy/emmy/pull/184)).
+  ([#184](https://github.com/mentat-collective/emmy/pull/184)).
 
 - `modint` instances now implement `v/freeze?`: `(emmy.modint/make 1 2)`
   freezes to that `(modint 1 2)`.
-  ([#185](https://github.com/emmy/emmy/pull/185)).
+  ([#185](https://github.com/mentat-collective/emmy/pull/185)).
 
 - `v/eq` renamed to `v/=`.
-  ([#186](https://github.com/emmy/emmy/pull/186)).
+  ([#186](https://github.com/mentat-collective/emmy/pull/186)).
 
 - `v/zero-like` on matrices now fills entries with appropriate `v/zero-like`
   versions of their existing types
-  ([#188](https://github.com/emmy/emmy/pull/188))
+  ([#188](https://github.com/mentat-collective/emmy/pull/188))
 
 - `v/Value` gains `identity-like` and `identity`
-  ([#188](https://github.com/emmy/emmy/pull/188)). These are
+  ([#188](https://github.com/mentat-collective/emmy/pull/188)). These are
   aliased into `emmy.env`. Implementations are installed on:
 
   - all numeric types, symbolic expressions, `Differential` (they return 1 of the appropriate type)
@@ -2784,11 +2784,11 @@ On to the detailed release notes:
     This decision follows `scmutils` convention.
 
 - `emmy.complex/I` aliases `i`
-  ([#189](https://github.com/emmy/emmy/pull/189))
+  ([#189](https://github.com/mentat-collective/emmy/pull/189))
 
 - `matrix.cljc` has a new `by-cols` (analogous to `m/by-rows`), and `row` to
   generate a row matrix (analagous to `column`).
-  [#197](https://github.com/emmy/emmy/pull/197) Also in
+  [#197](https://github.com/mentat-collective/emmy/pull/197) Also in
   `matrix.cljc`:
 
   - `num-rows`, `num-cols` access the row or column number without inspecting
@@ -2823,23 +2823,23 @@ On to the detailed release notes:
 - `emmy.structure/up` and `emmy.structure/down` now have analogous
   `s/up*` and `s/down*` functions. These behave identically, but are
   non-variadic. If you already have a sequence you'd like to transform, prefer
-  these ([#197](https://github.com/emmy/emmy/pull/197)).
+  these ([#197](https://github.com/mentat-collective/emmy/pull/197)).
 
 - `emmy.value/kind-predicate` takes some item and returns a predicate that
   returns true if its argument has the same type (or inherits from it)
-  ([#197](https://github.com/emmy/emmy/pull/197)).
+  ([#197](https://github.com/mentat-collective/emmy/pull/197)).
 
 - `emmy.function/arg-shift` and `emmy.function/arg-scale` take
   functions and return new functions that shift and scale their arguments
   (respectively) by the originally supplied shifts
-  ([#197](https://github.com/emmy/emmy/pull/197)).
+  ([#197](https://github.com/mentat-collective/emmy/pull/197)).
 
 - `emmy.generic/factorial` computes the factorial of the supplied integer
   `n`.
-  ([#197](https://github.com/emmy/emmy/pull/197)).
+  ([#197](https://github.com/mentat-collective/emmy/pull/197)).
 
 - Many new functions and constants exposed in `emmy.env` via
-  [#197](https://github.com/emmy/emmy/pull/197):
+  [#197](https://github.com/mentat-collective/emmy/pull/197):
 
   - `-pi` joins `pi` as a constant
   - `s:generate`, `m:generate`, `vector:generate` to generate matrices,
@@ -2861,14 +2861,14 @@ On to the detailed release notes:
 
 - Structures and matrices both gain the ability to do native `get-in`,
   `assoc-in` and `empty`. These work as expected, like a potentially nested
-  vector. ([#193](https://github.com/emmy/emmy/pull/193))
+  vector. ([#193](https://github.com/mentat-collective/emmy/pull/193))
 
 - `matrix.cljc` gains `up->row-matrix`, `up->column-matrix`, `row-matrix->up`,
   `column-matrix->up`
-  ([#193](https://github.com/emmy/emmy/pull/193))
+  ([#193](https://github.com/mentat-collective/emmy/pull/193))
 
 - `structure.cljc` gains many features in
-  ([#193](https://github.com/emmy/emmy/pull/193)):
+  ([#193](https://github.com/mentat-collective/emmy/pull/193)):
 
   - `kronecker` and `basis-unit` for generating potentially infinite basis
     sequences
@@ -2915,14 +2915,14 @@ On to the detailed release notes:
 ### Literals
 
 - `literal-matrix` fn generates a symbolic matrix
-  (https://github.com/emmy/emmy/pull/169)
+  (https://github.com/mentat-collective/emmy/pull/169)
 - `literal`, `literal-up` and `literal-down` generate symbolic structures
-  (https://github.com/emmy/emmy/pull/169)
+  (https://github.com/mentat-collective/emmy/pull/169)
 
 ### Numeric Tower Adjustments
 
 This release (courtesy of
-[#168](https://github.com/emmy/emmy/pull/168)) brings
+[#168](https://github.com/mentat-collective/emmy/pull/168)) brings
 the numeric tower in line with the scmutils tower. Prior to this release, all
 numbers, including complex, descended from `::x/numerical-expression`. Symbolic
 expressions _also_ derived from this type! The problem this causes is that all
@@ -3009,7 +3009,7 @@ matrices, up and down tuples.
 
 This release brings us closer to the interface provided by `scmutils`.
 
-PR [#193](https://github.com/emmy/emmy/pull/193) brings:
+PR [#193](https://github.com/mentat-collective/emmy/pull/193) brings:
 
 - `g/dot-product`, for scalars, differentials, structures, functions and
   row/column matrices
@@ -3019,14 +3019,14 @@ PR [#193](https://github.com/emmy/emmy/pull/193) brings:
 - `g/cross-product` now works for row/column matrices in addition to structures
   (and functions that accept these)
 
-PR https://github.com/emmy/emmy/pull/169 brings:
+PR https://github.com/mentat-collective/emmy/pull/169 brings:
 
 - `g/exp2`, `g/exp10` for exponents with base 2 and 10
 - `g/log2`, for base 2 logarithms
 - `g/log10` for base 10 logs
 - `g/gcd` and `g/lcm` are now exposed in `emmy.env`
 
-[#178](https://github.com/emmy/emmy/pull/178) introduces:
+[#178](https://github.com/mentat-collective/emmy/pull/178) introduces:
 
 - `g/dimension` for scalars (always 1), structures and matrices (square, column
   and row)
@@ -3034,7 +3034,7 @@ PR https://github.com/emmy/emmy/pull/169 brings:
 
 We now expose the following additional trigonometric functions in
 `emmy.generic` (courtesy of
-https://github.com/emmy/emmy/pull/154):
+https://github.com/mentat-collective/emmy/pull/154):
 
 - `cosh`: hyperbolic cosine
 - `sinh`: hyperbolic sine
@@ -3079,9 +3079,9 @@ These now work on:
 - structures (only `magnitude` and `conjugate`)
   - `magnitude` formerly didn't handle structures containing complex numbers by
     taking a proper inner product. This is fixed as of
-    [#168](https://github.com/emmy/emmy/pull/168)
+    [#168](https://github.com/mentat-collective/emmy/pull/168)
 
-- PR [#189](https://github.com/emmy/emmy/pull/189) introduces:
+- PR [#189](https://github.com/mentat-collective/emmy/pull/189) introduces:
 
   - `g/make-rectangular`, (build a complex number from real and imaginary parts)
   - `g/make-polar` (build a complex number from radius and angle)
