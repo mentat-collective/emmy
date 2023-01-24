@@ -333,7 +333,7 @@
        (let [rep (if (<= x (.-MAX_SAFE_INTEGER js/Number))
                    (str x)
                    (str "\"" x "\""))]
-         (write-all writer "#sicm/bigint " rep)))))
+         (write-all writer "#emmy/bigint " rep)))))
 
 #?(:cljs
    ;; goog.math.{Long, Integer} won't compare properly using <, > etc unless they

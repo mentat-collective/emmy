@@ -246,7 +246,7 @@
 
 (deftest divide-numbers-through-test
   (let [d r/divide-numbers-through]
-    (is (= #sicm/ratio 1/2 (d '(/ 1 2))))
+    (is (= #emmy/ratio 1/2 (d '(/ 1 2))))
     (is (= 'x (d '(* 1 x))))
     (is (= '(* x y z) (d '(* 1 x y z))))
     (is (= '(*) (d '(* 1))))

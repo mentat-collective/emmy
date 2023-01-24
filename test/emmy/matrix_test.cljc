@@ -998,9 +998,9 @@
 
     (testing "structural division unit test"
       (is (= (s/down
-              (s/up #sicm/ratio 1/2
+              (s/up #emmy/ratio 1/2
                     1
-                    #sicm/ratio 3/2))
+                    #emmy/ratio 3/2))
              (g/div (s/up 1 2 3)
                     (s/up 2)))
           "one compatible for contraction layer added")
@@ -1141,35 +1141,35 @@
 
     (testing "ratio literals"
       (is (= (s/down (s/down -2 1)
-                     (s/down #sicm/ratio 3/2 #sicm/ratio -1/2))
+                     (s/down #emmy/ratio 3/2 #emmy/ratio -1/2))
              (g/divide A)))
-      (is (= #sicm/ratio 5/2 (g/* A (g/divide A))))
-      (is (= #sicm/ratio 5/2 (g/* (g/divide A) A)))
-      (is (= (g/* #sicm/ratio 1/22
+      (is (= #emmy/ratio 5/2 (g/* A (g/divide A))))
+      (is (= #emmy/ratio 5/2 (g/* (g/divide A) A)))
+      (is (= (g/* #emmy/ratio 1/22
                   (s/down (s/up 24 -12 -2)
                           (s/up 5 3 -5)
                           (s/up -4 2 4)))
              (g/divide C)))
 
-      (is (= (s/up (s/down #sicm/ratio 1/3))
+      (is (= (s/up (s/down #emmy/ratio 1/3))
              (g/divide D)))
 
-      (is (= (s/down (s/up #sicm/ratio 1/4 0 0 0)
+      (is (= (s/down (s/up #emmy/ratio 1/4 0 0 0)
                      (s/up 0 -1 1 0)
-                     (s/up 0 #sicm/ratio 1/2 0 0)
-                     (s/up #sicm/ratio -1/4 0 0 1))
+                     (s/up 0 #emmy/ratio 1/2 0 0)
+                     (s/up #emmy/ratio -1/4 0 0 1))
              (g/divide G)))
 
-      (is (= (s/down (s/up #sicm/ratio 1/4 0 0 0)
+      (is (= (s/down (s/up #emmy/ratio 1/4 0 0 0)
                      (s/up 0 -1 1 0)
-                     (s/up 0 #sicm/ratio 1/2 0 0)
-                     (s/up #sicm/ratio -1/4 0 0 1))
+                     (s/up 0 #emmy/ratio 1/2 0 0)
+                     (s/up #emmy/ratio -1/4 0 0 1))
              (g/divide G)))
-      (is (= (s/down (s/up #sicm/ratio 1/8))
+      (is (= (s/down (s/up #emmy/ratio 1/8))
              (g/divide (s/down (s/up 8))))))
 
     (testing "matrix ops, ratio literals"
-      (is (= (m/by-rows [#sicm/ratio 1/2])
+      (is (= (m/by-rows [#emmy/ratio 1/2])
              (m/invert (m/by-rows [2])))))
 
     (testing "invert-hilbert-matrix"

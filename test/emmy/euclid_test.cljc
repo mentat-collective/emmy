@@ -60,9 +60,9 @@
     (is (= 30 (reduce g/lcm [2 3 5]))))
 
   (testing "high precision gcd"
-    (is (= (ok #sicm/bigint 37279462087332
-               #sicm/bigint 366983722766)
+    (is (= (ok #emmy/bigint 37279462087332
+               #emmy/bigint 366983722766)
            564958))
-    (is (= (ok #sicm/bigint 4323874085395
-               #sicm/bigint "586898689868986900219865")
+    (is (= (ok #emmy/bigint 4323874085395
+               #emmy/bigint "586898689868986900219865")
            85))))

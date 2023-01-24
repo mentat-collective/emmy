@@ -202,7 +202,7 @@
       ;; p. 61
       (let [Lf (fn [m g]
                  (fn [[_ [_ y] v]]
-                   (- (* #sicm/ratio 1/2 m (square v)) (* m g y))))
+                   (- (* #emmy/ratio 1/2 m (square v)) (* m g y))))
             dp-coordinates (fn [l y_s]
                              (fn [[t θ]]
                                (let [x (* l (sin θ))
@@ -239,7 +239,7 @@
                          (up x y)
                          (up v_x v_y))
                         't))))
-      (is (= (up 1 (up 3.0 4.0) (up #sicm/ratio -1/2 -1.0))
+      (is (= (up 1 (up 3.0 4.0) (up #emmy/ratio -1/2 -1.0))
              ((harmonic-state-derivative 2. 1.) (up 0 (up 1. 2.) (up 3. 4.)))))
 
       (is (= '(1 3.0 4.0 (/ -1 2) -1.0)

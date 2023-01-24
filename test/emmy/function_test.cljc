@@ -388,7 +388,7 @@
       (is (= 4 (add2 2)))
       (is (= -4 ((g/- add2) 2)))
       (is (= 9 ((g/sqrt add2) 79)))
-      (is (= #sicm/ratio 1/9 ((g/invert add2) 7)))
+      (is (= #emmy/ratio 1/9 ((g/invert add2) 7)))
       (is (= 1 (explog 1.0)))
       (is (ish? 99.0 (explog 99.0)))
       (is (ish? 20.085536923187668 ((g/exp add2) 1.0)))
@@ -503,7 +503,7 @@
         (is (= 7 (h)))
         (is (= -1 (k)))
         (is (= 12 (j)))
-        (is (= #sicm/ratio 3/4 (q)))))
+        (is (= #emmy/ratio 3/4 (q)))))
 
     (testing "at least 0 arity"
       (let [add (fn [& xs] (reduce + 0 xs))

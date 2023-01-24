@@ -99,7 +99,7 @@
 
         :else (u/illegal
                (str
-                "#sicm/complex takes a string, 2-vector or a number. Received: "
+                "#emmy/complex takes a string, 2-vector or a number. Received: "
                 x))))
 
 ;; ## Type Extensions
@@ -122,13 +122,13 @@
      (-pr-writer [x writer _]
        (write-all
         writer
-        "#sicm/complex "
+        "#emmy/complex "
         (str [(obj/get x "re")
               (obj/get x "im")])))))
 
 #?(:clj
    (defmethod print-method Complex [^Complex v ^java.io.Writer w]
-     (.write w (str "#sicm/complex "
+     (.write w (str "#emmy/complex "
                     [(.getReal v)
                      (.getImaginary v)]))))
 

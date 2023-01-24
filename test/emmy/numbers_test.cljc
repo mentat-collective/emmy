@@ -58,27 +58,27 @@
 
   (testing "log, exp works on bigint"
     (is (ish? 59874.14171519782
-              (g/exp #sicm/bigint 11)))
+              (g/exp #emmy/bigint 11)))
 
     (is (ish? 2.3978952727983707
-              (g/log #sicm/bigint 11)))
+              (g/log #emmy/bigint 11)))
 
     (is (ish? 3.4594316186372978
-              (g/log2 #sicm/bigint 11)))
+              (g/log2 #emmy/bigint 11)))
 
     (is (ish? 1.041392685158225
-              (g/log10 #sicm/bigint 11))))
+              (g/log10 #emmy/bigint 11))))
 
   (testing "log converts to complex"
     (is (c/complex? (g/log -10)))
     (is (= (c/complex 0 Math/PI) (g/log -1))))
 
   (testing "expt goes rational with negative expt"
-    (is (= #sicm/ratio 1/4 (g/expt 2 -2))))
+    (is (= #emmy/ratio 1/4 (g/expt 2 -2))))
 
   (testing "expt goes imaginary with negative base and non-integral expt"
     (is (ish? (c/complex 0 (g/sqrt 2))
-              (g/expt -2 #sicm/ratio 1/2))
+              (g/expt -2 #emmy/ratio 1/2))
         "integer, ratio")
 
     (is (ish? (c/complex 0 (g/sqrt 2))
@@ -90,7 +90,7 @@
         "both floating point")
 
     (is (ish? (c/complex 0 (g/sqrt 0.5))
-              (g/expt #sicm/ratio -1/2 0.5))
+              (g/expt #emmy/ratio -1/2 0.5))
         "ratio, float"))
 
   (testing "exp/log round-trip, but coerce to double on the JVM"
@@ -488,7 +488,7 @@
       (is (= 0 (g/sinc ##Inf)))
       (is (= 0 (g/sinc ##-Inf)))
       (is (= 1 (g/sinc 0)))
-      (is (= 1 (g/sinc #sicm/bigint 0)))
+      (is (= 1 (g/sinc #emmy/bigint 0)))
 
       (checking "sinc nonzero" 100 [n (sg/reasonable-double)]
                 (is (ish? (/ (Math/sin n) n)
@@ -498,7 +498,7 @@
       (is (= 0 (g/sinc ##Inf)))
       (is (= 0 (g/sinc ##-Inf)))
       (is (= 1 (g/sinc 0)))
-      (is (= 1 (g/sinc #sicm/bigint 0)))
+      (is (= 1 (g/sinc #emmy/bigint 0)))
 
       (checking "sinc nonzero" 100 [n (sg/reasonable-double)]
                 (is (ish? (/ (Math/sin n) n)

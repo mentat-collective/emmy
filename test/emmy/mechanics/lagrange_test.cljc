@@ -397,11 +397,11 @@
 
 (deftest interpolation-tests
   (testing "lagrange interpolation"
-    (is (= [#sicm/ratio 1/6
-            #sicm/ratio 1/3
-            #sicm/ratio 1/2
-            #sicm/ratio 2/3
-            #sicm/ratio 5/6]
+    (is (= [#emmy/ratio 1/6
+            #emmy/ratio 1/3
+            #emmy/ratio 1/2
+            #emmy/ratio 2/3
+            #emmy/ratio 5/6]
            (L/linear-interpolants 0 1 5)))
 
     (let [f (L/Lagrange-interpolation-function [3 2 5 1] [1 2 3 4])]
