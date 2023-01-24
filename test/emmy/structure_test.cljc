@@ -84,7 +84,7 @@
     (testing "exact?"
       (is (v/exact? (s/up 1 2 3 4)))
       (is (not (v/exact? (s/up 1.2 3 4))))
-      (is (v/exact? (s/up 0 1 #sicm/ratio 3/2)))
+      (is (v/exact? (s/up 0 1 #emmy/ratio 3/2)))
       (is (not (v/exact? (s/up 0 0 0.00001)))))
 
     (testing "numerical?"
@@ -815,8 +815,8 @@
   (testing "{dot,inner}-product throws at incompatible lengths"
     (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
                  (g/inner-product
-                  (s/up (s/down #sicm/complex "1+2i" 2))
-                  (s/up (s/down #sicm/complex "1+2i" 2 3 4)))))
+                  (s/up (s/down #emmy/complex "1+2i" 2))
+                  (s/up (s/down #emmy/complex "1+2i" 2 3 4)))))
 
     (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
                  (g/dot-product
@@ -892,9 +892,9 @@
                (s/up 1 2 3)
                (s/up 1 2 3))))
 
-    (is (= (g/+ 10 (g/* 2 #sicm/complex "2+3i"))
+    (is (= (g/+ 10 (g/* 2 #emmy/complex "2+3i"))
            (s/vector-dot-product
-            (s/up 1 #sicm/complex "2+3i" 3)
+            (s/up 1 #emmy/complex "2+3i" 3)
             (s/up 1 2 3)))
         "dot-product won't collapse complex.")
 
@@ -909,9 +909,9 @@
                (s/up 1 2 3)
                (s/up 1 2 3))))
 
-    (is (= (g/conjugate #sicm/complex "2+3i")
+    (is (= (g/conjugate #emmy/complex "2+3i")
            (s/vector-inner-product
-            (s/up 1 #sicm/complex "2+3i" 3)
+            (s/up 1 #emmy/complex "2+3i" 3)
             (s/up 0 1 0)))
         "inner-product works as expected")
 
@@ -1196,7 +1196,7 @@
     (is (ish? (g/sqrt 50) (g/magnitude [3 4 5]))))
 
   (testing "magnitude of a structure with complex entries"
-    (let [m (g/magnitude [#sicm/complex "3+4i" (g/sqrt 11)])]
+    (let [m (g/magnitude [#emmy/complex "3+4i" (g/sqrt 11)])]
       (is (ish? 6 (g/real-part m)))
       (is (ish? 0 (g/imag-part m)))))
 
@@ -1210,7 +1210,7 @@
   (testing "g/abs"
     (is (ish? (g/abs [3 4 5]) (g/sqrt 50)))
 
-    (let [m (g/magnitude [#sicm/complex "3+4i" (g/sqrt 11)])]
+    (let [m (g/magnitude [#emmy/complex "3+4i" (g/sqrt 11)])]
       (is (= (g/sqrt (g/square m))
              (c/complex (g/abs m))))))
 
@@ -1237,5 +1237,5 @@
 
   (testing "g/conjugate"
     (is (= (s/up 3 4 5) (g/conjugate [3 4 5])))
-    (is (= (s/up #sicm/complex "3-4i")
-           (g/conjugate [#sicm/complex "3+4i"])))))
+    (is (= (s/up #emmy/complex "3-4i")
+           (g/conjugate [#emmy/complex "3+4i"])))))

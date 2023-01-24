@@ -78,7 +78,7 @@
               (is (nil? (get x "face")))))
 
   (testing "quaternions can assoc new elements"
-    (let [x #sicm/quaternion ['r 'i 'j 'k]]
+    (let [x #emmy/quaternion ['r 'i 'j 'k]]
       (is (= (q/make 10 'i 'j 'k)
              (assoc x 0 10))
           "assoc replaces indices")
@@ -106,7 +106,7 @@
 
   (testing "f/arity"
     (is (= [:exactly 1]
-           (f/arity #sicm/quaternion [g/abs g/negate g/exp g/cos]))
+           (f/arity #emmy/quaternion [g/abs g/negate g/exp g/cos]))
         "arity matches the arity of contained functions"))
 
   (testing "IFn"
@@ -136,7 +136,7 @@
                  (g/* x x y)
                  (g/* x x y y)
                  x)))]
-      (is (= #sicm/quaternion
+      (is (= #emmy/quaternion
              ['y '(* 2 x y) '(* 2 x (expt y 2)) 1]
              (g/simplify
               (((D f) 'x) 'y)))
@@ -179,7 +179,7 @@
     (testing "exact?"
       (is (v/exact? (q/make 1 2 3 4)))
       (is (not (v/exact? (q/make 1.2 3 4 5))))
-      (is (v/exact? (q/make 1 2 3 #sicm/ratio 3/2)))
+      (is (v/exact? (q/make 1 2 3 #emmy/ratio 3/2)))
       (is (not (v/exact? (q/make 0 0 0 0.00001)))))
 
     (testing "numerical?"
@@ -188,7 +188,7 @@
 
     (testing "freeze"
       (is (= '(quaternion (/ 1 2) 2 3 x)
-             (v/freeze (q/make #sicm/ratio 1/2
+             (v/freeze (q/make #emmy/ratio 1/2
                                2 3 'x)))))
 
     (checking "kind" 100 [x (sg/quaternion)]
@@ -254,9 +254,9 @@
               (is (v/= r (q/make r)) "real == quaternion")
               (is (v/= (q/make r) r) "quaternion == real")
 
-              (is (ish? #sicm/complex [r i] (q/make r i 0 0))
+              (is (ish? #emmy/complex [r i] (q/make r i 0 0))
                   "complex == quaternion")
-              (is (ish? (q/make r i 0 0) #sicm/complex [r i])
+              (is (ish? (q/make r i 0 0) #emmy/complex [r i])
                   "quaternion == complex")
 
               (is (v/= v (q/make v)) "vector == quaternion")
@@ -285,7 +285,7 @@
                   real component and imaginary vector.")
 
               (is (ish? (q/make [r i 0 0])
-                        (q/make #sicm/complex [r i]))
+                        (q/make #emmy/complex [r i]))
                   "make can properly unpack complex numbers")
 
               (is (= (q/make v)
@@ -436,8 +436,8 @@
                 "solve-linear-right scalar matches q*q"))
 
   (testing "unit tests from failed generative"
-    (let [c #sicm/complex [-1.0 -2.0]
-          x #sicm/quaternion ['a 'b 'c 'd]]
+    (let [c #emmy/complex [-1.0 -2.0]
+          x #emmy/quaternion ['a 'b 'c 'd]]
       (is (= (g/simplify (g/solve-linear (q/make c) x))
              (g/simplify (g/solve-linear c x)))
           "solve-linear complex matches q*q unit")))
@@ -535,7 +535,7 @@
                      (g/dot-product x-complex x-complex))
                   "quaternion dots with complex")
 
-(is (= (g/dot-product x x-real)
+              (is (= (g/dot-product x x-real)
                      (g/dot-product x-real x)
                      (g/dot-product x-real x-real))
                   "quaternion dots with real"))
@@ -600,7 +600,7 @@
                  (g/cross-product  (g/* 2 p) q))))
           "commutator identity")
 
-      (is (= #sicm/quaternion
+      (is (= #emmy/quaternion
              [0
               '(+ (* 2 j1 k2) (* -2 j2 k1))
               '(+ (* -2 i1 k2) (* 2 i2 k1))
@@ -772,7 +772,7 @@
              (g/expt q4 3))
           "exponents with native integral powers stay exact")
 
-      (is (ish? #sicm/quaternion
+      (is (ish? #emmy/quaternion
                 [-730823.7637667366
                  -156449.1960650097
                  -55874.71288036061
@@ -781,63 +781,63 @@
           "not so much for fractional exponents")
 
       (testing "transcendental functions"
-        (is (ish? #sicm/quaternion
+        (is (ish? #emmy/quaternion
                   [-5.727001093501774E14
                    1.0498682596332112E14
                    3.749529498690041E13
                    3.7495294986900405E12]
                   (g/exp q4)))
 
-        (is (ish? #sicm/quaternion
+        (is (ish? #emmy/quaternion
                   [1.8285331065398575E25
                    -2.7602822237164246E25
                    -9.85815079898723E24
                    -9.85815079898723E23]
                   (g/sin q4)))
 
-        (is (ish? #sicm/quaternion
+        (is (ish? #emmy/quaternion
                   [-2.932696308866326E25
                    -1.7210331032912269E25
                    -6.146546797468668E24
                    -6.146546797468668E23]
                   (g/cos q4)))
 
-        (is (ish? #sicm/quaternion
+        (is (ish? #emmy/quaternion
                   [0.0
                    0.9412097036339402
                    0.3361463227264072
                    0.03361463227264068]
                   (g/tan q4)))
 
-        (is (ish? #sicm/quaternion
+        (is (ish? #emmy/quaternion
                   [-2.863500546750887E14
                    5.249341298166056E13
                    1.8747647493450203E13
                    1.8747647493450203E12]
                   (q/sinh q4)))
 
-        (is (ish? #sicm/quaternion
+        (is (ish? #emmy/quaternion
                   [-2.863500546750887E14
                    5.249341298166056E13
                    1.8747647493450203E13
                    1.8747647493450203E12]
                   (q/cosh q4)))
 
-        (is (ish? #sicm/quaternion
+        (is (ish? #emmy/quaternion
                   [1.0
                    0.0
                    -6.288372600415926E-18
                    1.734723475976807E-18]
                   (q/tanh q4)))
 
-        (is (ish? #sicm/quaternion
+        (is (ish? #emmy/quaternion
                   [-2.391804589431832E23
                    -4.179034275395878E23
                    -1.4925122412128137E23
                    -1.4925122412128143E22]
                   (g/sinc q4)))
 
-        (is (ish? #sicm/quaternion
+        (is (ish? #emmy/quaternion
                   [-1.3666031202326084E12
                    3.794799638667254E12
                    1.3552855852383052E12

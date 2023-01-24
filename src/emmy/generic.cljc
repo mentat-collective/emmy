@@ -154,8 +154,8 @@
   For example:
 
   ```clojure
-  (* 2 #sicm/complex \"3 + 1i\")
-  ;;=> #sicm/complex \"6 + 2i\"
+  (* 2 #emmy/complex \"3 + 1i\")
+  ;;=> #emmy/complex \"6 + 2i\"
   ```"
   ([] 1)
   ([x] x)

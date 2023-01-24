@@ -93,7 +93,7 @@
       (u/bigint ~denominator))))
 
 (defn parse-ratio
-  "Parser for the `#sicm/ratio` literal."
+  "Parser for the `#emmy/ratio` literal."
   [x]
   (cond #?@(:clj
             [(ratio? x)
@@ -196,7 +196,7 @@
                d (denominator x)]
            (if (v/one? d)
              (-pr-writer n writer opts)
-             (write-all writer "#sicm/ratio \""
+             (write-all writer "#emmy/ratio \""
                         (str n) "/" (str d)
                         "\"")))))))
 

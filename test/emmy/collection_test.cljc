@@ -61,7 +61,7 @@
 
     (testing "v/freeze"
       (is (= '(up (/ 1 2))
-             (v/freeze [#sicm/ratio 1/2]))
+             (v/freeze [#emmy/ratio 1/2]))
           "v/freeze freezes entries"))))
 
 (deftest sequence-tests
@@ -220,7 +220,7 @@
 
     (testing "v/freeze"
       (is (= {:ratio '(/ 1 2)}
-             (v/freeze {:ratio #sicm/ratio 1/2}))
+             (v/freeze {:ratio #emmy/ratio 1/2}))
           "v/freeze freezes values"))
 
     (testing "v/= on collections"

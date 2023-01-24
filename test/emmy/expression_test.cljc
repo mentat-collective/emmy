@@ -139,8 +139,8 @@
       (is (= 0 (e/compare () ()))))
 
     (testing "for types that don't play nice we resort to hashing."
-      (is (= -1 (e/compare '(+ x y) #sicm/complex "1+2i")))
-      (is (= 1 (e/compare #sicm/complex "1+2i" '(+ x y)))))
+      (is (= -1 (e/compare '(+ x y) #emmy/complex "1+2i")))
+      (is (= 1 (e/compare #emmy/complex "1+2i" '(+ x y)))))
 
     ;; TODO add more tests as we start to explore this function.
 ))

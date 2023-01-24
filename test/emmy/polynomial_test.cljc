@@ -673,14 +673,14 @@
     (let [U (p/make [-5 2 8 -3 -3 0 1 0 1])
           V (p/make [21 -9 -4 0 5 0 3])
           [pr d] (p/pseudo-remainder U V)]
-      #?(:clj (is (= [(p/make [#sicm/ratio -2/9
+      #?(:clj (is (= [(p/make [#emmy/ratio -2/9
                                0
-                               #sicm/ratio 1/3])
-                      (p/make [#sicm/ratio -1/3
+                               #emmy/ratio 1/3])
+                      (p/make [#emmy/ratio -1/3
                                0
-                               #sicm/ratio 1/9
+                               #emmy/ratio 1/9
                                0
-                               #sicm/ratio -5/9])]
+                               #emmy/ratio -5/9])]
                      (p/divide U V))))
 
       (is (= [(p/make [-3 0 1 0 -5]) 2]

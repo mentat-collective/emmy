@@ -82,7 +82,7 @@ and proper ratios in ClojureScript:
 ;;=> 3/2
 
 (asin -10)
-;;=> #sicm/complex [-1.5707963267948966 2.9932228461263786]
+;;=> #emmy/complex [-1.5707963267948966 2.9932228461263786]
 ```
 
 Symbols are interpreted as abstract complex numbers, and arithmetic on them

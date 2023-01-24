@@ -15,16 +15,16 @@
   (testing "u/parse-bigint can round-trip Bigint instances in clj or cljs. "
     (is (= #?(:clj 10N
               :cljs '(emmy.util/bigint 10))
-           (read-string {:readers {'sicm/bigint u/parse-bigint}}
-                        (pr-str #sicm/bigint 10))))
+           (read-string {:readers {'emmy/bigint u/parse-bigint}}
+                        (pr-str #emmy/bigint 10))))
 
     #_{:clj-kondo/ignore [:unused-binding]}
     (let [one-e-40 (apply str "1" (repeat 40 "0"))]
       (is (= #?(:clj (bigint 1e40)
                 :cljs (list 'emmy.util/bigint one-e-40))
-             (read-string {:readers {'sicm/bigint u/parse-bigint}}
-                          (pr-str #sicm/bigint one-e-40)))
-          "Parsing #sicm/bigint works with big strings too."))))
+             (read-string {:readers {'emmy/bigint u/parse-bigint}}
+                          (pr-str #emmy/bigint one-e-40)))
+          "Parsing #emmy/bigint works with big strings too."))))
 
 (deftest vector-value-impl
   (testing "zero?"
@@ -45,7 +45,7 @@
   (testing "exact?"
     (is (v/exact? [1 2 3 4]))
     (is (not (v/exact? [1.2 3 4])))
-    (is (v/exact? [0 1 #sicm/ratio 3/2]))
+    (is (v/exact? [0 1 #emmy/ratio 3/2]))
     (is (not (v/exact? [0 0 0.00001]))))
 
   (testing "freeze"
@@ -156,7 +156,7 @@
   (is (not (v/exact? 1.1)))
   (is (not (v/exact? :a)))
   (is (not (v/exact? "a")))
-  (is (v/exact? #sicm/ratio 3/2))
+  (is (v/exact? #emmy/ratio 3/2))
   (is (v/exact? (u/biginteger 111))))
 
 (deftest argument-kinds

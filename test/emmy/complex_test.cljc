@@ -25,12 +25,12 @@
               :cljs '(emmy.complex/complex 1 2))
 
            ;; string input:
-           (read-string {:readers {'sicm/complex c/parse-complex}}
-                        (pr-str #sicm/complex "1 + 2i"))
+           (read-string {:readers {'emmy/complex c/parse-complex}}
+                        (pr-str #emmy/complex "1 + 2i"))
 
            ;; vector input:
-           (read-string {:readers {'sicm/complex c/parse-complex}}
-                        (pr-str #sicm/complex [1 2]))))
+           (read-string {:readers {'emmy/complex c/parse-complex}}
+                        (pr-str #emmy/complex [1 2]))))
 
     (checking "complex constructor can handle strings OR direct inputs" 100
               [re (sg/reasonable-double)
@@ -39,11 +39,11 @@
                      (c/complex (str re " + " im "i")))))
 
     (testing "complex inputs"
-      (is (= (c/complex 1 2) #sicm/complex [1 2]))
-      (is (= (c/complex 1) #sicm/complex [1]))
-      (is (= (c/complex 1.2) #sicm/complex 1.2))
-      (is (= (c/complex 1.2) #sicm/complex 1.2))
-      (is (= (c/complex "1.2+3.4i") #sicm/complex "1.2+3.4i")))))
+      (is (= (c/complex 1 2) #emmy/complex [1 2]))
+      (is (= (c/complex 1) #emmy/complex [1]))
+      (is (= (c/complex 1.2) #emmy/complex 1.2))
+      (is (= (c/complex 1.2) #emmy/complex 1.2))
+      (is (= (c/complex "1.2+3.4i") #emmy/complex "1.2+3.4i")))))
 
 (deftest complex-laws
   ;; Complex numbers form a field. We use a custom comparator to control some
@@ -62,13 +62,13 @@
           (v/zero-like c/ONE)
           (v/zero-like (c/complex 100))
           c/ZERO
-          #sicm/complex "0"])
+          #emmy/complex "0"])
         "negative zero doesn't affect zero")
 
     (is (not (v/zero? c/ONE)))
     (is (not (v/zero? (c/complex 1.0))))
     (is (= c/ZERO (v/zero-like (c/complex 2))))
-    (is (= c/ZERO (v/zero-like #sicm/complex "0 + 3.14i")))
+    (is (= c/ZERO (v/zero-like #emmy/complex "0 + 3.14i")))
 
     (let [ones [c/ONE
                 (c/complex 1.0)
@@ -103,18 +103,18 @@
 (let [pi Math/PI]
   (deftest complex-numbers
     (testing "v/="
-      (is (v/= #sicm/complex "1+0i" #sicm/bigint 1))
-      (is (not (v/= #sicm/complex "1+2i" #sicm/ratio "1/2")))
+      (is (v/= #emmy/complex "1+0i" #emmy/bigint 1))
+      (is (not (v/= #emmy/complex "1+2i" #emmy/ratio "1/2")))
 
       #?(:cljs
          (testing "CLJS can compare complex with non-complex using clojure.core/="
-           (is (= #sicm/complex "1+0i" #sicm/bigint 1))
-           (is (not= #sicm/complex "1+2i" #sicm/ratio "1/2")))))
+           (is (= #emmy/complex "1+0i" #emmy/bigint 1))
+           (is (not= #emmy/complex "1+2i" #emmy/ratio "1/2")))))
 
     (testing "complex constructor and predicate"
       (is (c/complex? c/ONE))
       (is (c/complex? c/I))
-      (is (c/complex? #sicm/complex "2"))
+      (is (c/complex? #emmy/complex "2"))
       (is (not (c/complex? 4))))
 
     (testing "complex-generics"
@@ -154,9 +154,9 @@
           complex number `g/infinite?`"))
 
     (testing "add"
-      (is (= #sicm/complex "4 + 6i"
-             (g/add #sicm/complex "1 + 2i"
-                    #sicm/complex "3 + 4i")))
+      (is (= #emmy/complex "4 + 6i"
+             (g/add #emmy/complex "1 + 2i"
+                    #emmy/complex "3 + 4i")))
       (is (= (c/complex 1 3) (g/add (c/complex 0 3) 1)))
       (is (= (c/complex 1 3)
              (g/add 1 (c/complex 0 3))
@@ -178,7 +178,7 @@
       (is (= (c/complex 0 -1) (g/div 1 c/I)))
       (is (= (c/complex 2 2) (g/div (c/complex 4 4) 2))))
 
-(testing "modulo examples"
+    (testing "modulo examples"
       ;; https://stackoverflow.com/questions/54553489/how-to-calculate-a-modulo-of-complex-numbers
       (is (= (c/complex 1 1)
              (g/modulo (c/complex 8 2) (c/complex 2 1))))
@@ -470,7 +470,7 @@
                    (g/real-part (g/conjugate z))))
 
             (is (= z (g/+ (g/real-part z)
-                          (g/* #sicm/complex "0+1i"
+                          (g/* #emmy/complex "0+1i"
                                (g/imag-part z))))))
 
   (checking "angle" 100 [z sg/complex]
@@ -479,7 +479,7 @@
                        (g/imag-part z)
                        (g/real-part z))))
             (let [rt (g/* (g/magnitude z)
-                          (g/exp (g/* #sicm/complex "0+1i"
+                          (g/exp (g/* #emmy/complex "0+1i"
                                       (g/angle z))))]
               (with-comparator (v/within 1e-8)
                 (is (ish? (g/real-part z)

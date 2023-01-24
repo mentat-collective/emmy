@@ -157,7 +157,7 @@
   #?@(:clj
       [Object
        (equals [self q] (eq self q))
-       (toString [_] (str "#sicm/quaternion [" r " " i  " " j " " k "]"))
+       (toString [_] (str "#emmy/quaternion [" r " " i  " " j " " k "]"))
 
        IObj
        (meta [_] m)
@@ -269,7 +269,7 @@
       :cljs
       [Object
        (toString [_]
-                 (str "#sicm/quaternion [" r " " i  " " j " " k "]"))
+                 (str "#emmy/quaternion [" r " " i  " " j " " k "]"))
 
        IEquiv
        (-equiv [this that] (eq this that))
@@ -638,7 +638,7 @@
   "Implementation of a reader literal that turns literal 4-vectors into calls
   to [[make]]. For all other input, call [[make]] directly.
 
-  Installed by default under #sicm/quaternion."
+  Installed by default under #emmy/quaternion."
   [x]
   (if (vector? x)
     (if (= (count x) 4)

@@ -15,7 +15,7 @@
     (is (= (apply g/* (range 1 8))
            (sf/factorial 7)))
 
-    (is (= #sicm/bigint "15511210043330985984000000"
+    (is (= #emmy/bigint "15511210043330985984000000"
            (sf/factorial 25))
         "factorial can handle `n` that triggers overflow in cljs and clj."))
 
@@ -23,8 +23,8 @@
     (is (g/infinite?
          (sf/falling-factorial -10 -10)))
     (is (= -1320 (sf/falling-factorial -10 3)))
-    (is (= #sicm/ratio -1/504 (sf/falling-factorial -10 -3)))
-    (is (= #sicm/ratio 1/1716 (sf/falling-factorial 10 -3)))
+    (is (= #emmy/ratio -1/504 (sf/falling-factorial -10 -3)))
+    (is (= #emmy/ratio 1/1716 (sf/falling-factorial 10 -3)))
 
     (testing "falling factorial works on unital rings, functions are game!"
       (is (= '(/ 1 (+ (expt x 3) (* 6 (expt x 2)) (* 11 x) 6))
@@ -85,8 +85,8 @@
     (is (g/infinite?
          (sf/rising-factorial 3 -5)))
     (is (= -720 (sf/rising-factorial -10 3)))
-    (is (= #sicm/ratio -1/1716 (sf/rising-factorial -10 -3)))
-    (is (= #sicm/ratio 1/504 (sf/rising-factorial 10 -3)))
+    (is (= #emmy/ratio -1/1716 (sf/rising-factorial -10 -3)))
+    (is (= #emmy/ratio 1/504 (sf/rising-factorial 10 -3)))
 
     (testing "rising factorial works on unital rings, functions are game!"
       (is (= '(/ 1 (+ (expt x 3) (* -6 (expt x 2)) (* 11 x) -6))
@@ -146,9 +146,9 @@
     (is (= 1 (sf/double-factorial 0)))
     (is (= 1 (sf/double-factorial -1)))
     (is (= -1 (sf/double-factorial -3)))
-    (is (= #sicm/ratio 1/3 (sf/double-factorial -5)))
-    (is (= #sicm/ratio -1/15 (sf/double-factorial -7)))
-    (is (= #sicm/ratio 1/105 (sf/double-factorial -9))))
+    (is (= #emmy/ratio 1/3 (sf/double-factorial -5)))
+    (is (= #emmy/ratio -1/15 (sf/double-factorial -7)))
+    (is (= #emmy/ratio 1/105 (sf/double-factorial -9))))
 
   (testing "subfactorial"
     (is (= 1 (sf/subfactorial 0)))
@@ -233,7 +233,7 @@
     (is (= -3 (sf/stirling-first-kind 3 2)))
     (is (= -50 (sf/stirling-first-kind 5 2)))
     (is (= 1624 (sf/stirling-first-kind 7 3)))
-    (is (= #sicm/bigint "-62262192842035613491057459200000"
+    (is (= #emmy/bigint "-62262192842035613491057459200000"
            (sf/stirling-first-kind 30 3))))
 
   (checking "stirling second kind identities" 100

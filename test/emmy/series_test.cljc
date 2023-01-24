@@ -177,11 +177,11 @@
              (take 10 (g/* nats0 (s/power-series 4 3 2 1)))))
 
       (testing "rational"
-        (is (= [#sicm/ratio 17/4
-                #sicm/ratio 7/2
-                #sicm/ratio 11/4
+        (is (= [#emmy/ratio 17/4
+                #emmy/ratio 7/2
+                #emmy/ratio 11/4
                 1]
-               (take 4 (g/+ (g/* #sicm/ratio 1/4 nats) S)))))
+               (take 4 (g/+ (g/* #emmy/ratio 1/4 nats) S)))))
 
       (is (v/= '(ε (* 2 ε) (* 3 ε) (* 4 ε))
                (g/simplify
@@ -531,10 +531,10 @@
 
   (testing "harmonic numbers"
     (is (= [1
-            #sicm/ratio 3/2
-            #sicm/ratio 11/6
-            #sicm/ratio 25/12
-            #sicm/ratio 137/60]
+            #emmy/ratio 3/2
+            #emmy/ratio 11/6
+            #emmy/ratio 25/12
+            #emmy/ratio 137/60]
            (take 5 s/harmonic-series))))
 
   (testing "bell numbers"
