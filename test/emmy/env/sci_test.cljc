@@ -3,12 +3,12 @@
 (ns emmy.env.sci-test
   (:refer-clojure :exclude [eval])
   (:require [clojure.test :refer [is deftest testing use-fixtures]]
-            [sci.core :as sci]
             [emmy.env :as e]
             [emmy.env.sci :as es]
             [emmy.operator :as o]
             [emmy.simplify :refer [hermetic-simplify-fixture]]
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [sci.core :as sci]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 
@@ -21,7 +21,7 @@
 (deftest pattern-tests
   (is (= ['(+ 2 1) "done!"]
          (eval
-          '(do (require '[pattern.rule :as r :refer [=>]])
+          '(do (require '[emmy.pattern.rule :as r :refer [=>]])
                (let [R (r/ruleset
                         (+ 10 _) => "done!"
                         (+ ?a ?b) => (+ ?b ?a))]
@@ -30,7 +30,7 @@
 
   (is (= '(+ 6)
          (eval
-          '(do (require '[pattern.rule :as r :refer [=>]])
+          '(do (require '[emmy.pattern.rule :as r :refer [=>]])
                (let [R (r/term-rewriting
                         (r/rule (+ ?a ?b ??c) => (+ ?b ??c)))]
                  (R '(+ 1 2 3 4 5 6))))))))

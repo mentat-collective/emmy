@@ -3,7 +3,6 @@
 (ns emmy.mechanics.rigid-test
   (:refer-clojure :exclude [+ - * / partial])
   (:require [clojure.test :refer [is deftest testing use-fixtures]]
-            [same :refer [ish? with-comparator] :include-macros true]
             [emmy.abstract.function :as f]
             [emmy.calculus.derivative :refer [D partial]]
             [emmy.generic :as g :refer [+ - * /]]
@@ -14,7 +13,8 @@
             [emmy.quaternion :as q]
             [emmy.simplify :refer [hermetic-simplify-fixture]]
             [emmy.structure :as s :refer [up]]
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [same :refer [ish? with-comparator] :include-macros true]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 

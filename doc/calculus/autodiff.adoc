@@ -45,7 +45,7 @@ evaluating a conditional.
 
 NOTE: This note about conditionals is currently true in Emmy, but we're
 working on it. See
-https://github.com/emmy/emmy/issues/191[this ticket] for
+https://github.com/mentat-collective/emmy/issues/191[this ticket] for
 information on the plan to make generic comparisons in conditionals work in
 automatic differentiation.
 

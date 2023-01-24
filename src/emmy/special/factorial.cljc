@@ -2,9 +2,9 @@
 
 (ns emmy.special.factorial
   "Namespace holding implementations of variations on the factorial function."
-  (:require [emmy.generic :as g]
+  (:require #?@(:cljs [[emmy.util :as u]])
+            [emmy.generic :as g]
             [emmy.numbers]
-            #?@(:cljs [[emmy.util :as u]])
             [emmy.util.def :refer [defgeneric]]
             [emmy.value :as v]))
 

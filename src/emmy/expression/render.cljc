@@ -6,9 +6,9 @@
   (:require [clojure.set :as set]
             [clojure.string :as s]
             [clojure.zip :as z]
-            [pattern.rule :as R :refer [=>]]
             [emmy.expression :as x]
             [emmy.expression.compile :as compile]
+            [emmy.pattern.rule :as R :refer [=>]]
             [emmy.ratio :as r]
             [emmy.util :as u]
             [emmy.value :as v]))

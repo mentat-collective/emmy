@@ -2,12 +2,12 @@
 
 (ns emmy.numerical.quadrature.adaptive-test
   (:require [clojure.test :refer [is deftest testing]]
-            [same :refer [ish? with-comparator] :include-macros true]
             [emmy.numerical.quadrature.adaptive :as qa]
             [emmy.numerical.quadrature.bulirsch-stoer :as bs]
             [emmy.numerical.quadrature.common :as qc]
             [emmy.util :as u]
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [same :refer [ish? with-comparator] :include-macros true]))
 
 (def ^:private adaptive-integrate
   (qa/adaptive

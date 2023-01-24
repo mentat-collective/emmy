@@ -95,10 +95,9 @@
                               (cs/union s1 s2)
                               (cs/intersection s1 s2)))
                        symdiff)
-                    "vs/symmetric-difference matches (union s1 s2) - (intersection s1 s2)")))
-    )
+                    "vs/symmetric-difference matches (union s1 s2) - (intersection s1 s2)"))))
 
-  (testing "conj"
+(testing "conj"
     (checking "conj every element matches make" 100
               [v (gen/vector gen/nat)]
               (is (= (vs/make v)

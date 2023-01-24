@@ -3,10 +3,10 @@
 (ns emmy.operator
   (:refer-clojure :exclude [get identity name])
   (:require [clojure.core :as core]
-            [pattern.rule :refer [rule-simplifier]]
             [emmy.differential :as d]
             [emmy.function :as f]
             [emmy.generic :as g]
+            [emmy.pattern.rule :refer [rule-simplifier]]
             [emmy.series :as series]
             [emmy.simplify.rules :as rules]
             [emmy.util :as u]

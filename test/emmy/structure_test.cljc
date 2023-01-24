@@ -5,8 +5,6 @@
   (:require [clojure.test :refer [is deftest testing]]
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
-            [pattern.match :as pm]
-            [same :refer [ish? with-comparator] :include-macros true]
             [emmy.abstract.number]
             [emmy.complex :as c]
             [emmy.expression :as x]
@@ -14,10 +12,12 @@
             [emmy.generators :as sg]
             [emmy.generic :as g :refer [+ - * / cube expt negate square]]
             [emmy.operator :as o]
+            [emmy.pattern.match :as pm]
             [emmy.structure :as s]
             [emmy.util :as u]
             [emmy.util.aggregate :as ua]
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [same :refer [ish? with-comparator] :include-macros true]))
 
 (deftest interface-tests
   (checking "Clojure interface definitions" 100
@@ -170,7 +170,7 @@
   (arity-check s/down* "s/down"))
 
 (deftest structure-interfaces
-  (testing "pattern matching"
+  (testing "emmy.pattern.matching"
     (testing "non-seq sequential? things like structures are treated as eq
               matchers, not automatically converted to sequence matchers."
       (let [expr (pm/sequence

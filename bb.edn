@@ -1,0 +1,20 @@
+{:pods {clj-kondo/clj-kondo {:version "2022.12.10"}}
+ :tasks
+ {:requires ([pod.borkdude.clj-kondo :as clj-kondo])
+
+  test:clj
+  {:doc "Run CLJ tests."
+   :task (shell "clojure -X:test:runner")}
+
+  test:cljs
+  {:doc "Run CLJS tests."
+   :task (shell "npm run test")}
+
+  release
+  {:doc "Release the library to Clojars."
+   :task (shell "clojure -T:build publish")}
+
+  lint
+  {:doc "Lint with clj-kondo."
+   :task (clj-kondo/print!
+          (clj-kondo/run! {:lint ["src" "test"]}))}}}

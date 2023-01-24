@@ -42,9 +42,7 @@
   (numerator [_] u)
   (denominator [_] v)
 
-
-
-  v/Value
+v/Value
   (zero? [_] (v/zero? u))
   (one? [_] (and (v/one? u) (v/one? v)))
   (identity? [_] (and (v/identity? u) (v/one? v)))
@@ -513,8 +511,6 @@
         (v/zero? s) r
         :else (binary-combine r s p/add uv:+)))
 
-
-
 (defn sub
   "Returns the difference of rational functions `r` and `s`, with appropriate
   handling of [[RationalFunction]], [[polynomial/Polynomial]] or coefficients of
@@ -815,7 +811,7 @@
 ;;
 ;; TODO: `g/quotient`, `g/remainder` and `g/lcm` feel like valid methods to
 ;; install for [[RationalFunction]] instances.
-;; Close [#365](https://github.com/emmy/emmy/issues/365) when these
+;; Close [#365](https://github.com/mentat-collective/emmy/issues/365) when these
 ;; are implemented.
 
 (defn ^:no-doc defbinary

@@ -196,8 +196,7 @@
          [f-counter f] (u/counted f)
          xmid          (* 0.5 (+ a b))
          mid           [xmid (f xmid)]]
-     (loop [
-            ;; a and b bound the interval in which the minimizer is searching.
+     (loop [;; a and b bound the interval in which the minimizer is searching.
             ;; `xx` is the current candidate point, and `fx` is its value.
             [a [xx fx :as x] b] [a mid b]
 
@@ -214,8 +213,7 @@
             ;; step size taken by the previous iteration.
             delta  0
             iteration 0]
-       (let [
-             ;; The total tolerance for the algorithm, and also the minimum
+       (let [;; The total tolerance for the algorithm, and also the minimum
              ;; possible step to take during each iteration.
              tol  (+ absolute-threshold (* relative-threshold (g/abs xx)))
              tol2 (* 2 tol)

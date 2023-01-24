@@ -92,7 +92,7 @@
         ;; Unfortunately, this says only that the
         ;; Christoffel symbols are symmetric in the
         ;; lower two indices iff the torsion is zero.
-        ))
+))
 
     (let-coordinates [[theta phi] m/S2-spherical]
       (let [S2-spherical-basis (b/coordinate-system->basis S2-spherical)
@@ -617,4 +617,4 @@
   ;;
   ;; let w be an arbitrary vector over the map
   ;; w(f)(t) = d:dtheta (f)(gamma(t)) a_0(t) + d:dphi (f)(gamma(t)) a_1(t)
-  )
+)

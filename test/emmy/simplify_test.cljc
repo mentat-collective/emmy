@@ -2,8 +2,8 @@
 
 (ns emmy.simplify-test
   (:refer-clojure :exclude [=])
-  (:require [clojure.test :refer [is deftest testing use-fixtures]]
-            #?(:cljs [goog.string :refer [format]])
+  (:require #?(:cljs [goog.string :refer [format]])
+            [clojure.test :refer [is deftest testing use-fixtures]]
             [emmy.complex :as c]
             [emmy.expression.analyze :as a]
             [emmy.generic :as g]

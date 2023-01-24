@@ -309,7 +309,6 @@
    (let [arithmetic-p-q (iterate #(+ q %) p)]
      (richardson-column xs col t arithmetic-p-q))))
 
-
 ;; ## Richardson Extrapolation and Polynomial Extrapolation
 ;;
 ;; It turns out that the Richardson extrapolation is a special case of

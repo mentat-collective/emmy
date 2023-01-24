@@ -2,11 +2,11 @@
 
 (ns emmy.numerical.quadrature-test
   (:require [clojure.test :refer [is deftest testing]]
-            [same :refer [ish? zeroish? with-comparator] :include-macros true]
             [emmy.numerical.quadrature :as q]
             [emmy.numerical.quadrature.adaptive :as qa]
             [emmy.numerical.quadrature.common :as qc]
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [same :refer [ish? zeroish? with-comparator] :include-macros true]))
 
 (def ^:private near (v/within 1e-6))
 

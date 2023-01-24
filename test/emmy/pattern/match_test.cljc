@@ -1,11 +1,11 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
-(ns pattern.match-test
+(ns emmy.pattern.match-test
   (:require [clojure.test :refer [is deftest testing]]
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
-            [pattern.match :as m]
-            [pattern.syntax :as ps]))
+            [emmy.pattern.match :as m]
+            [emmy.pattern.syntax :as ps]))
 
 (def gen-frame
   (gen/map gen/keyword
@@ -332,26 +332,26 @@
   (testing "element inside of list"
     (is (= {'b 1}
            (m/match '(a ((? b) 2 3) 1 c)
-                    '(a (1 2 3) 1 c))))
+             '(a (1 2 3) 1 c))))
 
     (is (= {'b 1}
            (m/match `(~'a ((~'? ~'b ~number?) 2 3) 1 ~'c)
-                    '(a (1 2 3) 1 c)))
+             '(a (1 2 3) 1 c)))
         "match element with predicate inside of list")
 
     (is (m/failed?
          (m/match `(~'a ((~'? ~'b ~symbol?) 2 3) 1 ~'c)
-                  '(a (1 2 3) 1 c)))
+           '(a (1 2 3) 1 c)))
         "match element inside list with failing predicate")
 
     (is (m/failed?
          (m/match '(a ((? b) 2 3) (? b) c)
-                  '(a (1 2 3) 2 c)))
+           '(a (1 2 3) 2 c)))
         "match element inside list, but fail the second match outside")
 
     (is (= {'b 1}
            (m/match '(a ((? b) 2 3) (? b) c)
-                    '(a (1 2 3) 1 c)))
+             '(a (1 2 3) 1 c)))
         "match element inside list, repeated match outside"))
 
   (testing "segment and reverse segment"
@@ -405,8 +405,8 @@
   (testing "predicates can return new bindings"
     (is (= {'x '+, :y 'z}
            (m/match (m/sequence (m/bind 'x))
-                    (fn [_] {:y 'z})
-                    ['+]))
+             (fn [_] {:y 'z})
+             ['+]))
         "We can add new bindings to the map."))
 
   (testing "wildcards are ignored"

@@ -627,7 +627,7 @@
    (cond (quaternion? x) x
          (sequential? x) (apply ->Quaternion (take 4 x))
          (sc/complex? x) (->Quaternion
-                          (sc/real x)(sc/imaginary x) 0 0)
+                          (sc/real x) (sc/imaginary x) 0 0)
          :else (->Quaternion x 0 0 0)))
   ([r [i j k]]
    (->Quaternion r i j k))

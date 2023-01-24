@@ -3,21 +3,21 @@
 (ns emmy.env.sci.macros
   "This namespace contains reimplementations of various macros from emmy,
   defined in the form required by SCI."
-  (:require [pattern.consequence :as pc]
-            [pattern.rule :as r]
-            [pattern.syntax :as ps]
-            [emmy.abstract.function :as af]
+  (:require [emmy.abstract.function :as af]
             [emmy.algebra.fold :as fold]
             [emmy.calculus.coordinate :as cc]
             [emmy.calculus.form-field :as ff]
             [emmy.calculus.manifold :as m]
             [emmy.calculus.vector-field :as vf]
+            [emmy.pattern.consequence :as pc]
+            [emmy.pattern.rule :as r]
+            [emmy.pattern.syntax :as ps]
             [emmy.util :as u]))
 
 ;; ## Pattern Matching Macros
 
 (defn pattern
-  "Originally defined in `pattern.rule`."
+  "Originally defined in `emmy.pattern.rule`."
   ([_ _ form]
    `(r/pattern*
      ~(ps/compile-pattern form)))
@@ -27,14 +27,14 @@
      ~@(when pred [pred]))))
 
 (defn consequence
-  "Originally defined in `pattern.rule`."
+  "Originally defined in `emmy.pattern.rule`."
   [_ _ form]
   (let [sym (gensym)]
     `(fn [~sym]
        ~(pc/compile-skeleton sym form))))
 
 (defn template
-  "Originally defined in `pattern.rule`."
+  "Originally defined in `emmy.pattern.rule`."
   ([_ _ form]
    (pc/compile-skeleton (gensym) form))
   ([_ _ m form]
@@ -49,7 +49,7 @@
    (r/compile-rule pattern pred skeleton)))
 
 (defn ruleset
-  "Originally defined in `pattern.rule`."
+  "Originally defined in `emmy.pattern.rule`."
   [_ _ & patterns-and-consequences]
   {:pre (zero? (mod (count patterns-and-consequences) 3))}
   (let [inputs (partition 3 patterns-and-consequences)
@@ -176,7 +176,7 @@
    'ruleset     (tag-as-macro ruleset)})
 
 (def ns-bindings
-  {'pattern.rule pattern-macros
+  {'emmy.pattern.rule pattern-macros
 
    'emmy.env
    (select-keys all ['literal-function

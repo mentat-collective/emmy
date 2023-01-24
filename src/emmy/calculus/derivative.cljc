@@ -56,12 +56,12 @@
                 (g/* x y z))))]
     ((((D f) 'x) 'y) 'z))
   ;;=> (* y z)
-  )
+)
 
 (comment
   (((partial 0) g/*) 'x 'y 'z)
   ;;=> (* y z)
-  )
+)
 
 ;; To `extract-tangent` from a function, we need to compose the
 ;; `extract-tangent` operation with the returned function.

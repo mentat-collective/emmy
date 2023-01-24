@@ -1,18 +1,18 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
 (ns emmy.ratio-test
-  (:require [clojure.test :refer [is deftest testing]]
+  (:require #?(:cljs [cljs.reader :refer [read-string]])
+            [clojure.test :refer [is deftest testing]]
             [clojure.test.check.generators :as gen]
-            #?(:cljs [cljs.reader :refer [read-string]])
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
-            [same :refer [ish?]]
             [emmy.generators :as sg]
             [emmy.generic :as g]
             [emmy.generic-test :as gt]
             [emmy.laws :as l]
             [emmy.ratio :as r]
             [emmy.util :as u]
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [same :refer [ish?]]))
 
 (deftest ratio-value-implementation
   (testing "v/freeze"

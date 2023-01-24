@@ -180,8 +180,7 @@
                  (reset! compare-fn vcompare))
                (ianalyze expr))
 
-
-             ;; NOTE: use `doall` to force the variable-binding side effects
+;; NOTE: use `doall` to force the variable-binding side effects
              ;; of `base-simplify`.
              (new-kernels [expr]
                (let [simplified-expr (doall (map base-simplify expr))

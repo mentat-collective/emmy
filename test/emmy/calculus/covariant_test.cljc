@@ -49,8 +49,7 @@
                       (-> (simplify expr)
                           (x/substitute '(up x0 y0 z0) 'p)))]
 
-
-        (is (= '(+ (* (Y↑0 p) (((partial 0) w_0) p) (X↑0 p))
+(is (= '(+ (* (Y↑0 p) (((partial 0) w_0) p) (X↑0 p))
                    (* (Y↑0 p) (w_0 p) (((partial 0) X↑0) p))
                    (* (Y↑0 p) (w_1 p) (((partial 0) X↑1) p))
                    (* (Y↑0 p) (w_2 p) (((partial 0) X↑2) p))
@@ -73,7 +72,7 @@
 
         (is (= 0 (simplify
                   ((- ((ff/d ((g/Lie-derivative X) f)) Y)
-                      (((g/Lie-derivative X) (ff/d f)) Y) )
+                      (((g/Lie-derivative X) (ff/d f)) Y))
                    R3-rect-point))))
 
         (is (= 0 (simplify
@@ -114,8 +113,7 @@
 
         ;; we only need linear terms in phi_t(x)
 
-
-        ;; Perhaps
+;; Perhaps
 
         ;; phi_t(x) = (I + t v(I))(x)
 
@@ -206,10 +204,9 @@
                      ((D (fn [t]
                            (- ((Y f) ((phiX t) m_0))
                               ((Y (compose f (phiX t))) m_0))))
-                      0)))
-               ))
+                      0)))))
 
-        (is (= 0 (simplify
+(is (= 0 (simplify
                   (- result-via-Lie
                      ((D (fn [t]
                            (- ((Y f) ((phiX t) m_0))
@@ -516,8 +513,7 @@
           rect-Cartan (cov/Christoffel->Cartan rect-Christoffel)
           polar-Cartan (cov/Christoffel->Cartan polar-Christoffel)
           J (- (* x d:dy) (* y d:dx))
-          f (man/literal-scalar-field 'f R2-rect)
-          ]
+          f (man/literal-scalar-field 'f R2-rect)]
       (is (= '(((partial 1) f) (up x0 y0))
              (v/freeze
               (simplify
@@ -721,8 +717,7 @@
                    (cm/basis->basis-over-map
                     mu:N->M
                     (cov/Cartan->basis Cartan))))))))))
-    (let [
-          ;; We can get the geodesic equations as ordinary Lagrange
+    (let [;; We can get the geodesic equations as ordinary Lagrange
           ;; equations of a free particle constrained to the surface
           ;; of the sphere:
           Lfree (fn [m]
@@ -817,7 +812,7 @@
           ;; So \Gammar_{\theta \theta} = -r, \Gamma\theta_{\theta \theta} = 0
           ;;
           ;; These are correct Christoffel symbols...
-          )))))
+)))))
 
 (defn CD
   "Computation of Covariant derivatives by difference quotient. [[CD]] is parallel
@@ -890,8 +885,7 @@
              (((((cov/covariant-derivative CF-rect) X) Y) F) m_0)))))
 
     ;; TODO: Too slow... it works if we bump the timeout, but this is not fast.
-    #_
-    (binding [pg/*poly-gcd-time-limit* [5 :seconds]]
+    #_(binding [pg/*poly-gcd-time-limit* [5 :seconds]]
       (is (zero?
            (simplify
             (- (((((CD CF-polar R2-polar) X) Y) F) m_0)

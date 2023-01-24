@@ -50,8 +50,7 @@
 
 ;; This works as expected:
 
-#_
-(= [1 2 3 4 0 0 0 0 0 0]
+#_(= [1 2 3 4 0 0 0 0 0 0]
    (take 10 (->series [1 2 3 4])))
 
 ;; The core observation we'll use in the following definitions (courtesy of
@@ -73,8 +72,7 @@
 (defn negate [xs]
   (map g/negate xs))
 
-#_
-(let [xs [1 2 3 4]]
+#_(let [xs [1 2 3 4]]
   (= [-1 -2 -3 -4 0 0 0]
      (take 7 (negate (->series xs)))))
 
@@ -90,8 +88,7 @@
 (defn seq:+ [f g]
   (map g/+ f g))
 
-#_
-(= [0 2 4 6 8]
+#_(= [0 2 4 6 8]
    (take 5 (seq:+ (range) (range))))
 
 ;; A constant is a series with its first element populated, all zeros otherwise.
@@ -106,8 +103,7 @@
   (lazy-seq
    (cons (g/+ (first f) c) (rest f))))
 
-#_
-(let [series (->series [1 2 3 4])]
+#_(let [series (->series [1 2 3 4])]
   (= [11 2 3 4 0 0]
      (take 6 (seq+c series 10))
      (take 6 (c+seq 10 series))))
@@ -119,13 +115,12 @@
 (defn seq:- [f g]
   (map g/- f g))
 
-#_
-(= [0 0 0 0 0]
+#_(= [0 0 0 0 0]
    (take 5 (seq:- (range) (range))))
 
 ;; We /should/ get equivalent results from mapping `g/-` over both sequences,
 ;; and in almost all cases we do... but until we understand and fix this bug
-;; https://github.com/emmy/emmy/issues/151 that method would
+;; https://github.com/mentat-collective/emmy/issues/151 that method would
 ;; return different results.
 
 ;; Subtract a constant from a sequence by subtracting it from the first element:
@@ -134,8 +129,7 @@
   (lazy-seq
    (cons (g/- (first f) c) (rest f))))
 
-#_
-(= [-10 1 2 3 4]
+#_(= [-10 1 2 3 4]
    (take 5 (seq-c (range) 10)))
 
 ;; To subtract a sequence from a constant, subtract the first element as before,
@@ -145,8 +139,7 @@
   (lazy-seq
    (cons (g/- c (first f)) (negate (rest f)))))
 
-#_
-(= [10 -1 -2 -3 -4]
+#_(= [10 -1 -2 -3 -4]
    (take 5 (c-seq 10 (range))))
 
 ;; ### Multiplication
@@ -187,8 +180,7 @@
 
 ;; This works just fine on two infinite sequences:
 
-#_
-(= [0 4 11 20 30 40 50 60 70 80]
+#_(= [0 4 11 20 30 40 50 60 70 80]
    (take 10 (seq:* (range) (->series [4 3 2 1]))))
 
 ;; NOTE This is also called the "Cauchy Product" of the two sequences:
@@ -244,8 +236,7 @@
 
 ;; A simple example shows success:
 
-#_
-(let [series (->series [0 0 0 4 3 2 1])]
+#_(let [series (->series [0 0 0 4 3 2 1])]
   (= [1 0 0 0 0]
      (take 5 (div series series))))
 
@@ -276,15 +267,13 @@
 ;; This definition of `invert` matches the more straightforward division
 ;; implementation:
 
-#_
-(let [series (iterate inc 3)]
+#_(let [series (iterate inc 3)]
   (= (take 5 (invert series))
      (take 5 (div (->series [1]) series))))
 
 ;; An example:
 
-#_
-(let [series (iterate inc 3)]
+#_(let [series (iterate inc 3)]
   (= [1 0 0 0 0]
      (take 5 (seq:* series (invert series)))
      (take 5 (div series series))))
@@ -297,15 +286,13 @@
 
 ;; It's not obvious that this works:
 
-#_
-(let [nats (iterate inc 1)]
+#_(let [nats (iterate inc 1)]
   (= [4 -8 4 0 0 0]
      (take 6 (c-div-seq 4 nats))))
 
 ;; But we can recover the initial series:
 
-#_
-(let [nats       (iterate inc 1)
+#_(let [nats       (iterate inc 1)
       divided    (c-div-seq 4 nats)
       seq-over-4 (invert divided)
       original   (seq*c seq-over-4 4)]
@@ -319,8 +306,7 @@
 
 ;; Division by a constant undoes multiplication by a constant:
 
-#_
-(let [nats (iterate inc 1)]
+#_(let [nats (iterate inc 1)]
   (= [1 2 3 4 5]
      (take 5 (seq-div-c (seq*c nats 2) 2))))
 
@@ -355,8 +341,7 @@
 
 ;; Composing $x^2 = (0, 0, 1, 0, 0, ...)$ should square all $x$s, and give us a
 ;; sequence of only even powers:
-#_
-(= [1 0 1 0 1 0 1 0 1 0]
+#_(= [1 0 1 0 1 0 1 0 1 0]
    (take 10 (compose (repeat 1)
                      (->series [0 0 1]))))
 
@@ -394,8 +379,7 @@
 
 ;; An example, inverting a series starting with 0:
 
-#_
-(let [f (cons 0 (iterate inc 1))]
+#_(let [f (cons 0 (iterate inc 1))]
   (= [0 1 0 0 0]
      (take 5 (compose f (revert f)))))
 
@@ -411,8 +395,7 @@
 (defn deriv [f]
   (map g/* (rest f) (iterate inc 1)))
 
-#_
-(= [1 2 3 4 5 6] ;; 1 + 2x + 3x^2 + ...
+#_(= [1 2 3 4 5 6] ;; 1 + 2x + 3x^2 + ...
    (take 6 (deriv (repeat 1))))
 
 ;; The definite integral $\int_0^{x}F(t)dt$ is similar. To take the
@@ -427,14 +410,12 @@
 
 ;; With a custom constant term:
 
-#_
-(= [5 1 1 1 1 1]
+#_(= [5 1 1 1 1 1]
    (take 6 (integral (iterate inc 1) 5)))
 
 ;; By default, the constant term is 0:
 
-#_
-(= [0 1 1 1 1 1]
+#_(= [0 1 1 1 1 1]
    (take 6 (integral (iterate inc 1))))
 
 ;; ### Exponentiation
@@ -461,8 +442,7 @@
 
 ;; We can use `expt` to verify that $(1+x)^3$ expands to $1 + 3x + 3x^2 + x^3$:
 
-#_
-(= [1 3 3 1 0]
+#_(= [1 3 3 1 0]
    (take 5 (expt (->series [1 1]) 3)))
 
 ;; ### Square Root of a Series
@@ -502,8 +482,7 @@
 
 ;; And a test that we can recover the naturals:
 
-#_
-(let [xs (iterate inc 1)]
+#_(let [xs (iterate inc 1)]
   (= [1 2 3 4 5 6]
      (take 6 (seq:* (sqrt xs)
                     (sqrt xs)))))
@@ -511,16 +490,14 @@
 ;; We can maintain precision of the first element is the square of a rational
 ;; number:
 
-#_
-(let [xs (iterate inc 9)]
+#_(let [xs (iterate inc 9)]
   (= [9 10 11 12 13 14]
      (take 6 (seq:* (sqrt xs)
                     (sqrt xs)))))
 
 ;; We get a correct result if the sequence starts with 0, 0:
 
-#_
-(let [xs (concat [0 0] (iterate inc 9))]
+#_(let [xs (concat [0 0] (iterate inc 9))]
   (= [0 0 9 10 11 12]
      (take 6 (seq:* (sqrt xs)
                     (sqrt xs)))))
@@ -530,22 +507,19 @@
 ;; Power series computations can encode polynomial computations. Encoding
 ;; $(1-2x^2)^3$ as a power series returns the correct result:
 
-#_
-(= [1 0 -6 0 12 0 -8 0 0 0]
+#_(= [1 0 -6 0 12 0 -8 0 0 0]
    (take 10 (expt (->series [1 0 -2]) 3)))
 
 ;; Encoding $1 \over (1-x)$ returns the power series $1 + x + x^2 + ...$ which
 ;; sums to that value in its region of convergence:
 
-#_
-(= (take 10 (repeat 1))
+#_(= (take 10 (repeat 1))
    (take 10 (div (->series [1])
                  (->series [1 -1]))))
 
 ;; $1 \over (1-x)^2$ is the derivative of the above series:
 
-#_
-(= (take 10 (iterate inc 1))
+#_(= (take 10 (iterate inc 1))
    (take 10 (div (->series [1])
                  (-> (->series [1 -1])
                      (expt 2)))))
@@ -563,8 +537,7 @@
 
 ;; This bare definition is enough to generate the power series for $e^x$:
 
-#_
-(= '(1
+#_(= '(1
      1
      (/ 1 2)
      (/ 1 6)
@@ -583,8 +556,7 @@
 (def sinx (lazy-seq (integral cosx)))
 (def cosx (lazy-seq (c-seq 1 (integral sinx))))
 
-#_
-(= '(0
+#_(= '(0
      1
      0
      (/ -1 6)
@@ -596,8 +568,7 @@
      (/ 1 362880))
    (v/freeze (take 10 sinx)))
 
-#_
-(= '(1
+#_(= '(1
      0
      (/ -1 2)
      0
@@ -651,8 +622,7 @@
 (def catalan
   (lazy-cat [1] (seq:* catalan catalan)))
 
-#_
-(= [1 1 2 5 14 42 132 429 1430 4862]
+#_(= [1 1 2 5 14 42 132 429 1430 4862]
    (take 10 catalan))
 
 ;; ordered trees...
@@ -662,8 +632,7 @@
 (def list' (lazy-cat [1] list'))
 (def forest' (compose list' tree'))
 
-#_
-(= [0 1 1 2 5 14 42 132 429 1430]
+#_(= [0 1 1 2 5 14 42 132 429 1430]
    (take 10 tree'))
 
 ;; The catalan numbers again!

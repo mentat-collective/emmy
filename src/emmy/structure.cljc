@@ -278,8 +278,7 @@
        (-invoke [_ a b c d e f g h i j k l m-arg n o p q r s t]
                 (Structure. orientation (mapv #(% a b c d e f g h i j k l m-arg n o p q r s t) v) m))
        (-invoke [_ a b c d e f g h i j k l m-arg n o p q r s t rest]
-                (Structure. orientation (mapv #(apply % a b c d e f g h i j k l m-arg n o p q r s t rest) v) m))
-       ]))
+                (Structure. orientation (mapv #(apply % a b c d e f g h i j k l m-arg n o p q r s t rest) v) m))]))
 
 #?(:clj
    (defmethod print-method Structure [^Structure s w]

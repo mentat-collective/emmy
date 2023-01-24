@@ -189,8 +189,7 @@
                           (L/coordinate-tuple 'x 'y)
                           (L/momentum-tuple 'p_x 'p_y)))))))
 
-
-  (is (= '(/ (+ (* m (expt r 2) (V r))
+(is (= '(/ (+ (* m (expt r 2) (V r))
                 (* (/ 1 2) (expt p_r 2) (expt r 2))
                 (* (/ 1 2) (expt p_phi 2)))
              (* m (expt r 2)))
@@ -275,8 +274,7 @@
                         (L/coordinate-tuple 'x_1 'x_2)
                         (L/momentum-tuple 'p_1 'p_2))))))
 
-
-  (is (= '(up 0
+(is (= '(up 0
               (up (/ (+ (* m_1 ((D x_1) t)) (* -1 (p_1 t))) m_1)
                   (/ (+ (* m_2 ((D x_2) t)) (* -1 (p_2 t))) m_2))
               (down (+ (* c (x_2 t)) (* k_1 (x_1 t)) ((D p_1) t))
@@ -442,8 +440,7 @@
                 (H/Poisson-bracket HH (H/Poisson-bracket FF GG)))
              (up 't (up 'x 'y) (down 'p_x 'p_y))))))))
 
-
-  (let [Sx (comp (s/component 0) L/coordinate)
+(let [Sx (comp (s/component 0) L/coordinate)
         Sy (comp (s/component 1) L/coordinate)
         Sz (comp (s/component 2) L/coordinate)
 

@@ -5,7 +5,6 @@
   (:refer-clojure :exclude [bigint biginteger double long symbol])
   (:require [clojure.core :as core]
             [clojure.test.check.generators :as gen]
-            [same.ish :as si]
             [emmy.complex :as c]
             [emmy.differential :as d]
             [emmy.generic :as g]
@@ -22,13 +21,13 @@
             [emmy.structure :as s]
             [emmy.util :as u]
             [emmy.util.vector-set :as vs]
-            [emmy.value :as v])
+            [emmy.value :as v]
+            [same.ish :as si])
   #?(:clj
      (:import (clojure.lang Symbol)
               (emmy.structure Structure)
               (emmy.quaternion Quaternion)
               (org.apache.commons.math3.complex Complex))))
-
 
 (def bigint
   "js/BigInt in cljs, clojure.lang.BigInt in clj."

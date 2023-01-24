@@ -1,6 +1,6 @@
 = How to Use Emmy
 
-:uri-QUICKSTART: https://github.com/emmy/emmy#quickstart
+:uri-QUICKSTART: https://github.com/mentat-collective/emmy#quickstart
 
 == Emmy Supported Environments
 
@@ -22,7 +22,7 @@ library.
 Install Emmy into your Clojure(script) project using the instructions at
 its Clojars page:
 
-image::https://img.shields.io/clojars/v/emmy/emmy.svg[caption="Emmy Clojars Project", link="https://clojars.org/emmy/emmy"]
+image::https://img.shields.io/clojars/v/org.mentat/emmy.svg[caption="Emmy Clojars Project", link="https://clojars.org/org.mentat/emmy"]
 
 Initialize the `emmy.env` "Batteries Included" environment at the REPL:
 
@@ -51,7 +51,7 @@ and hitting ``<space>`` in any block, and evaluating the following form:
 ----
 
 Any subsequent ClojureScript block will have every function in
-https://cljdoc.org/d/emmy/emmy/CURRENT/api/emmy.env[``emmy.env``]
+https://cljdoc.org/d/org.mentat/emmy/CURRENT/api/emmy.env[``emmy.env``]
 available.
 
 Visit the https://nextjournal.com/try/samritchie/emmy[Emmy Tutorial on

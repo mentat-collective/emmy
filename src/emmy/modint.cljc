@@ -186,7 +186,7 @@
 (defmethod g/negative? [::modint] [a] (g/negative? (residue a)))
 
 ;; A more efficient exponent implementation is available on the JVM.
-(defmethod g/expt [::v/integral ::modint] [a b](mod-expt a (residue b) (modulus b)))
+(defmethod g/expt [::v/integral ::modint] [a b] (mod-expt a (residue b) (modulus b)))
 (defmethod g/expt [::modint ::v/integral] [a b] (mod-expt (residue a) b (modulus a)))
 
 (defmethod g/solve-linear [::modint ::modint] [a b] (div b a))

@@ -2,13 +2,13 @@
 
 (ns emmy.numerical.ode
   "ODE solvers for working with initial value problems."
-  (:require [emmy.expression.compile :as c]
+  (:require #?(:cljs ["odex" :as o])
             #?(:cljs [emmy.util :as u])
             #?(:cljs [emmy.value :as v])
+            [emmy.expression.compile :as c]
             [emmy.structure :as struct]
             [emmy.util.stopwatch :as us]
-            [taoensso.timbre :as log]
-            #?(:cljs ["odex" :as o]))
+            [taoensso.timbre :as log])
   #?(:clj
      (:import (org.apache.commons.math3.ode.nonstiff GraggBulirschStoerIntegrator)
               (org.apache.commons.math3.ode FirstOrderDifferentialEquations)

@@ -50,8 +50,7 @@
 ;;
 ;; Here is how to use this function to add up the integers from 0 to 9:
 
-#_
-(let [xs (range 10)]
+#_(let [xs (range 10)]
   (= 45 (generic-sum-fold
          (reduce generic-sum-fold (generic-sum-fold) xs))))
 
@@ -98,8 +97,7 @@
         (transduce (map f) fold xs))))))
 
 ;; Our example again:
-#_
-(let [sum (fold->sum-fn generic-sum-fold)
+#_(let [sum (fold->sum-fn generic-sum-fold)
       xs  (range 10)]
   (= 45 (sum xs)))
 
@@ -108,8 +106,7 @@
 ;; This pattern is quite general. Here is example of a fold that (inefficiently)
 ;; computes the average of a sequence of numbers:
 
-#_
-(defn average
+#_(defn average
   ([] [0.0 0])
   ([[sum n]] (/ sum n))
   ([[sum n] x]
@@ -117,8 +114,7 @@
 
 ;; The average of [0,9] is 4.5:
 
-#_
-(let [sum (fold->sum-fn average)]
+#_(let [sum (fold->sum-fn average)]
   (= 4.5 (sum (range 10))))
 
 ;; (I'm not committing this particular implementation because it can overflow
@@ -213,8 +209,7 @@
 ;; For example, the following snippet computes the minimum, maximum and sum
 ;; of `(range 10)`:
 
-#_
-(let [fold (join min max generic-sum-fold)
+#_(let [fold (join min max generic-sum-fold)
       process (fold->sum-fn fold)]
   (= [0 9 45]
      (process (range 10))))
@@ -279,8 +274,7 @@
 ;; vector in the returned (lazy) sequence is the minimum, maximum and running
 ;; total seen up to that point.
 
-#_
-(let [fold (join min max generic-sum-fold)
+#_(let [fold (join min max generic-sum-fold)
       process (fold->scan-fn fold)]
   (i [[0 0 0]
       [0 1 1]
@@ -351,8 +345,7 @@
 
 ;; Voila, using [[kahan]], our example from before now correctly sums to 1.0:
 
-#_
-(= 1.0 ((fold->sum-fn kahan) [1.0 1e-8 -1e-8]))
+#_(= 1.0 ((fold->sum-fn kahan) [1.0 1e-8 -1e-8]))
 
 ;; From the [wiki
 ;; page](https://en.wikipedia.org/wiki/Kahan_summation_algorithm#Further_enhancements),
@@ -364,8 +357,7 @@
 ;; Here is an example of where Kahan fails. The following should be 2.0, but
 ;; Kahan returns 0.0:
 
-#_
-(= 0.0 ((fold->sum-fn kahan) [1.0 1e100 1.0 -1e100]))
+#_(= 0.0 ((fold->sum-fn kahan) [1.0 1e100 1.0 -1e100]))
 
 ;; This improved fold is implemented here:
 
@@ -395,8 +387,7 @@
 
 ;; [[kbn]] returns the correct result for the example above:
 
-#_
-(= 2.0 ((fold->sum-fn kbn) [1.0 1e100 1.0 -1e100]))
+#_(= 2.0 ((fold->sum-fn kbn) [1.0 1e100 1.0 -1e100]))
 
 ;; The [wiki
 ;; page](https://en.wikipedia.org/wiki/Kahan_summation_algorithm#Further_enhancements)

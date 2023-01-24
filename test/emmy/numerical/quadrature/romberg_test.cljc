@@ -2,14 +2,14 @@
 
 (ns emmy.numerical.quadrature.romberg-test
   (:require [clojure.test :refer [is deftest testing]]
-            [same :refer [ish?]]
             [emmy.numerical.quadrature.boole :as qb]
             [emmy.numerical.quadrature.common :as qc]
             [emmy.numerical.quadrature.romberg :as qr]
             [emmy.numerical.quadrature.simpson :as qs]
             [emmy.numerical.quadrature.trapezoid :as qt]
             [emmy.numsymb]
-            [emmy.util :as u]))
+            [emmy.util :as u]
+            [same :refer [ish?]]))
 
 (defn gaussian [x]
   (* (/ 1 (Math/sqrt Math/PI))

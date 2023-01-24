@@ -92,7 +92,6 @@
         flat  (m/lower metric)]
     (f/compose sharp star ff/d flat)))
 
-
 (def ^{:doc "Operator that takes a function `f` and returns a function that
   calculates the [Vector
   Laplacian](https://en.wikipedia.org/wiki/Laplace_operator#Vector_Laplacian) of

@@ -2,11 +2,11 @@
 
 (ns emmy.numerical.quadrature.midpoint-test
   (:require [clojure.test :refer [is deftest testing]]
-            [same :refer [ish?]]
             [emmy.numerical.quadrature.midpoint :as qm]
             [emmy.numerical.quadrature.riemann :as qr]
             [emmy.numsymb]
-            [emmy.util :as u]))
+            [emmy.util :as u]
+            [same :refer [ish?]]))
 
 (deftest midpoint-tests
   (testing "midpoint-sum does the job"

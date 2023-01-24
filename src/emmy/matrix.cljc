@@ -866,7 +866,7 @@
    (dec (num-rows m))
    (dec (num-cols m))
    (mapv #(delete % j)
-         (delete (matrix->vector m) i))) )
+         (delete (matrix->vector m) i))))
 
 (defn- checkerboard-negate [s i j]
   (if (even? (+ i j))

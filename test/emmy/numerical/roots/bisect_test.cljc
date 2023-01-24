@@ -2,11 +2,11 @@
 
 (ns emmy.numerical.roots.bisect-test
   (:require [clojure.test :refer [is deftest testing]]
-            [same :refer [ish?] :include-macros true]
             [emmy.generic :as g]
             [emmy.numbers]
             [emmy.numerical.roots.bisect :as bi]
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [same :refer [ish?] :include-macros true]))
 
 (deftest bisect-tests
   (doseq [method bi/all-methods]

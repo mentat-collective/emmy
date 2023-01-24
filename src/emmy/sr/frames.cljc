@@ -62,7 +62,6 @@
                      origin))]
       (make-SR-coordinates this-frame coords))))
 
-
 (let [make (cf/frame-maker coordinates->event event->coordinates)]
   (defn make-SR-frame [name ancestor-frame boost-direction v-over-c origin]
     (make name ancestor-frame

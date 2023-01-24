@@ -141,7 +141,6 @@
       (is (= '(+ (* -1 a m (expt ω 2) (cos (+ (* t ω) φ))) (* a k (cos (+ (* t ω) φ))))
              (simplify (((Lagrange-equations (L/L-harmonic 'm 'k)) proposed-solution) 't)))))))
 
-
 (deftest section-1-6
   (e/with-literal-functions [x y r θ φ U y_s]
     (let [L-alternate-central-polar (fn [m U]

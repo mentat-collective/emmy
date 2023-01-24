@@ -48,11 +48,11 @@
 ;; called "forward-mode [Automatic
 ;; Differentiation](https://en.wikipedia.org/wiki/Automatic_differentiation)".
 ;; The [Emmy
-;; wiki](https://github.com/emmy/emmy/wiki/Automatic-Differentiation)
+;; wiki](https://github.com/mentat-collective/emmy/wiki/Automatic-Differentiation)
 ;; has more information on the history of this technique, and links to the many
 ;; other implementations you'll find in different languages. See the [cljdocs
 ;; Automatic Differentiation
-;; page](https://cljdoc.org/d/emmy/emmy/CURRENT/doc/calculus/automatic-differentiation)
+;; page](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/calculus/automatic-differentiation)
 ;; for "how do I use this?"-style questions.
 ;;
 ;; NOTE: The other flavor of automatic differentiation (AD) is "reverse-mode
@@ -1175,7 +1175,7 @@
   That means that this is NOT an appropriate lifting method for an n-ary
   function that isn't built out of associative binary calls. If you need this
   ability, please file an issue at the [emmy issue
-  tracker](https://github.com/emmy/emmy/issues)."
+  tracker](https://github.com/mentat-collective/emmy/issues)."
   [f df:dx df:dx1 df:dx2]
   (let [f1 (lift-1 f df:dx)
         f2 (lift-2 f df:dx1 df:dx2)]

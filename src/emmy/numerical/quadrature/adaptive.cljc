@@ -78,7 +78,6 @@
 ;; of introducing open endpoints at every subdivision. All internal intervals
 ;; that don't touch an open endpoint are considered closed.
 
-
 (defn- fill-defaults
   "Populates the supplied `opts` dictionary with defaults required by `adaptive`.
   Two of these have values controlled by dynamic variables in `adaptive.cljc`."

@@ -5,7 +5,7 @@
   extensions of the Emmy generic operations to functions.
 
   See [the `Function`
-  cljdocs](https://cljdoc.org/d/emmy/emmy/CURRENT/doc/data-types/function)
+  cljdocs](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/data-types/function)
   for a discussion of generic function arithmetic."
   (:refer-clojure :exclude [get get-in memoize])
   (:require [clojure.core :as core]

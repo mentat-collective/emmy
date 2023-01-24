@@ -1,9 +1,9 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
 (ns emmy.polynomial.gcd
-  (:require [clojure.set :as cs]
+  (:require #?(:cljs [goog.string :refer [format]])
+            [clojure.set :as cs]
             [clojure.string :as string]
-            #?(:cljs [goog.string :refer [format]])
             [emmy.generic :as g]
             [emmy.polynomial :as p]
             [emmy.polynomial.exponent :as xpt]

@@ -4,7 +4,6 @@
   (:require [clojure.test :refer [is deftest testing]]
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
-            [same :refer [ish?] :include-macros true]
             [emmy.abstract.number :as an]
             [emmy.calculus.derivative :refer [D]]
             [emmy.differential :as sd]
@@ -21,7 +20,8 @@
             [emmy.series :as ss]
             [emmy.simplify]
             [emmy.util :as u]
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [same :refer [ish?] :include-macros true]))
 
 (deftest impl-tests
   (testing "tests of polynomial backing impl"
@@ -897,7 +897,7 @@
             (is  (= p (-> (p/extend p 0)
                           (p/contract 0)))
                  "extending creates an empty index, and contracting removes
- it.")) )
+ it.")))
 
 (deftest poly-partial-derivatives
   (testing "partial-derivative with constants"

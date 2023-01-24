@@ -333,7 +333,7 @@
 
   (coords->point [this coords]
     "Returns the manifold point on this [[ICoordinateSystem]]'s manifold
-    corresponding to the supplied `coords`." )
+    corresponding to the supplied `coords`.")
 
   (point->coords [this point]
     "Returns a coordinate representation of the supplied manifold point `point`,
@@ -1056,7 +1056,6 @@ codebase compatibility."}
            (with-meta {::coord-prototype coordinate-prototype
                        ::manifold manifold}))))))
 
-
 (defn- ->Euler-chart
   "Returns an [[ICoordinateSystem]] instance that converts between `manifold`
   points and the [Euler angles](https://en.wikipedia.org/wiki/Euler_angles) for
@@ -1124,7 +1123,7 @@ codebase compatibility."}
                   (or (not (v/number? (nth coords 0)))
                       (< (/ Math/PI -2)
                          (nth coords 0)
-                         (/ Math/PI 2) ))))
+                         (/ Math/PI 2)))))
 
            (check-point [_ point]
              (my-manifold-point? point manifold))

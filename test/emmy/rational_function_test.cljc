@@ -106,7 +106,7 @@
                                   nil)
            (rf/make (p/identity)
                     (c/complex -1 10)))
-        "complex denominator is negated, since its real part is negative.")) )
+        "complex denominator is negated, since its real part is negative.")))
 
 (deftest rational-function-tests
   (testing "rf/make constructor tests"
@@ -125,8 +125,7 @@
       all denominators are processed out, including rational coefficient
       denominators.")
 
-    (let [
-          ;; constant arity 1 polynomial
+    (let [;; constant arity 1 polynomial
           p #(p/make 1 [[[0] %]])
 
           ;; ratio of constant arity 1 polynomials
@@ -178,7 +177,7 @@
 
 (deftest rf-arithmetic
   (testing "rational functions forms a field"
-    (let[rf-gen (sg/rational-function
+    (let [rf-gen (sg/rational-function
                  1
                  {:coeffs sg/rational}
                  {:coeffs sg/rational})]

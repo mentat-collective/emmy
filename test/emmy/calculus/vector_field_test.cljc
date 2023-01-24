@@ -3,7 +3,6 @@
 (ns emmy.calculus.vector-field-test
   (:refer-clojure :exclude [+ - * / partial])
   (:require [clojure.test :refer [is deftest testing use-fixtures]]
-            [same :refer [ish?]]
             [emmy.abstract.function :as af]
             [emmy.calculus.basis :as b]
             [emmy.calculus.coordinate :refer [let-coordinates]]
@@ -13,7 +12,8 @@
             [emmy.operator :as o]
             [emmy.simplify :refer [hermetic-simplify-fixture]]
             [emmy.structure :refer [up down]]
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [same :refer [ish?]]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 
@@ -203,8 +203,7 @@
                  (simplify
                   ((vf/vector-field->components A R3-rect) (up 'x 'y 'z)))))
 
-
-          ;; This disagrees with McQuistan.  Explanation follows.
+;; This disagrees with McQuistan.  Explanation follows.
 
           (is (= '(up (* -1 y) x 0)
                  (simplify
@@ -258,7 +257,7 @@
                ((vf/vector-field->components d:dy R3-cyl)
                 (up 1 0 0))))
 
-        (is (= '(up (sin theta0) (/ (cos theta0) r0)0)
+        (is (= '(up (sin theta0) (/ (cos theta0) r0) 0)
                (simplify
                 ((vf/vector-field->components d:dy R3-cyl)
                  (up 'r0 'theta0 'z)))))))))

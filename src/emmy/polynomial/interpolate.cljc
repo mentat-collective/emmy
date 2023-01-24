@@ -178,8 +178,7 @@
 
   entry `N` in the returned sequence is the estimate using a polynomial
   generated from the first `N` points of the input sequence."
-    [_points _x]
-    ,,,))
+    [_points _x]))
 ;;
 ;; First, write a function to process each initial point into a vector that
 ;; contains each of those required elements:
@@ -291,7 +290,7 @@
                     (lagrange-incremental points 'x))]
     (every? zero? diffs))
   ;; => true
-  )
+)
 
 ;; ## Generic Tableau Processing
 ;;

@@ -6,7 +6,6 @@
             [clojure.test :refer [is deftest testing use-fixtures]]
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
-            [same :refer [ish?]]
             [emmy.abstract.number :refer [literal-number]]
             [emmy.calculus.manifold :as m]
             [emmy.function :as f :refer [compose]]
@@ -15,7 +14,8 @@
             [emmy.simplify :refer [hermetic-simplify-fixture]]
             [emmy.structure :refer [up]]
             [emmy.util :as u]
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [same :refer [ish?]]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 

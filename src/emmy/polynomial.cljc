@@ -1166,7 +1166,6 @@
 ;; polynomials over a [unique factorization
 ;; domain](https://en.wikipedia.org/wiki/Unique_factorization_domain) (UFD)."
 
-
 #?(:cljs
    (defn- ->big
      "ClojureScript multiplication doesn't autopromote; we expect large values

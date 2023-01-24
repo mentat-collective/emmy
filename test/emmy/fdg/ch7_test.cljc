@@ -3,7 +3,6 @@
 (ns emmy.fdg.ch7-test
   (:refer-clojure :exclude [+ - * / zero? ref partial])
   (:require [clojure.test :refer [is deftest testing use-fixtures]]
-            [same :refer [ish? with-comparator] :include-macros true]
             [emmy.calculus.curvature-test :refer [S2-Christoffel]]
             [emmy.env :as e :refer [+ - * / zero?
                                     D d
@@ -14,7 +13,8 @@
                                     let-coordinates]]
             [emmy.operator :as o]
             [emmy.simplify :refer [hermetic-simplify-fixture]]
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [same :refer [ish? with-comparator] :include-macros true]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 

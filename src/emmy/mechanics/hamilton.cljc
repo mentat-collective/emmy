@@ -3,13 +3,13 @@
 (ns emmy.mechanics.hamilton
   (:refer-clojure :exclude [+ - * /  partial])
   (:require [clojure.core :as core]
-            [pattern.rule :as r]
             [emmy.calculus.derivative :refer [D D-as-matrix partial]]
             [emmy.function :as f]
             [emmy.generic :as g :refer [sin cos + - * /]]
             [emmy.matrix :as matrix]
             [emmy.mechanics.lagrange :as l]
             [emmy.operator :as o]
+            [emmy.pattern.rule :as r]
             [emmy.structure :as s :refer [up]]
             [emmy.value :as v]))
 

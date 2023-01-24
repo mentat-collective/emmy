@@ -16,12 +16,12 @@
   how to proceed here."
   (:refer-clojure :exclude [even? odd?])
   (:require [clojure.set :as cs]
-            [pattern.match :as pm]
-            [pattern.rule :as r :refer [=> ruleset rule-simplifier]]
             [emmy.complex :as c]
             [emmy.expression :as x]
             [emmy.generic :as g]
             [emmy.numsymb :as sym]
+            [emmy.pattern.match :as pm]
+            [emmy.pattern.rule :as r :refer [=> ruleset rule-simplifier]]
             [emmy.util.logic :as ul]
             [emmy.value :as v]))
 
@@ -1123,27 +1123,27 @@ out of the first term of the argument."}
 (def trig:sum->product
   (rule-simplifier
    (ruleset
-    (+ ??a (sin ?x) ??b (sin ?y) ??c )
+    (+ ??a (sin ?x) ??b (sin ?y) ??c)
     => (+ (* 2 (sin (/ (+ ?x ?y) 2)) (cos (/ (- ?x ?y) 2)))
           ??a ??b ??c)
 
-    (+ ??a (sin ?x) ??b (* -1 (sin ?y)) ??c )
+    (+ ??a (sin ?x) ??b (* -1 (sin ?y)) ??c)
     => (+ (* 2 (sin (/ (- ?x ?y) 2)) (cos (/ (+ ?x ?y) 2)))
           ??a ??b ??c)
 
-    (+ ??a (* -1 (sin ?y)) ??b (sin ?x) ??c )
+    (+ ??a (* -1 (sin ?y)) ??b (sin ?x) ??c)
     => (+ (* 2 (sin (/ (- ?x ?y) 2)) (cos (/ (+ ?x ?y) 2)))
           ??a ??b ??c)
 
-    (+ ??a (cos ?x) ??b (cos ?y) ??c )
+    (+ ??a (cos ?x) ??b (cos ?y) ??c)
     => (+ (* 2 (cos (/ (+ ?x ?y) 2)) (cos (/ (- ?x ?y) 2)))
           ??a ??b ??c)
 
-    (+ ??a (cos ?x) ??b (* -1 (cos ?y)) ??c )
+    (+ ??a (cos ?x) ??b (* -1 (cos ?y)) ??c)
     => (+ (* -2 (sin (/ (+ ?x ?y) 2)) (sin (/ (- ?x ?y) 2)))
           ??a ??b ??c)
 
-    (+ ??a (* -1 (cos ?y)) ??b (cos ?x) ??c )
+    (+ ??a (* -1 (cos ?y)) ??b (cos ?x) ??c)
     => (+ (* -2 (sin (/ (+ ?x ?y) 2)) (sin (/ (- ?x ?y) 2)))
           ??a ??b ??c))))
 

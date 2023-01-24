@@ -392,7 +392,7 @@
 
 (defn- emc-u-d
   "Internal helper to set constants for [[Jacobi-elliptic-functions]].
-  "[emc u d]
+  " [emc u d]
   (let [bo (< emc 0.0)]
     (if bo
       (let [d (- 1. emc)

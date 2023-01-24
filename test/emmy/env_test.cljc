@@ -3,7 +3,6 @@
 (ns emmy.env-test
   (:refer-clojure :exclude [+ - * / zero? partial ref])
   (:require [clojure.test :refer [is deftest testing]]
-            [same :refer [ish?] :include-macros true]
             [emmy.complex :as c]
             [emmy.env :as e :refer [+ * /  partial ref
                                     complex
@@ -16,7 +15,8 @@
                                     cot csc sec]]
             [emmy.matrix :as matrix]
             [emmy.operator :as o]
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [same :refer [ish?] :include-macros true]))
 
 (deftest constant-tests
   (is (ish? e/euler (e/exp 1))

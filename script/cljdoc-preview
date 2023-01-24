@@ -10,9 +10,9 @@ lein install
 echo "---- cljdoc preview: ingesting emmy"
 docker run --rm -v "$PWD:/emmy" \
        -v "$HOME/.m2:/root/.m2" -v /tmp/cljdoc:/app/data --entrypoint "clojure" \
-       cljdoc/cljdoc -A:cli ingest -p emmy/emmy -v "$version" \
+       cljdoc/cljdoc -A:cli ingest -p org.mentat/emmy -v "$version" \
        --git /emmy
 
 echo "---- cljdoc preview: starting server on port 8000"
-echo "visit to http://localhost:8000/d/emmy/emmy/$version"
+echo "visit to http://localhost:8000/d/org.mentat/emmy/$version"
 docker run --rm -p 8000:8000 -v /tmp/cljdoc:/app/data cljdoc/cljdoc

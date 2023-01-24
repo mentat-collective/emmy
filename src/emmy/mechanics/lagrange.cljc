@@ -2,13 +2,13 @@
 
 (ns emmy.mechanics.lagrange
   (:refer-clojure :exclude [+ - * / partial time])
-  (:require [pattern.rule :as r]
-            [emmy.calculus.derivative :refer [D partial]]
+  (:require [emmy.calculus.derivative :refer [D partial]]
             [emmy.function :as f :refer [compose]]
             [emmy.generic :as g :refer [cos sin + - * /]]
             [emmy.numerical.minimize :as m]
             [emmy.numerical.quadrature :as q]
             [emmy.operator :as o]
+            [emmy.pattern.rule :as r]
             [emmy.polynomial :as p]
             [emmy.structure :as s :refer [down up up?]]))
 
@@ -233,7 +233,7 @@
   (fn [[_ [r] [rdot phidot]]]
     (+ (* (/ 1 2) m
           (+ (g/square rdot)
-             (g/square (* r phidot))) )
+             (g/square (* r phidot))))
        (/ (* GM m) r))))
 
 (defn L-axisymmetric-top [A C gMR]

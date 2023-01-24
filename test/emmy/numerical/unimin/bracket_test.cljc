@@ -4,13 +4,13 @@
   (:require [clojure.test :refer [is deftest testing]]
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
-            [same :refer [ish? with-comparator] :include-macros true]
             [emmy.calculus.derivative :refer [D]]
             [emmy.function]
             [emmy.generic :as g]
             [emmy.numerical.unimin.bracket :as b]
             [emmy.polynomial.interpolate :as pi]
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [same :refer [ish? with-comparator] :include-macros true]))
 
 (def point
   ;; Generator of [x, (f x)] points.

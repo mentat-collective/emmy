@@ -188,7 +188,6 @@
        (u/unsupported (str "`extract-tangent` not supported for type " t "."))
        (u/map-vals #(d/extract-tangent % tag) m)))))
 
-
 ;; ## Sets
 ;;
 ;; Emmy treats Clojure's set data structure as a monoid, with set union as

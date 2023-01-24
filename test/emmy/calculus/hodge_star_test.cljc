@@ -169,8 +169,7 @@
                      (* (m/literal-scalar-field 'beta R3-rect) dy)
                      (* (m/literal-scalar-field 'gamma R3-rect) dz))
 
-
-            present (fn [expr]
+present (fn [expr]
                       (-> (simplify expr)
                           (x/substitute '(up x0 y0 z0) 'p)))]
         (is (= 0 (simplify
@@ -529,7 +528,7 @@
                      SR-point))))
 
           ;; Other rotations of variables are all similar.
-          )))))
+)))))
 
 (defn ip
   "Claim: this is the interior product in a metric space."
@@ -659,8 +658,7 @@
                          (simplify
                           (((SR-star four-current) d:dx d:dy d:dz) an-event))))
 
-
-                  (is (= '(/ (* -1 (Ix (up t0 x0 y0 z0))) c)
+(is (= '(/ (* -1 (Ix (up t0 x0 y0 z0))) c)
                          (simplify
                           (((SR-star four-current)
                             (* (/ 1 c) d:dt) d:dy d:dz)

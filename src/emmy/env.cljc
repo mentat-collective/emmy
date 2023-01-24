@@ -1,7 +1,7 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
 (ns emmy.env
-  "Batteries-included namespace for the [Emmy](https://github.com/emmy/emmy/) library.
+  "Batteries-included namespace for the [Emmy](https://github.com/mentat-collective/emmy/) library.
 
   The purpose of [[emmy.env]] is to bundle all of the functions used
   in [Structure and Interpretation of Classical

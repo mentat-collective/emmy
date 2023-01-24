@@ -2,8 +2,8 @@
 
 (ns emmy.util.permute
   "Utilities for generating permutations of sequences."
-  (:require [emmy.special.factorial :as sf]
-            #?(:cljs [emmy.generic :as g]))
+  (:require #?(:cljs [emmy.generic :as g])
+            [emmy.special.factorial :as sf])
   #?(:clj
      (:import (clojure.lang APersistentVector))))
 
@@ -235,13 +235,12 @@
                        :else ;; P5. [Change.]
                        (let [i1 (+ s (- j (aget c j)))
                              i2 (+ s (- j q))
-                             t (aget a i1)
-                             ]
+                             t (aget a i1)]
                          (aset a i1 (aget a i2))
                          (aset a i2 t)
                          (aset c j q)
                          true ;; More permutations are forthcoming.
-                         ))))]
+))))]
     (#?(:clj iterator-seq :cljs #'cljs.core/chunkIteratorSeq)
      (reify #?(:clj java.util.Iterator :cljs Object)
        (hasNext [_] @has-next)

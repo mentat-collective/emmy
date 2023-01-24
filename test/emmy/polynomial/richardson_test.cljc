@@ -2,12 +2,12 @@
 
 (ns emmy.polynomial.richardson-test
   (:require [clojure.test :refer [is deftest testing]]
-            [same :refer [ish?]]
             [emmy.numbers]
             [emmy.polynomial.interpolate :as pi]
             [emmy.polynomial.richardson :as pr]
             [emmy.util.stream :as us]
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [same :refer [ish?]]))
 
 (deftest richardson-limit-tests
   (let [pi-seq pr/archimedean-pi-sequence]

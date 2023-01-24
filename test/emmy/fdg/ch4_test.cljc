@@ -275,7 +275,7 @@
           e_z d:dphi
 
           f (literal-manifold-function 'f-Euler Euler-angles)
-          SO3-point((point Euler-angles) (up 'theta 'phi 'psi))]
+          SO3-point ((point Euler-angles) (up 'theta 'phi 'psi))]
       (testing "page 51, part 2"
         (is (zero?
              (simplify

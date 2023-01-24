@@ -3,7 +3,6 @@
 (ns emmy.numerical.quadrature.milne-test
   (:refer-clojure :exclude [+ - * /])
   (:require [clojure.test :refer [is deftest testing use-fixtures]]
-            [same :refer [ish?]]
             [emmy.abstract.function :as f]
             [emmy.generic :as g :refer [+ - * /]]
             [emmy.numerical.quadrature.midpoint :as mid]
@@ -11,7 +10,8 @@
             [emmy.numsymb]
             [emmy.simplify :as s :refer [hermetic-simplify-fixture]]
             [emmy.util :as u]
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [same :refer [ish?]]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 

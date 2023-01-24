@@ -5,7 +5,6 @@
   (:require [clojure.test :refer [is deftest testing use-fixtures]]
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
-            [same :refer [ish?]]
             [emmy.abstract.function :as f]
             [emmy.calculus.derivative :refer [D partial]]
             [emmy.function :refer [I arity]]
@@ -14,7 +13,8 @@
             [emmy.operator :as o]
             [emmy.simplify :refer [hermetic-simplify-fixture]]
             [emmy.structure :refer [down]]
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [same :refer [ish?]]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 

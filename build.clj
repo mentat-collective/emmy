@@ -4,7 +4,7 @@
 
 ;; ## Variables
 
-(def lib 'emmy/emmy)
+(def lib 'org.mentat/emmy)
 (def version (slurp "resources/EMMY_VERSION"))
 
 (defn- ->version
@@ -36,14 +36,19 @@
   [{:keys [version-suffix] :as opts}]
   (let [version  (->version version-suffix)
         jar-file (->jar-file version)]
-    (b/write-pom {:class-dir class-dir
-                  :lib lib
-                  :version version
-                  :scm {:tag (str "v" version)}
-                  :basis basis
-                  :src-pom "template/pom.xml"
-                  :src-dirs ["src"]
-                  :resource-dirs ["resources"]})
+    (b/write-pom
+     {:class-dir class-dir
+      :lib lib
+      :version version
+      :scm
+      {:tag (str "v" version)
+       :connection "scm:git:git://github.com/mentat-collective/emmy.git"
+       :developConnection "scm:git:ssh://git@github.com/mentat-collect/emmy.git"
+       :url "https://github.com/mentat-collective/emmy"}
+      :basis basis
+      :src-pom "template/pom.xml"
+      :src-dirs ["src"]
+      :resource-dirs ["resources"]})
     (doseq [f ["README.md" "LICENSE" "deps.edn"]]
       (b/copy-file {:src f :target (format "%s/%s" class-dir f)}))
     (b/copy-dir {:src-dirs ["src" "resources"]

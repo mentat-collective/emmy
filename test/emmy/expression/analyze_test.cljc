@@ -59,4 +59,4 @@
       (reset-tables!)
 
       (is (= '{} (get-tables))
-          "After an explicit reset the tables are empty again.") )))
+          "After an explicit reset the tables are empty again."))))

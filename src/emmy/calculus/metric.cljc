@@ -236,7 +236,7 @@
   [metric-tensor basis]
   (let [gi (invert metric-tensor basis)]
     (fn [tensor02]
-      (letfn[(v2 [omega1 omega2]
+      (letfn [(v2 [omega1 omega2]
                (b/contract
                 (fn [e1 w1]
                   (b/contract
@@ -283,7 +283,6 @@
       (ci/with-argument-types
         f
         [::v/function]))))
-
 
 ;; Unfortunately raise is very expensive because the matrix is
 ;; inverted for each manifold point.

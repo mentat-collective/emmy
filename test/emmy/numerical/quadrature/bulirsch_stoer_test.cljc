@@ -2,9 +2,9 @@
 
 (ns emmy.numerical.quadrature.bulirsch-stoer-test
   (:require [clojure.test :refer [is deftest testing]]
-            [same :refer [ish?]]
             [emmy.numerical.quadrature.bulirsch-stoer :as bs]
-            [emmy.numerical.quadrature.romberg-test :as rom]))
+            [emmy.numerical.quadrature.romberg-test :as rom]
+            [same :refer [ish?]]))
 
 (deftest open-bulirsch-stoer-tests
   (testing "Bulirsch-Stoer integration over an open interval converges."

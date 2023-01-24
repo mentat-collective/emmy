@@ -48,8 +48,8 @@
    emmy.util.def/import-def hooks.emmy.util.def/import-def
    emmy.util.def/import-macro hooks.emmy.util.def/import-def
 
-   pattern.rule/consequence hooks.pattern.rule/consequence
-   pattern.rule/pattern hooks.pattern.rule/pattern
-   pattern.rule/rule hooks.pattern.rule/rule
-   pattern.rule/ruleset hooks.pattern.rule/ruleset
-   pattern.rule/template hooks.pattern.rule/template}}}
+   emmy.pattern.rule/consequence hooks.emmy.pattern.rule/consequence
+   emmy.pattern.rule/pattern hooks.emmy.pattern.rule/pattern
+   emmy.pattern.rule/rule hooks.emmy.pattern.rule/rule
+   emmy.pattern.rule/ruleset hooks.emmy.pattern.rule/ruleset
+   emmy.pattern.rule/template hooks.emmy.pattern.rule/template}}}

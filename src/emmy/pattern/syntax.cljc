@@ -1,8 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
-(ns pattern.syntax
+(ns emmy.pattern.syntax
   "The syntax namespace defines the default syntax for patterns corresponding to
-  the matcher combinators defined in [[pattern.match]]."
+  the matcher combinators defined in [[emmy.pattern.match]]."
   (:require [emmy.util :as u]))
 
 ;; ### Notes

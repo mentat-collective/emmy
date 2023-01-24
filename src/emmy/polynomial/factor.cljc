@@ -4,10 +4,10 @@
   "This namespace contains functions for factoring polynomials and symbolic
   expressions."
   (:require [clojure.walk :as w]
-            [pattern.rule :as r :refer [=> rule-simplifier]]
             [emmy.expression :as x]
             [emmy.expression.analyze :as a]
             [emmy.numsymb :as sym]
+            [emmy.pattern.rule :as r :refer [=> rule-simplifier]]
             [emmy.polynomial :as poly]
             [emmy.polynomial.gcd :refer [gcd gcd-Dp]]
             [emmy.simplify.rules :as rules]

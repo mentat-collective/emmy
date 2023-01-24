@@ -2,13 +2,13 @@
 
 (ns emmy.polynomial.interpolate-test
   (:require [clojure.test :refer [is deftest testing use-fixtures]]
-            [same :refer [ish?] :include-macros true]
             [emmy.generic :as g]
             [emmy.numsymb]
             [emmy.polynomial.gcd :as pg]
             [emmy.polynomial.interpolate :as pi]
             [emmy.simplify :as s :refer [hermetic-simplify-fixture]]
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [same :refer [ish?] :include-macros true]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 

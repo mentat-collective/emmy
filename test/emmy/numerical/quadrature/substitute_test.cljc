@@ -2,11 +2,11 @@
 
 (ns emmy.numerical.quadrature.substitute-test
   (:require [clojure.test :refer [is deftest testing]]
-            [same :refer [ish? with-comparator] :include-macros true]
             [emmy.numerical.quadrature.romberg :as qr]
             [emmy.numerical.quadrature.simpson :as simp]
             [emmy.numerical.quadrature.substitute :as qs]
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [same :refer [ish? with-comparator] :include-macros true]))
 
 (deftest infinitize-tests
   (testing "volume of Gabriel's Horn (https://en.wikipedia.org/wiki/Gabriel%27s_Horn)"

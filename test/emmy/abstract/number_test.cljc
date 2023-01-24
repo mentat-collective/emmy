@@ -1,20 +1,20 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
 (ns emmy.abstract.number-test
-  (:require [clojure.test :refer [is deftest testing]]
+  (:require #?(:cljs [emmy.ratio :as r])
+            [clojure.test :refer [is deftest testing]]
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
-            [pattern.rule :as rule :refer [=>]]
-            [same :refer [ish?]]
             [emmy.abstract.number :as an]
             [emmy.complex :as c]
             [emmy.expression :as x]
             [emmy.generators :as sg]
             [emmy.generic :as g]
             [emmy.numsymb :as sym]
-            #?(:cljs [emmy.ratio :as r])
+            [emmy.pattern.rule :as rule :refer [=>]]
             [emmy.simplify :as simpl]
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [same :refer [ish?]]))
 
 (def gen-literal-element
   (gen/one-of [sg/real sg/complex gen/symbol]))

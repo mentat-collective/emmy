@@ -21,7 +21,7 @@
 === How should I configure Emacs?
 
 The Emmy repository includes a
-https://github.com/emmy/emmy/blob/main/.dir-locals.el[dir-locals.el]
+https://github.com/mentat-collective/emmy/blob/main/.dir-locals.el[dir-locals.el]
 file with a few variable settings that improve the Emacs experience with
 Emmy.
 
@@ -37,6 +37,6 @@ Setting CIDER's print function to ``expression->stream`` will cause the REPL to
 automatically simplify forms before rendering them.
 
 ``expression->stream`` currently uses ``clojure.pprint`` to print simplified
-values. Once https://github.com/emmy/emmy/issues/519[#519] is
+values. Once https://github.com/mentat-collective/emmy/issues/519[#519] is
 completed, the ``pprint`` call will be replaced by a call you can bind to
 ``prn``, ``zprint`` or any other preferred printer.

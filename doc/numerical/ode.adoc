@@ -24,7 +24,7 @@ used can be set by the user:
 
 WARNING: In Emmy we currently only support the Gragg-Bulirsch-Stoer
 algorithm. If you need any of the others, please
-https://github.com/emmy/emmy/pulls[file a PR] and we can
+https://github.com/mentat-collective/emmy/pulls[file a PR] and we can
 discuss how to get these in for you.
 
 The integration methods all automatically select the step sizes to maintain the

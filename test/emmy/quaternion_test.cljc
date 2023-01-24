@@ -4,7 +4,6 @@
   (:require [clojure.test :refer [is deftest testing use-fixtures]]
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
-            [same :refer [ish? with-comparator] :include-macros true]
             [emmy.calculus.derivative :refer [D]]
             [emmy.complex :as sc]
             [emmy.function :as f]
@@ -16,7 +15,8 @@
             [emmy.simplify]
             [emmy.structure :as s]
             [emmy.util.logic :as ul]
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [same :refer [ish? with-comparator] :include-macros true]))
 
 (use-fixtures :each
   (fn [thunk]
@@ -535,8 +535,7 @@
                      (g/dot-product x-complex x-complex))
                   "quaternion dots with complex")
 
-
-              (is (= (g/dot-product x x-real)
+(is (= (g/dot-product x x-real)
                      (g/dot-product x-real x)
                      (g/dot-product x-real x-real))
                   "quaternion dots with real"))
@@ -747,7 +746,7 @@
       (doseq [x [(q/make 2 0 0 0)
                  (q/make 2 2 0 0)
                  (q/make 2 2 2 0)
-                 (q/make 1 1 1 1 )]]
+                 (q/make 1 1 1 1)]]
         (is (ish? q/ONE
                   (g/+ (g/square (g/cos x))
                        (g/square (g/sin x))))))))
@@ -885,7 +884,7 @@
                    (first
                     (q/->complex-matrix x)))
                 "The first row of the associated complex matrix matches
-                ->complex-pair.")) )
+                ->complex-pair.")))
 
 (deftest four-by-four-matrix-tests
   (checking "to and from 4x4 matrices" 100 [x (sg/quaternion)]

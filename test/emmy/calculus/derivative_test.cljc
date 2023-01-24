@@ -3,7 +3,6 @@
 (ns emmy.calculus.derivative-test
   (:refer-clojure :exclude [+ - * / partial])
   (:require [clojure.test :refer [is deftest testing use-fixtures]]
-            [same :refer [ish? with-comparator] :include-macros true]
             [emmy.abstract.function :as af]
             [emmy.abstract.number :refer [literal-number]]
             [emmy.calculus.derivative :as d :refer [D partial]]
@@ -21,7 +20,8 @@
             [emmy.simplify :refer [hermetic-simplify-fixture]]
             [emmy.structure :as s]
             [emmy.util :as u]
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [same :refer [ish? with-comparator] :include-macros true]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 
@@ -240,12 +240,10 @@
                    (* (η t) ((D g) (q t))))
                (simplify (((δη (+ F G)) q) 't)))))
 
-
-      (testing "scalar product rule for variation: δ(cF) = cδF"
+(testing "scalar product rule for variation: δ(cF) = cδF"
         (is (= '(* c (η t) ((D f) (q t))) (simplify (((δη (* 'c F)) q) 't)))))
 
-
-      (testing "product rule for variation: δ(FG) = δF G + F δG"
+(testing "product rule for variation: δ(FG) = δF G + F δG"
         (is (= (simplify (+ (* (((δη F) q) 't) ((G q) 't))
                             (* ((F q) 't) (((δη G) q) 't))))
                (simplify (((δη (* F G)) q) 't)))))
@@ -778,7 +776,6 @@
   (let [odear (fn [z] ((D (f/compose sin cos)) z))]
     (is (= '(* -1 (cos (cos x)) (sin x)) (simplify (odear 'x))))))
 
-
 ;; Tests from the refman that came about while implementing various derivative
 ;; and operator functions.
 
@@ -941,7 +938,7 @@
       ;; RETURNS a function with a captured tag (say, `0`). The buggy approach
       ;; to a functional return value was to re-wrap the returned function in a
       ;; new function that extracted the original tag. That code
-      ;; lived [here](https://github.com/emmy/emmy/blob/9b4f9c5983cd0f9b209ef27036bc2dbb8f7ffb1c/src/emmy/calculus/derivative.cljc#L233).
+      ;; lived [here](https://github.com/mentat-collective/emmy/blob/9b4f9c5983cd0f9b209ef27036bc2dbb8f7ffb1c/src/emmy/calculus/derivative.cljc#L233).
       ;;
       ;; The reason this is a bug is that both instances of `f-hat` attempted to
       ;; extract the same tag `0`. The outer call saw no tangent associated with
@@ -1097,7 +1094,7 @@
 
         ;; Before the fix, every call to `D` generated (and froze, closed over)
         ;; a new tag. Now every invocation generates a new tag.
-        )))
+)))
 
   (testing "more subtle amazing bug!"
     ;; Here's an example of a variant on the bug above that shows why the
@@ -1152,7 +1149,7 @@
     ;; in will stay tagged as `old` if it happens to leak out of this level, and
     ;; stay tagged as `fresh` internally so it can never get confused if someone
     ;; ELSE passes `old` in.
-    )
+)
 
   (testing "church box example"
     ;; According to [Manzyuk et al.
@@ -1190,8 +1187,7 @@
             (wrap2-result [f]
               (fn [x] (wrap2 (f x))))]
 
-      (let [
-            ;; R -> ((R->R) -> (R->R)))
+      (let [;; R -> ((R->R) -> (R->R)))
             s (fn [x]
                 (fn [g]
                   (fn [y]
@@ -1210,8 +1206,7 @@
 
   (testing "D on a higher-order function responds differently to evaluations
   inside the 'body' of the multi-argument version of the function, vs outside."
-    (let [
-          ;; Make some literal function that takes TWO inputs:
+    (let [;; Make some literal function that takes TWO inputs:
           a (af/literal-function 'a '(-> (X Real Real) Real))
 
           ;; (D f) returns a function that takes a continuation that received
@@ -1274,7 +1269,7 @@
       ;; This means that the tangents of the `x` instances captured by `f1` and
       ;; `f2` can no longer interact. There is no context waiting to bind them
       ;; together!
-      )))
+)))
 
 (deftest dvl-bug-examples
   ;; These tests and comments all come from Alexey Radul's
@@ -1344,7 +1339,7 @@
     ;; The "linear" comment matters because if you only combine the dropped-down
     ;; pieces linearly, then their tangents wouldn't have interacted anyway, so
     ;; you can't tell that there are different cases here.
-    )
+)
 
   (testing "amazing bug 4"
     ;; The same as amazing-bug-3.dvl, but supplies the arguments to f in the
@@ -1579,7 +1574,7 @@
       differential instances.")
 
   (testing "compare, one stays symbolic:"
-    (letfn[(f [[a b]]
+    (letfn [(f [[a b]]
              (* (sin (* 3 a))
                 (cos (* 4 b))))]
 

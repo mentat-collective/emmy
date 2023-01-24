@@ -2,10 +2,10 @@
 
 (ns emmy.simplify.rules-test
   (:require [clojure.test :refer [is deftest testing]]
-            [pattern.rule :as pr :refer [rule-simplifier template]]
             [emmy.complex :as c]
             [emmy.generic :as g]
             [emmy.numbers]
+            [emmy.pattern.rule :as pr :refer [rule-simplifier template]]
             [emmy.ratio]
             [emmy.simplify :as s]
             [emmy.simplify.rules :as r]

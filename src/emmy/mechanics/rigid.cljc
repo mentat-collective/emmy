@@ -95,7 +95,6 @@
 ;; Assuming Euler angles rotate principal axes from reference orientation.
 ;;
 
-
 (defn Euler-state->omega-body
   "Although this implementation appears to summarize `(M->omega-body r/Euler->M)`,
   it is actually essential to prevent intermediate expression explosion."
