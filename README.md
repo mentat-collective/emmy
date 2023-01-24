@@ -30,10 +30,9 @@ Scmutils is extensively used in the textbooks [The Structure and Interpretation
 of Classical Mechanics][SICM] and [Functional Differential Geometry][FDG] by
 G.J. Sussman and J. Wisdom.
 
-> :wave: Need help getting started? Say hi on
-> [Twitter](https://twitter.com/sritchie) or [Clojurians
+> :wave: Need help getting started? Say hi on [Clojurians
 > Slack](http://clojurians.net/) in
-> [#emmy](https://clojurians.slack.com/archives/C01ECA9AA74).
+> [#mentat-collective](https://clojurians.slack.com/archives/C041G9B1AAK).
 
 [![Build Status](https://github.com/mentat-collective/emmy/workflows/Clojure%20CI/badge.svg?branch=main)](https://github.com/mentat-collective/emmy/actions?query=workflow%3A%22Clojure+CI%22)
 [![License](https://img.shields.io/badge/license-GPLv3-brightgreen.svg)](https://github.com/mentat-collective/emmy/blob/main/LICENSE)
@@ -61,11 +60,8 @@ Initialize the `emmy.env` "Batteries Included" environment at the REPL:
 (env/bootstrap-repl!)
 ```
 
-See the [demo directory](./demo) for minimal examples of build configurations
-that use the Emmy library.
-
-Alternatively, visit the [Emmy Tutorial on
-Nextjournal](https://nextjournal.com/try/samritchie/emmy) to try all of the
+Visit the [Emmy Tutorial on
+Nextjournal](https://nextjournal.com/try/samritchie/sicmutils) to try all of the
 examples below in your browser with no setup required:
 
 <img width="1152" alt="nje" src="https://user-images.githubusercontent.com/462255/109587851-9e1be280-7abc-11eb-9369-6d56519fb3cd.png">
@@ -218,8 +214,8 @@ year = {2016}
 ```
 
 In the above BibTeX entry, the version number is intended to be that from
-[project.clj](./project.clj), and the year corresponds to the project's
-open-source release.
+[resources/EMMY_VERSION](./resources/EMMY_VERSION), and the year corresponds to
+the project's open-source release.
 
 ## License
 
@@ -233,4 +229,4 @@ open-source release.
 [REFMAN]: https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/reference-manual
 [PHYSICS_IN_CLOJURE]: https://www.youtube.com/watch?v=7PoajCqNKpg
 
-Copyright © 2016 Colin Smith
+Copyright © 2016-2023 Colin Smith, Sam Ritchie
