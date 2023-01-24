@@ -146,7 +146,7 @@
             ([x y z & _xs] (* x y z)))))
       "Adding a variadic triggers :at-least...")
 
-  (is (= [:exactly 1]
+(is (= [:exactly 1]
          (f/arity (fn ([] 10)
                     ([x] (inc x))
                     ([_ _])

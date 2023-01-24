@@ -16,7 +16,7 @@
     (testing "Euler's constant"
       ;; https://en.wikipedia.org/wiki/Euler%E2%80%93Mascheroni_constant
       (let [f (fn [x] (* (Math/log x)
-                         (Math/exp (- x))))]
+                        (Math/exp (- x))))]
         (is (ish? {:converged? true
                    :result -0.5772156418405041}
                   ((qi/improper integrator) f 0 ##Inf))

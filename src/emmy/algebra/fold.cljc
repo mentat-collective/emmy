@@ -51,8 +51,8 @@
 ;; Here is how to use this function to add up the integers from 0 to 9:
 
 #_(let [xs (range 10)]
-    (= 45 (generic-sum-fold
-           (reduce generic-sum-fold (generic-sum-fold) xs))))
+  (= 45 (generic-sum-fold
+         (reduce generic-sum-fold (generic-sum-fold) xs))))
 
 ;; To see how this abstraction is useful, let's first capture this ability to
 ;; make "summation" functions out of folds. (Note the docstring's description of
@@ -90,16 +90,16 @@
    (fold->sum-fn fold fold present))
   ([init fold present]
    (fn ([xs]
-        (present
-         (reduce fold (init) xs)))
+       (present
+        (reduce fold (init) xs)))
      ([f low high]
       (let [xs (range low high)]
         (transduce (map f) fold xs))))))
 
 ;; Our example again:
 #_(let [sum (fold->sum-fn generic-sum-fold)
-        xs  (range 10)]
-    (= 45 (sum xs)))
+      xs  (range 10)]
+  (= 45 (sum xs)))
 
 ;; ### Useful Folds
 ;;
@@ -107,15 +107,15 @@
 ;; computes the average of a sequence of numbers:
 
 #_(defn average
-    ([] [0.0 0])
-    ([[sum n]] (/ sum n))
-    ([[sum n] x]
-     [(+ sum x) (inc n)]))
+  ([] [0.0 0])
+  ([[sum n]] (/ sum n))
+  ([[sum n] x]
+   [(+ sum x) (inc n)]))
 
 ;; The average of [0,9] is 4.5:
 
 #_(let [sum (fold->sum-fn average)]
-    (= 4.5 (sum (range 10))))
+  (= 4.5 (sum (range 10))))
 
 ;; (I'm not committing this particular implementation because it can overflow
 ;; for large numbers. There is a better implementation in Algebird, used
@@ -210,9 +210,9 @@
 ;; of `(range 10)`:
 
 #_(let [fold (join min max generic-sum-fold)
-        process (fold->sum-fn fold)]
-    (= [0 9 45]
-       (process (range 10))))
+      process (fold->sum-fn fold)]
+  (= [0 9 45]
+     (process (range 10))))
 
 ;; ### Scans
 ;;
@@ -275,12 +275,12 @@
 ;; total seen up to that point.
 
 #_(let [fold (join min max generic-sum-fold)
-        process (fold->scan-fn fold)]
-    (i [[0 0 0]
-        [0 1 1]
-        [0 2 3]
-        [0 3 6]]
-       (process (range 4))))
+      process (fold->scan-fn fold)]
+  (i [[0 0 0]
+      [0 1 1]
+      [0 2 3]
+      [0 3 6]]
+     (process (range 4))))
 
 ;; ## Summing Sequences of Numbers
 ;;

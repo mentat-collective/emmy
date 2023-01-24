@@ -5,11 +5,11 @@
   (:require [clojure.test :refer [is deftest testing use-fixtures]]
             [emmy.calculus.curvature-test :refer [S2-Christoffel]]
             [emmy.env :as e :refer [+ - * / sin zero?
-                                    D partial
-                                    up
-                                    point chart
-                                    R2-rect R2-polar
-                                    define-coordinates]]
+                                         D partial
+                                         up
+                                         point chart
+                                         R2-rect R2-polar
+                                         define-coordinates]]
             [emmy.operator :as o]
             [emmy.simplify :refer [hermetic-simplify-fixture]]
             [emmy.value :as v]))

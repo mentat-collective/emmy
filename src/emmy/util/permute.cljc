@@ -240,7 +240,7 @@
                          (aset a i2 t)
                          (aset c j q)
                          true ;; More permutations are forthcoming.
-                         ))))]
+))))]
     (#?(:clj iterator-seq :cljs #'cljs.core/chunkIteratorSeq)
      (reify #?(:clj java.util.Iterator :cljs Object)
        (hasNext [_] @has-next)

@@ -521,13 +521,13 @@
     (let [t (nth terms i nil)]
       (if (nil? t)
         acc
-        (let [[tags1 coeff1] t]
-          (if (empty? (uv/intersection tags tags1))
-            (recur (conj acc (make-term
-                              (uv/union tags tags1)
-                              (g/* coeff coeff1)))
-                   (inc i))
-            (recur acc (inc i))))))))
+	      (let [[tags1 coeff1] t]
+	        (if (empty? (uv/intersection tags tags1))
+		        (recur (conj acc (make-term
+		                          (uv/union tags tags1)
+		                          (g/* coeff coeff1)))
+		               (inc i))
+		        (recur acc (inc i))))))))
 
 (defn terms:*
   "Returns a vector of non-zero [[Differential]] terms that represent the product
@@ -541,7 +541,7 @@
               (if (nil? x)
                 []
                 (terms:+ (t*ts x ylist)
-                         (call (inc i))))))]
+	                       (call (inc i))))))]
     (call 0)))
 
 ;; ## Differential Type Implementation

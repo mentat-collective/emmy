@@ -11,9 +11,9 @@
             [emmy.generators :as sg]
             [emmy.generic :as g]
             [emmy.numsymb :as sym]
-            [emmy.pattern.rule :as rule :refer [=>]]
             [emmy.simplify :as simpl]
             [emmy.value :as v]
+            [pattern.rule :as rule :refer [=>]]
             [same :refer [ish?]]))
 
 (def gen-literal-element
@@ -697,8 +697,8 @@
                 (is (v/= sym (g/make-polar sym n))
                     "an exact zero returns the symbolic radius.")
                 (is (= `(~'* ~sym (~'+ (~'cos ~(v/freeze n))
-                                       (~'* (~'complex 0.0 1.0)
-                                            (~'sin ~(v/freeze n)))))
+                                   (~'* (~'complex 0.0 1.0)
+                                    (~'sin ~(v/freeze n)))))
                        (v/freeze
                         (g/make-polar sym n)))
                     "otherwise, an exact numeric angle stays exact and is

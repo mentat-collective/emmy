@@ -11,8 +11,8 @@
             [emmy.expression :as x]
             [emmy.function :as f]
             [emmy.generic :as g :refer [acos asin atan cos sin tan
-                                        cot sec csc
-                                        log exp expt + - * /]]
+                                             cot sec csc
+                                             log exp expt + - * /]]
             [emmy.matrix :as matrix]
             [emmy.mechanics.hamilton :as h]
             [emmy.operator :as o]
@@ -240,10 +240,10 @@
                    (* (η t) ((D g) (q t))))
                (simplify (((δη (+ F G)) q) 't)))))
 
-      (testing "scalar product rule for variation: δ(cF) = cδF"
+(testing "scalar product rule for variation: δ(cF) = cδF"
         (is (= '(* c (η t) ((D f) (q t))) (simplify (((δη (* 'c F)) q) 't)))))
 
-      (testing "product rule for variation: δ(FG) = δF G + F δG"
+(testing "product rule for variation: δ(FG) = δF G + F δG"
         (is (= (simplify (+ (* (((δη F) q) 't) ((G q) 't))
                             (* ((F q) 't) (((δη G) q) 't))))
                (simplify (((δη (* F G)) q) 't)))))
@@ -692,8 +692,8 @@
 
     (testing "f -> Series"
       (let [F (fn [k] (series/series
-                       (fn [t] (g/* k t))
-                       (fn [t] (g/* k k t))))]
+                      (fn [t] (g/* k t))
+                      (fn [t] (g/* k k t))))]
         (is (= '((* q z) (* (expt q 2) z) 0 0) (simp4 ((F 'q) 'z))))
         (is (= '(z (* 2 q z) 0 0) (simp4 (((D F) 'q) 'z)))))))
 
@@ -854,7 +854,7 @@
          (simplify
           (((D (fn [eps]
                  (fn [t]
-                   ((d/D (g/* g/cos eps)) t))))
+	                 ((d/D (g/* g/cos eps)) t))))
             'e)
            't)))
       "another nesting test from deriv.scm."))
@@ -1094,7 +1094,7 @@
 
         ;; Before the fix, every call to `D` generated (and froze, closed over)
         ;; a new tag. Now every invocation generates a new tag.
-        )))
+)))
 
   (testing "more subtle amazing bug!"
     ;; Here's an example of a variant on the bug above that shows why the
@@ -1149,7 +1149,7 @@
     ;; in will stay tagged as `old` if it happens to leak out of this level, and
     ;; stay tagged as `fresh` internally so it can never get confused if someone
     ;; ELSE passes `old` in.
-    )
+)
 
   (testing "church box example"
     ;; According to [Manzyuk et al.
@@ -1269,7 +1269,7 @@
       ;; This means that the tangents of the `x` instances captured by `f1` and
       ;; `f2` can no longer interact. There is no context waiting to bind them
       ;; together!
-      )))
+)))
 
 (deftest dvl-bug-examples
   ;; These tests and comments all come from Alexey Radul's
@@ -1309,7 +1309,7 @@
                  (fn [g]
                    (fn [z] (g (+ x z)))))))]
       (is (ish? ((fn [y] (+ (* 3 (cos (* 3 y)))
-                            (* y (cos (* 3 y)))))
+                           (* y (cos (* 3 y)))))
                  (+ 3 Math/PI))
                 (((D f) 3)
                  (fn [g-hat f-hat]
@@ -1339,7 +1339,7 @@
     ;; The "linear" comment matters because if you only combine the dropped-down
     ;; pieces linearly, then their tangents wouldn't have interacted anyway, so
     ;; you can't tell that there are different cases here.
-    )
+)
 
   (testing "amazing bug 4"
     ;; The same as amazing-bug-3.dvl, but supplies the arguments to f in the
@@ -1575,8 +1575,8 @@
 
   (testing "compare, one stays symbolic:"
     (letfn [(f [[a b]]
-              (* (sin (* 3 a))
-                 (cos (* 4 b))))]
+             (* (sin (* 3 a))
+                (cos (* 4 b))))]
 
       (is (ish? [-0.020532965943782493
                  (s/down 0.4321318251769156 -0.558472974950351)]

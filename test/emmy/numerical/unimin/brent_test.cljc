@@ -120,10 +120,10 @@
 (deftest quintic-tests
   (with-comparator (v/within 1e-8)
     (let [f (fn [x] (g/* (g/- x 1)
-                         (g/- x 0.5)
-                         x
-                         (g/+ x 0.5)
-                         (g/+ x 1)))]
+                        (g/- x 0.5)
+                        x
+                        (g/+ x 0.5)
+                        (g/+ x 1)))]
 
       (testing "quintic minimum"
         (let [min1 -0.27195613

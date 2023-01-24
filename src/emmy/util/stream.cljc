@@ -48,8 +48,8 @@
   pred must be free of side-effects."
   [pred coll]
   (let [[ts fs] (reduce (fn [[t f] o] (if (pred o)
-                                        [(conj! t o) f]
-                                        [t (conj! f o)]))
+                                       [(conj! t o) f]
+                                       [t (conj! f o)]))
                         [(transient []) (transient [])]
                         coll)]
     [(persistent! ts) (persistent! fs)]))

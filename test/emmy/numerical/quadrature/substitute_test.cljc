@@ -11,7 +11,7 @@
 (deftest infinitize-tests
   (testing "volume of Gabriel's Horn (https://en.wikipedia.org/wiki/Gabriel%27s_Horn)"
     (let [slice-area (fn [x] (let [y (/ 1 x)]
-                               (* Math/PI (* y y))))
+                              (* Math/PI (* y y))))
           integrate  (qs/infinitize qr/open-integral)]
       (is (ish? {:converged? true
                  :terms-checked 2
@@ -21,7 +21,7 @@
   (testing "1 => inf calculation of Euler's constant"
     ;; https://en.wikipedia.org/wiki/Euler%E2%80%93Mascheroni_constant
     (let [f (fn [x] (* (Math/log x)
-                       (Math/exp (- x))))]
+                      (Math/exp (- x))))]
       (is (ish? {:converged? true
                  :terms-checked 7
                  :result 0.2193839343960799}

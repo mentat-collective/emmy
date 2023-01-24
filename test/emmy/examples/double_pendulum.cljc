@@ -48,7 +48,7 @@
              l1 ;; length of rod1
              l2 ;; length of rod2
              g  ;; acceleration due to gravity
-             )
+)
    (up 0.0
        (up theta_0 phi_0)
        (up thetadot_0 phidot_0))

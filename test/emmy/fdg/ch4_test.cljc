@@ -23,53 +23,53 @@
 
 (deftest section-4-0
   (let-coordinates [[x y] R2-rect]
-                   (let [e0 (+ (* (literal-manifold-function 'e0x R2-rect) d:dx)
-                               (* (literal-manifold-function 'e0y R2-rect) d:dy))
-                         e1 (+ (* (literal-manifold-function 'e1x R2-rect) d:dx)
-                               (* (literal-manifold-function 'e1y R2-rect) d:dy))
-                         F (literal-manifold-function 'F R2-rect)
-                         e-vector-basis (down e0 e1)
-                         e-dual-basis (e/vector-basis->dual e-vector-basis R2-polar)
-                         R2-rect-chi-inverse (point R2-rect)
-                         v (* (up (literal-manifold-function 'b↑0 R2-rect)
-                                  (literal-manifold-function 'b↑1 R2-rect))
-                              e-vector-basis)
-                         p (R2-rect-chi-inverse (up 'X 'Y))]
+    (let [e0 (+ (* (literal-manifold-function 'e0x R2-rect) d:dx)
+                (* (literal-manifold-function 'e0y R2-rect) d:dy))
+          e1 (+ (* (literal-manifold-function 'e1x R2-rect) d:dx)
+                (* (literal-manifold-function 'e1y R2-rect) d:dy))
+          F (literal-manifold-function 'F R2-rect)
+          e-vector-basis (down e0 e1)
+          e-dual-basis (e/vector-basis->dual e-vector-basis R2-polar)
+          R2-rect-chi-inverse (point R2-rect)
+          v (* (up (literal-manifold-function 'b↑0 R2-rect)
+                   (literal-manifold-function 'b↑1 R2-rect))
+               e-vector-basis)
+          p (R2-rect-chi-inverse (up 'X 'Y))]
 
-                     (is (= '(up (down 1 0)
-                                 (down 0 1))
-                            (simplify
-                             ((e-dual-basis e-vector-basis) p)))
-                         "p44")
+      (is (= '(up (down 1 0)
+                  (down 0 1))
+             (simplify
+              ((e-dual-basis e-vector-basis) p)))
+          "p44")
 
-                     (is (= '(up (b↑0 (up X Y))
-                                 (b↑1 (up X Y)))
-                            (simplify
-                             ((e-dual-basis v) p)))
-                         "p44, bottom")
+      (is (= '(up (b↑0 (up X Y))
+                  (b↑1 (up X Y)))
+             (simplify
+              ((e-dual-basis v) p)))
+          "p44, bottom")
 
-                     (testing "e0, 1 are vector fields. They act on manifold functions to
+      (testing "e0, 1 are vector fields. They act on manifold functions to
                 produce directional derivatives... which are manifold
                 functions."
-                       (is (= '(+
-                                (* (e0x (up X Y)) (((partial 0) F) (up X Y)))
-                                (* (e0y (up X Y)) (((partial 1) F) (up X Y))))
-                              (simplify
-                               ((e0 F) p))))
-                       (is (= '(+
-                                (* (((partial 0) F) (up X Y)) (e1x (up X Y)))
-                                (* (((partial 1) F) (up X Y)) (e1y (up X Y))))
-                              (simplify
-                               ((e1 F) p))))
-                       (is (= '(down
-                                (+
-                                 (* (e0x (up X Y)) (((partial 0) F) (up X Y)))
-                                 (* (e0y (up X Y)) (((partial 1) F) (up X Y))))
-                                (+
-                                 (* (((partial 0) F) (up X Y)) (e1x (up X Y)))
-                                 (* (((partial 1) F) (up X Y)) (e1y (up X Y)))))
-                              (simplify
-                               ((e-vector-basis F) p))))))))
+        (is (= '(+
+                 (* (e0x (up X Y)) (((partial 0) F) (up X Y)))
+                 (* (e0y (up X Y)) (((partial 1) F) (up X Y))))
+               (simplify
+                ((e0 F) p))))
+        (is (= '(+
+                 (* (((partial 0) F) (up X Y)) (e1x (up X Y)))
+                 (* (((partial 1) F) (up X Y)) (e1y (up X Y))))
+               (simplify
+                ((e1 F) p))))
+        (is (= '(down
+                 (+
+                  (* (e0x (up X Y)) (((partial 0) F) (up X Y)))
+                  (* (e0y (up X Y)) (((partial 1) F) (up X Y))))
+                 (+
+                  (* (((partial 0) F) (up X Y)) (e1x (up X Y)))
+                  (* (((partial 1) F) (up X Y)) (e1y (up X Y)))))
+               (simplify
+                ((e-vector-basis F) p))))))))
 
 (deftest section-4-1
   (let [b-rect ((e/coordinate-system->oneform-basis R2-rect)
@@ -223,68 +223,68 @@
 
 (deftest section-4-3
   (let-coordinates [[x y] R2-rect]
-                   (let [e0 (+ (* (literal-manifold-function 'e0x R2-rect) d:dx)
-                               (* (literal-manifold-function 'e0y R2-rect) d:dy))
-                         e1 (+ (* (literal-manifold-function 'e1x R2-rect) d:dx)
-                               (* (literal-manifold-function 'e1y R2-rect) d:dy))
-                         polar-basis (e/coordinate-system->basis R2-polar)
-                         polar-vector-basis (e/basis->vector-basis polar-basis)
-                         polar-dual-basis (e/basis->oneform-basis polar-basis)
-                         f (literal-manifold-function 'f-rect R2-rect)
-                         p ((point R2-rect) (up 'X 'Y))]
-                     (is (zero?
-                          (simplify
-                           ((- ((e/commutator e0 e1) f)
-                               (* (- (e0 (polar-dual-basis e1))
-                                     (e1 (polar-dual-basis e0)))
-                                  (polar-vector-basis f)))
-                            p)))
-                         "page 50")))
+    (let [e0 (+ (* (literal-manifold-function 'e0x R2-rect) d:dx)
+                (* (literal-manifold-function 'e0y R2-rect) d:dy))
+          e1 (+ (* (literal-manifold-function 'e1x R2-rect) d:dx)
+                (* (literal-manifold-function 'e1y R2-rect) d:dy))
+          polar-basis (e/coordinate-system->basis R2-polar)
+          polar-vector-basis (e/basis->vector-basis polar-basis)
+          polar-dual-basis (e/basis->oneform-basis polar-basis)
+          f (literal-manifold-function 'f-rect R2-rect)
+          p ((point R2-rect) (up 'X 'Y))]
+      (is (zero?
+           (simplify
+            ((- ((e/commutator e0 e1) f)
+                (* (- (e0 (polar-dual-basis e1))
+                      (e1 (polar-dual-basis e0)))
+                   (polar-vector-basis f)))
+             p)))
+          "page 50")))
 
   (let-coordinates [[x y z] R3-rect]
-                   (let [R3-rect-point ((point R3-rect) (up 'x0 'y0 'z0))
-                         g (literal-manifold-function 'g-rect R3-rect)
-                         Jz (- (* x d:dy) (* y d:dx))
-                         Jx (- (* y d:dz) (* z d:dy))
-                         Jy (- (* z d:dx) (* x d:dz))]
-                     (testing "page 51"
-                       (is (zero?
-                            (simplify
-                             (((+ (e/commutator Jx Jy) Jz) g) R3-rect-point))))
+    (let [R3-rect-point ((point R3-rect) (up 'x0 'y0 'z0))
+          g (literal-manifold-function 'g-rect R3-rect)
+          Jz (- (* x d:dy) (* y d:dx))
+          Jx (- (* y d:dz) (* z d:dy))
+          Jy (- (* z d:dx) (* x d:dz))]
+      (testing "page 51"
+        (is (zero?
+             (simplify
+              (((+ (e/commutator Jx Jy) Jz) g) R3-rect-point))))
 
-                       (is (zero?
-                            (simplify
-                             (((+ (e/commutator Jy Jz) Jx) g) R3-rect-point))))
+        (is (zero?
+             (simplify
+              (((+ (e/commutator Jy Jz) Jx) g) R3-rect-point))))
 
-                       (is (zero?
-                            (simplify
-                             (((+ (e/commutator Jz Jx) Jy) g) R3-rect-point)))))))
+        (is (zero?
+             (simplify
+              (((+ (e/commutator Jz Jx) Jy) g) R3-rect-point)))))))
 
   (let-coordinates [[theta phi psi] Euler-angles]
-                   (let [;; equation 4.29
-                         e_x (+ (* (cos phi) d:dtheta)
-                                (* -1 (/ (* (sin phi) (cos theta)) (sin theta)) d:dphi)
-                                (* (/ (sin phi) (sin theta)) d:dpsi))
+    (let [;; equation 4.29
+          e_x (+ (* (cos phi) d:dtheta)
+                 (* -1 (/ (* (sin phi) (cos theta)) (sin theta)) d:dphi)
+                 (* (/ (sin phi) (sin theta)) d:dpsi))
 
           ;; equation 4.30
-                         e_y (+ (/ (* (cos phi) (cos theta) d:dphi) (sin theta))
-                                (* (sin phi) d:dtheta)
-                                (* -1 (/ (cos phi) (sin theta)) d:dpsi))
+          e_y (+ (/ (* (cos phi) (cos theta) d:dphi) (sin theta))
+                 (* (sin phi) d:dtheta)
+                 (* -1 (/ (cos phi) (sin theta)) d:dpsi))
 
           ;; equation 4.31
-                         e_z d:dphi
+          e_z d:dphi
 
-                         f (literal-manifold-function 'f-Euler Euler-angles)
-                         SO3-point ((point Euler-angles) (up 'theta 'phi 'psi))]
-                     (testing "page 51, part 2"
-                       (is (zero?
-                            (simplify
-                             (((+ (e/commutator e_x e_y) e_z) f) SO3-point))))
+          f (literal-manifold-function 'f-Euler Euler-angles)
+          SO3-point ((point Euler-angles) (up 'theta 'phi 'psi))]
+      (testing "page 51, part 2"
+        (is (zero?
+             (simplify
+              (((+ (e/commutator e_x e_y) e_z) f) SO3-point))))
 
-                       (is (zero?
-                            (simplify
-                             (((+ (e/commutator e_y e_z) e_x) f) SO3-point))))
+        (is (zero?
+             (simplify
+              (((+ (e/commutator e_y e_z) e_x) f) SO3-point))))
 
-                       (is (zero?
-                            (simplify
-                             (((+ (e/commutator e_z e_x) e_y) f) SO3-point))))))))
+        (is (zero?
+             (simplify
+              (((+ (e/commutator e_z e_x) e_y) f) SO3-point))))))))

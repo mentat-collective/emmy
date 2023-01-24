@@ -78,7 +78,7 @@
              (g/simplify (m/characteristic-polynomial C 'y))))
 
       (is ((v/within 1e-12) 0.0
-                            (g/simplify (m/characteristic-polynomial A (g/divide (g/- 5 (g/sqrt 33)) 2))))))))
+           (g/simplify (m/characteristic-polynomial A (g/divide (g/- 5 (g/sqrt 33)) 2))))))))
 
 (deftest native-clojure-things
   (is (= "foo" (g/simplify "foo")))

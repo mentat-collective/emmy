@@ -143,7 +143,7 @@
         (is (v/identity? (d/from-terms {[] 1 [1] 0})))
         (is (not (v/identity? (d/from-terms {[] 1 [1] 1})))))
 
-      (checking "*-like works" 100 [diff real-diff-gen]
+(checking "*-like works" 100 [diff real-diff-gen]
                 (is (v/zero? (v/zero-like diff)))
                 (is (v/one? (v/one-like diff)))
                 (is (v/identity? (v/identity-like diff))))

@@ -140,7 +140,7 @@
   [& modints]
   (let [prod  (transduce (map modulus) g/* modints)
         xform (map (fn [mi]
-                     (let [i (residue mi)
+		                 (let [i (residue mi)
                            m (modulus mi)
                            c (g/quotient prod m)]
                        (g/* i c (residue (invert c m))))))]

@@ -44,9 +44,9 @@
 
     (testing "adaptive respects intervals"
       (let [f (fn [x] (condp = x
-                        0 (u/illegal "Zero!!")
-                        1 (u/illegal "One!")
-                        (/ 4 (+ 1 (* x x)))))
+                       0 (u/illegal "Zero!!")
+                       1 (u/illegal "One!")
+                       (/ 4 (+ 1 (* x x)))))
             opts (fn [interval]
                    (-> {:adaptive-neighborhood-width 0
 

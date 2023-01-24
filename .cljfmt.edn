@@ -1,1 +1,2 @@
-{:sort-ns-references? true}
+{:indentation? false
+ :sort-ns-references? true}

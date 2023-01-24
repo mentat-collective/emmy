@@ -199,7 +199,7 @@
             (when observe
               (attach-handler integrator observe step-size initial-state))
             (.integrate ^GraggBulirschStoerIntegrator
-             integrator equations 0
+                        integrator equations 0
                         initial-state-array t output-buffer)
             (us/stop total-time)
             (log/info "#" @counter "total" (us/repr total-time) "f" (us/repr stopwatch))

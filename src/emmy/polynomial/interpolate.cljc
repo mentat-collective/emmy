@@ -290,7 +290,7 @@
                     (lagrange-incremental points 'x))]
     (every? zero? diffs))
   ;; => true
-  )
+)
 
 ;; ## Generic Tableau Processing
 ;;

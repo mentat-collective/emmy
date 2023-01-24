@@ -428,7 +428,7 @@
         (is (= "1/2 dx² ∂₀²f(up(x, y)) + dx dy (∂₀ ∂₁)(f)(up(x, y)) + 1/2 dy² ∂₁²f(up(x, y)) + dx ∂₀f(up(x, y)) + dy ∂₁f(up(x, y)) + f(up(x, y))"
                (s->infix expr)))
 
-        (is (= (str "function(dx, dy, f, partial, x, y) {\n"
+(is (= (str "function(dx, dy, f, partial, x, y) {\n"
                     "  var _0001 = 1/2;\n"
                     "  var _0002 = partial(0);\n"
                     "  var _0003 = partial(1);\n"

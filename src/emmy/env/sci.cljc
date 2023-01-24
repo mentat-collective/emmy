@@ -46,10 +46,10 @@
  right to expose to a user by default. Each value is the sym->var map for the
  corresponding namespace."}
   ns->publics
-  {'emmy.pattern.consequence            (ns-publics 'emmy.pattern.consequence)
-   'emmy.pattern.match                  (ns-publics 'emmy.pattern.match)
-   'emmy.pattern.rule                   (ns-publics 'emmy.pattern.rule)
-   'emmy.pattern.syntax                 (ns-publics 'emmy.pattern.syntax)
+  {'pattern.consequence                      (ns-publics 'pattern.consequence)
+   'pattern.match                            (ns-publics 'pattern.match)
+   'pattern.rule                             (ns-publics 'pattern.rule)
+   'pattern.syntax                           (ns-publics 'pattern.syntax)
    'emmy.algebra.fold                   (ns-publics 'emmy.algebra.fold)
    'emmy.complex                        (ns-publics 'emmy.complex)
    'emmy.differential                   (ns-publics 'emmy.differential)

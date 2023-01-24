@@ -8,22 +8,22 @@
             [clojure.zip :as z]
             [emmy.expression :as x]
             [emmy.expression.compile :as compile]
-            [emmy.pattern.rule :as R :refer [=>]]
             [emmy.ratio :as r]
             [emmy.util :as u]
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [pattern.rule :as R :refer [=>]]))
 
 (defn- make-symbol-generator [p]
   (let [i (atom 0)]
     (fn [] (symbol
-            #?(:clj
-               (format "%s%04x" p (swap! i inc))
+           #?(:clj
+              (format "%s%04x" p (swap! i inc))
 
-               :cljs
-               (let [suffix (-> (swap! i inc)
-                                (.toString 16)
-                                (.padStart 4 "0"))]
-                 (str p suffix)))))))
+              :cljs
+              (let [suffix (-> (swap! i inc)
+                               (.toString 16)
+                               (.padStart 4 "0"))]
+                (str p suffix)))))))
 
 (def ^{:private true
        :doc "Historical preference is to write `sin^2(x)` rather
@@ -662,8 +662,8 @@
                                 'or (fn [[a b]] (str a " || " b))
                                 '/ render-infix-ratio}))]
     (fn [x & {:keys [symbol-generator parameter-order deterministic?]
-              :or {symbol-generator (make-symbol-generator "_")
-                   parameter-order sort}}]
+             :or {symbol-generator (make-symbol-generator "_")
+                  parameter-order sort}}]
       (let [x      (v/freeze x)
             params (set/difference (x/variables-in x) operators-known)
             ordered-params (if (fn? parameter-order)

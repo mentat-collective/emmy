@@ -138,7 +138,7 @@
   ```"
   [coordinate-prototype coordinate-system & body]
   `(let-coordinates [~coordinate-prototype ~coordinate-system]
-                    ~@body))
+     ~@body))
 
 (defmacro define-coordinates
   "Give some `coordinate-system` like `R2-rect` and a `coordinate-prototype` like

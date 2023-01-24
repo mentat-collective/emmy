@@ -27,18 +27,18 @@
 ;;    to return a "numerical expression", a syntax tree representing the
 ;;    function's body:
 #_(let [f (fn [x] (g/sqrt
-                   (g/+ (g/square (g/sin x))
-                        (g/square (g/cos x)))))]
-    (= '(sqrt (+ (expt (sin x) 2) (expt (cos x) 2)))
-       (x/expression-of (f 'x))))
+                (g/+ (g/square (g/sin x))
+                     (g/square (g/cos x)))))]
+(= '(sqrt (+ (expt (sin x) 2) (expt (cos x) 2)))
+   (x/expression-of (f 'x))))
 
 ;; 2. `g/simplify` the new function body. Sometimes this results in large
 ;;    simplifications:
 
 #_(let [f (fn [x] (g/sqrt
-                   (g/+ (g/square (g/sin x))
-                        (g/square (g/cos x)))))]
-    (v/= 1 (g/simplify (f 'x))))
+                (g/+ (g/square (g/sin x))
+                     (g/square (g/cos x)))))]
+  (v/= 1 (g/simplify (f 'x))))
 
 ;; 3. Apply "common subexpression elimination". Any subexpression inside the
 ;;    new, simplified body that appears more than once gets extracted out into a
@@ -233,8 +233,8 @@
 ;; Consider some expression like:
 
 #_(+ (* (sin x) (cos x))
-     (* (sin x) (cos x))
-     (* (sin x) (cos x)))
+   (* (sin x) (cos x))
+   (* (sin x) (cos x)))
 
 ;; At first pass, we have three repeated subexpressions:
 ;;
@@ -440,7 +440,7 @@
 ;; The compiled version of a state function like
 
 #_(fn [mass g]
-    (fn [q]))
+  (fn [q]))
 
 ;; Has a signature like
 

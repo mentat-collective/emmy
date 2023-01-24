@@ -143,7 +143,7 @@
       (is (= 1 (e/compare #sicm/complex "1+2i" '(+ x y)))))
 
     ;; TODO add more tests as we start to explore this function.
-    ))
+))
 
 (deftest string-form-test
   (let [expr (g/+ 'x 'x)]

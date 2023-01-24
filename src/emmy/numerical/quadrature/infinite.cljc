@@ -111,53 +111,53 @@
            r-break       (Math/abs ^double infinite-breakpoint)
            l-break       (- r-break)]
        (match [[a b]]
-         [(:or [##-Inf ##-Inf] [##Inf ##Inf])]
-         {:converged? true
-          :terms-checked 0
-          :result 0.0}
+              [(:or [##-Inf ##-Inf] [##Inf ##Inf])]
+              {:converged? true
+               :terms-checked 0
+               :result 0.0}
 
-         [(:or [_ ##-Inf] [##Inf _])]
-         (-> (rec f b a opts)
-             (update :result -))
+              [(:or [_ ##-Inf] [##Inf _])]
+              (-> (rec f b a opts)
+                  (update :result -))
 
               ;; Break the region up into three pieces: a central closed core
               ;; and two open endpoints where we create a change of variables,
               ;; letting the boundary go to infinity. We use an OPEN interval on
               ;; the infinite side.
-         [[##-Inf ##Inf]]
-         (let [-inf->l (inf-integrate a l-break qc/open-closed)
-               l->r    (integrate     l-break r-break qc/closed)
-               r->+inf (inf-integrate r-break b qc/closed-open)]
-           {:converged? true
-            :result (+ -inf->l l->r r->+inf)})
+              [[##-Inf ##Inf]]
+              (let [-inf->l (inf-integrate a l-break qc/open-closed)
+                    l->r    (integrate     l-break r-break qc/closed)
+                    r->+inf (inf-integrate r-break b qc/closed-open)]
+                {:converged? true
+                 :result (+ -inf->l l->r r->+inf)})
 
               ;; If `b` lies to the left of the negative breakpoint, don't cut.
               ;; Else, cut the integral into two pieces at the negative
               ;; breakpoint and variable-change the left piece.
-         [[##-Inf _]]
-         (if (<= b l-break)
-           (inf-integrate a b ab-interval)
-           (let [-inf->l (inf-integrate a l-break qc/open-closed)
-                 l->b    (integrate     l-break b (qc/close-l ab-interval))]
-             {:converged? true
-              :result (+ -inf->l l->b)}))
+              [[##-Inf _]]
+              (if (<= b l-break)
+                (inf-integrate a b ab-interval)
+                (let [-inf->l (inf-integrate a l-break qc/open-closed)
+                      l->b    (integrate     l-break b (qc/close-l ab-interval))]
+                  {:converged? true
+                   :result (+ -inf->l l->b)}))
 
               ;; If `a` lies to the right of the positive breakpoint, don't cut.
               ;; Else, cut the integral into two pieces at the positive breakpoint
               ;; and variable-change the right piece.
-         [[_ ##Inf]]
-         (if (>= a r-break)
-           (inf-integrate a b ab-interval)
-           (let [a->r    (integrate     a r-break (qc/close-r ab-interval))
-                 r->+inf (inf-integrate r-break b qc/closed-open)]
-             {:converged? true
-              :result (+ a->r r->+inf)}))
+              [[_ ##Inf]]
+              (if (>= a r-break)
+                (inf-integrate a b ab-interval)
+                (let [a->r    (integrate     a r-break (qc/close-r ab-interval))
+                      r->+inf (inf-integrate r-break b qc/closed-open)]
+                  {:converged? true
+                   :result (+ a->r r->+inf)}))
 
               ;; This is a lot of machinery to use with NON-infinite endpoints;
               ;; but for completeness, if you reach this level the fn will attempt
               ;; to integrate the full range directly using the original
               ;; integrator.
-         :else (integrator f a b opts))))))
+              :else (integrator f a b opts))))))
 
 ;; ## Suggestions for Improvement
 ;;

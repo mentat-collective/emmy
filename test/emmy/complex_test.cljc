@@ -178,7 +178,7 @@
       (is (= (c/complex 0 -1) (g/div 1 c/I)))
       (is (= (c/complex 2 2) (g/div (c/complex 4 4) 2))))
 
-    (testing "modulo examples"
+(testing "modulo examples"
       ;; https://stackoverflow.com/questions/54553489/how-to-calculate-a-modulo-of-complex-numbers
       (is (= (c/complex 1 1)
              (g/modulo (c/complex 8 2) (c/complex 2 1))))

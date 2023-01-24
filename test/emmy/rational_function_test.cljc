@@ -178,9 +178,9 @@
 (deftest rf-arithmetic
   (testing "rational functions forms a field"
     (let [rf-gen (sg/rational-function
-                  1
-                  {:coeffs sg/rational}
-                  {:coeffs sg/rational})]
+                 1
+                 {:coeffs sg/rational}
+                 {:coeffs sg/rational})]
       (sl/field 10 rf-gen "rational-function")))
 
   (testing "invert-hilbert-matrix"

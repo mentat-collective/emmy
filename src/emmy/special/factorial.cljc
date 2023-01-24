@@ -337,13 +337,13 @@
     (let [rec (atom nil)
           rec* (fn [n k]
                  (cond (= k 1) 1
-                       (= n k) 1
-                       :else
-                       (let [n-1 (dec n)]
-                         (add
+	                     (= n k) 1
+	                     :else
+	                     (let [n-1 (dec n)]
+		                     (add
                           (mul k #?(:cljs (u/bigint (@rec n-1 k))
                                     :clj  (@rec n-1 k)))
-                          (@rec n-1 (dec k))))))]
+		                      (@rec n-1 (dec k))))))]
       (reset! rec (memoize rec*))
       (cond (zero? k) (if (zero? n) 1 0)
             (> k n) 0

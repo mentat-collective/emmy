@@ -21,7 +21,7 @@
 (deftest pattern-tests
   (is (= ['(+ 2 1) "done!"]
          (eval
-          '(do (require '[emmy.pattern.rule :as r :refer [=>]])
+          '(do (require '[pattern.rule :as r :refer [=>]])
                (let [R (r/ruleset
                         (+ 10 _) => "done!"
                         (+ ?a ?b) => (+ ?b ?a))]
@@ -30,7 +30,7 @@
 
   (is (= '(+ 6)
          (eval
-          '(do (require '[emmy.pattern.rule :as r :refer [=>]])
+          '(do (require '[pattern.rule :as r :refer [=>]])
                (let [R (r/term-rewriting
                         (r/rule (+ ?a ?b ??c) => (+ ?b ??c)))]
                  (R '(+ 1 2 3 4 5 6))))))))
@@ -78,11 +78,11 @@
     (is (= [true true true true]
            (eval '(let-coordinates [[x y]     R2-rect
                                     [r theta] R2-polar]
-                                   (let [p ((point R2-rect) (up 1 2))]
-                                     [(= 1 (x p))
-                                      (= 2 (y p))
-                                      (= (sqrt 5) (r p))
-                                      (= (atan 2) (theta p))]))))
+                    (let [p ((point R2-rect) (up 1 2))]
+                      [(= 1 (x p))
+                       (= 2 (y p))
+                       (= (sqrt 5) (r p))
+                       (= (atan 2) (theta p))]))))
         "let-coordinates macro works")
 
     (is (= [true true]

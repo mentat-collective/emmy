@@ -1145,8 +1145,8 @@
          in the process of generating the bare expression."))
 
   (let [new-analyzer (fn [] (a/make-analyzer
-                             p/analyzer
-                             (a/monotonic-symbol-generator "k%08d")))
+                            p/analyzer
+                            (a/monotonic-symbol-generator "k%08d")))
         A #((a/default-simplifier
              (new-analyzer)) %)]
     (is (= '(+ x 1) (A '(+ 1 x))))

@@ -6,11 +6,11 @@
             [emmy.differential :as d]
             [emmy.function :as f]
             [emmy.generic :as g]
-            [emmy.pattern.rule :refer [rule-simplifier]]
             [emmy.series :as series]
             [emmy.simplify.rules :as rules]
             [emmy.util :as u]
-            [emmy.value :as v])
+            [emmy.value :as v]
+            [pattern.rule :refer [rule-simplifier]])
   #?(:clj
      (:import (clojure.lang IFn ILookup IObj))))
 
@@ -231,7 +231,7 @@
   (make-operator
    (f/get (procedure o) k)
    `(~'compose (~'component ~k)
-               ~(name o))))
+     ~(name o))))
 
 (def ^{:doc "Identity operator. Returns its argument unchanged."}
   identity
@@ -287,7 +287,7 @@
   (let [h (f/coerce-to-fn f [:exactly 1])]
     (->Operator (fn [g] (op (f/compose h g) (o g)))
                 (arity o)
-                `(~sym ~(v/freeze f) ~(name o))
+	              `(~sym ~(v/freeze f) ~(name o))
                 (context o)
                 nil)))
 
@@ -312,7 +312,7 @@
   (let [h (f/coerce-to-fn f [:exactly 1])]
     (->Operator (fn [g] (op (o g) (f/compose h g)))
                 (arity o)
-                `(~sym ~(name o) ~(v/freeze f))
+	              `(~sym ~(name o) ~(v/freeze f))
                 (context o)
                 nil)))
 
@@ -326,7 +326,7 @@
                 (g/negate (apply o fs)))
               (arity o)
               (list '- (name o))
-              (context o)
+	            (context o)
               (meta o)))
 
 (defn- o:-
@@ -411,7 +411,7 @@
   (->Operator (fn [& gs]
                 (g/mul (g/invert n) (apply o gs)))
               (arity o)
-              `(~'/ ~(name o) ~n)
+	            `(~'/ ~(name o) ~n)
               (context o)
               (meta o)))
 

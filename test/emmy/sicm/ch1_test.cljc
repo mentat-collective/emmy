@@ -120,8 +120,8 @@
           δ_η (δ η)
           φ (fn [f] (fn [q] (fn [t] (φ ((f q) t)))))
           test-path (fn [t] (up (+ 'a0 (* 'a t))
-                                (+ 'b0 (* 'b t))
-                                (+ 'c0 (* 'c t))))
+                               (+ 'b0 (* 'b t))
+                               (+ 'c0 (* 'c t))))
           proposed-solution (fn [t] (* 'a (cos (+ (* 'ω t) 'φ))))]
 
       ;; p. 29

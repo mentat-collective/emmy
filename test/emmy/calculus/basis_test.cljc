@@ -15,21 +15,21 @@
 (deftest basis-tests
   (testing "vector-basis->dual"
     (let-coordinates [[theta phi] m/S2-spherical]
-                     (let [e0 (vf/components->vector-field
-                               (up (literal-function 'e0t '(-> (UP* Real 2) Real))
-                                   (literal-function 'e0p '(-> (UP* Real 2) Real)))
-                               S2-spherical)
-                           e1 (vf/components->vector-field
-                               (up (literal-function 'e1t '(-> (UP* Real 2) Real))
-                                   (literal-function 'e1p '(-> (UP* Real 2) Real)))
-                               S2-spherical)
-                           edual (b/vector-basis->dual (down e0 e1) S2-spherical)]
-                       (is (= (up (down 1 0)
-                                  (down 0 1))
-                              (g/simplify
-                               ((edual (down e0 e1))
-                                ((m/point S2-spherical)
-                                 (up 'theta0 'phi0)))))))))
+      (let [e0 (vf/components->vector-field
+                (up (literal-function 'e0t '(-> (UP* Real 2) Real))
+                    (literal-function 'e0p '(-> (UP* Real 2) Real)))
+                S2-spherical)
+            e1 (vf/components->vector-field
+                (up (literal-function 'e1t '(-> (UP* Real 2) Real))
+                    (literal-function 'e1p '(-> (UP* Real 2) Real)))
+                S2-spherical)
+            edual (b/vector-basis->dual (down e0 e1) S2-spherical)]
+        (is (= (up (down 1 0)
+                   (down 0 1))
+               (g/simplify
+                ((edual (down e0 e1))
+                 ((m/point S2-spherical)
+                  (up 'theta0 'phi0)))))))))
 
   (testing "Jacobian"
     (let [v   (vf/literal-vector-field 'v m/R2-rect)
@@ -53,7 +53,7 @@
       (is (v/= '(+ (((partial 0) f) (up x0 y0))
                    (((partial 1) f) (up x0 y0)))
                (s/sumr (fn [e]
-                         ((e (comp (literal-function 'f '(-> (UP Real Real) Real))
-                                   chi-R2))
-                          (chi-inverse-R2 (up 'x0 'y0))))
-                       (b/basis->vector-basis R2-basis)))))))
+		                     ((e (comp (literal-function 'f '(-> (UP Real Real) Real))
+			                             chi-R2))
+		                      (chi-inverse-R2 (up 'x0 'y0))))
+		                   (b/basis->vector-basis R2-basis)))))))

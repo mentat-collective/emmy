@@ -34,9 +34,9 @@
 (deftest api-tests
   (testing "midpoint integrator never evaluates the endpoints"
     (let [f (fn [x] (condp = x
-                      0 (u/illegal "Zero!!")
-                      1 (u/illegal "One!")
-                      (/ 4 (+ 1 (* x x)))))]
+                     0 (u/illegal "Zero!!")
+                     1 (u/illegal "One!")
+                     (/ 4 (+ 1 (* x x)))))]
       (is (ish? {:converged? true
                  :terms-checked 9
                  :result 3.141592655525674}

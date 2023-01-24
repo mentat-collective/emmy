@@ -9,9 +9,9 @@
             [emmy.matrix :as matrix]
             [emmy.mechanics.lagrange :as l]
             [emmy.operator :as o]
-            [emmy.pattern.rule :as r]
             [emmy.structure :as s :refer [up]]
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [pattern.rule :as r]))
 
 ;; Hamiltonian mechanics requires a phase space QxP, and a function H:RxQxP -->
 ;; R
