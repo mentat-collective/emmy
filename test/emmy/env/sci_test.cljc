@@ -21,7 +21,7 @@
 (deftest pattern-tests
   (is (= ['(+ 2 1) "done!"]
          (eval
-          '(do (require '[pattern.rule :as r :refer [=>]])
+          '(do (require '[emmy.pattern.rule :as r :refer [=>]])
                (let [R (r/ruleset
                         (+ 10 _) => "done!"
                         (+ ?a ?b) => (+ ?b ?a))]
@@ -30,7 +30,7 @@
 
   (is (= '(+ 6)
          (eval
-          '(do (require '[pattern.rule :as r :refer [=>]])
+          '(do (require '[emmy.pattern.rule :as r :refer [=>]])
                (let [R (r/term-rewriting
                         (r/rule (+ ?a ?b ??c) => (+ ?b ??c)))]
                  (R '(+ 1 2 3 4 5 6))))))))

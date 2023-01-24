@@ -20,10 +20,10 @@
             [emmy.expression :as x]
             [emmy.generic :as g]
             [emmy.numsymb :as sym]
+            [emmy.pattern.match :as pm]
+            [emmy.pattern.rule :as r :refer [=> ruleset rule-simplifier]]
             [emmy.util.logic :as ul]
-            [emmy.value :as v]
-            [pattern.match :as pm]
-            [pattern.rule :as r :refer [=> ruleset rule-simplifier]]))
+            [emmy.value :as v]))
 
 ;; ## Simplifier Configuration Variables
 ;;

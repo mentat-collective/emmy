@@ -8,10 +8,10 @@
             [clojure.zip :as z]
             [emmy.expression :as x]
             [emmy.expression.compile :as compile]
+            [emmy.pattern.rule :as R :refer [=>]]
             [emmy.ratio :as r]
             [emmy.util :as u]
-            [emmy.value :as v]
-            [pattern.rule :as R :refer [=>]]))
+            [emmy.value :as v]))
 
 (defn- make-symbol-generator [p]
   (let [i (atom 0)]

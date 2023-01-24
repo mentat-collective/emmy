@@ -2,6 +2,14 @@
  :tasks
  {:requires ([pod.borkdude.clj-kondo :as clj-kondo])
 
+  test:clj
+  {:doc "Run CLJ tests."
+   :task (shell "clojure -X:test:runner")}
+
+  test:cljs
+  {:doc "Run CLJS tests."
+   :task (shell "npm run test")}
+
   release
   {:doc "Release the library to Clojars."
    :task (shell "clojure -T:build publish")}

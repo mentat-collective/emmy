@@ -12,11 +12,11 @@
             [emmy.generators :as sg]
             [emmy.generic :as g :refer [+ - * / cube expt negate square]]
             [emmy.operator :as o]
+            [emmy.pattern.match :as pm]
             [emmy.structure :as s]
             [emmy.util :as u]
             [emmy.util.aggregate :as ua]
             [emmy.value :as v]
-            [pattern.match :as pm]
             [same :refer [ish? with-comparator] :include-macros true]))
 
 (deftest interface-tests
@@ -170,7 +170,7 @@
   (arity-check s/down* "s/down"))
 
 (deftest structure-interfaces
-  (testing "pattern matching"
+  (testing "emmy.pattern.matching"
     (testing "non-seq sequential? things like structures are treated as eq
               matchers, not automatically converted to sequence matchers."
       (let [expr (pm/sequence

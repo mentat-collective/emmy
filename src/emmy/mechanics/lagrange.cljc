@@ -8,9 +8,9 @@
             [emmy.numerical.minimize :as m]
             [emmy.numerical.quadrature :as q]
             [emmy.operator :as o]
+            [emmy.pattern.rule :as r]
             [emmy.polynomial :as p]
-            [emmy.structure :as s :refer [down up up?]]
-            [pattern.rule :as r]))
+            [emmy.structure :as s :refer [down up up?]]))
 
 ;; ## Variational Mechanics
 
