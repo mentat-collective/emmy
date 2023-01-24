@@ -16,6 +16,11 @@ jobs:
         with:
           cli: latest
 
+      - name: Install babashka
+        uses: just-sultanov/setup-babashka@v2
+        with:
+          version: '0.8.156'
+
       - name: Set up JDK 17
         uses: actions/setup-java@v2
         with:
@@ -43,5 +48,4 @@ jobs:
           restore-keys: ${{ runner.os }}-kondo
 
       - name: Run clj-kondo
-        run: |
-          clj-kondo --lint src test --config '{:output {:pattern "::{{level}} file={{filename}},line={{row}},col={{col}}::{{message}}"}}'
+        run: bb lint --config '{:output {:pattern "::{{level}} file={{filename}},line={{row}},col={{col}}::{{message}}"}}'

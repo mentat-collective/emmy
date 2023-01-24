@@ -15,6 +15,11 @@ jobs:
         with:
           cli: latest
 
+      - name: Install babashka
+        uses: just-sultanov/setup-babashka@v2
+        with:
+          version: '0.8.156'
+
       - name: Set up JDK 17
         uses: actions/setup-java@v2
         with:
@@ -32,4 +37,4 @@ jobs:
         run: clojure -P -M:test:runner
 
       - name: Clojure tests
-        run: clojure -X:test:runner
+        run: bb test:clj
