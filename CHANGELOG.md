@@ -2,6 +2,9 @@
 
 ## [unreleased]
 
+- #96 renames `#sicm/{bigint, quaternion, complex, ratio}` to `#emmy/{bigint,
+  quaternion, complex, ratio}`.
+
 - #1, #2:
 
   - Renames the `sicmutils` portion of all namespaces to `emmy`.
