@@ -1,7 +1,12 @@
 # Emmy
 
-A Clojure(script) implementation of the
-[scmutils](https://groups.csail.mit.edu/mac/users/gjs/6946/refman.txt) system
+> **Note**
+> Emmy is currently undergoing transition from its old identity as
+> [sicmutils](https://github.com/sicmutils/sicmutils). For any broken README or
+> docs links, please visit the corresponding page at
+> https://github.com/sicmutils/sicmutils.
+
+A Clojure(script) implementation of the [scmutils][scmutils-refman-url] system
 for math and physics investigations in the Clojure and ClojureScript languages.
 Emmy provides facilities for
 
@@ -22,34 +27,35 @@ Emmy provides facilities for
   mechanics](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/textbooks/structure-and-interpretation-of-classical-mechanics)
 
 And implementations of many different [mathematical
-objects](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/data-types), all
-built on a tower of [generic, extensible mathematical
+objects](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/data-types), all built
+on a tower of [generic, extensible mathematical
 operations](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/basics/generics).
 
 Scmutils is extensively used in the textbooks [The Structure and Interpretation
-of Classical Mechanics][SICM] and [Functional Differential Geometry][FDG] by
-G.J. Sussman and J. Wisdom.
+of Classical Mechanics][sicm-book-url] and [Functional Differential
+Geometry][fdg-book-url] by G.J. Sussman and J. Wisdom.
 
 > :wave: Need help getting started? Say hi on [Clojurians
-> Slack](http://clojurians.net/) in
-> [#mentat-collective](https://clojurians.slack.com/archives/C041G9B1AAK).
+> Slack](http://clojurians.net/) in [#mentat-collective][mentat-slack-url].
 
-[![Build Status](https://github.com/mentat-collective/emmy/workflows/Clojure%20CI/badge.svg?branch=main)](https://github.com/mentat-collective/emmy/actions?query=workflow%3A%22Clojure+CI%22)
-[![License](https://img.shields.io/badge/license-GPLv3-brightgreen.svg)](https://github.com/mentat-collective/emmy/blob/main/LICENSE)
-[![Codecov branch](https://img.shields.io/codecov/c/github/mentat-collective/emmy/main.svg?maxAge=3600)](https://codecov.io/github/mentat-collective/emmy)
-[![cljdoc badge](https://cljdoc.org/badge/org.mentat/emmy)](https://cljdoc.org/d/org.mentat/emmy/CURRENT)
-[![Clojars Project](https://img.shields.io/clojars/v/org.mentat/emmy.svg)](https://clojars.org/org.mentat/emmy)
+[![Build Status][build-status]][build-status-url]
+[![License][license]][license-url]
+[![Codecov branch][codecov]][codecov-url]
+[![cljdoc badge][cljdoc]][cljdoc-url]
+[![Clojars Project][clojars]][clojars-url]
+[![Discord Shield][discord]][discord-url]
 
 ## Quickstart
 
+> **Note**
 > Emmy is best experienced in an interactive environment like the
 > [REPL](https://clojure.org/guides/repl/introduction). We [support many
 > environments](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/basics/how-to-use-emmy)
 > with rich support for [TeX](https://en.wikipedia.org/wiki/TeX) rendering and
 > plotting.
 
-Install Emmy into your Clojure(script) project using the instructions at
-its Clojars page:
+Install Emmy into your Clojure(Script) project using the instructions at its
+Clojars page:
 
 [![Clojars Project](https://img.shields.io/clojars/v/org.mentat/emmy.svg)](https://clojars.org/org.mentat/emmy)
 
@@ -67,13 +73,13 @@ examples below in your browser with no setup required:
 <img width="1152" alt="nje" src="https://user-images.githubusercontent.com/462255/109587851-9e1be280-7abc-11eb-9369-6d56519fb3cd.png">
 
 Math works as expected (see
-[Generics](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/basics/generics)
-for the full menu of operations), but notice that the numeric tower includes
+[Generics](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/basics/generics) for
+the full menu of operations), but notice that the numeric tower includes
 [complex
 numbers](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/data-types/complex),
 and proper ratios in ClojureScript:
 
-```clojure
+```clj
 (- (* 7 (/ 1 2)) 2)
 ;;=> 3/2
 
@@ -102,8 +108,8 @@ Use the
 operator to perform [forward-mode automatic
 differentiation](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/calculus/automatic-differentiation)
 and
-[`simplify`](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/simplification)
-to collapse symbolic expressions into tidy form:
+[`simplify`](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/simplification) to
+collapse symbolic expressions into tidy form:
 
 ```clojure
 ((D cube) 'x)
@@ -118,8 +124,8 @@ to collapse symbolic expressions into tidy form:
 ```
 
 Emmy is based on the engine behind [The Structure and Interpretation of
-Classical Mechanics][SICM], and has a built-in API for exploring Lagrangian and
-Hamiltonian mechanics.
+Classical Mechanics][sicm-book-url], and has a built-in API for exploring
+Lagrangian and Hamiltonian mechanics.
 
 Define a [Lagrangian](https://en.wikipedia.org/wiki/Lagrangian_mechanics) for a
 central potential `U` acting on a particle with mass `m`:
@@ -151,15 +157,15 @@ There is so much more! This is a dense library, and lots of documentation
 remains to be written. Some suggested next steps, for now:
 
 - Open up the live, interactive [Emmy tutorial on
-Nextjournal](https://nextjournal.com/try/samritchie/emmy), play with the
-examples above and start to explore on your own.
-- Read the [Emmy Reference Manual][REFMAN] ("refman") for inspiration. All
+  Nextjournal](https://nextjournal.com/try/samritchie/emmy), play with the
+  examples above and start to explore on your own.
+- Read the [Emmy Reference Manual][refman-url] ("refman") for inspiration. All
   of the code snippets in the refman will work in the [Nextjournal
   environment](https://nextjournal.com/try/samritchie/emmy). Use the two
   together.
-- Visit our [CLJDocs][CLJDOCS] page for an introduction and detailed
+- Visit our [CLJDocs][cljdoc-url] page for an introduction and detailed
   documentation
-- Watch Colin's ["Physics in Clojure"][PHYSICS_IN_CLOJURE] talk for an overview
+- Watch Colin's ["Physics in Clojure"][physics-in-clj-talk-url] talk for an overview
   of Emmy and its implementation
 - Visit the HTML version of [Structure and Interpretation of Classical
   Mechanics](https://tgvaughan.github.io/sicm/). Many of the SICM exercises have
@@ -168,15 +174,16 @@ examples above and start to explore on your own.
 
 ## Background
 
-[SICM][SICM] and [FDG][FDG] can be thought of as spiritual successors to [The
-Structure and Interpretation of Computer Programs][SICP], a very influential
-text—as I can attest, since carefully reading this book in my 30s changed my
-life as a programmer. To see the same techniques applied to differential
-geometry and physics is an irresistible lure.
+[SICM][sicm-book-url] and [FDG][fdg-book-url] can be thought of as spiritual
+successors to [The Structure and Interpretation of Computer
+Programs][sicp-book-url], a very influential text—as I can attest, since
+carefully reading this book in my 30s changed my life as a programmer. To see
+the same techniques applied to differential geometry and physics is an
+irresistible lure.
 
 Scmutils is an excellent system, but it is written in an older variant of LISP
 (Scheme) and is tied to a particular implementation of Scheme—MIT/GNU Scheme.
-(There is a [port to Guile][GSCM], but due to the fact that Guile does not
+(There is a [port to Guile][gscm-url], but due to the fact that Guile does not
 support MIT Scheme's [apply
 hooks](https://www.gnu.org/software/mit-scheme/documentation/stable/mit-scheme-ref/Application-Hooks.html)
 some glue code is required to run examples from the book in that environment.)
@@ -189,7 +196,7 @@ this is a lot compared to what we get with MIT/GNU scheme. Clojure support is
 now extensive in any number of editors and IDEs. Even better, you can interact
 with the system in the context of a [Jupyter notebook](./jupyter).
 
-You can invoke the system from within Java or Javascript code or use any Java or
+You can invoke the system from within Java or JavaScript code or use any Java or
 JS packages you like together with the mathematics system. It's my hope that
 continuing this project will extend the reach of SICM and FDG by allowing
 experimentation and collaboration with them in modern environments.
@@ -219,14 +226,27 @@ the project's open-source release.
 
 ## License
 
-[GPL v3](LICENSE).
+[GPL v3][license-url].
 
-[CLJDOCS]: https://cljdoc.org/d/org.mentat/emmy/CURRENT
-[SICM]: https://mitpress.mit.edu/books/structure-and-interpretation-classical-mechanics-second-edition
-[FDG]: http://mitpress.mit.edu/books/functional-differential-geometry
-[SICP]: http://mitpress.mit.edu/sicp/
-[GSCM]: http://www.cs.rochester.edu/~gildea/guile-scmutils/
-[REFMAN]: https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/reference-manual
-[PHYSICS_IN_CLOJURE]: https://www.youtube.com/watch?v=7PoajCqNKpg
+[build-status-url]: https://github.com/mentat-collective/emmy/actions?query=workflow%3A%22Clojure+CI%22
+[build-status]: https://github.com/mentat-collective/emmy/workflows/Clojure%20CI/badge.svg?branch=main
+[cljdoc-url]: https://cljdoc.org/d/org.mentat/emmy/CURRENT
+[cljdoc]: https://cljdoc.org/badge/org.mentat/emmy
+[clojars-url]: https://clojars.org/org.mentat/emmy
+[clojars]: https://img.shields.io/clojars/v/org.mentat/emmy.svg
+[codecov]: https://img.shields.io/codecov/c/github/mentat-collective/emmy/main.svg?maxAge=3600
+[codecov-url]: https://codecov.io/github/mentat-collective/emmy
+[discord-url]: https://discord.gg/hsRBqGEeQ4
+[discord]: https://img.shields.io/discord/731131562002743336?style=flat&colorA=000000&colorB=000000&label=&logo=discord
+[fdg-book-url]: http://mitpress.mit.edu/books/functional-differential-geometry
+[gscm-url]: http://www.cs.rochester.edu/~gildea/guile-scmutils/
+[license-url]: LICENSE
+[license]: https://img.shields.io/badge/license-GPLv3-brightgreen.svg
+[mentat-slack-url]: https://clojurians.slack.com/archives/C041G9B1AAK
+[physics-in-clj-talk-url]: https://www.youtube.com/watch?v=7PoajCqNKpg
+[scmutils-refman-url]: https://groups.csail.mit.edu/mac/users/gjs/6946/refman.txt
+[refman-url]: https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/reference-manual
+[sicm-book-url]: https://mitpress.mit.edu/books/structure-and-interpretation-classical-mechanics-second-edition
+[sicp-book-url]: http://mitpress.mit.edu/sicp/
 
 Copyright © 2016-2023 Colin Smith, Sam Ritchie
