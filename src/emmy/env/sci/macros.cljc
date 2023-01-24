@@ -9,10 +9,10 @@
             [emmy.calculus.form-field :as ff]
             [emmy.calculus.manifold :as m]
             [emmy.calculus.vector-field :as vf]
-            [emmy.util :as u]
             [emmy.pattern.consequence :as pc]
             [emmy.pattern.rule :as r]
-            [emmy.pattern.syntax :as ps]))
+            [emmy.pattern.syntax :as ps]
+            [emmy.util :as u]))
 
 ;; ## Pattern Matching Macros
 

@@ -6,11 +6,11 @@
             [emmy.differential :as d]
             [emmy.function :as f]
             [emmy.generic :as g]
+            [emmy.pattern.rule :refer [rule-simplifier]]
             [emmy.series :as series]
             [emmy.simplify.rules :as rules]
             [emmy.util :as u]
-            [emmy.value :as v]
-            [emmy.pattern.rule :refer [rule-simplifier]])
+            [emmy.value :as v])
   #?(:clj
      (:import (clojure.lang IFn ILookup IObj))))
 

@@ -4,9 +4,9 @@
   (:require [clojure.test :as t :refer [is deftest testing]]
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
-            [emmy.ratio]
             [emmy.pattern.match :as m]
-            [emmy.pattern.rule :as r :refer [=> !=>]]))
+            [emmy.pattern.rule :as r :refer [=> !=>]]
+            [emmy.ratio]))
 
 (deftest consequence-tests
   (testing "consequence preserves empty containers with correct type"

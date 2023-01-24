@@ -5,11 +5,11 @@
             [emmy.complex :as c]
             [emmy.generic :as g]
             [emmy.numbers]
+            [emmy.pattern.rule :as pr :refer [rule-simplifier template]]
             [emmy.ratio]
             [emmy.simplify :as s]
             [emmy.simplify.rules :as r]
-            [emmy.value :as v]
-            [emmy.pattern.rule :as pr :refer [rule-simplifier template]]))
+            [emmy.value :as v]))
 
 (deftest algebraic-tests
   (testing "unary elimination"

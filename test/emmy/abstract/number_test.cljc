@@ -11,9 +11,9 @@
             [emmy.generators :as sg]
             [emmy.generic :as g]
             [emmy.numsymb :as sym]
+            [emmy.pattern.rule :as rule :refer [=>]]
             [emmy.simplify :as simpl]
             [emmy.value :as v]
-            [emmy.pattern.rule :as rule :refer [=>]]
             [same :refer [ish?]]))
 
 (def gen-literal-element

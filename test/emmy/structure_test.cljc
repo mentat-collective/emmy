@@ -12,11 +12,11 @@
             [emmy.generators :as sg]
             [emmy.generic :as g :refer [+ - * / cube expt negate square]]
             [emmy.operator :as o]
+            [emmy.pattern.match :as pm]
             [emmy.structure :as s]
             [emmy.util :as u]
             [emmy.util.aggregate :as ua]
             [emmy.value :as v]
-            [emmy.pattern.match :as pm]
             [same :refer [ish? with-comparator] :include-macros true]))
 
 (deftest interface-tests
