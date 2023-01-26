@@ -7,7 +7,7 @@
             [emmy.polynomial.richardson :as pr]
             [emmy.util.stream :as us]
             [emmy.value :as v]
-            [same :refer [ish?]]))
+            [same.core :refer [ish?]]))
 
 (deftest richardson-limit-tests
   (let [pi-seq pr/archimedean-pi-sequence]

@@ -8,7 +8,7 @@
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
             [emmy.generic :as g]
             [emmy.value :as v]
-            [same :refer [ish?]]))
+            [same.core :refer [ish?]]))
 
 (defn nullity [options generator type-name]
   (checking (str type-name " v/zero? agrees with v/zero-like.")

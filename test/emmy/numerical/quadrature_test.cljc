@@ -6,7 +6,7 @@
             [emmy.numerical.quadrature.adaptive :as qa]
             [emmy.numerical.quadrature.common :as qc]
             [emmy.value :as v]
-            [same :refer [ish? zeroish? with-comparator] :include-macros true]))
+            [same.core :refer [ish? zeroish? with-comparator]]))
 
 (def ^:private near (v/within 1e-6))
 

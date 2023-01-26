@@ -10,7 +10,7 @@
             [emmy.util.aggregate :as ua]
             [emmy.util.stream :as us]
             [emmy.value :as v]
-            [same :refer [ish?]]))
+            [same.core :refer [ish?]]))
 
 (deftest windowed-sum-tests
   (testing "windowed-sum makes for inefficient integrals, but they're

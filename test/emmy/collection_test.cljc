@@ -14,7 +14,7 @@
             [emmy.laws :as laws]
             [emmy.util :as u]
             [emmy.value :as v]
-            [same :refer [ish?]]))
+            [same.core :refer [ish?]]))
 
 (deftest vector-tests
   (testing "Vector protocol implementations"

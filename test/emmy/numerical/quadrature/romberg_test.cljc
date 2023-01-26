@@ -9,7 +9,7 @@
             [emmy.numerical.quadrature.trapezoid :as qt]
             [emmy.numsymb]
             [emmy.util :as u]
-            [same :refer [ish?]]))
+            [same.core :refer [ish?]]))
 
 (defn gaussian [x]
   (* (/ 1 (Math/sqrt Math/PI))

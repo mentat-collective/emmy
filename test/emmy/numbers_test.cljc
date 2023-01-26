@@ -11,7 +11,7 @@
             [emmy.laws :as l]
             [emmy.util :as u]
             [emmy.value :as v]
-            [same :refer [ish? with-comparator] :include-macros true]))
+            [same.core :refer [ish? with-comparator]]))
 
 (def near (v/within 1e-12))
 

@@ -16,7 +16,7 @@
             [emmy.structure :as s]
             [emmy.util.logic :as ul]
             [emmy.value :as v]
-            [same :refer [ish? with-comparator] :include-macros true]))
+            [same.core :refer [ish? with-comparator]]))
 
 (use-fixtures :each
   (fn [thunk]

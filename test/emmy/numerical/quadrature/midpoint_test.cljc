@@ -6,7 +6,7 @@
             [emmy.numerical.quadrature.riemann :as qr]
             [emmy.numsymb]
             [emmy.util :as u]
-            [same :refer [ish?]]))
+            [same.core :refer [ish?]]))
 
 (deftest midpoint-tests
   (testing "midpoint-sum does the job"

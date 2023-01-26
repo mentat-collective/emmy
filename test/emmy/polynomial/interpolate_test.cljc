@@ -8,7 +8,7 @@
             [emmy.polynomial.interpolate :as pi]
             [emmy.simplify :as s :refer [hermetic-simplify-fixture]]
             [emmy.value :as v]
-            [same :refer [ish?] :include-macros true]))
+            [same.core :refer [ish?]]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 

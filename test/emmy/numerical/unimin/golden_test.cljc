@@ -8,7 +8,7 @@
             [emmy.numerical.unimin.bracket :as b]
             [emmy.numerical.unimin.golden :as ug]
             [emmy.value :as v]
-            [same :refer [ish? zeroish? with-comparator] :include-macros true]))
+            [same.core :refer [ish? zeroish? with-comparator]]))
 
 (deftest golden-ratio-tests
   (testing "constants work as defined"

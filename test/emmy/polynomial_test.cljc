@@ -21,7 +21,7 @@
             [emmy.simplify]
             [emmy.util :as u]
             [emmy.value :as v]
-            [same :refer [ish?] :include-macros true]))
+            [same.core :refer [ish?]]))
 
 (deftest impl-tests
   (testing "tests of polynomial backing impl"

@@ -10,7 +10,7 @@
             [emmy.numerical.unimin.brent :as b]
             [emmy.util :as u]
             [emmy.value :as v]
-            [same :refer [ish? zeroish? with-comparator] :include-macros true]))
+            [same.core :refer [ish? zeroish? with-comparator]]))
 
 (deftest brent-tests
   (with-comparator (v/within 1e-8)

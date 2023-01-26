@@ -10,7 +10,7 @@
             [emmy.numsymb]
             [emmy.simplify :as s :refer [hermetic-simplify-fixture]]
             [emmy.value :as v]
-            [same :refer [ish?]]))
+            [same.core :refer [ish?]]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 

@@ -4,7 +4,7 @@
   (:require [clojure.test :refer [is deftest testing]]
             [emmy.numerical.quadrature.bulirsch-stoer :as bs]
             [emmy.numerical.quadrature.romberg-test :as rom]
-            [same :refer [ish?]]))
+            [same.core :refer [ish?]]))
 
 (deftest open-bulirsch-stoer-tests
   (testing "Bulirsch-Stoer integration over an open interval converges."

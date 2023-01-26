@@ -6,7 +6,7 @@
             [emmy.numerical.quadrature.simpson :as simp]
             [emmy.numerical.quadrature.substitute :as qs]
             [emmy.value :as v]
-            [same :refer [ish? with-comparator] :include-macros true]))
+            [same.core :refer [ish? with-comparator]]))
 
 (deftest infinitize-tests
   (testing "volume of Gabriel's Horn (https://en.wikipedia.org/wiki/Gabriel%27s_Horn)"

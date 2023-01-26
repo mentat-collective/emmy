@@ -41,7 +41,7 @@
     {:git/sha "d08c26043efe19a92fe33dd9eb4499e304e4cff7"}
     org.clojure/test.check {:mvn/version "1.1.1"}
     hiccup/hiccup {:mvn/version "1.0.5"}
-    same/ish {:mvn/version "0.1.4"}}}
+    same/ish {:mvn/version "0.1.6"}}}
 
   :build
   ;; build.clj tool.

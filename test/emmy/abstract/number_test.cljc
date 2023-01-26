@@ -14,7 +14,7 @@
             [emmy.pattern.rule :as rule :refer [=>]]
             [emmy.simplify :as simpl]
             [emmy.value :as v]
-            [same :refer [ish?]]))
+            [same.core :refer [ish?]]))
 
 (def gen-literal-element
   (gen/one-of [sg/real sg/complex gen/symbol]))

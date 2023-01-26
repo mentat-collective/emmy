@@ -9,7 +9,7 @@
             [emmy.generic :as g]
             [emmy.numbers]
             [emmy.value :as v]
-            [same :refer [ish? with-comparator] :include-macros true]))
+            [same.core :refer [ish? with-comparator]]))
 
 (deftest value-protocol-tests
   (testing "v/zero? returns false for fns"

@@ -7,7 +7,7 @@
             [emmy.numerical.ode :as o]
             [emmy.structure :refer [up]]
             [emmy.value :as v]
-            [same :refer [ish? with-comparator] :include-macros true]))
+            [same.core :refer [ish? with-comparator]]))
 
 (def ^:private near? (v/within 1e-8))
 

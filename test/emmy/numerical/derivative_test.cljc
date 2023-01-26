@@ -9,7 +9,7 @@
             [emmy.util :as u]
             [emmy.util.stream :as us]
             [emmy.value :as v]
-            [same :refer [ish? with-comparator] :include-macros true]))
+            [same.core :refer [ish? with-comparator]]))
 
 (deftest derivative-tests
   (let [f         g/sqrt
