@@ -126,24 +126,14 @@ forms (`:unquote` or `:unquote-splicing`, false otherwise.)"}
   [[lint-binding-form!]] returns nil for any input."
   [node]
   (when (binding-form? node)
-    (let [[sym binding & restrictions] (:children node)]
+    (let [[_ binding] (:children node)]
       (when-not (or (simple-symbol? (:value binding))
                     (any-unquote? binding))
-        (reg-binding-sym! binding))
-
-      (when (segment-marker? sym)
-        (doseq [r restrictions]
-          (api/reg-finding!
-           (assoc (meta r)
-                  :message
-                  (str "Restrictions are (currently) ignored on "
-                       (:value sym) " binding forms: "
-                       (pr-str (api/sexpr r)))
-                  :type :emmy.pattern/ignored-restriction)))))))
+        (reg-binding-sym! binding)))))
 
 (defn pattern-vec
   "Given a node representing a pattern form, (and, optionally, a node representing
-  a predicate function `f`), returns a vector of all checkable entries in the
+  a predicate function `pred`), returns a vector of all checkable entries in the
   pattern.
 
   These are

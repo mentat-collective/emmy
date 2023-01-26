@@ -68,6 +68,14 @@
             (is (r/failed? (r/fail x)))
             (is (r/failed? ((r/rule ?x !=> ?x) x))))
 
+
+  (let [check (r/rule (+ (? x odd?) (? x #{1})) => (+ 2))]
+    (is (= '(+ 2) (check '(+ 1 1)))
+        "x is both odd and #{1}")
+    (is (r/failed? (check '(+ 3 3)))
+        "only passing ONE predicate fails!"))
+
+
   (testing "pattern with spliced bindings"
     (let [z 'x]
       (is (= {'x [1 2], 'z 3}
@@ -169,7 +177,7 @@
     (let [z 2
           R (r/rule
              (~(m/eq '+) () ~(m/match-when odd? (m/bind '?a))
-                         ?a ??b)
+              ?a ??b)
              => (* ~@[z] ?a ??b))]
       (is (= '(* 2 3 y z)
              (R '(+ () 3 3 y z)))))

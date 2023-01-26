@@ -2,6 +2,16 @@
 
 ## [unreleased]
 
+- #100:
+
+  - Implements predicate support for `segment`, `entire-segment` and
+    `reverse-segment` in `emmy.pattern.match`. This support bubbles up to forms
+    in rules like `(?? x pred1 pred2)`.
+
+  - Removes the `:emmy.pattern/ignored-restriction` linter keyword, and all
+    clj-kondo code warning that restrictions aren't supported on segment binding
+    forms.
+
 - #96 renames `#sicm/{bigint, quaternion, complex, ratio}` to `#emmy/{bigint,
   quaternion, complex, ratio}`.
 

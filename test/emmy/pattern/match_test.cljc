@@ -160,7 +160,63 @@
              (m/all-results
               find-two-ints
               '(1.1 [1 3] 2.3 3 6.5 x [3 5] 4 22)))
-          "segments accomplish searches")))
+          "segments accomplish searches"))
+
+    (letfn [(ends-with-odd [xs]
+              (when (seq xs)
+                (odd? (peek xs))))
+            (starts-with-odd [xs]
+              (when (seq xs)
+                (odd? (first xs))))]
+      (is (= [{:xs [1], :ys [2 3 4 5 6 7 8]}
+              {:xs [1 2 3], :ys [4 5 6 7 8]}
+              {:xs [1 2 3 4 5], :ys [6 7 8]}
+              {:xs [1 2 3 4 5 6 7], :ys [8]}]
+             (-> (m/sequence
+                  (m/segment :xs ends-with-odd)
+                  (m/segment :ys))
+                 (m/all-results
+                  '(1 2 3 4 5 6 7 8))))
+          "segment predicates work")
+
+      (is (= [{:xs [1], :ys [3 2 4], :zs [3 2 4]}
+              {:xs [1 3], :ys [2 4], :zs [2 4]}]
+             (-> (m/sequence
+                  (m/segment :xs seq)
+                  (m/segment :ys)
+                  (m/segment :xs ends-with-odd)
+                  (m/segment :zs))
+                 (m/all-results
+                  '(1 3 2 4 1 3 2 4))))
+          "predicates stack (first seq, then ends-with-odd)")
+
+      (let [input '(1 2 3 4 4 3 2 1)]
+        (is (= '[{x [1]}
+                 {x [1 2]}
+                 {x [1 2 3]}
+                 {x [1 2 3 4]}]
+               (-> '[(?? x) (?? _) ($$ x)]
+                   (m/all-results input)))
+            "match all prefix and reverse suffixes")
+
+        (is (= '[{x [1]}
+                 {x [1 2 3]}]
+               (-> ['(?? x) '(?? _) (list '$$ 'x starts-with-odd)]
+                   (m/all-results input))
+               (-> [(list '?? 'x ends-with-odd) '(?? _) '($$ x)]
+                   (m/all-results input)))
+            "pass when the reversed segments END with odd, or the non-reversed
+            start with odd.")
+
+        (is (= '[{x (1 2 3 4 4 3 2 1)}
+                 {x (3 4 4 3 2 1)}
+                 {x (3 2 1)}
+                 {x (1)}]
+               (-> ['(?? _) (list '?? 'x (fn [xs]
+                                           (when (seq xs)
+                                             (odd? (first xs)))))]
+                   (m/all-results input)))
+            "pass when the final segment passes the predicate."))))
 
   (testing "twin, equal-binding segments"
     (let [xs-xs (m/sequence
