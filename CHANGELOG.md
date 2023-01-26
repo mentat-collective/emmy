@@ -2,10 +2,8 @@
 
 ## [unreleased]
 
-- PR:
-
-  - Upgrade `same/ish` to 0.1.6, rename all `same` requires to `same.core` and
-    remove final `:include-macros true` from the codebase.
+- #98 upgrades `same/ish` to 0.1.6, renames all `same` requires to `same.core`
+  and removes final `:include-macros true` from the codebase.
 
 - #96 renames `#sicm/{bigint, quaternion, complex, ratio}` to `#emmy/{bigint,
   quaternion, complex, ratio}`.
