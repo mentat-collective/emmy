@@ -7,6 +7,11 @@
             [emmy.pattern.match :as m]
             [emmy.pattern.syntax :as ps]))
 
+;; test that predicates applied to multiple instances all stack up.
+#_
+((rule (+ (? x odd?) (? x #{1})) => (+ 2))
+ '(+ 1 1))
+
 (def gen-frame
   (gen/map gen/keyword
            gen/any-equatable
