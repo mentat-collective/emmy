@@ -296,22 +296,25 @@
    (as-segment-matcher
     (fn segment-match [frame xs succeed]
       (let [xs (core/or xs [])]
-        (when (and (sequential? xs) (pred xs))
+        (when (sequential? xs)
           (if-let [binding (core/and
                             (core/not (s/wildcard? sym))
                             (frame sym))]
-            (let [binding-count (count binding)]
-              (when (= (take binding-count xs) binding)
-                (succeed frame (drop binding-count xs))))
+            (when (pred binding)
+              (let [binding-count (count binding)]
+                (when (= (take binding-count xs) binding)
+                  (succeed frame (drop binding-count xs)))))
             (loop [prefix []
                    suffix xs]
-              (let [new-frame (if (s/wildcard? sym)
-                                frame
-                                (assoc frame sym prefix))]
-                (core/or (succeed new-frame suffix)
-                         (core/and (seq suffix)
-                                   (recur (conj prefix (first suffix))
-                                          (next suffix)))))))))))))
+              (core/or
+               (core/and (pred prefix)
+                         (let [new-frame (if (s/wildcard? sym)
+                                           frame
+                                           (assoc frame sym prefix))]
+                           (succeed new-frame suffix)))
+               (core/and (seq suffix)
+                         (recur (conj prefix (first suffix))
+                                (next suffix))))))))))))
 
 (defn- entire-segment
   "Similar to [[segment]], but matches the entire remaining sequential argument
@@ -328,7 +331,7 @@
    (as-segment-matcher
     (fn entire-segment-match [frame xs succeed]
       (let [xs (core/or xs [])]
-        (when (and (sequential? xs) (pred xs))
+        (when (core/and (sequential? xs) (pred xs))
           (if (s/wildcard? sym)
             (succeed frame nil)
             (if-let [binding (frame sym)]
@@ -358,8 +361,8 @@
             (when (vector? binding)
               (let [binding-count (count binding)
                     reversed      (rseq binding)]
-                (when (and (= (take binding-count xs) reversed)
-                           (pred xs))
+                (when (core/and (= (take binding-count xs) reversed)
+                                (pred xs))
                   (succeed frame (drop binding-count xs))))))))))))
 
 (defn sequence*
