@@ -1,11 +1,8 @@
 {:linters
  {:emmy.pattern/binding-sym {:level :error}
-  :emmy.pattern/ignored-restriction {:level :warning}
   :emmy.pattern/consequence-restriction {:level :error}
   :emmy.pattern/ruleset-args {:level :error}
-
   :emmy.abstract.function/invalid-binding {:level :error}
-
   :emmy.calculus.coordinate/invalid-binding {:level :error}}
 
  :lint-as

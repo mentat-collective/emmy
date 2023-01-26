@@ -7,8 +7,6 @@
             [emmy.pattern.match :as m]
             [emmy.pattern.syntax :as ps]))
 
-;; test that predicates applied to multiple instances all stack up.
-
 (def gen-frame
   (gen/map gen/keyword
            gen/any-equatable
