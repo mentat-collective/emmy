@@ -35,14 +35,14 @@
           (is (near? (Math/exp 1) (first result)))))))
   
   (testing "y' = y, new interface"
-    (let [f (o/stream-integrator (fn [_ [y]] [y]) 0 [1] 1e-8)]
+    (let [f (o/stream-integrator (fn [_ [y]] [y]) 0 [1] {:epsilon 1e-8})]
       (doseq [x (range 0 1 0.01)]
         (let [[ex] (f x)]
           (is (near? (Math/exp x) ex))))
       (f)))
   
   (testing "y'' = - y, new interface"
-    (let [f (o/stream-integrator (fn [_ [y0 y1]] [y1 (- y0)]) 0 [1 0] 1e-8)]
+    (let [f (o/stream-integrator (fn [_ [y0 y1]] [y1 (- y0)]) 0 [1 0] {:epsilon 1e-8})]
       (doseq [x (range 0 (* 2 Math/PI) 0.1)]
         (let [[c ms] (f x)]
           (is (near? (Math/cos x) c))
@@ -50,7 +50,7 @@
       (f)))
   
   (testing "stream integrator throws if used backwards"
-    (let [f (o/stream-integrator (fn [_ [y]] [y]) 0 [1] 1e-8)]
+    (let [f (o/stream-integrator (fn [_ [y]] [y]) 0 [1] {:epsilon 1e-8})]
       (is (f 10))
       (is (thrown? #?(:clj IllegalStateException :cljs js/Error) (f 1)))
       (f)))

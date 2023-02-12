@@ -26,7 +26,9 @@
 (defn stream-integrator
   "Produces a function, monotonic in its single numeric argument, 
    that represents the integral of the function f' given the initial 
-   data $y_0 = f(x_0)$ and a tolerance for error $\\epsilon$. 
+   data $y_0 = f(x_0)$ and an options dictionary (presently containing
+   the tolerance for error $\\epsilon$, but eventually also selecting
+   from a menu of integration techniques). 
    
    This is done by creating an adaptive step-size ODE solver, and 
    advancing its steps as needed to supply function values. (This 
@@ -44,7 +46,7 @@
    use an auxiliary thread to enable this style of flow control.  If
    JavaScript, we expect the solver to provide a generator of solution
    segments."
-  [f' x0 y0 epsilon]
+  [f' x0 y0 {:keys [epsilon] :or {epsilon default-epsilon}}]
   (let [dimension (count y0)]
     #?(:clj
        (let [gbs               (GraggBulirschStoerIntegrator. 0. 1. (double epsilon) (double epsilon))
@@ -152,7 +154,7 @@
   - `:counter` an atom containing a `Long` that increments every time derivative fn
     is called."
   [state-derivative derivative-args initial-state
-   {:keys [compile? epsilon] :or {epsilon default-epsilon}}]
+   {:keys [compile?] :as opts}]
   (let [evaluation-time    (us/stopwatch :started? false)
         evaluation-count   (atom 0)
         flat-initial-state (flatten initial-state)
@@ -180,7 +182,7 @@
                              (us/stop evaluation-time)
                              y'))
 
-        integrator (stream-integrator equations 0 flat-initial-state epsilon)]
+        integrator (stream-integrator equations 0 flat-initial-state opts)]
     {:integrator integrator
      :stopwatch evaluation-time
      :counter evaluation-count}))
@@ -271,6 +273,6 @@
   (let [opts (integration-opts state-derivative 
                                state-derivative-args 
                                initial-state 
-                               default-epsilon)
+                               {})
         f (:integrator opts)]
     (mapv f (range 0 (+ t1 dt) dt))))
