@@ -52,7 +52,7 @@
   (testing "stream integrator throws if used backwards"
     (let [f (o/stream-integrator (fn [_ [y]] [y]) 0 [1] 1e-8)]
       (is (f 10))
-      (is (thrown? IllegalStateException (f 1)))
+      (is (thrown? #?(:clj IllegalStateException :cljs js/Error) (f 1)))
       (f)))
 
   (testing "y'' = -y"
