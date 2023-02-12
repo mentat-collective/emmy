@@ -33,6 +33,27 @@
                        :observe #(swap! states conj [%1 %2])})]
           (is (= 11 (count @states)))
           (is (near? (Math/exp 1) (first result)))))))
+  
+  (testing "y' = y, new interface"
+    (let [f (o/stream-integrator (fn [_ [y]] [y]) 0 [1] 1e-8)]
+      (doseq [x (range 0 1 0.01)]
+        (let [[ex] (f x)]
+          (is (near? (Math/exp x) ex))))
+      (f)))
+  
+  (testing "y'' = - y, new interface"
+    (let [f (o/stream-integrator (fn [_ [y0 y1]] [y1 (- y0)]) 0 [1 0] 1e-8)]
+      (doseq [x (range 0 (* 2 Math/PI) 0.1)]
+        (let [[c ms] (f x)]
+          (is (near? (Math/cos x) c))
+          (is (near? (- (Math/sin x)) ms))))
+      (f)))
+  
+  (testing "stream integrator throws if used backwards"
+    (let [f (o/stream-integrator (fn [_ [y]] [y]) 0 [1] 1e-8)]
+      (is (f 10))
+      (is (thrown? IllegalStateException (f 1)))
+      (f)))
 
   (testing "y'' = -y"
     (let [f (fn [] (fn [[y u]] (up u (- y))))]
