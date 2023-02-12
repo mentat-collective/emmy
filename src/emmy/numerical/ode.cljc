@@ -26,7 +26,7 @@
 (defn stream-integrator
   "Produces a function, monotonic in its single numeric argument, 
    that represents the integral of the function f' given the initial 
-   data $y_0 = f(x_0)$ and a tolerance for error $\epsilon$. 
+   data $y_0 = f(x_0)$ and a tolerance for error $\\epsilon$. 
    
    This is done by creating an adaptive step-size ODE solver, and 
    advancing its steps as needed to supply function values. (This 
