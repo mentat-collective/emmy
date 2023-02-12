@@ -4,11 +4,10 @@
   "ODE solvers for working with initial value problems."
   (:require #?@(:cljs
                 [["odex" :as o]
-                 [emmy.util :as u]   ;; XXX see if we can do without this: who needs a cast to double in JS?
-                 [goog.string :refer [format]]])
+                 [emmy.util :as u]])
             #?(:clj
                [clojure.core.async :as a])
-            [emmy.expression.compile :as c]  ;; XXX try to get rid of this
+            [emmy.expression.compile :as c]
             [emmy.structure :as struct]
             [emmy.util.stopwatch :as us]
             [emmy.value :as v]
@@ -208,8 +207,6 @@
     ([initial-state step-size t {:keys [observe] :as opts}]
      (let [total-time (us/stopwatch :started? true)
            latest     (atom [0 nil])
-           ;; TODO notice that equations is not needed
-           ;; no need to make stopwatch in options, is there?
            {:keys [integrator stopwatch counter]}
            (integration-opts state-derivative derivative-args initial-state opts)
            array->state #(struct/unflatten % initial-state)
