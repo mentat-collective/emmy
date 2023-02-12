@@ -21,6 +21,7 @@
 
 
 (def ^:private near? (v/within 1e-8))
+(def ^:private default-epsilon 1e-8)
 
 (defn stream-integrator
   "Produces a function, monotonic in its single numeric argument, 
@@ -151,7 +152,7 @@
   - `:counter` an atom containing a `Long` that increments every time derivative fn
     is called."
   [state-derivative derivative-args initial-state
-   {:keys [compile? epsilon] :or {epsilon 1e-8}}]
+   {:keys [compile? epsilon] :or {epsilon default-epsilon}}]
   (let [evaluation-time    (us/stopwatch :started? false)
         evaluation-count   (atom 0)
         flat-initial-state (flatten initial-state)
@@ -266,18 +267,10 @@
   instead of having to deal with a callback. Integrates the supplied
   state derivative (and its argument package) from [0 to t1] in steps
   of size dt"
-  ;; TODO(colin): this will wind up being stupid, because it takes 
-  ;; a wrapper to reestablish the callback interface only to unwind
-  ;; it again here. The point of the stream interface was not having
-  ;; to do this, so will probably rmeove the call to make-integrator
-  ;; and use stream-integrator directly here and map it over a
-  ;; range of x coordinates.
   [state-derivative state-derivative-args initial-state t1 dt]
-  (let [I (make-integrator state-derivative state-derivative-args)
-        out (atom [])
-        collector (fn [_ state]
-                    (swap! out conj state))]
-    (I initial-state dt t1 {:compile? true
-                            :epsilon 1e-6
-                            :observe collector})
-    @out))
+  (let [opts (integration-opts state-derivative 
+                               state-derivative-args 
+                               initial-state 
+                               default-epsilon)
+        f (:integrator opts)]
+    (mapv f (range 0 (+ t1 dt) dt))))
