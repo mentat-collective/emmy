@@ -270,9 +270,11 @@
   state derivative (and its argument package) from [0 to t1] in steps
   of size dt"
   [state-derivative state-derivative-args initial-state t1 dt]
-  (let [opts (integration-opts state-derivative 
-                               state-derivative-args 
-                               initial-state 
+  (let [opts (integration-opts state-derivative
+                               state-derivative-args
+                               initial-state
                                {})
-        f (:integrator opts)]
-    (mapv f (range 0 (+ t1 dt) dt))))
+        f (:integrator opts)
+        v (mapv f (range 0 (+ t1 dt) dt))]
+    (f)
+    v))
