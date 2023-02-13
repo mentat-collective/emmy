@@ -53,10 +53,10 @@
              ode               (ExpandableStatefulODE.
                                 (reify FirstOrderDifferentialEquations
                                   (computeDerivatives
-                                   [_ x y out]
-                                   (let [y' (f' x y)]
-                                     (doseq [i (range 0 (alength out))]
-                                       (aset out i (nth y' i)))))
+                                    [_ x y out]
+                                    (let [y' (f' x y)]
+                                      (doseq [i (range 0 (alength out))]
+                                        (aset out i (nth y' i)))))
                                   (getDimension [_] dimension)))
              step-requests     (a/chan)
              solution-segments (a/chan)]
@@ -97,8 +97,8 @@
                                              (into [] (.getInterpolatedState interpolator)))}))
                              (a/<!! step-requests))
                 (throw (InterruptedException. "end of integration"))))))
-         (.start (Thread.
-                  (fn []
+         (doto (Thread.
+                (fn []
                     ;; Wait for the first step request before calling integrate.
                     ;; Our flow control for the CM3 integrator is through the 
                     ;; StepHandler callback; when `.integrate` is called, the first
@@ -109,16 +109,18 @@
                     ;; before we are ready. Therefore we enforce the invariant that 
                     ;; a step request will precede the computation of any step, which
                     ;; is why we pull from the channel here.
-                    (a/<!! step-requests)
-                    (try
-                      (.integrate gbs ode Double/MAX_VALUE)
+                  (a/<!! step-requests)
+                  (try
+                    (.integrate gbs ode Double/MAX_VALUE)
                       ;; InterruptedException is the nominal way to exit an integration
-                      (catch InterruptedException _)
+                    (catch InterruptedException _)
                       ;; If the integrator throws an exception, send that exception through
                       ;; the `solution-segments` channel so that it may be handled by the consumer
                       ;; thread.
-                      (catch Throwable t
-                        (a/>!! solution-segments t))))))
+                    (catch Throwable t
+                      (a/>!! solution-segments t)))))
+           (.setDaemon true)
+           (.start))
          (let [next-segment (fn []
                               (a/>!! step-requests true)
                               (a/<!! solution-segments))
@@ -275,6 +277,8 @@
                                initial-state
                                {})
         f (:integrator opts)
-        v (mapv f (range 0 (+ t1 dt) dt))]
+        v (mapv f (for [x (range 0 (+ t1 dt) dt)
+                        :when (< x (+ t1 (/ dt 2)))]
+                    x))]
     (f)
     v))
