@@ -95,7 +95,7 @@
               ;; Normally, the use of an exception for flow control is frowned upon.
               ;; Ideally, the CM3 integrator would look at the return value of the
               ;; step handler to decide whether or not to continue, but it doesn't.
-              ;; (You can install an EventHander, which watches an indicator function
+              ;; (You can install an EventHandler, which watches an indicator function
               ;; whose change of sign can halt the integration, but using that feature
               ;; for this purpose would be contrived, and the extra work the integrator
               ;; must do to watch the indicator function is not justified by this
