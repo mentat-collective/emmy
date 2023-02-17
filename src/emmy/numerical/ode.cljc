@@ -2,11 +2,11 @@
 
 (ns emmy.numerical.ode
   "ODE solvers for working with initial value problems."
-  (:require #?@(:cljs
-                [["odex" :as o]
-                 [emmy.util :as u]])
+  (:require #?(:cljs
+               ["odex" :as o])
             #?(:clj
                [clojure.core.async :as a])
+            [clojure.core.reducers :as r]
             [emmy.expression.compile :as c]
             [emmy.structure :as struct]
             [emmy.util.stopwatch :as us]
@@ -18,31 +18,52 @@
               (org.apache.commons.math3.ode ExpandableStatefulODE)
               (org.apache.commons.math3.ode.sampling StepHandler))))
 
-
-
 (def ^:private near? (v/within 1e-8))
 (def ^:private default-epsilon 1e-8)
 
+(defn- flatten-into-primitive-array
+  "Copy the sequence `xs` into the primitive double array `arr`."
+  [arr xs]
+  (let [ix (atom -1)
+        asetter #?(:clj aset-double :cljs aset)]
+    (r/reduce (fn [a x]
+                (asetter a (swap! ix unchecked-inc) x)
+                a)
+              arr
+              (r/flatten xs))))
+
 (defn stream-integrator
-  "Produces a function, monotonic in its single numeric argument, 
-   that represents the integral of the function f' given the initial 
+  "Produces a function, monotonic in its single numeric argument,
+   that represents the integral of the function f' given the initial
    data $y_0 = f(x_0)$ and an options dictionary (presently containing
    the tolerance for error $\\epsilon$, but eventually also selecting
-   from a menu of integration techniques). 
-   
-   This is done by creating an adaptive step-size ODE solver, and 
-   advancing its steps as needed to supply function values. (This 
+   from a menu of integration techniques).
+
+   This is done by creating an adaptive step-size ODE solver, and
+   advancing its steps as needed to supply function values. (This
    architecture accounts for why the arguments to f must be presented
-   in order). Old solution segments are discarded. The goal of this 
+   in order). Old solution segments are discarded. The goal of this
    approach is to avoid the requirement of supplying an upper limit
    to the integration. At the cost of requiring monotonic arguments
    to f, the integrated function can essentially be used forever
    without accumulating unbounded state.
-   
-   The returned function may be called with no arguments to shut down
+
+   The function `f'` should have the signature `[x y y']`, where `y'` is a
+   primitive double array, which the function should fill in based
+   on the values `x` and `y`.) Both `y` and `y'` will be primitive arrays
+   of type double, the same length as that of `y0`. Both arrays are
+   owned by the integrator. In particular, y should never be modified,
+   and neither array should be modified or expected to persist after
+   the return of `f'`. This approach has observable memory and
+   performance impacts.
+
+   The return value of the integrating function, however, is newly
+   allocated and belongs to the caller.
+
+   The integrating function may be called with no arguments to shut down
    the integration, allowing for the final reclamation of its resources.
 
-   When the ODE solver is provided by Java, it may be necessary to 
+   When the ODE solver is provided by Java, it may be necessary to
    use an auxiliary thread to enable this style of flow control.  If
    JavaScript, we expect the solver to provide a generator of solution
    segments."
@@ -52,11 +73,7 @@
        (let [gbs               (GraggBulirschStoerIntegrator. 0. 1. (double epsilon) (double epsilon))
              ode               (ExpandableStatefulODE.
                                 (reify FirstOrderDifferentialEquations
-                                  (computeDerivatives
-                                    [_ x y out]
-                                    (let [y' (f' x y)]
-                                      (doseq [i (range 0 (alength out))]
-                                        (aset out i (nth y' i)))))
+                                  (computeDerivatives [_ x y out] (f' x y out))
                                   (getDimension [_] dimension)))
              step-requests     (a/chan)
              solution-segments (a/chan)]
@@ -69,20 +86,26 @@
             (init [_ _ _ _])
             (handleStep
               [_ interpolator _]
-              ;; The `step-requests` channel sends `true` each time a new segment of 
+              ;; The `step-requests` channel sends `true` each time a new segment of
               ;; the solution is demanded; `false` is a signal that the consumer
               ;; has no further need of them. When sending segments back, receiving
               ;; false from the send operation indicates that the channel is closed.
-              ;; In either of these cases the integration should be shut down. 
+              ;; In either of these cases the integration should be shut down.
               ;;
               ;; Normally, the use of an exception for flow control is frowned upon.
-              ;; Ideally, the CM3 integrator would look at the return value of the 
+              ;; Ideally, the CM3 integrator would look at the return value of the
               ;; step handler to decide whether or not to continue, but it doesn't.
               ;; (You can install an EventHander, which watches an indicator function
-              ;; whose change of sign can halt the integration, but using that feature 
-              ;; for this purpose would be contrived, and the extra work the integrator 
-              ;; must do to watch the indicator function is not justified by this 
+              ;; whose change of sign can halt the integration, but using that feature
+              ;; for this purpose would be contrived, and the extra work the integrator
+              ;; must do to watch the indicator function is not justified by this
               ;; goal.) Handling one exception in a worker thread is a small cost.
+              ;;
+              ;; The function returned in the solution segment object is evaluated
+              ;; using state that the integrator maintains, and which will be
+              ;; overwritten when the next state is computed. Use of the function
+              ;; after the next step-request is made will result in undefined
+              ;; behavior.
               (when-not (and (a/>!! solution-segments
                                     (let [x0 (.getPreviousTime interpolator)
                                           x1 (.getCurrentTime interpolator)]
@@ -94,19 +117,19 @@
                                                      (format "ODE interpolation request %g out of range [%g, %g]"
                                                              x x0 x1))
                                              (.setInterpolatedTime interpolator x)
-                                             (into [] (.getInterpolatedState interpolator)))}))
+                                             (.getInterpolatedState interpolator))}))
                              (a/<!! step-requests))
                 (throw (InterruptedException. "end of integration"))))))
          (doto (Thread.
                 (fn []
                     ;; Wait for the first step request before calling integrate.
-                    ;; Our flow control for the CM3 integrator is through the 
+                    ;; Our flow control for the CM3 integrator is through the
                     ;; StepHandler callback; when `.integrate` is called, the first
                     ;; step will be computed, and we want to hold the callback from
-                    ;; returning until the client signals that they are done with the 
-                    ;; (very stateful!) interpolation function, in order to prevent 
+                    ;; returning until the client signals that they are done with the
+                    ;; (very stateful!) interpolation function, in order to prevent
                     ;; the generation of another step's worth of interpolation data
-                    ;; before we are ready. Therefore we enforce the invariant that 
+                    ;; before we are ready. Therefore we enforce the invariant that
                     ;; a step request will precede the computation of any step, which
                     ;; is why we pull from the channel here.
                   (a/<!! step-requests)
@@ -123,7 +146,10 @@
            (.start))
          (let [next-segment (fn []
                               (a/>!! step-requests true)
-                              (a/<!! solution-segments))
+                              (let [v (a/<!! solution-segments)]
+                                (when (instance? #?(:clj Throwable :cljs Error) v)
+                                  (throw v))
+                                v))
                current-segment (atom (next-segment))]
            (fn
              ([]
@@ -134,15 +160,15 @@
               (while (> x (:x1 @current-segment))
                 (let [s (next-segment)]
                   (reset! current-segment s)))
-              ((:f @current-segment) x)))))
+              (into [] ((:f @current-segment) x))))))
 
        :cljs
-       (let [jsf' (fn [x ys] (double-array (f' x ys)))
-             solver (o/Solver.
-                     jsf'
+       (let [solver (o/Solver.
+                     f'
                      dimension
-                     (clj->js {:absoluteTolerance epsilon
-                               :relativeTolerance epsilon}))]
+                     #js {:absoluteTolerance epsilon
+                          :relativeTolerance epsilon
+                          :rawFunction true})]
          (comp js->clj (.integrate solver x0 (double-array y0)))))))
 
 
@@ -168,21 +194,11 @@
                                        array->state #(struct/unflatten % initial-state)]
                                    (comp d:dt array->state))))
 
-        state->array     #?(:clj
-                            (comp double-array flatten)
-
-                            :cljs
-                            (fn [state]
-                              (->> (flatten state)
-                                   (map u/double)
-                                   (into-array))))
-
-        equations        (fn [_ y]
+        equations        (fn [_ y out]
                            (us/start evaluation-time)
                            (swap! evaluation-count inc)
-                           (let [y' (state->array (derivative-fn y))]
-                             (us/stop evaluation-time)
-                             y'))
+                           (flatten-into-primitive-array out (derivative-fn y))
+                           (us/stop evaluation-time) )
 
         integrator (stream-integrator equations 0 flat-initial-state opts)]
     {:integrator integrator
@@ -201,7 +217,6 @@
   - the step size desired
   - the final time to seek, and
   - an error tolerance.
-
 
   If the `observe` function is not nil, it will be invoked with the time as
   first argument and integrated state as the second, at each intermediate step."

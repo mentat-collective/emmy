@@ -10,6 +10,7 @@
             [same :refer [ish? with-comparator] :include-macros true]))
 
 (def ^:private near? (v/within 1e-8))
+#?(:cljs (def ^:private aset-double aset))
 
 (deftest simple-odes
   (testing "y' = y"
@@ -20,10 +21,10 @@
     (let [f (constantly identity)]
       (doseq [compile? [true false true true]]
         (let [states (atom [])
-              result ((o/evolve f)         ;; solve: y' = y
-                      (up 1.)                               ;;        y(0) = 1
-                      0.1                                   ;; ... with step size 0.1
-                      1                                     ;; solve until t = 1
+              result ((o/evolve f)        ;; solve: y' = y
+                      (up 1.)             ;;        y(0) = 1
+                      0.1                 ;; with step size 0.1
+                      1                   ;; solve until t = 1
                       {:compile compile?
 
                        ;; accuracy desired
@@ -33,24 +34,29 @@
                        :observe #(swap! states conj [%1 %2])})]
           (is (= 11 (count @states)))
           (is (near? (Math/exp 1) (first result)))))))
-  
+
   (testing "y' = y, new interface"
-    (let [f (o/stream-integrator (fn [_ [y]] [y]) 0 [1] {:epsilon 1e-8})]
+    (let [f (o/stream-integrator (fn [_ y out] (aset-double out 0 (aget y 0))) 0 [1] {:epsilon 1e-8})]
       (doseq [x (range 0 1 0.01)]
         (let [[ex] (f x)]
           (is (near? (Math/exp x) ex))))
       (f)))
-  
+
   (testing "y'' = - y, new interface"
-    (let [f (o/stream-integrator (fn [_ [y0 y1]] [y1 (- y0)]) 0 [1 0] {:epsilon 1e-8})]
+    (let [f (o/stream-integrator (fn [_ y out]
+                                   (aset-double out 0 (aget y 1))
+                                   (aset-double out 1 (- (aget y 0))))
+                                 0 [1 0] {:epsilon 1e-8})]
       (doseq [x (range 0 (* 2 Math/PI) 0.1)]
         (let [[c ms] (f x)]
           (is (near? (Math/cos x) c))
           (is (near? (- (Math/sin x)) ms))))
       (f)))
-  
+
   (testing "stream integrator throws if used backwards"
-    (let [f (o/stream-integrator (fn [_ [y]] [y]) 0 [1] {:epsilon 1e-8})]
+    (let [f (o/stream-integrator (fn [_ y out]
+                                   (aset-double out 0 (aget y 0)))
+                                 0 [1] {:epsilon 1e-8})]
       (is (f 10))
       (is (thrown? #?(:clj IllegalStateException :cljs js/Error) (f 1)))
       (f)))
@@ -62,16 +68,16 @@
               ;; let u = y', then we have the first-order system {y' = u, u' = -y}
               ;; with initial conditions y(0) = 0, y'(0) = 1; we expect y = sin(x).
               result ((o/evolve f)
-                      (up 0. 1.)                            ;; y(0) = 0, y'(0) = 1
-                      0.1                                   ;; ... with step size 0.1
-                      (* 2 Math/PI)                       ;; over [0, 2π]
+                      (up 0. 1.)            ;; y(0) = 0, y'(0) = 1
+                      0.1                   ;; with step size 0.1
+                      (* 2 Math/PI)         ;; over [0, 2π]
                       {:compile? compile?
                        :epsilon 1.e-10
                        :observe #(swap! states conj [%1 %2])})]
-          (is (= 64 (count @states)))     ;; 0.0 .. 6.2 by .1, plus 2π
+          (is (= 64 (count @states)))       ;; 0.0 .. 6.2 by .1, plus 2π
           (is (near? 0 (first result)))
           (is (near? 1 (second result)))
-          (let [[t [s c]] (nth @states 15)]                  ;; state #15 is t = 1.5
+          (let [[t [s c]] (nth @states 15)] ;; state #15 is t = 1.5
             (is (near? t 1.5))
             (is (near? s (Math/sin 1.5)))
             (is (near? c (Math/cos 1.5))))
