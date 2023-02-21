@@ -9,6 +9,7 @@
             [clojure.core.reducers :as r]
             [emmy.expression.compile :as c]
             [emmy.structure :as struct]
+            [emmy.util :as u]
             [emmy.util.stopwatch :as us]
             [emmy.value :as v]
             [taoensso.timbre :as log])
@@ -119,7 +120,7 @@
                                              (.setInterpolatedTime interpolator x)
                                              (.getInterpolatedState interpolator))}))
                              (a/<!! step-requests))
-                (throw (InterruptedException. "end of integration"))))))
+                (throw (u/interrupted "end of integration"))))))
          (doto (Thread.
                 (fn []
                     ;; Wait for the first step request before calling integrate.
@@ -133,7 +134,7 @@
                     ;; a step request will precede the computation of any step, which
                     ;; is why we pull from the channel here.
                   (when-not (a/<!! step-requests)
-                    (throw (InterruptedException. "end of integration")))
+                    (throw (u/interrupted "end of integration")))
                   (try
                     (.integrate gbs ode Double/MAX_VALUE)
                     (catch InterruptedException _)
@@ -157,7 +158,7 @@
               (a/>!! step-requests false))
              ([x]
               (when (< x (:x0 @current-segment))
-                (throw (IllegalStateException. "Cannot use interpolation function in backwards direction")))
+                (throw (u/illegal-state "Cannot use interpolation function in backwards direction")))
               (while (> x (:x1 @current-segment))
                 (let [s (next-segment)]
                   (reset! current-segment s)))

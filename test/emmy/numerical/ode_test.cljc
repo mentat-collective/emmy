@@ -6,6 +6,7 @@
             [emmy.generic :as g :refer [- * /]]
             [emmy.numerical.ode :as o]
             [emmy.structure :refer [up]]
+            [emmy.util :as u]
             [emmy.value :as v]
             [same :refer [ish? with-comparator] :include-macros true]))
 
@@ -64,14 +65,14 @@
   (testing "throwing from derivative can be caught"
     (let [f' (fn [x [y0 y1] out]
                (when (> x (* 1.5 Math/PI))
-                 (throw (#?(:clj RuntimeException. :cljs js/Error.) "bad derivative")))
+                 (throw (u/exception "bad derivative")))
                (aset-double out 0 y1)
                (aset-double out 1 (- y0)))
           f (o/stream-integrator f' 0 [1 0] {})]
       (let [[y0 y1] (f Math/PI)]
         (is (near? -1 y0))
         (is (near? 0 y1)))
-      (is (thrown? #?(:clj RuntimeException :cljs js/Error) (f (* 2 Math/PI))))))
+      (is (thrown? #?(:clj Exception :cljs js/Error) (f (* 2 Math/PI))))))
 
   (testing "y'' = -y"
     (let [f (fn [] (fn [[y u]] (up u (- y))))]
