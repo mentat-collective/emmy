@@ -132,15 +132,16 @@
                     ;; before we are ready. Therefore we enforce the invariant that
                     ;; a step request will precede the computation of any step, which
                     ;; is why we pull from the channel here.
-                  (a/<!! step-requests)
+                  (when-not (a/<!! step-requests)
+                    (throw (InterruptedException. "end of integration")))
                   (try
                     (.integrate gbs ode Double/MAX_VALUE)
-                      ;; InterruptedException is the nominal way to exit an integration
                     (catch InterruptedException _)
+                      ;; InterruptedException is the nominal way to exit an integration
+                    (catch Throwable t
                       ;; If the integrator throws an exception, send that exception through
                       ;; the `solution-segments` channel so that it may be handled by the consumer
                       ;; thread.
-                    (catch Throwable t
                       (a/>!! solution-segments t)))))
            (.setDaemon true)
            (.start))
@@ -198,7 +199,7 @@
                            (us/start evaluation-time)
                            (swap! evaluation-count inc)
                            (flatten-into-primitive-array out (derivative-fn y))
-                           (us/stop evaluation-time) )
+                           (us/stop evaluation-time))
 
         integrator (stream-integrator equations 0 flat-initial-state opts)]
     {:integrator integrator
