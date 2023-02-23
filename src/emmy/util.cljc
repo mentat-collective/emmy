@@ -100,6 +100,11 @@
    #?(:clj (IllegalArgumentException. ^String s)
       :cljs (js/Error s))))
 
+(defn interrupted [s]
+  (throw
+   #?(:clj (InterruptedException. ^String s)
+      :cljs (js/Error s))))
+
 (defn illegal-state [s]
   (throw
    #?(:clj (IllegalStateException. ^String s)
