@@ -2,6 +2,8 @@
   (:require [nextjournal.clerk :as clerk]
             [emmy.env]))
 
+(alter-var-root #'*warn-on-reflection* (constantly true))
+
 (comment
   ;; Activate this line to start the clerk server.
   (clerk/serve!
