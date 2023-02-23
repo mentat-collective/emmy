@@ -293,9 +293,9 @@
                                state-derivative-args
                                initial-state
                                {})
-        f (:integrator opts)
-        v (mapv f (for [x (range 0 (+ t1 dt) dt)
-                        :when (< x (+ t1 (/ dt 2)))]
-                    x))]
-    (f)
-    v))
+        f (:integrator opts)]
+    (try
+      (mapv f (for [x (range 0 (+ t1 dt) dt)
+                    :when (< x (+ t1 (/ dt 2)))]
+                x))
+      (finally (f)))))
