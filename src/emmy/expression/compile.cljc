@@ -6,6 +6,7 @@
   functions."
   (:require #?(:cljs [goog.string :refer [format]])
             [clojure.set :as set]
+            [clojure.string :as cs]
             [clojure.walk :as w]
             [emmy.expression :as x]
             [emmy.expression.analyze :as a]
@@ -18,6 +19,131 @@
             [sci.core :as sci]
             [taoensso.timbre :as log]))
 
+;; This first bit is a small set of benchmarks exploring the speed differences
+;; between the case where we pass in JS arrays vs using vectors all the way
+;; through.
+
+(defn vec->vec
+  "vector in, vector out."
+  [[t theta thetadot]]
+  [1.0 thetadot (* -9.8 (Math/sin theta))])
+
+(defn ->vec
+  "Array in, returns a vector."
+  [^doubles arr]
+  (let [t        (aget arr 0)
+        theta    (aget arr 1)
+        thetadot (aget arr 2)]
+    [1.0 thetadot (* -9.8 (Math/sin theta))]))
+
+(defn ->array
+  "Array in, internally create an array and return it."
+  [^doubles arr]
+  (let [t        (aget arr 0)
+        theta    (aget arr 1)
+        thetadot (aget arr 2)]
+    (doto ^doubles (make-array Double/TYPE  3)
+      (aset 0 1.0)
+      (aset 1 thetadot)
+      (aset 2 (* -9.8 (Math/sin theta))))))
+
+(defn ->input-array
+  "Array in, output array in, set values on the output array."
+  [^doubles arr ^doubles out]
+  (let [t        (aget arr 0)
+        theta    (aget arr 1)
+        thetadot (aget arr 2)]
+    (doto out
+      (aset 0 1.0)
+      (aset 1 thetadot)
+      (aset 2 (* -9.8 (Math/sin theta))))))
+
+(defn ->input-array-param
+  "Same thing, but with a parameter vector in supplying the 9.8."
+  [params ^doubles arr ^doubles out]
+  (let [t        (aget arr 0)
+        theta    (aget arr 1)
+        thetadot (aget arr 2)]
+    (doto out
+      (aset 0 1.0)
+      (aset 1 thetadot)
+      (aset 2 (* #?(:clj  (.nth ^clojure.lang.PersistentVector params 0)
+                    :cljs (-nth params 0))
+
+                 (Math/sin theta))))))
+
+(comment
+  ;; SO what I've learned here is that I need to both change the inputs to take
+  ;; arrays, and the outputs to produce vectors if that occurs.
+  (let [v [0 1 2]
+        xs (double-array [0 1 2])
+        n  100000000]
+    (time (dotimes [_ n]
+            (vec->vec v)))
+
+    (time (dotimes [_ n]
+            (->vec xs)))
+
+    (time (dotimes [_ n]
+            (->array xs)))
+
+    (let [out ^doubles (make-array Double/TYPE 3)]
+      (time (dotimes [_ n]
+              (->input-array xs out))))
+
+    (let [out ^doubles (make-array Double/TYPE 3)
+          params [-9.8]]
+      (time (dotimes [_ n]
+              (->input-array-param params xs out)))))
+
+  ;; On my machine:
+  "Elapsed time: 1850.618375 msecs"
+  "Elapsed time: 468.673792 msecs"
+  "Elapsed time: 477.605167 msecs"
+  "Elapsed time: 475.19675 msecs"
+  "Elapsed time: 602.779916 msecs"
+  )
+
+;; I forget why I added this benchmark... this should be the same, I was seeing
+;; if there was any difference if you then used the output array. It's a touch
+;; faster to supply the output array, and better for memory usage as well, of
+;; course.
+(defn vec-checker [arr]
+  (let [result (->vec arr)]
+    (= (result 1)
+       (result 2))))
+
+(defn array-checker [arr]
+  (let [result ^doubles (->array arr)]
+    (= (aget result 1)
+       (aget result 2))))
+
+(defn input-array-checker [^doubles arr ^doubles result]
+  (->input-array arr result)
+  (= (aget result 1)
+     (aget result 2)))
+
+(comment
+  (let [xs (double-array [0 1 2])
+        n 100000000]
+    (time (dotimes [_ n]
+            (vec-checker xs)))
+
+    (time (dotimes [_ n]
+            (array-checker xs)))
+
+    (let [out ^doubles (make-array Double/TYPE 3)]
+      (time (dotimes [_ n]
+              (input-array-checker xs out)))))
+
+  ;; on my machine...
+  "Elapsed time: 1943.508708 msecs"
+  "Elapsed time: 540.407792 msecs"
+  "Elapsed time: 508.390167 msecs"
+  )
+
+;; Now we're back to regularly scheduled programming.
+
 ;; # Function Compilation
 ;;
 ;; Functions built out of generic operations can be compiled down into fast,
@@ -26,16 +152,18 @@
 ;; 1. Pass symbols like `'x` in for all arguments. This will cause the function
 ;;    to return a "numerical expression", a syntax tree representing the
 ;;    function's body:
-#_(let [f (fn [x] (g/sqrt
+#_
+(let [f (fn [x] (g/sqrt
                 (g/+ (g/square (g/sin x))
                      (g/square (g/cos x)))))]
-(= '(sqrt (+ (expt (sin x) 2) (expt (cos x) 2)))
-   (x/expression-of (f 'x))))
+  (= '(sqrt (+ (expt (sin x) 2) (expt (cos x) 2)))
+     (x/expression-of (f 'x))))
 
 ;; 2. `g/simplify` the new function body. Sometimes this results in large
 ;;    simplifications:
 
-#_(let [f (fn [x] (g/sqrt
+#_
+(let [f (fn [x] (g/sqrt
                 (g/+ (g/square (g/sin x))
                      (g/square (g/cos x)))))]
   (v/= 1 (g/simplify (f 'x))))
@@ -77,7 +205,7 @@
        you wrote it with generic routines)."}
   compiled-fn-whitelist
   {'up {:sym `vector :f vector}
-   'down {:sym 'emmy.structure/down
+   'down {:sym `struct/down
           :f struct/down}
    '+ {:sym `+ :f +}
    '- {:sym `- :f -}
@@ -232,7 +360,8 @@
 ;; This is important, as it forces us to consider smaller subexpressions first.
 ;; Consider some expression like:
 
-#_(+ (* (sin x) (cos x))
+#_
+(+ (* (sin x) (cos x))
    (* (sin x) (cos x))
    (* (sin x) (cos x)))
 
@@ -246,7 +375,8 @@
 ;; before the larger term that contains them both. And in fact the returned pair
 ;; looks like:
 
-#_[(+ g3 g3 g3) ([g1 (sin x)] [g2 (cos x)] [g3 (* g1 g2)])]
+#_
+[(+ g3 g3 g3) ([g1 (sin x)] [g2 (cos x)] [g3 (* g1 g2)])]
 
 ;; NOTE also that:
 ;;
@@ -323,7 +453,7 @@
   wrapped in a `let` binding with one binding per extracted common
   subexpression.
 
-  ## Optional Arguments
+  ## Optional Arguments TODO say `see blah for options`
 
   `:symbol-generator`: side-effecting function that returns a new, unique symbol
   on each invocation. These generated symbols are used to create unique binding
@@ -360,18 +490,18 @@
   "Takes a function body and returns a new body with all numeric operations
   like `(/ 1 2)` evaluated and all numerical literals converted to `double` or
   `js/Number`."
-  [body]
-  (w/postwalk
-   (fn [expr]
-     (cond (v/real? expr) (u/double expr)
-           (sequential? expr)
-           (let [[f & xs] expr]
-             (if-let [m (and (every? number? xs)
-                             (numeric-whitelist f))]
-               (u/double (apply (:f m) xs))
-               expr))
-           :else expr))
-   body))
+  ([body]
+   (w/postwalk
+    (fn [expr]
+      (cond (v/real? expr) (u/double expr)
+            (sequential? expr)
+            (let [[f & xs] expr]
+              (if-let [m (and (every? number? xs)
+                              (numeric-whitelist f))]
+                (u/double (apply (:f m) xs))
+                expr))
+            :else expr))
+    body)))
 
 ;; ### SCI vs Native Compilation
 ;;
@@ -421,7 +551,7 @@
   #?(:cljs (set! *mode* mode)
      :clj  (alter-var-root #'*mode* (constantly mode))))
 
-;; Native compilation works on the JVM, and on ClojureScript if you're running
+;; Native compilation works on the JVM, and on Clojurescript if you're running
 ;; in a self-hosted CLJS environment. Enable this mode by wrapping your call in
 ;;
 ;; `(binding [*mode* :native] ,,,)`
@@ -439,12 +569,14 @@
 ;;
 ;; The compiled version of a state function like
 
-#_(fn [mass g]
-  (fn [q]))
+#_
+(fn [mass g]
+  (fn [q] ,,,))
 
 ;; Has a signature like
 
-#_(fn [q [mass g]])
+#_
+(fn [q [mass g]] ,,,)
 
 ;; IE, first the structure, then a vector of the original function's arguments.
 
@@ -454,7 +586,7 @@
   - `params`: a seq of symbols equal in count to the original state function's
     args
   - `state-model`: a sequence of variables representing the structure of the
-    nested function returned by the state function
+    argument to the nested function returned by the state function
   - `opts`, a dictionary of compilation options.
 
   See [[compile-state-fn*]] for a description of the options accepted in
@@ -499,6 +631,34 @@
   [f-form]
   (sci/eval-form (sci/fork sci-context) f-form))
 
+(defn ^:no-doc array-bindings
+  "
+
+  - `include?`: fn (or a set!) that returns true of the symbol it's passed is
+    used inside of the function body (and needs to be bound), false otherwise.
+
+  - `array-sym`: symbol that stands for the array version of `inputs`.
+
+  - `inputs`: the structure of symbols that we're converting into a primitive
+    array during compilation."
+  [include? array-sym inputs]
+  (into [] (comp (map-indexed
+                  (fn [i v]
+                    (when (include? v)
+                      [v `(aget ~array-sym ~i)])))
+                 cat)
+        (flatten inputs)))
+
+(comment
+  ;; For example:
+  (= '[t (clojure.core/aget arr 0)
+       thetadot (clojure.core/aget arr 2)]
+     (array-bindings '#{+ t thetadot}
+                     'arr
+                     '[t theta thetadot])))
+
+;; TODO add docs for the `output` arg
+
 (defn- compile-state->source
   "Returns a natively-evaluated Clojure function that implements `body`, given:
 
@@ -507,9 +667,40 @@
   - `state-model`: a sequence of variables representing the structure of the
     nested function returned by the state function
   - `body`: a function body making use of any symbol in the args above"
-  [params state-model body opts]
-  (let [body (w/postwalk-replace sym->resolved-form body)]
-    `(fn ~(state-argv params state-model opts) ~body)))
+  [params state-model body output _opts]
+  (let [state-sym (with-meta (gensym) {:tag 'doubles})
+        param-sym (with-meta (gensym) {:tag 'doubles})
+        body      (w/postwalk-replace sym->resolved-form body)
+        vs        (x/variables-in body)]
+    ;; TODO maybe tidy up, no empty let binding if no params etc?
+    `(fn [~state-sym ~param-sym ~output]
+       (let ~(array-bindings vs state-sym state-model)
+         (let ~(array-bindings vs param-sym params)
+           ~body)))))
+
+(defn- compile-state->source-experimental
+  "Returns a natively-evaluated Clojure function that implements `body`, given:
+  - `params`: a seq of symbols equal in count to the original state function's
+    args
+
+  - `state-model`: a sequence of variables representing the structure of the
+    nested function returned by the state function
+
+  - `body`: a function body making use of any symbol in the args above
+
+  - `output`:
+
+  - `opts`: (ignored here)"
+  [params state-model body output _opts]
+  (let [state-sym (with-meta (gensym) {:tag 'doubles})
+        param-sym (with-meta (gensym) {:tag 'doubles})
+        body      (w/postwalk-replace sym->resolved-form body)
+        vs        (x/variables-in body)]
+    ;; TODO maybe tidy up, no empty let binding if no params etc?
+    `(fn [~state-sym ~param-sym ~output]
+       (let ~(into (array-bindings vs state-sym state-model)
+                   (array-bindings vs param-sym params))
+         ~body))))
 
 (defn- compile-state-native
   "Returns a natively-evaluated Clojure function that implements `body`, given:
@@ -542,7 +733,7 @@
 ;; versions of the following function exist, one that uses the global cache
 ;; defined above and one that doesn't.
 
-(defn- state->argv
+(defn state->argv
   "Given a (structural) initial `state` and a `gensym-fn` function from symbol =>
   generated symbol walks the structure and converts all structures to vectors
   and all non-structural elements to gensymmed symbols."
@@ -553,29 +744,75 @@
               (gensym-fn 'y)))]
     (rec state)))
 
+;; TODO -
+;;
+;; `:flatten?`, `:generic-params?` need to get killed in favor of
+;;
+;; - `:parameters`, where if these are MISSING we assume they've already been
+;;    supplied, and if present, then we act like `"generic-params?`" is true.
+;;
+(defn flatten-structs [x]
+  (letfn [(sym-struct? [expr]
+            (and (sequential? expr)
+                 (struct/symbol-set (first expr))))]
+    (filter (complement sym-struct?)
+            (rest (tree-seq sym-struct? rest x)))))
+
+(defn ^:no-doc ->output [body output]
+  (if (= `let (first body))
+    `(~@(take 2 body)
+      ~(->output (nth body 2) output))
+    `(doto ~output
+       ~@(map-indexed (fn [i x]
+                        `(aset ~i ~x))
+                      (flatten-structs body)))))
+
+(defn ^:no-doc ->js-output [body output]
+  (if (= `let (first body))
+    `(~@(take 2 body)
+      ~(->output (nth body 2) output))
+    `(do
+       ~@(map-indexed (fn [i x]
+                        `(aset ~output ~i ~x))
+                      (flatten-structs body)))))
+
+(comment
+  (= '(clojure.core/doto output
+        (clojure.core/aset 0 t)
+        (clojure.core/aset 1 x0)
+        (clojure.core/aset 2 x1)
+        (clojure.core/aset 3 v0)
+        (clojure.core/aset 4 v1))
+     (->output
+      '(up t (up x0 x1) (up v0 v1))
+      'output)))
+
 (defn compile-state-fn*
   "Returns a compiled, simplified function with signature `(f state params)`,
   given:
 
-  - a state function that can accept a symbolic arguments
+  - a (possibly parametric) function `f` of state => state that can accept a
+    symbolic arguments
 
-  - `params`; really any sequence of count equal to the number of arguments
-    taken by `f`. The values are ignored.
-
-  - `initial-state`: Some structure of the same shape as the argument expected
-    by the fn returned by the state function `f`. Only the shape matters; the
-    values are ignored.
+  - `prototype`: Some structure of the same shape as the argument expected by
+    the fn returned by the state function `f`. Only the shape matters; the values
+    are ignored.
 
   - an optional argument `opts`. Options accepted are:
 
     - `:flatten?`: if `true` (default), the returned function will have
       signature `(f <flattened-state> [params])`. If `false`, the first arg of the
-      returned function will be expected to have the same shape as `initial-state`
+      returned function will be expected to have the same shape as `initial-state`.
 
-    - `:generic-params?`: if `true` (default), the returned function will take a
-      second argument for the parameters of the state derivative and keep params
-      generic. If false, the returned function will take a single state argument,
-      and the supplied params will be hardcoded.
+    - `:parameters`; Prototype of params TODO more details
+
+      any sequence of count equal to the number of arguments taken by `f`. The
+      values are ignored. TODO EDIT:: if `true` (default), the returned function
+      will take a second argument for the parameters of the state derivative and
+      keep params generic. If false, the returned function will take a single state
+      argument, and the supplied params will be hardcoded.
+
+    - `:genysym-fn`:
 
     - `:mode`: Explicitly set the compilation mode to one of the values
       in [[valid-modes]]. Explicit alternative to dynamically binding [[*mode*]].
@@ -587,30 +824,32 @@
 
   NOTE this function uses no cache. To take advantage of the global compilation
   cache, see `compile-state-fn`."
-  ([f params initial-state]
-   (compile-state-fn* f params initial-state {}))
-  ([f params initial-state {:keys [generic-params?
-                                   gensym-fn
-                                   mode]
-                            :or {generic-params? true
-                                 gensym-fn gensym}
-                            :as opts}]
+  ([f prototype]
+   (compile-state-fn* f prototype {}))
+  ([f prototype {:keys [parameters
+                        gensym-fn
+                        mode]
+                 :or {gensym-fn gensym}
+                 :as opts}]
    (let [sw            (us/stopwatch)
-         params        (if generic-params?
-                         (for [_ params] (gensym-fn 'p))
-                         params)
-         generic-state (state->argv initial-state gensym-fn)
-         g             (apply f params)
+         ;; this needs to be the actual, structural argv at this stage.
+         generic-state (state->argv prototype gensym-fn)
+         [params g]    (if parameters
+                         (let [ps (for [_ parameters] (gensym-fn 'p))]
+                           [ps (apply f ps)])
+                         [nil f])
+         output        (with-meta (gensym) {:tag 'doubles})
          body          (-> (g generic-state)
                            (g/simplify)
                            (v/freeze)
                            (cse-form)
-                           (apply-numeric-ops))
+                           (apply-numeric-ops)
+                           (->output output))
          compiler      (case (validate-mode! (or mode *mode*))
                          :source compile-state->source
                          :native compile-state-native
                          :sci compile-state-sci)
-         compiled-fn   (compiler params generic-state body opts)]
+         compiled-fn   (compiler params generic-state body output opts)]
      (log/info "compiled state function in" (us/repr sw) "with mode" *mode*)
      compiled-fn)))
 
@@ -622,18 +861,205 @@
 
   NOTE that this function makes use of a global compilation cache, keyed by the
   value of `f`. Passing in the same `f` twice, even with different arguments for
-  `param` and `initial-state` and different compilation modes, will return the
-  cached value. See `compile-state-fn*` to avoid the cache."
-  ([f params initial-state]
-   (compile-state-fn f params initial-state {}))
-  ([f params initial-state opts]
+  `prototype`, `opts` and different compilation modes, will return the cached
+  value. See `compile-state-fn*` to avoid the cache."
+  ([f prototype]
+   (compile-state-fn f prototype {}))
+  ([f prototype opts]
    (if-let [cached (@fn-cache f)]
      (do
        (log/info "compiled state function cache hit")
        cached)
-     (let [compiled (compile-state-fn* f params initial-state opts)]
+     (let [compiled (compile-state-fn* f prototype opts)]
        (swap! fn-cache assoc f compiled)
        compiled))))
+
+;; ## To JavaScript
+
+(defn- make-symbol-generator [p]
+  (let [i (atom 0)]
+    (fn [] (symbol
+           #?(:clj
+              (format "%s%04x" p (swap! i inc))
+
+              :cljs
+              (let [suffix (-> (swap! i inc)
+                               (.toString 16)
+                               (.padStart 4 "0"))]
+                (str p suffix)))))))
+
+(def infix-set
+  '#{* + - / u- =})
+
+(def js-renames
+  {'sin "Math.sin"
+   'cos "Math.cos"
+   'tan "Math.tan"
+   'asin "Math.asin"
+   'acos "Math.acos"
+   'atan "Math.atan"
+   'cosh "Math.cosh"
+   'sinh "Math.sinh"
+   'tanh "Math.tanh"
+   'asinh "Math.asinh"
+   'acosh "Math.acosh"
+   'atanh "Math.atanh"
+   'sqrt "Math.sqrt"
+   'abs "Math.abs"
+   'expt "Math.pow"
+   'log "Math.log"
+   'exp "Math.exp"
+   'floor "Math.floor"
+   'ceiling "Math.ceil"
+   'integer-part "Math.trunc"
+   'not "!"})
+
+;; TODO pull in from render... and TODO add the `else` case in `render`.
+
+(defn- render-infix-ratio
+  "renders a pair of the form `[numerator denominator]` as a infix ratio of the
+  form `num/denom`.
+
+  If the pair contains only one entry `x`, it's coerced to `[1 x]` (and treated
+  as a denominator)."
+  [[num denom :as xs]]
+  (let [n (count xs)]
+    (cond (and (= n 1) (v/integral? num))
+          (str "1/" num)
+
+          (and (= n 2)
+               (v/integral? num)
+               (v/integral? denom))
+          (str num "/" denom)
+
+          :else (str num " / " denom))))
+
+(def js-handlers
+  (let [->parens #(str "(" % ")")
+        ->js-vector #(str \[ (cs/join ", " %) \])]
+    {'up ->js-vector
+     'down ->js-vector
+     'modulo (fn [[a b]]
+               (-> (str a " % " b)
+                   (->parens)
+                   (str " + " b)
+                   (->parens)
+                   (str " % " b)
+                   (->parens)))
+     'remainder (fn [[a b]]
+                  (str a " % " b))
+     'and (fn [[a b]] (str a " && " b))
+     'or  (fn [[a b]] (str a " || " b))
+
+     ;; TODO this is dumb for now!!
+     'do  (fn [xs] (apply str xs))
+     `aset
+     (fn [[a i v]] (str "  " a "[" (int i) "] = " v ";\n"))
+     '/ render-infix-ratio}))
+
+;; TODO return `(js/Function. "s" "p" "out" "body")`
+(let [->parens #(str "(" % ")")]
+  (defn ->js [xs]
+    (str
+     (w/postwalk
+      (fn [expr]
+        (cond (symbol? expr) expr
+              (v/real? expr) (u/double expr)
+              (sequential? expr)
+              (let [[f & xs] expr]
+                (if-let [m (and (every? number? xs)
+                                (numeric-whitelist f))]
+                  (u/double (apply (:f m) xs))
+                  (or (when-let [f' (js-handlers f)]
+                        (f' xs))
+
+                      ;; infix
+                      (when-let [sym (infix-set f)]
+                        (->parens
+                         (cs/join (str " " sym " ") xs)))
+
+                      ;; prefix
+                      (when-let [f-name (js-renames f)]
+                        (str f-name
+                             (->parens
+                              (cs/join " , " xs))))
+
+                      (u/illegal (str "Unknown op: " f)))))
+              :else expr))
+      xs))))
+
+(comment
+  (let [xs '(+ (* x y z)
+               (- (* a b c)
+                  (/ d g)))]
+    (->js xs)))
+
+;; TODO I expect that the guts here will be mostly the same...
+(defn compile-js
+  ([f prototype]
+   (compile-js f prototype {}))
+  ([f prototype {:keys [parameters
+                        gensym-fn
+                        mode]
+                 :or {gensym-fn gensym}
+                 :as opts}]
+   (let [sw            (us/stopwatch)
+         callback      (fn [new-expression new-vars]
+                         (str (cs/join
+                               (->> (for [[var val] new-vars]
+                                      (str "  var " var " = " (->js val) ";\n"))
+                                    (apply str)))
+                              (->js new-expression) ";"))
+         ;; this needs to be the actual, structural argv at this stage.
+         generic-state (state->argv prototype gensym-fn)
+         [params g]    (if parameters
+                         (let [ps (for [_ parameters] (gensym-fn 'p))]
+                           [ps (apply f ps)])
+                         [nil f])
+         state-sym     (with-meta (gensym) {:tag 'doubles})
+         param-sym     (with-meta (gensym) {:tag 'doubles})
+         output-sym    (with-meta (gensym) {:tag 'doubles})
+         body (-> (g generic-state)
+                  (g/simplify)
+                  (v/freeze))
+         vs (x/variables-in body)
+         body (-> body
+                  (->js-output output-sym)
+                  (extract-common-subexpressions callback opts))
+         s-bindings (transduce
+                     (comp (map-indexed
+                            (fn [i v]
+                              (when (vs v)
+                                [(str "  " v " = " state-sym "[" i "];\n")])))
+                           cat)
+                     str
+                     (flatten generic-state))
+         p-bindings (transduce
+                     (comp (map-indexed
+                            (fn [i v]
+                              (when (vs v)
+                                [(str "  " v " = " param-sym "[" i "];\n")])))
+                           cat)
+                     str
+                     params)
+         body-str (str s-bindings p-bindings body)]
+     (log/info "compiled state function in" (us/repr sw) "with mode :js")
+     #_(js/console.log
+        (str state-sym)
+        (str param-sym)
+        (str output-sym)
+        body-str)
+     #?(:clj
+        {:params [(str state-sym)
+                  (str param-sym)
+                  (str output-sym)]
+         :body body-str}
+        :cljs
+        (js/Function.
+         (str state-sym)
+         (str param-sym)
+         (str output-sym)
+         body-str)))))
 
 ;; ## Non-State-Functions
 ;;
