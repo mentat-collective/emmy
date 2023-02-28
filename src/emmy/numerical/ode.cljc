@@ -2,14 +2,12 @@
 
 (ns emmy.numerical.ode
   "ODE solvers for working with initial value problems."
-  (:require #?(:cljs
-               ["odex" :as o])
-            #?(:clj
-               [clojure.core.async :as a])
+  (:require #?(:cljs ["odex" :as o])
+            #?(:clj  [clojure.core.async :as a])
             [clojure.core.reducers :as r]
             [emmy.expression.compile :as c]
             [emmy.structure :as struct]
-            [emmy.util :as u]
+            #?(:clj [emmy.util :as u])
             [emmy.util.stopwatch :as us]
             [emmy.value :as v]
             [taoensso.timbre :as log])
@@ -86,7 +84,7 @@
           (reify StepHandler
             (init [_ _ _ _])
             (handleStep
-              [_ interpolator _]
+                [_ interpolator _]
               ;; The `step-requests` channel sends `true` each time a new segment of
               ;; the solution is demanded; `false` is a signal that the consumer
               ;; has no further need of them. When sending segments back, receiving
@@ -123,22 +121,22 @@
                 (throw (u/interrupted "end of integration"))))))
          (doto (Thread.
                 (fn []
-                    ;; Wait for the first step request before calling integrate.
-                    ;; Our flow control for the CM3 integrator is through the
-                    ;; StepHandler callback; when `.integrate` is called, the first
-                    ;; step will be computed, and we want to hold the callback from
-                    ;; returning until the client signals that they are done with the
-                    ;; (very stateful!) interpolation function, in order to prevent
-                    ;; the generation of another step's worth of interpolation data
-                    ;; before we are ready. Therefore we enforce the invariant that
-                    ;; a step request will precede the computation of any step, which
-                    ;; is why we pull from the channel here.
+                  ;; Wait for the first step request before calling integrate.
+                  ;; Our flow control for the CM3 integrator is through the
+                  ;; StepHandler callback; when `.integrate` is called, the first
+                  ;; step will be computed, and we want to hold the callback from
+                  ;; returning until the client signals that they are done with the
+                  ;; (very stateful!) interpolation function, in order to prevent
+                  ;; the generation of another step's worth of interpolation data
+                  ;; before we are ready. Therefore we enforce the invariant that
+                  ;; a step request will precede the computation of any step, which
+                  ;; is why we pull from the channel here.
                   (when-not (a/<!! step-requests)
                     (throw (u/interrupted "end of integration")))
                   (try
                     (.integrate gbs ode Double/MAX_VALUE)
                     (catch InterruptedException _)
-                      ;; InterruptedException is the nominal way to exit an integration
+                    ;; InterruptedException is the nominal way to exit an integration
                     (catch Throwable t
                       ;; If the integrator throws an exception, send that exception through
                       ;; the `solution-segments` channel so that it may be handled by the consumer
@@ -195,7 +193,6 @@
                                  (let [d:dt (apply state-derivative derivative-args)
                                        array->state #(struct/unflatten % initial-state)]
                                    (comp d:dt array->state))))
-
         equations        (fn [_ y out]
                            (us/start evaluation-time)
                            (swap! evaluation-count inc)
