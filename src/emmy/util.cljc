@@ -124,3 +124,6 @@
   (throw
    #?(:clj (Exception. ^String s)
       :cljs (js/Error s))))
+
+(defn throwable? [t]
+  (instance? #?(:clj Throwable :cljs js/Error) t))
