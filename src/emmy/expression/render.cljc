@@ -693,24 +693,3 @@
         (print ";\n"))
       (print "  return" value)
       (print ";\n}"))))
-
-(comment
-
-  (doseq [[var val] new-vars]
-    (print "  var ")
-    (print (str var " = "))
-    (print (R val))
-    (print ";\n"))
-(print "  return ")
-(print (R new-expression))
-(print ";\n}")
-
-  (let [xs '(+ (* x y z)
-               (* x y z)
-               (- (* a b (sin c))
-
-                  (/ d g)))]
-    (print (->JavaScript xs
-                         :deterministic? true
-                         :symbol-generator (make-symbol-generator "p"))))
-  )

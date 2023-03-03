@@ -39,52 +39,49 @@
           initial-state [3]
           expected ((apply f params) initial-state)]
       (testing "compilation works in sci and native modes"
-        #?(:clj
-           (binding [c/*mode* :native]
-             (is (= expected
-                    ((c/compile-state-fn* f params initial-state)
-                     initial-state params)))))
+
+        (binding [c/*mode* :native]
+          (is (= expected
+                 ((c/compile-state-fn* f params initial-state)
+                  initial-state params))))
 
         (binding [c/*mode* :sci]
           (is (= expected
                  ((c/compile-state-fn* f params initial-state)
                   initial-state params))))
 
-        (testing "bind gensym to `identity` so we can check the result."
-          (binding [c/*mode* :source]
-            (let [compiler #(c/compile-state-fn*
-                             f params initial-state
-                             {:gensym-fn identity})
-                  f-source (compiler)
-                  clj-source (binding [c/*mode* :clj]
-                               (compiler))]
-              (println "clj-source " clj-source)
-              (is (= #?(:clj `(fn [[~'y] [~'p]]
-                                (vector (+ (* ~'p ~'y) (* 0.5 ~'p))))
-                        :cljs ["[y]" "[p]" "  return [p * y + 0.5 * p];"])
-                     f-source)
-                  "source code for your native language!")
+        (testing "bind gensym to `identity` so we can check the result (multi language)"
+          (doseq [[mode expected-source] {:clj `(fn [[~'y] [~'p]]
+                                                  (vector (+ (* ~'p ~'y) (* 0.5 ~'p))))
+                                          :js ["[y]" "[p]" "  return [p * y + 0.5 * p];"]}]
+            (binding [c/*mode* mode]
+              (let [compiler #(c/compile-state-fn*
+                               f params initial-state
+                               {:gensym-fn identity})
+                    f-source (compiler)]
+                (is (= expected-source f-source)
+                    "source code for your native language!")
 
-              (binding [c/*mode* :native]
-                (is (= #?(:clj `(fn [[~'y] [~'p]]
-                                  (vector (+ (* ~'p ~'y) (* 0.5 ~'p))))
-                          :cljs ["[y]" "[p]" "  return [p * y + 0.5 * p];"])
-                       (c/compile-state-fn*
-                        f params initial-state
-                        {:gensym-fn identity
-                         :mode :source}))
-                    "explicit `:mode` overrides the dynamic binding."))
+                (binding [c/*mode* :native]
+                  (is (= expected-source
+                         (c/compile-state-fn*
+                          f params initial-state
+                          {:gensym-fn identity
+                           :mode mode}))
+                      "explicit `:mode` overrides the dynamic binding."))
 
-              (is (thrown? ExceptionInfo
-                           (c/compile-state-fn*
-                            f params initial-state
-                            {:gensym-fn identity
-                             :mode :invalid}))
-                  "explicit invalid modes will throw!")
+                (is (thrown? ExceptionInfo
+                             (c/compile-state-fn*
+                              f params initial-state
+                              {:gensym-fn identity
+                               :mode :invalid}))
+                    "explicit invalid modes will throw!")))
 
-              (is (= expected ((c/sci-eval clj-source)
-                               initial-state params))
-                  "source compiles to SCI and gives us the desired result."))))))
+            (is (= expected ((c/sci-eval (c/compile-state-fn
+                                           f params initial-state
+                                           {:mode :sci}))
+                             initial-state params))
+                "source compiles to SCI and gives us the desired result.")))))
 
     (testing "compile-state-fn options"
       (binding [c/*mode* :source]
@@ -96,28 +93,35 @@
               f (fn [scale]
                   (fn [[t]]
                     (up (g/* scale (g/+ t (g// 1 2))))))
-              params [3]
+              params [3.1]
               initial-state (up 1 (down 2 (down 4 (up 1))))]
 
-          (is (= #?(:clj `(fn ~'[[y1 [y2 [y3 [y4]]]]]
-                            (vector (+ (* 3.0 ~'y1) 1.5)))
-                    :cljs ["[y1, [y2, [y3, [y4]]]]" "  return [3 * y1 + 1.5];"])
-                 (c/compile-state-fn*
-                  f params initial-state
-                  {:flatten? false
-                   :generic-params? false
-                   :gensym-fn (gensym-fn)}))
-              "nested argument vector, no params.")
 
-          (is (= #?(:clj `(fn ~'[[y1 [y2 [y3 [y4]]]] [p5]]
-                            (vector (+ (* ~'p5 ~'y1) (* 0.5 ~'p5))))
-                    :cljs  ["[y1, [y2, [y3, [y4]]]]" "[p5]" "  return [p5 * y1 + 0.5 * p5];"])
+          (doseq [[mode expected-source]
+                  {:clj `(fn ~'[[y1 [y2 [y3 [y4]]]]]
+                           (vector (+ (* 3.1 ~'y1) 1.55)))
+                   :js ["[y1, [y2, [y3, [y4]]]]" "  return [3.1 * y1 + 1.55];"]}]
+                 (is (= expected-source
+                      (c/compile-state-fn*
+                       f params initial-state
+                       {:flatten? false
+                        :generic-params? false
+                        :gensym-fn (gensym-fn)
+                        :mode mode}))
+                     "nested argument vector, no params."))
+
+          (doseq [[mode expected-source]
+                  {:clj `(fn ~'[[y1 [y2 [y3 [y4]]]] [p5]]
+                           (vector (+ (* ~'p5 ~'y1) (* 0.5 ~'p5))))
+                   :js ["[y1, [y2, [y3, [y4]]]]" "[p5]" "  return [p5 * y1 + 0.5 * p5];"]}]
+            (is (= expected-source
                  (c/compile-state-fn*
                   f params initial-state
                   {:flatten? false
                    :generic-params? true
-                   :gensym-fn (gensym-fn)}))
-              "nested argument vector, params.")))))
+                   :gensym-fn (gensym-fn)
+                   :mode mode}))
+                "nested argument vector, params."))))))
 
   (testing "non-state-fns"
     (let [f (fn [x] (up (g/+ (g/cube x) (g/sin x))))

@@ -200,7 +200,7 @@
 ;; Native compilation works on the JVM and in ClojureScript. Enable this mode
 ;; by wrapping your call in
 ;;
-;; (binding [*mode* :native] ,,,)`
+;; `(binding [*mode* :native] ,,,)`
 ;;
 ;; ## State Functions
 ;;
@@ -270,8 +270,7 @@
 (defn- commafy-arglist
   "Since JavaScript likes commas between array elements:
 
-   [a [b c [d e] f]] -> \"[a, b, c, d, e, f]\"       if flatten?
-   [a [b c [d e] f]] -> \"[a, [b, c, [d, e], f]]\"   if not flatten?
+   [a [b c [d e] f]] -> \"[a, [b, c, [d, e], f]]\"
 
    However, [] (which occurs in parameterless state functions)
    will appear as \"_\" in the argument list. While it's not
@@ -323,7 +322,7 @@
   - `body`: a function body making use of any symbol in the args above"
   [argv body]
   (let [argv        (mapv commafy-arglist argv)
-        js          (render/->JavaScript* body)
+        js          (render/->JavaScript* body {})
         cs-bindings (s/join (for [[var val] (:vars js)]
                               (str "  const " var " = " val ";\n")))
         body        (str cs-bindings
@@ -435,7 +434,7 @@
                          :sci compile-sci)
          argv          (state-argv params generic-state opts)
          compiled-fn   (compiler argv body)]
-     (log/info "compiled state function in" (us/repr sw) "with mode" *mode* "and flatten" (:flatten? opts) "yielding" compiled-fn)
+     (log/info "compiled state function in" (us/repr sw))
      compiled-fn)))
 
 ;; TODO: `compile-state-fn` should be more discerning in how it caches!
