@@ -7,11 +7,12 @@
             [clojure.string :as s]
             [clojure.zip :as z]
             [emmy.expression :as x]
-            [emmy.expression.compile :as compile]
+            [emmy.expression.cse :refer [extract-common-subexpressions]]
             [emmy.pattern.rule :as R :refer [=>]]
             [emmy.ratio :as r]
             [emmy.util :as u]
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [emmy.util.permute :as p]))
 
 (defn- make-symbol-generator [p]
   (let [i (atom 0)]
@@ -586,30 +587,7 @@
              "\n\\end{equation}"))
       tex-string)))
 
-(def ^{:doc "Convert the given expression to a string representation of a
-  JavaScript function.
-
-  Parameters to the function will be extracted from the symbols in the expression.
-  Common subexpression elimination will be performed and auxiliary variables
-  will be bound in the body of the function; the names of these symbols are
-  obtained from the nullary function option :symbol-generator, which defaults to
-  a function yielding `_1, ...`.
-
-  If `:parameter-order` is specified, it is used to determine function parameter
-  order in one of two ways:
-
-  If it is set to a function, that function will be called on the sequence of
-  parameters and is expected to return the parameters in the desired sequence.
-
-  Otherwise, it is interpreted as the sequence of parameters itself. If not
-  specified, the default behavior is `sort`.
-
-  If `:deterministic? true` is supplied, the function will assign variables by
-  sorting the string representations of each term before assignment. Otherwise,
-  the nondeterministic order of hash maps inside this function won't guarantee a
-  consistent variable naming convention in the returned function. For tests, set
-  `:deterministic? true`."}
-  ->JavaScript
+(def ->JavaScript*
   (let [operators-known '#{+ - * /
                            sin cos tan
                            asin acos atan
@@ -661,27 +639,73 @@
                                 'and (fn [[a b]] (str a " && " b))
                                 'or (fn [[a b]] (str a " || " b))
                                 '/ render-infix-ratio}))]
-    (fn [x & {:keys [symbol-generator parameter-order deterministic?]
-             :or {symbol-generator (make-symbol-generator "_")
-                  parameter-order sort}}]
-      (let [x      (v/freeze x)
-            params (set/difference (x/variables-in x) operators-known)
-            ordered-params (if (fn? parameter-order)
-                             (parameter-order params)
-                             parameter-order)
-            callback (fn [new-expression new-vars]
-                       (doseq [[var val] new-vars]
-                         (print "  var ")
-                         (print (str var " = "))
-                         (print (R val))
-                         (print ";\n"))
-                       (print "  return ")
-                       (print (R new-expression))
-                       (print ";\n}"))
-            opts {:deterministic?   deterministic?
-                  :symbol-generator symbol-generator}]
-        (with-out-str
-          (print "function(")
-          (print (s/join ", " ordered-params))
-          (print ") {\n")
-          (compile/extract-common-subexpressions x callback opts))))))
+    (fn [x opts]
+      (let [x              (v/freeze x)
+            params         (set/difference (x/variables-in x) operators-known)
+            callback       (fn [new-expression new-vars]
+                             {:params params
+                              :vars   (into [] (map (fn [[k v]] [k (R v)])) new-vars)
+                              :value  (R new-expression)})
+            opts           (merge {:symbol-generator (make-symbol-generator "_")} opts)]
+        (extract-common-subexpressions x callback opts)))))
+
+(defn ->JavaScript
+  "Convert the given expression to a string representation of a
+  JavaScript function.
+
+  Parameters to the function will be extracted from the symbols in the expression.
+  Common subexpression elimination will be performed and auxiliary variables
+  will be bound in the body of the function; the names of these symbols are
+  `_0001, ...`.
+
+  If `:parameter-order` is specified, it is used to determine function parameter
+  order in one of two ways:
+
+  If it is set to a function, that function will be called on the sequence of
+  parameters and is expected to return the parameters in the desired sequence.
+
+  Otherwise, it is interpreted as the sequence of parameters itself. If not
+  specified, the default behavior is `sort`.
+
+  If `:deterministic? true` is supplied, the function will assign variables by
+  sorting the string representations of each term before assignment. Otherwise,
+  the nondeterministic order of hash maps inside this function won't guarantee a
+  consistent variable naming convention in the returned function. For tests, set
+  `:deterministic? true`."
+  [x & {:keys [parameter-order]
+        :or   {parameter-order sort}
+        :as opts}]
+  (let [{:keys [params vars value]} (->JavaScript* x opts)
+        ordered-params (if (fn? parameter-order)
+                         (parameter-order params)
+                         parameter-order)]
+    (with-out-str
+      (print "function(")
+      (print (s/join ", " ordered-params))
+      (print ") {\n")
+      (doseq [[var val] vars]
+        (print "  var" var "=" val)
+        (print ";\n"))
+      (print "  return" value)
+      (print ";\n}"))))
+
+(comment
+
+  (doseq [[var val] new-vars]
+    (print "  var ")
+    (print (str var " = "))
+    (print (R val))
+    (print ";\n"))
+(print "  return ")
+(print (R new-expression))
+(print ";\n}")
+
+  (let [xs '(+ (* x y z)
+               (* x y z)
+               (- (* a b (sin c))
+
+                  (/ d g)))]
+    (print (->JavaScript xs
+                         :deterministic? true
+                         :symbol-generator (make-symbol-generator "p"))))
+  )

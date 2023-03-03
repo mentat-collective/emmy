@@ -95,6 +95,7 @@
    'emmy.calculus.vector-field          (ns-publics 'emmy.calculus.vector-field)
    'emmy.expression.analyze             (ns-publics 'emmy.expression.analyze)
    'emmy.expression.compile             (ns-publics 'emmy.expression.compile)
+   'emmy.expression.cse                 (ns-publics 'emmy.expression.cse)
    'emmy.expression.render              (ns-publics 'emmy.expression.render)
    'emmy.mechanics.lagrange             (ns-publics 'emmy.mechanics.lagrange)
    'emmy.mechanics.hamilton             (ns-publics 'emmy.mechanics.hamilton)
