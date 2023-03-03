@@ -240,7 +240,7 @@
 
 #?(:clj
    (do (defn ^:no-doc arity-map [f]
-         (let [^"[java.lang.reflect.Method" methods (.getDeclaredMethods (class f))
+         (let [^"[Ljava.lang.reflect.Method;" methods (.getDeclaredMethods (class f))
                ;; tally up arities of invoke, doInvoke, and getRequiredArity
                ;; methods. Filter out invokeStatic.
                pairs (for [^Method m methods

@@ -5,4 +5,4 @@
 {:npm-deps
  {"complex.js" "^2.0.11"
   "fraction.js" "^4.0.12"
-  "odex" "^2.0.4"}}
+  "odex" "3.0.0-rc.3"}}
