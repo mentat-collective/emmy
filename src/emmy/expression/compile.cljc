@@ -151,7 +151,7 @@
 ;; Armed with the above compiler optimization we can move on to the actual
 ;; compilation step.
 ;;
-;; This library provides two compilation modes:
+;; This library provides several compilation modes:
 ;;
 ;; - Native compilation via `eval` in Clojure, transpiling in JavaScript
 ;; - interpreted compilation via [SCI](https://github.com/borkdude/sci), the
@@ -161,7 +161,7 @@
 ;; - just asking for :source will provide the source in whichever environment
 ;;   you're using
 ;;
-;; We default :native for performance.
+;; We default to :native for performance.
 
 (def ^{:dynamic true
        :no-doc true}
@@ -197,10 +197,10 @@
   #?(:cljs (set! *mode* mode)
      :clj  (alter-var-root #'*mode* (constantly mode))))
 
-;; Native compilation works on the JVM, and on ClojureScript if you're running
-;; in a self-hosted CLJS environment. Enable this mode by wrapping your call in
+;; Native compilation works on the JVM and in ClojureScript. Enable this mode
+;; by wrapping your call in
 ;;
-;; `(binding [*mode* :native] ,,,)`
+;; (binding [*mode* :native] ,,,)`
 ;;
 ;; ## State Functions
 ;;
@@ -245,7 +245,7 @@
       [state (into [] params)]
       [state])))
 
-;; The following two functions compile state functions in either native or SCI
+;; The following functions compile state functions in either native or SCI
 ;; mode. The primary difference is that native compilation requires us to
 ;; explicitly replace all instances of symbols from `compiled-fn-whitelist`
 ;; above with actual functions.

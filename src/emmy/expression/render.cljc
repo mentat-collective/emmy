@@ -587,7 +587,12 @@
              "\n\\end{equation}"))
       tex-string)))
 
-(def ->JavaScript*
+(def ^{:doc "Converts an expression to JavaScript, and returns the
+      result in a map containing `params` (list of the unbound symbols),
+      `vars` (sequence of [var value] pairs representing the output of
+      common subexpression analysis), and `body`. These pieces may be
+      assembled into a JS function in different ways."}
+  ->JavaScript*
   (let [operators-known '#{+ - * /
                            sin cos tan
                            asin acos atan
