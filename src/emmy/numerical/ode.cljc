@@ -188,12 +188,12 @@
         flat-initial-state (flatten initial-state)
         derivative-fn      (if compile?
                              (let [f' (c/compile-state-fn state-derivative derivative-args initial-state)]
-                               (fn [y] (f' y derivative-args)))
+                               (fn [y]
+                                 (f' y (or derivative-args []))))
                              (do (log/warn "Not compiling function for ODE analysis")
                                  (let [d:dt (apply state-derivative derivative-args)
                                        array->state #(struct/unflatten % initial-state)]
                                    (comp d:dt array->state))))
-
         equations        (fn [_ y out]
                            (us/start evaluation-time)
                            (swap! evaluation-count inc)

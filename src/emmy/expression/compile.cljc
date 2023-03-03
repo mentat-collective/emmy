@@ -4,11 +4,10 @@
   "This namespace contains tools for compiling functions implemented with the
   numeric operations defined in [[emmy.generic]] down to fast, native
   functions."
-  (:require #?(:cljs [goog.string :refer [format]])
-            [clojure.set :as set]
+  (:require [clojure.string :as s]
             [clojure.walk :as w]
-            [emmy.expression :as x]
-            [emmy.expression.analyze :as a]
+            [emmy.expression.cse :refer [cse-form]]
+            [emmy.expression.render :as render]
             [emmy.function :as f]
             [emmy.generic :as g]
             [emmy.structure :as struct]
@@ -27,18 +26,18 @@
 ;;    to return a "numerical expression", a syntax tree representing the
 ;;    function's body:
 #_(let [f (fn [x] (g/sqrt
-                (g/+ (g/square (g/sin x))
-                     (g/square (g/cos x)))))]
-(= '(sqrt (+ (expt (sin x) 2) (expt (cos x) 2)))
-   (x/expression-of (f 'x))))
+                   (g/+ (g/square (g/sin x))
+                        (g/square (g/cos x)))))]
+    (= '(sqrt (+ (expt (sin x) 2) (expt (cos x) 2)))
+       (x/expression-of (f 'x))))
 
 ;; 2. `g/simplify` the new function body. Sometimes this results in large
 ;;    simplifications:
 
 #_(let [f (fn [x] (g/sqrt
-                (g/+ (g/square (g/sin x))
-                     (g/square (g/cos x)))))]
-  (v/= 1 (g/simplify (f 'x))))
+                   (g/+ (g/square (g/sin x))
+                        (g/square (g/cos x)))))]
+    (v/= 1 (g/simplify (f 'x))))
 
 ;; 3. Apply "common subexpression elimination". Any subexpression inside the
 ;;    new, simplified body that appears more than once gets extracted out into a
@@ -124,232 +123,6 @@
   sym->resolved-form
   (u/map-vals :sym compiled-fn-whitelist))
 
-;; ## Subexpression Elimination
-;;
-;; This section implements subexpression extraction and "elimination", the
-;; process we use to avoid redundant computation inside of a simplified function
-;; body.
-;;
-;; The goal of this process is to split some symbolic expression into:
-;;
-;; - a map of symbol -> redundant subexpression
-;; - a new expression with each redundant subexpr replaced with its
-;;   corresponding symbol.
-;;
-;; The invariant we want to achieve is that the new expression, rehydrated using
-;; the symbol->subexpression map, should be equivalent to the old expression.
-;;
-;; First, we write a function to determine how often each subexpression appears.
-;; Subexpressions that appear just once aren't worth extracting, but two
-;; appearances is enough.
-
-(defn- expr-frequencies
-  "Returns a map from distinct subexpressions in the supplied `expr` to the
-  number of times each appears.
-
-  If `skip?` returns true given a subexpression it won't be included as a key in
-  the returned map."
-  [expr skip?]
-  (let [children (partial filter seq?)]
-    (->> (rest
-          (tree-seq seq? children expr))
-         (remove skip?)
-         (frequencies))))
-
-;; The next function assumes that we have the two data structures we referenced
-;; earlier. We want to be careful that we only generate and bind subexpressions
-;; that are actually used in the final computation.
-;;
-;; `discard-unferenced-syms` ensures this by removing any entry from our
-;; replacement map that doesn't appear in the expression it's passed, or any
-;; subexpression referenced by a symbol in the expression, etc etc.
-;;
-;; The algorithm is:
-;;
-;; - consider the intersection of all variables in the replacement map and the
-;;   supplied expression, and store these into a map of "referenced" symbols.
-;;
-;; - Look up the corresponding subexpression for each of these symbols, and add
-;;   all potential replacements from each subexpression into the "referenced"
-;;   list, continuing this process recursively until all candidates are
-;;   exhausted.
-;;
-;; - Return subset of the original `sym->expr` by removing any key not found in
-;; - the accumulated "referenced" set.
-
-(defn- discard-unreferenced-syms
-  "Trims down a proposed map of `sym->expr` replacements (suitable for a let-binding,
-  say) to include only entries relevant to the supplied `expr`.
-
-  Accepts:
-
-  - `sym->expr`, a map of symbol -> symbolic expression
-  - `expr`, an expression that potentially contains symbols referenced in the
-    keyset of `sym->expr`
-
-  And returns a subset of `sym->expr` containing only entries where the
-  symbol-key is found in:
-
-  - the original `expr`, or
-  - in an expression referenced by a symbol in the original `expr`"
-  [sym->expr expr]
-  (let [syms        (u/keyset sym->expr)
-        lookup-syms (mapcat (comp x/variables-in sym->expr))]
-    (loop [referenced #{}
-           sym-batch  (-> (x/variables-in expr)
-                          (set/intersection syms))]
-      (if (empty? sym-batch)
-        (select-keys sym->expr referenced)
-        (let [referenced'   (set/union referenced sym-batch)
-              syms-in-exprs (-> (into #{} lookup-syms sym-batch)
-                                (set/intersection syms)
-                                (set/difference referenced'))]
-          (recur referenced' syms-in-exprs))))))
-
-;; This final function implements common subexpression extraction in
-;; continuation-passing-style. Pass it a callback and it will invoke the
-;; callback with the two arguments described above, and detailed below in its
-;; docstring.
-;;
-;; The algorithm is:
-;;
-;; - For every subexpression that appears more than once in the supplied
-;;   expression, generate a new, unique symbol.
-;;
-;; - Generate a new expression by replacing every subexpression in the supplied
-;;   expression with a symbol using the new mapping of symbol -> subexpression.
-;;
-;; - Recursively keep going until there are no more common subexpressions to
-;;   replace. At this point, discard all extra bindings (see
-;;   `discard-unreferenced-syms` above) and call the continuation function with
-;;   the /new/ slimmed expression, and a sorted-by-symbol list of binding pairs.
-;;
-;; These two return values satisfy the invariant we described above: the new
-;; expression, rehydrated using the symbol->subexpression map, should give us
-;; back the old expression.
-;;
-;; NOTE that the algorithm as implemented below uses a postwalk tree traversal!
-;; This is important, as it forces us to consider smaller subexpressions first.
-;; Consider some expression like:
-
-#_(+ (* (sin x) (cos x))
-   (* (sin x) (cos x))
-   (* (sin x) (cos x)))
-
-;; At first pass, we have three repeated subexpressions:
-;;
-;; - `(sin x)`
-;; - `(cos x)`
-;; - `(* (sin x) (cos x))`
-;;
-;; Postwalk traversal guarantees that we replace the `sin` and `cos` terms
-;; before the larger term that contains them both. And in fact the returned pair
-;; looks like:
-
-#_[(+ g3 g3 g3) ([g1 (sin x)] [g2 (cos x)] [g3 (* g1 g2)])]
-
-;; NOTE also that:
-;;
-;; - this is why the `:symbol-generator` below must generate symbols that sort
-;;   in the order they're generated. Else, the final binding vector might put
-;;   the `g3` term in the example above /before/ the smaller subexpressions it
-;;   uses.
-;;
-;; - This algorithm justifies `discard-unreferenced-syms` above. Each pass will
-;;   larger subexpressions like `'(* (sin x) (cos x))` that should never make it
-;;   out, since they never appear in this form (since they contain smaller
-;;   subexpressions).
-
-(def sortable-gensym
-  (a/monotonic-symbol-generator "G"))
-
-(defn extract-common-subexpressions
-  "Considers an S-expression from the point of view of optimizing its evaluation
-  by isolating common subexpressions into auxiliary variables.
-
-  Accepts:
-
-  - A symbolic expression `expr`
-  - a continuation fn `continue` of two arguments:
-    - a new equivalent expression with possibly some subexpressions replaced by
-      new variables (delivered by the supplied generator, see below)
-    - a seq of pairs of `[aux variable, subexpression]` used to reconstitute the
-      value.
-
-  Calls the continuation at completion and returns the continuation's value.
-
-  ### Optional Arguments
-
-  `:symbol-generator`: side-effecting function that returns a new, unique
-  variable name on each invocation. `sortable-gensym` by default.
-
-  NOTE that the symbols should appear in sorted order! Otherwise we can't
-  guarantee that the binding sequence passed to `continue` won't contain entries
-  that reference previous entries.
-
-  `:deterministic?`: if true, the function will assign aux variables by sorting
-  the string representations of each term before assignment. Otherwise, the
-  nondeterministic order of hash maps inside this function won't guarantee a
-  consistent variable naming convention in the returned function. For tests, set
-  `:deterministic? true`."
-  ([expr continue] (extract-common-subexpressions expr continue {}))
-  ([expr continue {:keys [symbol-generator deterministic?]
-                   :or {symbol-generator sortable-gensym}}]
-   (let [sort (if deterministic?
-                (partial sort-by (comp str vec first))
-                identity)]
-     (loop [x         expr
-            expr->sym {}]
-       (let [expr->count (expr-frequencies x expr->sym)
-             new-syms    (into {} (for [[k v] (sort expr->count)
-                                        :when (> v 1)]
-                                    [k (symbol-generator)]))]
-         (if (empty? new-syms)
-           (let [sym->expr (-> (set/map-invert expr->sym)
-                               (discard-unreferenced-syms x))]
-             (continue x (sort-by key sym->expr)))
-           (let [expr->sym' (merge expr->sym new-syms)]
-             (recur (w/postwalk-replace expr->sym' x)
-                    expr->sym'))))))))
-
-;; This final wrapper function invokes `extract-common-subexpressions` to turn a
-;; symbolic expression a new, valid Clojure(script) form that uses a `let`
-;; binding to bind any common subexpressions exposed during the above search.
-;;
-;; If there are no common subexpressions, `cse-form` will round-trip its input.
-
-(defn cse-form
-  "Given a symbolic expression `expr`, returns a new expression potentially
-  wrapped in a `let` binding with one binding per extracted common
-  subexpression.
-
-  ## Optional Arguments
-
-  `:symbol-generator`: side-effecting function that returns a new, unique symbol
-  on each invocation. These generated symbols are used to create unique binding
-  names for extracted subexpressions. `sortable-gensym` by default.
-
-  NOTE that the symbols should appear in sorted order! Otherwise we can't
-  guarantee that the binding sequence won't contain entries that reference
-  previous entries, resulting in \"Unable to resolve symbol\" errors.
-
-  `:deterministic?`: if true, the function will order the let-binding contents
-  by sorting the string representations of each term before assignment. If false
-  the function won't guarantee a consistent variable naming convention in the
-  returned function. For tests, we recommend `:deterministic? true`."
-  ([expr] (cse-form expr {}))
-  ([expr opts]
-   (letfn [(callback [new-expression bindings]
-             (let [n-bindings (count bindings)]
-               (if (pos? n-bindings)
-                 (let [binding-vec (into [] cat bindings)]
-                   (log/info
-                    (format "common subexpression elimination: %d expressions" n-bindings))
-                   `(let ~binding-vec
-                      ~new-expression))
-                 new-expression)))]
-     (extract-common-subexpressions expr callback opts))))
-
 (def ^{:private true
        :doc "Similar to [[compiled-fn-whitelist]], but restricted to numeric
   operations."}
@@ -378,23 +151,26 @@
 ;; Armed with the above compiler optimization we can move on to the actual
 ;; compilation step.
 ;;
-;; This library provides two compilation modes:
+;; This library provides several compilation modes:
 ;;
-;; - Native compilation via `eval`
+;; - Native compilation via `eval` in Clojure, transpiling in JavaScript
 ;; - interpreted compilation via [SCI](https://github.com/borkdude/sci), the
 ;;   Small Clojure Interpreter.
+;; - Clojure source
+;; - JavaScript source
+;; - just asking for :source will provide the source in whichever environment
+;;   you're using
 ;;
-;; We default to SCI mode in CLJS, but :native in Clojure for performance.
+;; We default to :native for performance.
 
 (def ^{:dynamic true
        :no-doc true}
   *mode*
-  #?(:clj :native
-     :cljs :sci))
+  :native)
 
 (def ^{:doc "Set of all supported compilation modes."}
   valid-modes
-  #{:sci :native :source})
+  #{:sci :native :source :js :clj})
 
 (defn validate-mode!
   "Given a keyword `mode` specifying a compilation mode, returns `mode` if valid,
@@ -421,8 +197,8 @@
   #?(:cljs (set! *mode* mode)
      :clj  (alter-var-root #'*mode* (constantly mode))))
 
-;; Native compilation works on the JVM, and on ClojureScript if you're running
-;; in a self-hosted CLJS environment. Enable this mode by wrapping your call in
+;; Native compilation works on the JVM and in ClojureScript. Enable this mode
+;; by wrapping your call in
 ;;
 ;; `(binding [*mode* :native] ,,,)`
 ;;
@@ -440,7 +216,7 @@
 ;; The compiled version of a state function like
 
 #_(fn [mass g]
-  (fn [q]))
+    (fn [q]))
 
 ;; Has a signature like
 
@@ -463,13 +239,13 @@
                        :or {flatten? true
                             generic-params? true}}]
   (let [state (into [] (if flatten?
-                         (into [] (flatten state-model))
+                         (flatten state-model)
                          state-model))]
     (if generic-params?
       [state (into [] params)]
       [state])))
 
-;; The following two functions compile state functions in either native or SCI
+;; The following functions compile state functions in either native or SCI
 ;; mode. The primary difference is that native compilation requires us to
 ;; explicitly replace all instances of symbols from `compiled-fn-whitelist`
 ;; above with actual functions.
@@ -491,6 +267,30 @@
                  {'up struct/up
                   'down struct/down}}}))
 
+(defn- commafy-arglist
+  "Since JavaScript likes commas between array elements:
+
+   [a [b c [d e] f]] -> \"[a, [b, c, [d, e], f]]\"
+
+   However, [] (which occurs in parameterless state functions)
+   will appear as \"_\" in the argument list. While it's not
+   wrong to destructure an empty list in JavaScript, nil is
+   not iterable, and so can't serve as an empty list argument
+   as it can in Clojure. Instead, we \"discard\" the argument
+   by letting it bind to a dummy name: in this way, either nil
+   or [] can serve as the empty argument"
+  [a]
+  (let [c (w/postwalk
+           (fn [f]
+             (if (sequential? f)
+               (if (seq f)
+                 (let [as (clojure.string/join ", " f)]
+                             (str "[" as "]"))
+                 "_")
+               (str f)))
+           a)]
+    c))
+
 (defn sci-eval
   "Given an unevaluated source code form `f-form` representing a function,
   evaluates `f-form` using the bindings in [[sci-context]].
@@ -499,42 +299,58 @@
   [f-form]
   (sci/eval-form (sci/fork sci-context) f-form))
 
-(defn- compile-state->source
-  "Returns a natively-evaluated Clojure function that implements `body`, given:
+(defn- compile->clj
+  "Returns Clojure source for a function that implements `body`, given:
 
-  - `params`: a seq of symbols equal in count to the original state function's
-    args
-  - `state-model`: a sequence of variables representing the structure of the
-    nested function returned by the state function
-  - `body`: a function body making use of any symbol in the args above"
-  [params state-model body opts]
+  - `argv`: a vector of symbols to serve as the function's arguments.
+    The vector may be nested for sequence destructuring.
+
+  - `body`: a function body making use of any symbol in argv above"
+  [argv body]
   (let [body (w/postwalk-replace sym->resolved-form body)]
-    `(fn ~(state-argv params state-model opts) ~body)))
+    `(fn [~@argv] ~body)))
 
-(defn- compile-state-native
-  "Returns a natively-evaluated Clojure function that implements `body`, given:
+(defn- compile->js
+  "Returns an array containing JavaScript source for a function that implements
+  `body` in a form suitable for application of the Function constructor, given:
 
-  - `params`: a seq of symbols equal in count to the original state function's
-    args
-  - `state-model`: a sequence of variables representing the structure of the
-    nested function returned by the state function
-  - `body`: a function body making use of any symbol in the args above"
-  [params state-model body opts]
-  (eval
-   (compile-state->source params state-model body opts)))
+  - `argv`: a vector of symbols to serve as the function's arguments.
+    The vector may be nested for sequence destructuring.
 
-(defn- compile-state-sci
+  - `body`: a function body making use of any symbol in argv above"
+  [argv body]
+  (let [argv        (mapv commafy-arglist argv)
+        js          (render/->JavaScript* body {})
+        cs-bindings (s/join (for [[var val] (:vars js)]
+                              (str "  const " var " = " val ";\n")))
+        body        (str cs-bindings
+                         "  return "
+                         (:value js)
+                         ";")]
+    (conj argv body)))
+
+(defn- compile-native
+  "Returns a natively-evaluated function that implements `body`, given:
+
+  - `argv`: a vector of symbols to serve as the function's arguments.
+    The vector may be nested for sequence destructuring.
+
+  - `body`: a function body making use of any symbol in argv above"
+  [argv body]
+  #?(:clj (eval (compile->clj argv body))
+     :cljs (comp js->clj (apply js/Function (compile->js argv body)))))
+
+(defn- compile-sci
   "Returns a Clojure function evaluated using SCI. The returned fn implements
   `body`, given:
 
-  - `params`: a seq of symbols equal in count to the original state function's
-    args
-  - `state-model`: a sequence of variables representing the structure of the
-    nested function returned by the state function
-  - `body`: a function body making use of any symbol in the args above"
-  ([params state-model body opts]
+  - `argv`: a vector of symbols to serve as the function's arguments.
+    The vector may be nested for sequence destructuring.
+
+  - `body`: a function body making use of any symbol in argv above"
+  ([argv body]
    (sci-eval
-    (compile-state->source params state-model body opts))))
+    (compile->clj argv body))))
 
 ;; ### State Fn Interface
 ;;
@@ -604,14 +420,17 @@
          body          (-> (g generic-state)
                            (g/simplify)
                            (v/freeze)
-                           (cse-form)
+                           #?(:clj (cse-form))  ;; JavaScript handles this in render
                            (apply-numeric-ops))
          compiler      (case (validate-mode! (or mode *mode*))
-                         :source compile-state->source
-                         :native compile-state-native
-                         :sci compile-state-sci)
-         compiled-fn   (compiler params generic-state body opts)]
-     (log/info "compiled state function in" (us/repr sw) "with mode" *mode*)
+                         :source #?(:clj compile->clj :cljs compile->js)
+                         :clj compile->clj
+                         :js compile->js
+                         :native compile-native
+                         :sci compile-sci)
+         argv          (state-argv params generic-state opts)
+         compiled-fn   (compiler argv body)]
+     (log/info "compiled state function in" (us/repr sw))
      compiled-fn)))
 
 ;; TODO: `compile-state-fn` should be more discerning in how it caches!
@@ -634,43 +453,6 @@
      (let [compiled (compile-state-fn* f params initial-state opts)]
        (swap! fn-cache assoc f compiled)
        compiled))))
-
-;; ## Non-State-Functions
-;;
-;; Compiled functions are excellent input for `definite-integral`, ODE solvers,
-;; single variable function minimization, root finding and more.
-;;
-;; The implementation and compilation steps are simpler than the state function
-;; versions above; the function you pass in has to take `n` symbolic arguments,
-;; that's it.
-
-(defn- compile->source
-  "Returns an unevaluated source code body function that implements `body`, given
-  some sequence `args` of argument symbols.
-
-  `body` should of course make use of the symbols in `args`."
-  [args body]
-  (let [body (w/postwalk-replace sym->resolved-form body)]
-    `(fn [~@args] ~body)))
-
-(defn- compile-native
-  "Returns a natively-evaluated Clojure function that implements `body`, given
-  some sequence `args` of argument symbols.
-
-  `body` should of course make use of the symbols in `args`."
-  [args body]
-  (eval
-   (compile->source args body)))
-
-(defn- compile-sci
-  "Returns a Clojure function evaluated
-  using [SCI](https://github.com/borkdude/sci) The returned fn implements
-  `body`, given some sequence `args` of argument symbols.
-
-  `body` should of course make use of the symbols in `args`."
-  [args body]
-  (sci-eval
-   (compile->source args body)))
 
 (defn- retrieve-arity [f]
   (let [[kwd n :as arity] (f/arity f)]
@@ -702,7 +484,9 @@
                       (cse-form)
                       (apply-numeric-ops))
          compiled (case (compiler-mode)
-                    :source (compile->source args body)
+                    :source (#?(:clj compile->clj :cljs compile->js) args body)
+                    :js (compile->js args body)
+                    :clj (compile->clj args body)
                     :native (compile-native args body)
                     :sci (compile-sci args body))]
      (log/info "compiled function of arity" n "in" (us/repr sw) "with mode" *mode*)
