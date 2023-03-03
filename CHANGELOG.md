@@ -2,6 +2,17 @@
 
 ## [unreleased]
 
+- #107:
+
+  - move CSE to its own namespace to avoid the circular dependency
+    `compile`->`render`->`compile`
+
+  - refactor JS rendering to allow compiler to use it
+
+  - adjust meaning of :native and :source compilation modes now you get
+    what's compatible with your execution environment but you can also
+    ask for a specific language, allowing tests to be bilingual
+
 - #100:
 
   - Implements predicate support for `segment`, `entire-segment` and
