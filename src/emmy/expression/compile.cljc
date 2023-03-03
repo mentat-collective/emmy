@@ -302,24 +302,22 @@
 (defn- compile->clj
   "Returns Clojure source for a function that implements `body`, given:
 
-  - `params`: a seq of symbols equal in count to the original state function's
-    args
-  - `state-model`: a sequence of variables representing the structure of the
-    nested function returned by the state function
-  - `body`: a function body making use of any symbol in the args above"
+  - `argv`: a vector of symbols to serve as the function's arguments.
+    The vector may be nested for sequence destructuring.
+
+  - `body`: a function body making use of any symbol in argv above"
   [argv body]
   (let [body (w/postwalk-replace sym->resolved-form body)]
     `(fn [~@argv] ~body)))
 
 (defn- compile->js
   "Returns an array containing JavaScript source for a function that implements
-  `body` in a form suitable for the arguments of the Function constructor, given:
+  `body` in a form suitable for application of the Function constructor, given:
 
-  - `params`: a seq of symbols equal in count to the original state function's
-    args
-  - `state-model`: a sequence of variables representing the structure of the
-    nested function returned by the state function
-  - `body`: a function body making use of any symbol in the args above"
+  - `argv`: a vector of symbols to serve as the function's arguments.
+    The vector may be nested for sequence destructuring.
+
+  - `body`: a function body making use of any symbol in argv above"
   [argv body]
   (let [argv        (mapv commafy-arglist argv)
         js          (render/->JavaScript* body {})
@@ -334,11 +332,10 @@
 (defn- compile-native
   "Returns a natively-evaluated function that implements `body`, given:
 
-  - `params`: a seq of symbols equal in count to the original state function's
-    args
-  - `state-model`: a sequence of variables representing the structure of the
-    nested function returned by the state function
-  - `body`: a function body making use of any symbol in the args above"
+  - `argv`: a vector of symbols to serve as the function's arguments.
+    The vector may be nested for sequence destructuring.
+
+  - `body`: a function body making use of any symbol in argv above"
   [argv body]
   #?(:clj (eval (compile->clj argv body))
      :cljs (comp js->clj (apply js/Function (compile->js argv body)))))
@@ -347,11 +344,10 @@
   "Returns a Clojure function evaluated using SCI. The returned fn implements
   `body`, given:
 
-  - `params`: a seq of symbols equal in count to the original state function's
-    args
-  - `state-model`: a sequence of variables representing the structure of the
-    nested function returned by the state function
-  - `body`: a function body making use of any symbol in the args above"
+  - `argv`: a vector of symbols to serve as the function's arguments.
+    The vector may be nested for sequence destructuring.
+
+  - `body`: a function body making use of any symbol in argv above"
   ([argv body]
    (sci-eval
     (compile->clj argv body))))
