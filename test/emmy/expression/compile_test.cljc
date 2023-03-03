@@ -138,9 +138,6 @@
 
         (testing "bind gensym to `identity` so we can check the result."
           (binding [c/*mode* :source]
-            ;; we compile twice because in mode :native we'd get JS source
-            ;; in a JS environment, and that can't be evaluated by sci.
-            ;; It may be that the sci environment has been made obsolete.
             (let [[f-source clj-source] (with-redefs [gensym (fn
                                                                ([] (clojure.core/gensym))
                                                                ([x] x))]
