@@ -155,7 +155,7 @@
                "  const _09 = Math.cos(y02);\n"
                "  const _12 = Math.pow(_08, 2);\n"
                "  const _13 = Math.pow(_09, 2);\n"
-               "  return [1.0, [y05 / A, (- y07 * _09 + y06) / (A * _12), (A * y07 * _12 + C * y07 * _13 - C * y06 * _09) / (A * C * _12)], [(A * gMR * Math.pow(_09, 4.0) - 2.0 * A * gMR * _13 - y06 * y07 * _13 + Math.pow(y06, 2.0) * _09 + Math.pow(y07, 2.0) * _09 + A * gMR - y06 * y07) / (A * Math.pow(_08, 3.0)), 0.0, 0.0]];")]
+               "  return [1, [y05 / A, (- y07 * _09 + y06) / (A * _12), (A * y07 * _12 + C * y07 * _13 - C * y06 * _09) / (A * C * _12)], [(A * gMR * Math.pow(_09, 4) - 2 * A * gMR * _13 - y06 * y07 * _13 + Math.pow(y06, 2) * _09 + Math.pow(y07, 2) * _09 + A * gMR - y06 * y07) / (A * Math.pow(_08, 3)), 0, 0]];")]
              (c/compile-state-fn* (fn [] sysder) [] top-state {:mode :js
                                                                :gensym-fn (gensym-fn)})))))
 
@@ -197,7 +197,7 @@
                  "  const _06 = Math.pow(l, 2);\n"
                  "  const _08 = omega * y01;\n"
                  "  const _09 = Math.sin(_08);\n"
-                 "  return [1.0, (a * l * m * omega * _09 * _04 + y03) / (_06 * m), (- Math.pow(a, 2.0) * l * m * Math.pow(omega, 2.0) * Math.pow(_09, 2.0) * _04 * _05 - a * omega * y03 * _09 * _05 - g * _06 * m * _04) / l];")]
+                 "  return [1, (a * l * m * omega * _09 * _04 + y03) / (_06 * m), (- Math.pow(a, 2) * l * m * Math.pow(omega, 2) * Math.pow(_09, 2) * _04 * _05 - a * omega * y03 * _09 * _05 - g * _06 * m * _04) / l];")]
                (c/compile-state-fn*
                 (fn []
                   (e/Hamiltonian->state-derivative

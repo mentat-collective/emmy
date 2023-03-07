@@ -136,14 +136,19 @@
   [body]
   (w/postwalk
    (fn [expr]
-     (cond (v/real? expr) (u/double expr)
-           (sequential? expr)
-           (let [[f & xs] expr]
-             (if-let [m (and (every? number? xs)
-                             (numeric-whitelist f))]
-               (u/double (apply (:f m) xs))
-               expr))
-           :else expr))
+     (cond
+       ;; Native integers in Clojure are excused from promotion to double,
+       ;; as we don't want every `1` to become `1.0` in output formats
+       #?@(:clj [(or (instance? Long expr)
+                     (instance? Integer expr)) expr])
+       (v/real? expr) (u/double expr)
+       (sequential? expr)
+       (let [[f & xs] expr]
+         (if-let [m (and (every? number? xs)
+                         (numeric-whitelist f))]
+           (u/double (apply (:f m) xs))
+           expr))
+       :else expr))
    body))
 
 ;; ### SCI vs Native Compilation
@@ -385,11 +390,8 @@
   (extract-common-subexpressions
    x
    (fn [body bindings]
-     ;; TODO: consistency demands that we do apply-numeric-ops on the
-     ;; intermediate bindings, but that will shake up a lot of unit
-     ;; tests so I'm temporarily postponing this.
-     {:bindings bindings  #_(mapv (fn [[k v]] [k (apply-numeric-ops v)]) bindings)
-                            :body (apply-numeric-ops body)})
+     {:bindings (mapv (fn [[k v]] [k (apply-numeric-ops v)]) bindings)
+      :body (apply-numeric-ops body)})
    opts))
 
 (defn compile-state-fn*

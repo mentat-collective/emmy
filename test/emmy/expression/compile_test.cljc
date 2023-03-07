@@ -145,7 +145,7 @@
                               (binding [c/*mode* :clj] (c/compile-fn f))])]
               (is (= #?(:clj `(fn [~'x]
                                 (vector
-                                 (+ (~'Math/pow ~'x 3.0)
+                                 (+ (~'Math/pow ~'x 3)
                                     (~'Math/sin ~'x))))
                         :cljs ["x" "  return [Math.pow(x, 3) + Math.sin(x)];"])
                      f-source)
@@ -157,15 +157,15 @@
             (with-redefs [gensym (fn
                                    ([] (clojure.core/gensym))
                                    ([x] x))]
-              (is (= #?(:clj `(fn [~'x] (+ (* -1.0 ~'x) 28.0))
+              (is (= #?(:clj `(fn [~'x] (+ (* -1 ~'x) 28.0))
                         :cljs ["x" "  return - x + 28;"])
                      (c/compile-fn
                       (fn [x]
                         (g/- (g/* 8 (g/+ (g// 1 2) 3))
                              x))))
-                  "all remaining numerical literals are doubles.")
+                  "fractional arithmetic results in double literals.")
 
-              (is (= #?(:clj `(fn [~'x] (vector 2.0 (+ ~'x 0.5)))
+              (is (= #?(:clj `(fn [~'x] (vector 2 (+ ~'x 0.5)))
                         :cljs ["x" "  return [2, x + 0.5];"])
                      (c/compile-fn
                       (fn [x]
@@ -212,7 +212,7 @@
              ((c/compile-fn f 1) 1))
           "If you specify an arity, you avoid the error.")
 
-      (is (== 3.0 (f 1 2 2)))
+      (is (== 3 (f 1 2 2)))
       (is (== (f 1 2 2) ((c/compile-fn f 3) 1 2 2))
           "If you specify an arity, you avoid the error."))))
 
