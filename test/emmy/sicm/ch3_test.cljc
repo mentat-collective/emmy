@@ -7,6 +7,7 @@
              :refer [+ zero? up down literal-function]]
             [emmy.examples.driven-pendulum :as driven]
             [emmy.examples.top :as top]
+            [emmy.expression.compile :as c]
             [emmy.mechanics.hamilton :as H]
             [emmy.mechanics.lagrange :as L]
             [emmy.polynomial.gcd :as pg]
@@ -16,6 +17,14 @@
 
 (def simplify
   (comp e/freeze e/simplify))
+
+(defn- gensym-fn
+  []
+  (let [i (atom 0)]
+    (fn [x]
+      (let [n (str (swap! i inc))
+            n (if (= (count n) 1) (str "0" n) n)]
+        (symbol (str x n))))))
 
 (deftest section-3-1
   (testing "p.189"
@@ -138,55 +147,63 @@
                           0
                           0))
                (simplify (sysder top-state)))))
-      (is (= (str "function(A, C, gMR, p_phi, p_psi, p_theta, theta) {\n"
-                  "  var _0001 = Math.cos(theta);\n"
-                  "  var _0004 = Math.sin(theta);\n"
-                  "  var _0005 = Math.pow(_0001, 2);\n"
-                  "  var _0006 = Math.pow(_0004, 2);\n"
-                  "  return [1, [p_theta / A, (- p_psi * _0001 + p_phi) / (A * _0006), (A * p_psi * _0006 + C * p_psi * _0005 - C * p_phi * _0001) / (A * C * _0006)], [(A * gMR * Math.pow(_0001, 4) -2 * A * gMR * _0005 - p_phi * p_psi * _0005 + Math.pow(p_phi, 2) * _0001 + Math.pow(p_psi, 2) * _0001 + A * gMR - p_phi * p_psi) / (A * Math.pow(_0004, 3)), 0, 0]];\n"
-                  "}")
-             (-> (sysder top-state)
-                 (simplify)
-                 (e/->JavaScript :deterministic? true)))))))
 
-(deftest section-3-5
-  (testing "p.221"
-    (let [H ((e/Lagrangian->Hamiltonian
-              (driven/L 'm 'l 'g 'a 'omega))
-             (up 't 'theta 'p_theta))]
-      (is (= '(/ (+ (* (/ -1 2)
-                       (expt a 2) (expt l 2) (expt m 2)
-                       (expt omega 2)
-                       (expt (sin (* omega t)) 2)
-                       (expt (cos theta) 2))
-                    (* a g (expt l 2) (expt m 2) (cos (* omega t)))
-                    (* a l m omega p_theta (sin (* omega t)) (sin theta))
-                    (* -1 g (expt l 3) (expt m 2) (cos theta))
-                    (* (/ 1 2) (expt p_theta 2)))
-                 (* (expt l 2) m))
-             (simplify H))))
-    (let [sysder (simplify
-                  ((e/Hamiltonian->state-derivative
-                    (e/Lagrangian->Hamiltonian
-                     (driven/L 'm 'l 'g 'a 'omega)))
-                   (up 't 'theta 'p_theta)))]
-      (is (= '(up 1
-                  (/ (+ (* a l m omega (sin (* omega t)) (sin theta)) p_theta)
-                     (* (expt l 2) m))
-                  (/ (+ (* -1 (expt a 2) l m (expt omega 2) (expt (sin (* omega t)) 2) (sin theta) (cos theta))
-                        (* -1 a omega p_theta (sin (* omega t)) (cos theta))
-                        (* -1 g (expt l 2) m (sin theta)))
-                     l))
-             sysder))
+      (is (= ["[y01, y02, y03, y04, y05, y06, y07]"
+                "_"
+                (str
+                 "  const _08 = Math.sin(y02);\n"
+                 "  const _09 = Math.cos(y02);\n"
+                 "  const _12 = Math.pow(_08, 2);\n"
+                 "  const _13 = Math.pow(_09, 2);\n"
+                 "  return [1.0, [y05 / A, (- y07 * _09 + y06) / (A * _12), (A * y07 * _12 + C * y07 * _13 - C * y06 * _09) / (A * C * _12)], [(A * gMR * Math.pow(_09, 4.0) + -2.0 * A * gMR * _13 - y06 * y07 * _13 + Math.pow(y06, 2.0) * _09 + Math.pow(y07, 2.0) * _09 + A * gMR - y06 * y07) / (A * Math.pow(_08, 3.0)), 0.0, 0.0]];")]
+                 (c/compile-state-fn* (fn [] sysder) [] top-state {:mode :js
+                                                                   :gensym-fn (gensym-fn)})))))
 
-      ;; ah, we observe that _1 is omega*t, and we have a few examples of the
-      ;; sine (of that. So our algorithm is a little on the naive side o_o
-      (is (= (str "function(a, g, l, m, omega, p_theta, t, theta) {\n"
-                  "  var _0001 = omega * t;\n"
-                  "  var _0002 = Math.cos(theta);\n"
-                  "  var _0003 = Math.pow(l, 2);\n"
-                  "  var _0005 = Math.sin(theta);\n"
-                  "  var _0006 = Math.sin(_0001);\n"
-                  "  return [1, (a * l * m * omega * _0006 * _0005 + p_theta) / (_0003 * m), (- Math.pow(a, 2) * l * m * Math.pow(omega, 2) * Math.pow(_0006, 2) * _0005 * _0002 - a * omega * p_theta * _0006 * _0002 - g * _0003 * m * _0005) / l];\n"
-                  "}")
-             (e/->JavaScript sysder :deterministic? true))))))
+  (deftest section-3-5
+    (testing "p.221"
+      (let [H ((e/Lagrangian->Hamiltonian
+                (driven/L 'm 'l 'g 'a 'omega))
+               (up 't 'theta 'p_theta))]
+        (is (= '(/ (+ (* (/ -1 2)
+                         (expt a 2) (expt l 2) (expt m 2)
+                         (expt omega 2)
+                         (expt (sin (* omega t)) 2)
+                         (expt (cos theta) 2))
+                      (* a g (expt l 2) (expt m 2) (cos (* omega t)))
+                      (* a l m omega p_theta (sin (* omega t)) (sin theta))
+                      (* -1 g (expt l 3) (expt m 2) (cos theta))
+                      (* (/ 1 2) (expt p_theta 2)))
+                   (* (expt l 2) m))
+               (simplify H))))
+      (let [sysder (simplify
+                    ((e/Hamiltonian->state-derivative
+                      (e/Lagrangian->Hamiltonian
+                       (driven/L 'm 'l 'g 'a 'omega)))
+                     (up 't 'theta 'p_theta)))]
+        (is (= '(up 1
+                    (/ (+ (* a l m omega (sin (* omega t)) (sin theta)) p_theta)
+                       (* (expt l 2) m))
+                    (/ (+ (* -1 (expt a 2) l m (expt omega 2) (expt (sin (* omega t)) 2) (sin theta) (cos theta))
+                          (* -1 a omega p_theta (sin (* omega t)) (cos theta))
+                          (* -1 g (expt l 2) m (sin theta)))
+                       l))
+               sysder))
+
+        (is (= ["[y01, y02, y03]"
+                "_"
+                (str
+                 "  const _04 = Math.sin(y02);\n"
+                 "  const _05 = Math.cos(y02);\n"
+                 "  const _06 = Math.pow(l, 2);\n"
+                 "  const _08 = omega * y01;\n"
+                 "  const _09 = Math.sin(_08);\n"
+                 "  return [1.0, (a * l * m * omega * _09 * _04 + y03) / (_06 * m), (- Math.pow(a, 2.0) * l * m * Math.pow(omega, 2.0) * Math.pow(_09, 2.0) * _04 * _05 - a * omega * y03 * _09 * _05 - g * _06 * m * _04) / l];")]
+               (c/compile-state-fn*
+                (fn []
+                  (e/Hamiltonian->state-derivative
+                   (e/Lagrangian->Hamiltonian
+                    (driven/L 'm 'l 'g 'a 'omega))))
+                []
+                (up 't 'theta 'p_theta)
+                {:mode :js
+                 :gensym-fn (gensym-fn)})))))))

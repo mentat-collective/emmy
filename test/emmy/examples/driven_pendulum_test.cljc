@@ -5,9 +5,18 @@
   (:require [clojure.test :refer [deftest is use-fixtures]]
             [emmy.env :as e :refer [up /]]
             [emmy.examples.driven-pendulum :as driven]
+            [emmy.expression.compile :refer [compile-state-fn*]]
             [emmy.simplify :refer [hermetic-simplify-fixture]]))
 
 (use-fixtures :each hermetic-simplify-fixture)
+
+(defn- gensym-fn
+  []
+  (let [i (atom 0)]
+    (fn [x]
+      (let [n (str (swap! i inc))
+            n (if (= (count n) 1) (str "0" n) n)]
+        (symbol (str x n))))))
 
 (deftest equations
   (e/with-literal-functions [θ]
@@ -25,29 +34,33 @@
       (is (= 4 (count @o))))))
 
 (deftest as-javascript
-  (let [eq (e/simplify
-            ((driven/state-derivative 'm 'l 'g 'a 'omega)
-             (up 't 'theta 'thetadot)))]
-    (is (= (str "function(t, theta, thetadot) {\n"
-                "  var _0001 = Math.sin(theta);\n"
-                "  return [1, thetadot, (a * Math.pow(omega, 2) * _0001 * Math.cos(omega * t) - g * _0001) / l];\n"
-                "}")
-           (e/->JavaScript eq
-                           :parameter-order '[t theta thetadot]
-                           :deterministic? true))))
-  (let [eq (e/simplify
-            ((e/Hamiltonian->state-derivative
-              (e/Lagrangian->Hamiltonian
-               (driven/L 'm 'l 'g 'a 'omega)))
-             (e/->H-state 't 'theta 'p_theta)))]
-    (is (= (str "function(t, theta, p_theta) {\n"
-                "  var _0001 = omega * t;\n"
-                "  var _0002 = Math.cos(theta);\n"
-                "  var _0003 = Math.pow(l, 2);\n"
-                "  var _0005 = Math.sin(theta);\n"
-                "  var _0006 = Math.sin(_0001);\n"
-                "  return [1, (a * l * m * omega * _0005 * _0006 + p_theta) / (_0003 * m), (- Math.pow(a, 2) * l * m * Math.pow(omega, 2) * _0005 * Math.pow(_0006, 2) * _0002 - a * omega * p_theta * _0006 * _0002 - g * _0003 * m * _0005) / l];\n"
-                "}")
-           (e/->JavaScript eq
-                           :parameter-order '[t theta p_theta]
-                           :deterministic? true)))))
+  (is (= ["[y01, y02, y03]"
+          "[p04, p05, p06, p07, p08]"
+          (str
+           "  const _09 = Math.sin(y02);\n"
+           "  return [1.0, y03, (p07 * Math.pow(p08, 2.0) * _09 * Math.cos(p08 * y01) - p06 * _09) / p05];")]
+         (compile-state-fn* driven/state-derivative
+                            '[m l g a omega]
+                            (up 't 'theta 'thetadot)
+                            {:mode :js
+                             :gensym-fn (gensym-fn)
+                             :deterministic? true})))
+
+  (is (= ["[y01, y02, y03]"
+          "_"
+          (str
+           "  const _04 = omega * y01;\n"
+           "  const _05 = Math.cos(y02);\n"
+           "  const _06 = Math.pow(l, 2);\n"
+           "  const _08 = Math.sin(y02);\n"
+           "  const _09 = Math.sin(_04);\n"
+           "  return [1.0, (a * l * m * omega * _08 * _09 + y03) / (_06 * m), (- Math.pow(a, 2.0) * l * m * Math.pow(omega, 2.0) * _08 * Math.pow(_09, 2.0) * _05 - a * omega * y03 * _09 * _05 - g * _06 * m * _08) / l];")]
+         (compile-state-fn*
+          #(e/Hamiltonian->state-derivative
+            (e/Lagrangian->Hamiltonian
+             (driven/L 'm 'l 'g 'a 'omega)))
+          []
+          (e/->H-state 't 'theta 'p_theta)
+          {:mode :js
+           :gensym-fn (gensym-fn)
+           :deterministic? true}))))

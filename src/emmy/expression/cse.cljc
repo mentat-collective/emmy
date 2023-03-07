@@ -4,13 +4,11 @@
   "This namespace implements subexpression extraction and \"elimination\", the
   process we use to avoid redundant computation inside of a simplified function
   body."
-  (:require #?(:cljs [goog.string :refer [format]])
-            [clojure.set :as set]
+  (:require [clojure.set :as set]
             [clojure.walk :as w]
             [emmy.expression :as x]
             [emmy.expression.analyze :as a]
-            [emmy.util :as u]
-            [taoensso.timbre :as log]))
+            [emmy.util :as u]))
 
 ;;  The goal of this process is to split some symbolic expression into:
 ;;
@@ -132,7 +130,7 @@
 
 ;; NOTE also that:
 ;;
-;; - this is why the `:symbol-generator` below must generate symbols that sort
+;; - this is why the `:gensym-fn` below must generate symbols that sort
 ;;   in the order they're generated. Else, the final binding vector might put
 ;;   the `g3` term in the example above /before/ the smaller subexpressions it
 ;;   uses.
@@ -141,9 +139,6 @@
 ;;   larger subexpressions like `'(* (sin x) (cos x))` that should never make it
 ;;   out, since they never appear in this form (since they contain smaller
 ;;   subexpressions).
-
-(def sortable-gensym
-  (a/monotonic-symbol-generator "G"))
 
 (defn extract-common-subexpressions
   "Considers an S-expression from the point of view of optimizing its evaluation
@@ -162,8 +157,9 @@
 
   ### Optional Arguments
 
-  `:symbol-generator`: side-effecting function that returns a new, unique
-  variable name on each invocation. `sortable-gensym` by default.
+  `:gensym-fn`: side-effecting function that returns a new, unique
+  variable name prefixed by its argument on each invocation.
+   `monotonic-symbol-generator` by default.
 
   NOTE that the symbols should appear in sorted order! Otherwise we can't
   guarantee that the binding sequence passed to `continue` won't contain entries
@@ -175,8 +171,8 @@
   consistent variable naming convention in the returned function. For tests, set
   `:deterministic? true`."
   ([expr continue] (extract-common-subexpressions expr continue {}))
-  ([expr continue {:keys [symbol-generator deterministic?]
-                   :or {symbol-generator sortable-gensym}}]
+  ([expr continue {:keys [gensym-fn deterministic?]
+                   :or {gensym-fn (let [msg (a/monotonic-symbol-generator "_")] (fn [_] (msg)))}}]
    (let [sort (if deterministic?
                 (partial sort-by (comp str vec first))
                 identity)]
@@ -185,7 +181,7 @@
        (let [expr->count (expr-frequencies x expr->sym)
              new-syms    (into {} (for [[k v] (sort expr->count)
                                         :when (> v 1)]
-                                    [k (symbol-generator)]))]
+                                    [k (gensym-fn '_)]))]
          (if (empty? new-syms)
            (let [sym->expr (-> (set/map-invert expr->sym)
                                (discard-unreferenced-syms x))]
@@ -193,41 +189,3 @@
            (let [expr->sym' (merge expr->sym new-syms)]
              (recur (w/postwalk-replace expr->sym' x)
                     expr->sym'))))))))
-
-;; This final wrapper function invokes `extract-common-subexpressions` to turn a
-;; symbolic expression a new, valid Clojure(script) form that uses a `let`
-;; binding to bind any common subexpressions exposed during the above search.
-;;
-;; If there are no common subexpressions, `cse-form` will round-trip its input.
-
-(defn cse-form
-  "Given a symbolic expression `expr`, returns a new expression potentially
-  wrapped in a `let` binding with one binding per extracted common
-  subexpression.
-
-  ## Optional Arguments
-
-  `:symbol-generator`: side-effecting function that returns a new, unique symbol
-  on each invocation. These generated symbols are used to create unique binding
-  names for extracted subexpressions. `sortable-gensym` by default.
-
-  NOTE that the symbols should appear in sorted order! Otherwise we can't
-  guarantee that the binding sequence won't contain entries that reference
-  previous entries, resulting in \"Unable to resolve symbol\" errors.
-
-  `:deterministic?`: if true, the function will order the let-binding contents
-  by sorting the string representations of each term before assignment. If false
-  the function won't guarantee a consistent variable naming convention in the
-  returned function. For tests, we recommend `:deterministic? true`."
-  ([expr] (cse-form expr {}))
-  ([expr opts]
-   (letfn [(callback [new-expression bindings]
-             (let [n-bindings (count bindings)]
-               (if (pos? n-bindings)
-                 (let [binding-vec (into [] cat bindings)]
-                   (log/info
-                    (format "common subexpression elimination: %d expressions" n-bindings))
-                   `(let ~binding-vec
-                      ~new-expression))
-                 new-expression)))]
-     (extract-common-subexpressions expr callback opts))))

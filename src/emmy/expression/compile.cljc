@@ -6,7 +6,7 @@
   functions."
   (:require [clojure.string :as s]
             [clojure.walk :as w]
-            [emmy.expression.cse :refer [cse-form]]
+            [emmy.expression.cse :refer [extract-common-subexpressions]]
             [emmy.expression.render :as render]
             [emmy.function :as f]
             [emmy.generic :as g]
@@ -284,8 +284,8 @@
            (fn [f]
              (if (sequential? f)
                (if (seq f)
-                 (let [as (clojure.string/join ", " f)]
-                             (str "[" as "]"))
+                 (let [as (s/join ", " f)]
+                   (str "[" as "]"))
                  "_")
                (str f)))
            a)]
@@ -306,9 +306,15 @@
     The vector may be nested for sequence destructuring.
 
   - `body`: a function body making use of any symbol in argv above"
-  [argv body]
-  (let [body (w/postwalk-replace sym->resolved-form body)]
-    `(fn [~@argv] ~body)))
+  [argv {:keys [bindings body]}]
+  (w/postwalk-replace
+   sym->resolved-form
+   (if (seq bindings)
+     `(fn [~@argv]
+        (let ~(into [] cat bindings)
+          ~body))
+     `(fn [~@argv]
+        ~body))))
 
 (defn- compile->js
   "Returns an array containing JavaScript source for a function that implements
@@ -318,16 +324,14 @@
     The vector may be nested for sequence destructuring.
 
   - `body`: a function body making use of any symbol in argv above"
-  [argv body]
-  (let [argv        (mapv commafy-arglist argv)
-        js          (render/->JavaScript* body {})
-        cs-bindings (s/join (for [[var val] (:vars js)]
-                              (str "  const " var " = " val ";\n")))
-        body        (str cs-bindings
-                         "  return "
-                         (:value js)
-                         ";")]
-    (conj argv body)))
+  [argv {:keys [bindings body]}]
+  (let [argv        (map commafy-arglist argv)
+        code        (s/join
+                     (concat
+                      (for [[var val] bindings]
+                        (str "  const " var " = " (render/->JavaScript val) ";\n"))
+                      ["  return " (render/->JavaScript body) ";"]))]
+    (into [] (concat argv [code]))))
 
 (defn- compile-native
   "Returns a natively-evaluated function that implements `body`, given:
@@ -335,10 +339,10 @@
   - `argv`: a vector of symbols to serve as the function's arguments.
     The vector may be nested for sequence destructuring.
 
-  - `body`: a function body making use of any symbol in argv above"
-  [argv body]
-  #?(:clj (eval (compile->clj argv body))
-     :cljs (comp js->clj (apply js/Function (compile->js argv body)))))
+  - `body`: a map containing `bindings` and `body` keys"
+  [argv code]
+  #?(:clj (eval (compile->clj argv code))
+     :cljs (comp js->clj (apply js/Function (compile->js argv code)))))
 
 (defn- compile-sci
   "Returns a Clojure function evaluated using SCI. The returned fn implements
@@ -368,6 +372,25 @@
               (mapv rec s)
               (gensym-fn 'y)))]
     (rec state)))
+
+(defn- cse
+  "Invokes extract-common-subexpressions on `x`.
+
+   The results of the elimination are presented in a map with the keys
+   `:bindings` and `body`.  If no suitable subexpressions were found,
+   the binding list will be empty and body will be unchanged.
+
+   "
+  [x opts]
+  (extract-common-subexpressions
+   x
+   (fn [body bindings]
+     ;; TODO: consistency demands that we do apply-numeric-ops on the
+     ;; intermediate bindings, but that will shake up a lot of unit
+     ;; tests so I'm temporarily postponing this.
+     {:bindings bindings #_(into {} (for [[k v] bindings] [k (apply-numeric-ops v)]))
+      :body (apply-numeric-ops body)})
+   opts))
 
 (defn compile-state-fn*
   "Returns a compiled, simplified function with signature `(f state params)`,
@@ -407,9 +430,11 @@
    (compile-state-fn* f params initial-state {}))
   ([f params initial-state {:keys [generic-params?
                                    gensym-fn
-                                   mode]
+                                   mode
+                                   deterministic?]
                             :or {generic-params? true
-                                 gensym-fn gensym}
+                                 gensym-fn gensym
+                                 deterministic? false}
                             :as opts}]
    (let [sw            (us/stopwatch)
          params        (if generic-params?
@@ -417,11 +442,10 @@
                          params)
          generic-state (state->argv initial-state gensym-fn)
          g             (apply f params)
-         body          (-> (g generic-state)
+         code          (-> (g generic-state)
                            (g/simplify)
                            (v/freeze)
-                           #?(:clj (cse-form))  ;; JavaScript handles this in render
-                           (apply-numeric-ops))
+                           (cse {:gensym-fn gensym-fn :deterministic? deterministic?}))
          compiler      (case (validate-mode! (or mode *mode*))
                          :source #?(:clj compile->clj :cljs compile->js)
                          :clj compile->clj
@@ -429,7 +453,7 @@
                          :native compile-native
                          :sci compile-sci)
          argv          (state-argv params generic-state opts)
-         compiled-fn   (compiler argv body)]
+         compiled-fn   (compiler argv code)]
      (log/info "compiled state function in" (us/repr sw))
      compiled-fn)))
 
@@ -481,8 +505,7 @@
          body     (-> (apply f args)
                       (g/simplify)
                       (v/freeze)
-                      (cse-form)
-                      (apply-numeric-ops))
+                      (cse {}))
          compiled (case (compiler-mode)
                     :source (#?(:clj compile->clj :cljs compile->js) args body)
                     :js (compile->js args body)
