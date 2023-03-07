@@ -182,7 +182,7 @@ For example:
 ;; follow. Bindings can take multiple predicates, but it reads a bit better to
 ;; have them tightened up into a single predicate.
 
-(defn- negative-number? [x]
+(defn negative-number? [x]
   (and (v/number? x)
        (g/negative? x)))
 

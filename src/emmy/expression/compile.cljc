@@ -339,7 +339,7 @@
   - `argv`: a vector of symbols to serve as the function's arguments.
     The vector may be nested for sequence destructuring.
 
-  - `body`: a map containing `bindings` and `body` keys"
+  - `code`: a map containing `bindings` and `body` keys"
   [argv code]
   #?(:clj (eval (compile->clj argv code))
      :cljs (comp js->clj (apply js/Function (compile->js argv code)))))
@@ -374,13 +374,13 @@
     (rec state)))
 
 (defn- cse
-  "Invokes extract-common-subexpressions on `x`.
+  "Invokes [[emmy.expression.cse/extract-common-subexpressions]] on `x`.
 
-   The results of the elimination are presented in a map with the keys
-   `:bindings` and `body`.  If no suitable subexpressions were found,
-   the binding list will be empty and body will be unchanged.
-
-   "
+   The results of the elimination are operated on by a constant-folding
+   pass and presented in a map with the keys `:bindings` and `body`.
+   If no suitable subexpressions were found, the binding list will
+   be empty (though body might still reflect changes due to the constant
+   folding)."
   [x opts]
   (extract-common-subexpressions
    x
@@ -388,8 +388,8 @@
      ;; TODO: consistency demands that we do apply-numeric-ops on the
      ;; intermediate bindings, but that will shake up a lot of unit
      ;; tests so I'm temporarily postponing this.
-     {:bindings bindings #_(into {} (for [[k v] bindings] [k (apply-numeric-ops v)]))
-      :body (apply-numeric-ops body)})
+     {:bindings bindings  #_(mapv (fn [[k v]] [k (apply-numeric-ops v)]) bindings)
+                            :body (apply-numeric-ops body)})
    opts))
 
 (defn compile-state-fn*

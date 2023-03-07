@@ -6,7 +6,9 @@
   (:require [clojure.set :as set]
             [clojure.string :as s]
             [clojure.zip :as z]
+            [emmy.generic :as g]
             [emmy.pattern.rule :as R :refer [=>]]
+            [emmy.simplify.rules :refer [negative-number?]]
             [emmy.ratio :as r]
             [emmy.util :as u]
             [emmy.value :as v]))
@@ -38,10 +40,10 @@
   rewrite-negation
 
   (R/ruleset
-   (* -1 ?x) => (u- ?x)
-   (* -1.0 ?x) => (u- ?x)
-   (* -1 ??x) => (u- (* ??x))
-   (* -1.0 ??x) => (u- (* ??x))))
+   (* (? _ #{-1 -1.0}) ?x)               => (u- ?x)
+   (* (? _ #{-1 -1.0}) ??x)              => (u- (* ??x))
+   (* (? ?c negative-number?) ?x)  => (u- (* (? #(g/negate (% '?c))) ?x))
+   (* (? ?c negative-number?) ??x) => (u- (* (? #(g/negate (% '?c))) ??x))))
 
 (defn- render-infix-ratio
   "renders a pair of the form `[numerator denominator]` as a infix ratio of the

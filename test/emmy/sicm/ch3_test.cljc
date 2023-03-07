@@ -149,15 +149,15 @@
                (simplify (sysder top-state)))))
 
       (is (= ["[y01, y02, y03, y04, y05, y06, y07]"
-                "_"
-                (str
-                 "  const _08 = Math.sin(y02);\n"
-                 "  const _09 = Math.cos(y02);\n"
-                 "  const _12 = Math.pow(_08, 2);\n"
-                 "  const _13 = Math.pow(_09, 2);\n"
-                 "  return [1.0, [y05 / A, (- y07 * _09 + y06) / (A * _12), (A * y07 * _12 + C * y07 * _13 - C * y06 * _09) / (A * C * _12)], [(A * gMR * Math.pow(_09, 4.0) + -2.0 * A * gMR * _13 - y06 * y07 * _13 + Math.pow(y06, 2.0) * _09 + Math.pow(y07, 2.0) * _09 + A * gMR - y06 * y07) / (A * Math.pow(_08, 3.0)), 0.0, 0.0]];")]
-                 (c/compile-state-fn* (fn [] sysder) [] top-state {:mode :js
-                                                                   :gensym-fn (gensym-fn)})))))
+              "_"
+              (str
+               "  const _08 = Math.sin(y02);\n"
+               "  const _09 = Math.cos(y02);\n"
+               "  const _12 = Math.pow(_08, 2);\n"
+               "  const _13 = Math.pow(_09, 2);\n"
+               "  return [1.0, [y05 / A, (- y07 * _09 + y06) / (A * _12), (A * y07 * _12 + C * y07 * _13 - C * y06 * _09) / (A * C * _12)], [(A * gMR * Math.pow(_09, 4.0) - 2.0 * A * gMR * _13 - y06 * y07 * _13 + Math.pow(y06, 2.0) * _09 + Math.pow(y07, 2.0) * _09 + A * gMR - y06 * y07) / (A * Math.pow(_08, 3.0)), 0.0, 0.0]];")]
+             (c/compile-state-fn* (fn [] sysder) [] top-state {:mode :js
+                                                               :gensym-fn (gensym-fn)})))))
 
   (deftest section-3-5
     (testing "p.221"
