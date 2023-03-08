@@ -510,7 +510,7 @@
          body     (-> (apply f args)
                       (g/simplify)
                       (v/freeze)
-                      (cse {}))
+                      (cse))
          compiled (case (compiler-mode)
                     :source (#?(:clj compile->clj :cljs compile->js) args body)
                     :js (compile->js args body)
