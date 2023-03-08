@@ -2,6 +2,24 @@
 
 ## [unreleased]
 
+- #109:
+
+  - `->JavaScript` now produces expressions, and not function bodies.
+  This change makes `->JavaScript` do the same job as `->infix` and
+  `->TeX`. Initially, the JS rendering emitted a function in order to
+  facilitate experiments with embedding equations of motion in dynamic
+  web pages. This can still be done: `compile-state-fn` has been extended
+  to allow the compilation of a state function into either Clojure or
+  Javascript notation. The test directory contains many worked examples.
+
+  - numerous local `gensym` replacements found useful as part of test
+  fixtures have been gathered together into `monotonic-symbol-generator`.
+
+  - generation of sums and differences in all of the infix generators
+  has been improved to more closely approach standard mathematical
+  notation (e.g., instead of `-2 * x + -2 * y` you will see
+  `- 2 * x - 2 * y`).
+
 - #107:
 
   - move CSE to its own namespace to avoid the circular dependency
