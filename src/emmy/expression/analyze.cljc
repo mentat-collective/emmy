@@ -17,6 +17,7 @@
   round-trip to and from the canonical form."
   (:require [emmy.expression :as x]
             [emmy.numsymb :as sym]
+            [emmy.util :as u]
             [emmy.value :as v]))
 
 ;; ## General Recursive Simplifier Maker
@@ -81,25 +82,53 @@
       :else (compare v w))))
 
 (defn monotonic-symbol-generator
-  "Returns a function which generates a sequence of symbols with the given
-  `prefix` with the property that later symbols will sort after earlier symbols.
+  "Called with no arguments, produces a function mapping a string prefix
+   to a generated symbol with a four-digit suffix which increments
+   with each call, providing a stream of unique symbols. If the returned
+   function is called without arguments, a default prefix of \"_\" is
+   used (but see below).
 
-  This is important for the stability of the simplifier. (If we just used
-  `clojure.core/gensym`, then a temporary symbol like `G__1000` will sort
-  earlier than `G__999`. This will trigger errors at unpredictable times,
-  whenever `clojure.core/gensym` returns two symbols that cross an
-  order-of-magnitude boundary.)"
-  [prefix]
-  (let [count (atom -1)]
-    (fn [] (symbol
-           #?(:clj
-              (format "%s%016x" prefix (swap! count inc))
+   May be called with one integer argument to set the size of the
+   suffix field in digits.
 
-              :cljs
-              (let [i (swap! count inc)
-                    suffix (-> (.toString i 16)
-                               (.padStart 16 "0"))]
-                (str prefix suffix)))))))
+   Supplying yet one more string argument changes the default prefix.
+   ```
+   (def g (monotonic-symbol-generator))
+   (take 5 (repeatedly #(g \"a\")))
+   (take 5 (repeatedly g))
+   ;; (a0000 a0001 a0002 a0003 a0004)
+   ;; (_0005 _0006 _0007 _0008 _0009)
+
+
+   (def h (monotonic-symbol-generator 2))
+   (take 5 (repeatedly #(h \"b\")))
+   (take 5 (repeatedly h))
+   ;; (b00 b01 b02 b03 b04)
+   ;; (_05 _06 _07 _08 _09)
+
+   (def j (monotonic-symbol-generator 3 \"x\"))
+   (take 5 (repeatedly #(j \"a\")))
+   (take 5 (repeatedly j))
+   ;; (a000 a001 a002 a003 a004)
+   ;; (x005 x006 x007 x008 x009)
+   ```
+   "
+  ([]
+   (monotonic-symbol-generator 4 "_"))
+  ([size]
+   (monotonic-symbol-generator size "_"))
+  ([size prefix]
+   (let [i (atom 0)]
+     (fn g
+       ([] (g prefix))
+       ([prefix]
+        (let [n (str (swap! i inc))
+              s (count n)
+              d (- size s)]
+          (when (< d 0)
+            (u/illegal-state (str "Symbol generator of width " size " exhausted")))
+          (symbol
+           (apply str (concat (str prefix) (repeat d \0) n)))))))))
 
 (defprotocol ICanonicalize
   "[[ICanonicalize]] captures the methods exposed by a Emmy analyzer backend."
@@ -137,7 +166,7 @@
   operation is not available to the polynomial canonicalizer, and restore it
   afterwards."
   ([backend]
-   (make-analyzer backend (monotonic-symbol-generator "-g-")))
+   (make-analyzer backend (monotonic-symbol-generator 16 "-g-")))
   ([backend symbol-generator]
    (let [ref #?(:clj ref :cljs atom)
          alter #?(:clj alter :cljs swap!)

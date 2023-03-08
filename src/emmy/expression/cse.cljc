@@ -159,7 +159,7 @@
 
   `:gensym-fn`: side-effecting function that returns a new, unique
   variable name prefixed by its argument on each invocation.
-   `monotonic-symbol-generator` by default.
+   `monotonic-symbol-genπerator` by default.
 
   NOTE that the symbols should appear in sorted order! Otherwise we can't
   guarantee that the binding sequence passed to `continue` won't contain entries
@@ -172,7 +172,7 @@
   `:deterministic? true`."
   ([expr continue] (extract-common-subexpressions expr continue {}))
   ([expr continue {:keys [gensym-fn deterministic?]
-                   :or {gensym-fn (let [msg (a/monotonic-symbol-generator "_")] (fn [_] (msg)))}}]
+                   :or {gensym-fn (a/monotonic-symbol-generator 8 "_")}}]
    (let [sort (if deterministic?
                 (partial sort-by (comp str vec first))
                 identity)]
@@ -181,7 +181,7 @@
        (let [expr->count (expr-frequencies x expr->sym)
              new-syms    (into {} (for [[k v] (sort expr->count)
                                         :when (> v 1)]
-                                    [k (gensym-fn '_)]))]
+                                    [k (gensym-fn)]))]
          (if (empty? new-syms)
            (let [sym->expr (-> (set/map-invert expr->sym)
                                (discard-unreferenced-syms x))]

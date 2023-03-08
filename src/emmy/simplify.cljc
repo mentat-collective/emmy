@@ -28,7 +28,7 @@
   across the fraction bar.
   NOTE: I think this is fpf:analyzer in the scheme code."
   []
-  (let [gensym (a/monotonic-symbol-generator "-s-")]
+  (let [gensym (a/monotonic-symbol-generator 16 "-s-")]
     (a/make-analyzer poly/analyzer gensym)))
 
 (defn ^:no-doc rational-function-analyzer
@@ -36,7 +36,7 @@
   functions.
   NOTE: This is rcf:analyzer."
   []
-  (let [gensym (a/monotonic-symbol-generator "-r-")]
+  (let [gensym (a/monotonic-symbol-generator 16 "-r-")]
     (a/make-analyzer rf/analyzer gensym)))
 
 (def ^:dynamic *poly-simplify*

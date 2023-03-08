@@ -6,6 +6,7 @@
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
             [emmy.abstract.function :as f]
             [emmy.calculus.derivative :refer [D]]
+            [emmy.expression.analyze :as a]
             [emmy.generators :as sg]
             [emmy.generic :as g :refer [+ - * /]]
             [emmy.matrix :as m]
@@ -689,10 +690,7 @@
 
     ;; but not all transforms are canonical:
     (testing "non-canonical-transform"
-      (with-redefs [gensym (let [i (atom 0)]
-                             (fn
-                               ([] (clojure.core/gensym))
-                               ([x] (symbol (str x (swap! i inc))))))]
+      (with-redefs [gensym (a/monotonic-symbol-generator 1 "x")]
         (letfn [(a-non-canonical-transform [[t theta p]]
                   (let [x (* p (g/sin theta))
                         p_x (* p (g/cos theta))]

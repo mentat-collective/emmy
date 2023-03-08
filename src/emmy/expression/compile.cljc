@@ -6,6 +6,7 @@
   functions."
   (:require [clojure.string :as s]
             [clojure.walk :as w]
+            [emmy.expression.analyze :as a]
             [emmy.expression.cse :refer [extract-common-subexpressions]]
             [emmy.expression.render :as render]
             [emmy.function :as f]
@@ -386,13 +387,15 @@
    If no suitable subexpressions were found, the binding list will
    be empty (though body might still reflect changes due to the constant
    folding)."
-  [x opts]
-  (extract-common-subexpressions
-   x
-   (fn [body bindings]
-     {:bindings (mapv (fn [[k v]] [k (apply-numeric-ops v)]) bindings)
-      :body (apply-numeric-ops body)})
-   opts))
+  ([x]
+   (cse x {}))
+  ([x opts]
+   (extract-common-subexpressions
+    x
+    (fn [body bindings]
+      {:bindings (mapv (fn [[k v]] [k (apply-numeric-ops v)]) bindings)
+       :body (apply-numeric-ops body)})
+    opts)))
 
 (defn compile-state-fn*
   "Returns a compiled, simplified function with signature `(f state params)`,
@@ -435,7 +438,7 @@
                                    mode
                                    deterministic?]
                             :or {generic-params? true
-                                 gensym-fn gensym
+                                 gensym-fn (a/monotonic-symbol-generator 4)
                                  deterministic? false}
                             :as opts}]
    (let [sw            (us/stopwatch)
@@ -447,7 +450,7 @@
          code          (-> (g generic-state)
                            (g/simplify)
                            (v/freeze)
-                           (cse {:gensym-fn gensym-fn :deterministic? deterministic?}))
+                           (cse {:gensym-fn #(gensym-fn '_) :deterministic? deterministic?}))
          compiler      (case (validate-mode! (or mode *mode*))
                          :source #?(:clj compile->clj :cljs compile->js)
                          :clj compile->clj

@@ -7,6 +7,7 @@
              :refer [+ zero? up down literal-function]]
             [emmy.examples.driven-pendulum :as driven]
             [emmy.examples.top :as top]
+            [emmy.expression.analyze :as a]
             [emmy.expression.compile :as c]
             [emmy.mechanics.hamilton :as H]
             [emmy.mechanics.lagrange :as L]
@@ -17,14 +18,6 @@
 
 (def simplify
   (comp e/freeze e/simplify))
-
-(defn- gensym-fn
-  []
-  (let [i (atom 0)]
-    (fn [x]
-      (let [n (str (swap! i inc))
-            n (if (= (count n) 1) (str "0" n) n)]
-        (symbol (str x n))))))
 
 (deftest section-3-1
   (testing "p.189"
@@ -157,7 +150,7 @@
                "  const _13 = Math.pow(_09, 2);\n"
                "  return [1, [y05 / A, (- y07 * _09 + y06) / (A * _12), (A * y07 * _12 + C * y07 * _13 - C * y06 * _09) / (A * C * _12)], [(A * gMR * Math.pow(_09, 4) - 2 * A * gMR * _13 - y06 * y07 * _13 + Math.pow(y06, 2) * _09 + Math.pow(y07, 2) * _09 + A * gMR - y06 * y07) / (A * Math.pow(_08, 3)), 0, 0]];")]
              (c/compile-state-fn* (fn [] sysder) [] top-state {:mode :js
-                                                               :gensym-fn (gensym-fn)})))))
+                                                               :gensym-fn (a/monotonic-symbol-generator 2)})))))
 
   (deftest section-3-5
     (testing "p.221"
@@ -206,4 +199,4 @@
                 []
                 (up 't 'theta 'p_theta)
                 {:mode :js
-                 :gensym-fn (gensym-fn)})))))))
+                 :gensym-fn (a/monotonic-symbol-generator 2)})))))))

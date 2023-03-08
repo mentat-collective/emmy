@@ -3,6 +3,7 @@
 (ns emmy.expression.compile-test
   (:require [clojure.test :refer [is deftest testing]]
             [emmy.abstract.number]
+            [emmy.expression.analyze :as a]
             [emmy.expression.compile :as c]
             [emmy.generic :as g]
             [emmy.structure :refer [up down]]
@@ -85,12 +86,7 @@
 
     (testing "compile-state-fn options"
       (binding [c/*mode* :source]
-        (let [gensym-fn (fn []
-                          (let [i (atom 0)]
-                            (fn [x]
-                              (symbol
-                               (str x (swap! i inc))))))
-              f (fn [scale]
+        (let [f (fn [scale]
                   (fn [[t]]
                     (up (g/* scale (g/+ t (g// 1 2))))))
               params [3.1]
@@ -106,7 +102,7 @@
                        f params initial-state
                        {:flatten? false
                         :generic-params? false
-                        :gensym-fn (gensym-fn)
+                        :gensym-fn (a/monotonic-symbol-generator 1)
                         :mode mode}))
                      "nested argument vector, no params."))
 
@@ -119,7 +115,7 @@
                   f params initial-state
                   {:flatten? false
                    :generic-params? true
-                   :gensym-fn (gensym-fn)
+                   :gensym-fn (a/monotonic-symbol-generator 1)
                    :mode mode}))
                 "nested argument vector, params."))))))
 

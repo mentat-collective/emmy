@@ -5,19 +5,12 @@
   (:require [clojure.test :refer [is deftest use-fixtures]]
             [emmy.env :as e :refer [up down /]]
             [emmy.examples.double-pendulum :as double]
+            [emmy.expression.analyze :as a]
             [emmy.expression.compile :as c]
             [emmy.simplify :refer [hermetic-simplify-fixture]]
             [emmy.value :as v]))
 
 (use-fixtures :each hermetic-simplify-fixture)
-
-(defn- gensym-fn
-  []
-  (let [i (atom 0)]
-    (fn [x]
-      (let [n (str (swap! i inc))
-            n (if (= (count n) 1) (str "0" n) n)]
-        (symbol (str x n))))))
 
 (deftest equations
   (let [state (up 't (up 'θ 'φ) (up 'θdot 'φdot))
@@ -89,7 +82,7 @@
                             {:mode :js
                              :flatten? false
                              :generic-params? false
-                             :gensym-fn (gensym-fn)
+                             :gensym-fn (a/monotonic-symbol-generator 2)
                              :deterministic? true})))
 
 
@@ -111,7 +104,7 @@
           '[1 1 1 1 'g]
           (up 't (up 'theta 'phi) (up 'thetadot 'phidot))
           {:mode :js
-           :gensym-fn (gensym-fn)
+           :gensym-fn (a/monotonic-symbol-generator 2)
            :deterministic? true})))
 
   (let [eq (e/simplify
@@ -163,5 +156,5 @@
                []
                (e/->H-state 't (up 'theta 'psi) (down 'p_theta 'p_psi))
                {:mode :js
-                :gensym-fn (gensym-fn)
+                :gensym-fn (a/monotonic-symbol-generator 2)
                 :deterministic? true}))))))
