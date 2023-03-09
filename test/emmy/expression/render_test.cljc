@@ -27,8 +27,7 @@
 
 (deftest basic
   (testing "raw expressions"
-    (is (= "function(remainder, x, y) {\n  return x % y;\n}"
-           (->JavaScript (g/remainder 'x 'y)))
+    (is (= "x % y" (->JavaScript (g/remainder 'x 'y)))
         "remainder works")
 
     (is (= "Df(x, y)" (->infix '((D f) x y))))
@@ -317,106 +316,109 @@
     (fn [] (symbol (format "%s%d" p (swap! i inc))))))
 
 (deftest JS
-  (is (= "function(a, b, theta) {\n  return a + b + Math.sin(theta);\n}"
+  (is (= "a + b + Math.sin(theta)"
          (->JavaScript (+ 'a 'b (sin 'theta)))))
-  (is (= "function(j) {\n  return 1 / j;\n}"
+  (is (= "1 / j"
          (->JavaScript (g/invert 'j))))
-  (is (= "function(y) {\n  return Math.pow(2.71828, y);\n}"
+  (is (= "Math.pow(2.71828, y)"
          (->JavaScript (expt 2.71828 'y))))
-  (is (= "function(a, b, x) {\n  return a * Math.exp(b * Math.log(x));\n}"
+  (is (= "a * Math.exp(b * Math.log(x))"
          (->JavaScript (* 'a (g/exp (* 'b (g/log 'x)))))))
-  (is (= "function(x) {\n  var _0001 = Math.sin(x);\n  return Math.pow(_0001, 2) + _0001;\n}"
+  (is (= "Math.pow(Math.sin(x), 2) + Math.sin(x)"
          (s->JS (+ (sin 'x) (expt (sin 'x) 2)))))
-  (is (= (str "function(x, dx) {\n"
-              "  var t1 = Math.sin(x);\n"
-              "  return -1/2 * Math.pow(dx, 2) * t1 + dx * Math.cos(x) + t1;\n"
-              "}")
-         (s->JS (series/sum ((taylor-series sin 'x) 'dx) 2)
-                :symbol-generator (make-symbol-generator "t")
-                :parameter-order '[x dx])))
-  (is (= "function(x, y) {\n  return [1, x + y, 2];\n}"
+  (is (= "-1/2 * Math.pow(dx, 2) * Math.sin(x) + dx * Math.cos(x) + Math.sin(x)"
+         (s->JS (series/sum ((taylor-series sin 'x) 'dx) 2))))
+  (is (= "[1, x + y, 2]"
          (s->JS (up 1 (+ 'x 'y) 2))))
 
-  (is (= "function(a, b) {\n  return [[1, a], [b, 2]];\n}"
+  (is (= "[[1, a], [b, 2]]"
          (->JavaScript (down (up 1 'a) (up 'b 2))))))
 
 (deftest systematic
   (let [all-formats (juxt s->infix s->JS s->TeX)]
     (is (= ["a + b"
-            "function(a, b) {\n  return a + b;\n}"
+            "a + b"
             "a + b"]
            (all-formats (+ 'a 'b))))
     (is (= ["a b"
-            "function(a, b) {\n  return a * b;\n}"
+            "a * b"
             "a\\,b"]
            (all-formats (* 'a 'b))))
     (is (= ["a / b"
-            "function(a, b) {\n  return a / b;\n}"
+            "a / b"
             "\\frac{a}{b}"]
            (all-formats (/ 'a 'b))))
     (is (= ["a - b"
-            "function(a, b) {\n  return a - b;\n}"
+            "a - b"
             "a - b"]
            (all-formats (- 'a 'b))))
     (is (= ["sin(t)"
-            "function(t) {\n  return Math.sin(t);\n}"
+            "Math.sin(t)"
             "\\sin\\left(t\\right)"]
            (all-formats (sin 't))))
     (is (= ["sin²(t)"
-            "function(t) {\n  return Math.pow(Math.sin(t), 2);\n}"
+            "Math.pow(Math.sin(t), 2)"
             "{\\sin}^{2}\\left(t\\right)"]
            (all-formats ((expt sin 2) 't))))
     (is (= ["cos²(tan(t))"
-            "function(t) {\n  return Math.pow(Math.cos(Math.tan(t)), 2);\n}"
+            "Math.pow(Math.cos(Math.tan(t)), 2)"
             "{\\cos}^{2}\\left(\\tan\\left(t\\right)\\right)"]
            (all-formats ((expt cos 2) (g/tan 't)))))
     (is (= ["sin²(q + t)"
-            "function(q, t) {\n  return Math.pow(Math.sin(q + t), 2);\n}"
+            "Math.pow(Math.sin(q + t), 2)"
             "{\\sin}^{2}\\left(q + t\\right)"]
            (all-formats ((expt sin 2) (+ 't 'q)))))
     (is (= ["a b + c d"
-            "function(a, b, c, d) {\n  return a * b + c * d;\n}"
+            "a * b + c * d"
             "a\\,b + c\\,d"]
            (all-formats (+ (* 'a 'b) (* 'c 'd)))))
     (is (= ["a c + a d + b c + b d"
-            "function(a, b, c, d) {\n  return a * c + a * d + b * c + b * d;\n}"
+            "a * c + a * d + b * c + b * d"
             "a\\,c + a\\,d + b\\,c + b\\,d"]
            (all-formats (* (+ 'a 'b) (+ 'c 'd)))))
     (is (= ["(a + b) / c"
-            "function(a, b, c) {\n  return (a + b) / c;\n}"
+            "(a + b) / c"
             "\\frac{a + b}{c}"]
            (all-formats (/ (+ 'a 'b) 'c))))
     (is (= ["a / (b + c)"
-            "function(a, b, c) {\n  return a / (b + c);\n}"
+            "a / (b + c)"
             "\\frac{a}{b + c}"]
            (all-formats (/ 'a (+ 'b 'c)))))
     (is (= ["a / (b c)"
-            "function(a, b, c) {\n  return a / (b * c);\n}"
+            "a / (b * c)"
             "\\frac{a}{b\\,c}"]
            (all-formats (/ 'a (* 'b 'c)))))
     (is (= ["(b c) / a"
-            "function(a, b, c) {\n  return (b * c) / a;\n}"
+            "(b * c) / a"
             "\\frac{b\\,c}{a}"]
            (all-formats (/ (* 'b 'c) 'a))))
     (is (= ["(a b) / (c d)"
-            "function(a, b, c, d) {\n  return (a * b) / (c * d);\n}"
+            "(a * b) / (c * d)"
             "\\frac{a\\,b}{c\\,d}"]
            (all-formats (/ (* 'a 'b) (* 'c 'd)))))
     (is (= ["- a - b - c"
-            "function(a, b, c) {\n  return - a - b - c;\n}"
+            "- a - b - c"
             "- a - b - c"]
            (all-formats (- (+ 'a 'b 'c)))))
+    (is (= ["- 2 a - 2 b - 2 c"
+            "- 2 * a - 2 * b - 2 * c"
+            "- 2\\,a - 2\\,b - 2\\,c"]
+           (all-formats (* -2 (+ 'a 'b 'c)))))
     (is (= ["- a b c"
-            "function(a, b, c) {\n  return - a * b * c;\n}"
+            "- a * b * c"
             "- a\\,b\\,c"]
            (all-formats (- (* 'a 'b 'c)))))
+    (is (= ["- -baz-qux + foo-bar - star*power - terminus/est"
+            "- _baz_qux + foo_bar - star_STAR_power - terminus_SLASH_est"
+            "- \\mathsf{-baz-qux} + \\bar {foo-} - \\mathsf{star*power} - \\mathsf{terminus/est}"]
+           (all-formats (- 'foo-bar '-baz-qux 'star*power 'terminus/est))))
     (let [f (af/literal-function 'f)]
       (is (= ["Df(x)"
-              "function(D, f, x) {\n  return D(f)(x);\n}"
+              "D(f)(x)"
               "Df\\left(x\\right)"]
              (all-formats ((D f) 'x))))
       (is (= ["D²f(x)"
-              "function(D, f, x) {\n  return Math.pow(D, 2)(f)(x);\n}"
+              "Math.pow(D, 2)(f)(x)"
               "{D}^{2}f\\left(x\\right)"]
              (all-formats ((D (D f)) 'x))))
 
@@ -428,13 +430,8 @@
         (is (= "1/2 dx² ∂₀²f(up(x, y)) + dx dy (∂₀ ∂₁)(f)(up(x, y)) + 1/2 dy² ∂₁²f(up(x, y)) + dx ∂₀f(up(x, y)) + dy ∂₁f(up(x, y)) + f(up(x, y))"
                (s->infix expr)))
 
-(is (= (str "function(dx, dy, f, partial, x, y) {\n"
-                    "  var _0001 = 1/2;\n"
-                    "  var _0002 = partial(0);\n"
-                    "  var _0003 = partial(1);\n"
-                    "  var _0004 = [x, y];\n"
-                    "  return _0001 * Math.pow(dx, 2) * Math.pow(_0002, 2)(f)(_0004) + dx * dy * (_0002 * _0003)(f)(_0004) + _0001 * Math.pow(dy, 2) * Math.pow(_0003, 2)(f)(_0004) + dx * _0002(f)(_0004) + dy * _0003(f)(_0004) + f(_0004);\n}")
-               (s->JS expr :deterministic? true)))
+        (is (= (str "1/2 * Math.pow(dx, 2) * Math.pow(partial(0), 2)(f)([x, y]) + dx * dy * (partial(0) * partial(1))(f)([x, y]) + 1/2 * Math.pow(dy, 2) * Math.pow(partial(1), 2)(f)([x, y]) + dx * partial(0)(f)([x, y]) + dy * partial(1)(f)([x, y]) + f([x, y])")
+               (s->JS expr)))
 
         (is (= "\\frac{1}{2}\\,{dx}^{2}\\,{\\partial_0}^{2}f\\left(\\begin{pmatrix}\\displaystyle{x} \\cr \\cr \\displaystyle{y}\\end{pmatrix}\\right) + dx\\,dy\\,\\left(\\partial_0\\,\\partial_1\\right)\\left(f\\right)\\left(\\begin{pmatrix}\\displaystyle{x} \\cr \\cr \\displaystyle{y}\\end{pmatrix}\\right) + \\frac{1}{2}\\,{dy}^{2}\\,{\\partial_1}^{2}f\\left(\\begin{pmatrix}\\displaystyle{x} \\cr \\cr \\displaystyle{y}\\end{pmatrix}\\right) + dx\\,\\partial_0f\\left(\\begin{pmatrix}\\displaystyle{x} \\cr \\cr \\displaystyle{y}\\end{pmatrix}\\right) + dy\\,\\partial_1f\\left(\\begin{pmatrix}\\displaystyle{x} \\cr \\cr \\displaystyle{y}\\end{pmatrix}\\right) + f\\left(\\begin{pmatrix}\\displaystyle{x} \\cr \\cr \\displaystyle{y}\\end{pmatrix}\\right)"
                (s->TeX expr)))))))

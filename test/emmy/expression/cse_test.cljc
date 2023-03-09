@@ -1,14 +1,8 @@
 (ns emmy.expression.cse-test
-  (:require #?(:cljs [goog.string :refer [format]])
-            [clojure.test :refer [is deftest]]
+  (:require [clojure.test :refer [is deftest]]
             [clojure.walk :as w]
+            [emmy.expression.analyze :as a]
             [emmy.expression.cse :as c]))
-
-(defn ^:private make-generator
-  [s]
-  (let [i (atom 0)]
-    (fn []
-      (symbol (format "%s%d" s (swap! i inc))))))
 
 (defn- rehydrate
   "Takes a slimmed-down expression and a potentially-multi-level substitution map
@@ -24,14 +18,14 @@
           '(* (+ x y) (+ x z) (+ x y))
           vector
           {:deterministic? true
-           :symbol-generator (make-generator "g")}))
+           :gensym-fn (a/monotonic-symbol-generator 1 "g")}))
       "common (+ x y) variable is extracted.")
 
   (let [expr '(+ (* (sin x) (cos x))
                  (* (sin x) (cos x))
                  (* (sin x) (cos x)))
         opts {:deterministic? true
-              :symbol-generator (make-generator "g")}
+              :gensym-fn (a/monotonic-symbol-generator 1 "g")}
         slimmed '(+ g4 g4 g4)
         expected-subs '([g2 (cos x)]
                         [g3 (sin x)]
@@ -50,7 +44,7 @@
   (let [expr '(+ (sin x) (expt (sin x) 2)
                  (cos x) (sqrt (cos x)))
         opts {:deterministic? true
-              :symbol-generator (make-generator "K")}
+              :gensym-fn (a/monotonic-symbol-generator 1 "K")}
         slimmed '(+ K2 (expt K2 2) K1 (sqrt K1))
         expected-subs '([K1 (cos x)]
                         [K2 (sin x)])]
@@ -60,29 +54,3 @@
     (is (= [slimmed expected-subs]
            (c/extract-common-subexpressions expr vector opts))
         "subexpressions are again extracted in order.")))
-
-(def letsym
-  #?(:clj 'clojure.core/let :cljs 'cljs.core/let))
-
-(deftest subexp-compile-tests
-  (let [expr '(+ (* (sin x) (cos x))
-                 (* (sin x) (cos x))
-                 (* (sin x) (cos x))
-                 (sin x)
-                 (expt (sin x) 2)
-                 (cos x)
-                 (sqrt (cos x))
-                 (tan x))]
-    (is (= (list letsym
-                 '[g2 (sin x)
-                   g3 (cos x)
-                   g4 (* g2 g3)]
-                 '(+ g4 g4 g4
-                     g2 (expt g2 2)
-                     g3 (sqrt g3) (tan x)))
-           (c/cse-form expr {:symbol-generator (make-generator "g")}))
-        "Bindings appear in the correct order for subs.")
-
-    (is (= '(+ a b (sin x) (cos y))
-           (c/cse-form '(+ a b (sin x) (cos y))))
-        "No substitutions means no let binding.")))

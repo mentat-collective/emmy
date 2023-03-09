@@ -6,25 +6,12 @@
   (:require [clojure.set :as set]
             [clojure.string :as s]
             [clojure.zip :as z]
-            [emmy.expression :as x]
-            [emmy.expression.cse :refer [extract-common-subexpressions]]
+            [emmy.generic :as g]
             [emmy.pattern.rule :as R :refer [=>]]
             [emmy.ratio :as r]
+            [emmy.simplify.rules :refer [negative-number?]]
             [emmy.util :as u]
-            [emmy.value :as v]
-            [emmy.util.permute :as p]))
-
-(defn- make-symbol-generator [p]
-  (let [i (atom 0)]
-    (fn [] (symbol
-           #?(:clj
-              (format "%s%04x" p (swap! i inc))
-
-              :cljs
-              (let [suffix (-> (swap! i inc)
-                               (.toString 16)
-                               (.padStart 4 "0"))]
-                (str p suffix)))))))
+            [emmy.value :as v]))
 
 (def ^{:private true
        :doc "Historical preference is to write `sin^2(x)` rather
@@ -39,9 +26,12 @@
   simplifier negates by wrapping with `(* -1 ...)`. For rendering, we prefer to
   use a unary minus."}
   rewrite-negation
+
   (R/ruleset
-   (* -1 ?x) => (u- ?x)
-   (* -1 ??x) => (u- (* ??x))))
+   (* (? _ #{-1 -1.0}) ?x)               => (u- ?x)
+   (* (? _ #{-1 -1.0}) ??x)              => (u- (* ??x))
+   (* (? ?c negative-number?) ?x)  => (u- (* (? #(g/negate (% '?c))) ?x))
+   (* (? ?c negative-number?) ??x) => (u- (* (? #(g/negate (% '?c))) ??x))))
 
 (defn- render-infix-ratio
   "renders a pair of the form `[numerator denominator]` as a infix ratio of the
@@ -123,15 +113,16 @@
                                   (z/node loc)))]
               (z/replace loc result)
               loc))
-          (render-unary-node [op args]
-            (let [a (first args)]
-              (case op
-                (+ *) (str a)
-                u- (str "- " a)
-                / (if (v/integral? a)
-                    (str "1/" a)
-                    (str "1 / " a))
-                (str op " " a))))
+          (render-unary-node [op arg upper-op]
+            (case op
+              (+ *) (str arg)
+              u- (if (= upper-op '+)
+                   {:hint :unary-minus :term arg}
+                   (str "- " arg))
+              / (if (v/integral? arg)
+                  (str "1/" arg)
+                  (str "1 / " arg))
+              (str op " " arg)))
           (render-loc [loc]
             (if (z/branch? loc)
               ;; then the first child is the function and the rest are the
@@ -163,22 +154,47 @@
                              ;; rules would require.
                              (not (or (and (= op '*) (= upper-op 'u-))
                                       (ratio-expr? op args)))))
+
                    (or (and (special-handlers op)
                             ((special-handlers op) args))
-                       (and (= (count args) 1)
-                            (render-unary-node op args))
-                       (let [sep (case op
-                                   * (or juxtapose-multiply " * ")
-                                   expt "^"
-                                   (str " " op " "))]
-                         (with-out-str
-                           (loop [a args]
-                             (print (str (first a)))
-                             (when-let [a' (next a)]
-                               (if-not (and (string? (first a')) (= (first (first a')) \-))
-                                 (print sep)
-                                 (print " "))
-                               (recur a')))))))
+
+                       (cond
+                         (= (count args) 1)
+                         (render-unary-node op (first args) upper-op)
+
+                         ;; Special handling for + over unary -. The first term
+                         ;; should start with - if it is unary minus, no sign
+                         ;; otherwise. The remaining terms should follow +/-
+                         ;; according to their unary negation state. Unary negations
+                         ;; within sums are tagged as such by rewrite-negation.
+                         (= op '+)
+                         (let [u-term (fn [t] (let [{:keys [hint term]} t]
+                                                (if hint
+                                                  [(if (= hint :unary-minus) "-" "+") term]
+                                                  ["+" t])))
+                               [t & terms] (map u-term args)
+                               ;; hack any initial "+" off of the first term.
+                               ;; If the first term is unary minus, pad on the
+                               ;; right but not the left. Pad the intercalary
+                               ;; operators with spaces on both sides.
+                               terms (cons (cond
+                                             (= (first t) "+")
+                                             (subvec t 1)
+
+                                             (= (first t) "-")
+                                             (assoc t 0 "- ")
+
+                                             :else t)
+                                           (for [[pm t] terms] [(str " " pm " ") t]))]
+                           (transduce cat str terms))
+
+                         :else
+                         (let [sep (case op
+                                     * (or juxtapose-multiply " * ")
+                                     expt "^"
+                                     (str " " op " "))]
+                           (transduce (interpose sep) str args)))))
+
                   ;; case: op is not infix.
                   ;; The _whole_ result may need to be parenthesized, though, if it
                   ;; is part of an infix expression with an operator with very high
@@ -587,109 +603,49 @@
              "\n\\end{equation}"))
       tex-string)))
 
-(def ^{:doc "Converts an expression to JavaScript, and returns the
-      result in a map containing `params` (list of the unbound symbols),
-      `vars` (sequence of [var value] pairs representing the output of
-      common subexpression analysis), and `body`. These pieces may be
-      assembled into a JS function in different ways."}
-  ->JavaScript*
-  (let [operators-known '#{+ - * /
-                           sin cos tan
-                           asin acos atan
-                           cosh sinh tanh
-                           asinh acosh atanh
-                           sqrt abs expt
-                           exp log
-                           up down}
-        make-js-vector #(str \[ (s/join ", " %) \])
-        R (make-infix-renderer
-           :precedence-map '{not 9, D 8, :apply 8, * 5, / 5, - 3, + 3,
-                             = 2, > 2, < 2, >= 2, <= 2,
-                             and 1, or 1}
-           :infix? '#{* + - / u- =}
-           :rename-functions {'sin "Math.sin"
-                              'cos "Math.cos"
-                              'tan "Math.tan"
-                              'asin "Math.asin"
-                              'acos "Math.acos"
-                              'atan "Math.atan"
-                              'cosh "Math.cosh"
-                              'sinh "Math.sinh"
-                              'tanh "Math.tanh"
-                              'asinh "Math.asinh"
-                              'acosh "Math.acosh"
-                              'atanh "Math.atanh"
-                              'sqrt "Math.sqrt"
-                              'abs "Math.abs"
-                              'expt "Math.pow"
-                              'log "Math.log"
-                              'exp "Math.exp"
-                              'floor "Math.floor"
-                              'ceiling "Math.ceil"
-                              'integer-part "Math.trunc"
-                              'not "!"}
-           :special-handlers (let [parens (fn [x]
-                                            (str "(" x ")"))]
-                               {'up make-js-vector
-                                'down make-js-vector
-                                'modulo (fn [[a b]]
-                                          (-> (str a " % " b)
-                                              (parens)
-                                              (str " + " b)
-                                              (parens)
-                                              (str " % " b)
-                                              (parens)))
-                                'remainder (fn [[a b]]
-                                             (str a " % " b))
-                                'and (fn [[a b]] (str a " && " b))
-                                'or (fn [[a b]] (str a " || " b))
-                                '/ render-infix-ratio}))]
-    (fn [x opts]
-      (let [x              (v/freeze x)
-            params         (set/difference (x/variables-in x) operators-known)
-            callback       (fn [new-expression new-vars]
-                             {:params params
-                              :vars   (into [] (map (fn [[k v]] [k (R v)])) new-vars)
-                              :value  (R new-expression)})
-            opts           (merge {:symbol-generator (make-symbol-generator "_")} opts)]
-        (extract-common-subexpressions x callback opts)))))
-
-(defn ->JavaScript
-  "Convert the given expression to a string representation of a
-  JavaScript function.
-
-  Parameters to the function will be extracted from the symbols in the expression.
-  Common subexpression elimination will be performed and auxiliary variables
-  will be bound in the body of the function; the names of these symbols are
-  `_0001, ...`.
-
-  If `:parameter-order` is specified, it is used to determine function parameter
-  order in one of two ways:
-
-  If it is set to a function, that function will be called on the sequence of
-  parameters and is expected to return the parameters in the desired sequence.
-
-  Otherwise, it is interpreted as the sequence of parameters itself. If not
-  specified, the default behavior is `sort`.
-
-  If `:deterministic? true` is supplied, the function will assign variables by
-  sorting the string representations of each term before assignment. Otherwise,
-  the nondeterministic order of hash maps inside this function won't guarantee a
-  consistent variable naming convention in the returned function. For tests, set
-  `:deterministic? true`."
-  [x & {:keys [parameter-order]
-        :or   {parameter-order sort}
-        :as opts}]
-  (let [{:keys [params vars value]} (->JavaScript* x opts)
-        ordered-params (if (fn? parameter-order)
-                         (parameter-order params)
-                         parameter-order)]
-    (with-out-str
-      (print "function(")
-      (print (s/join ", " ordered-params))
-      (print ") {\n")
-      (doseq [[var val] vars]
-        (print "  var" var "=" val)
-        (print ";\n"))
-      (print "  return" value)
-      (print ";\n}"))))
+(def ^{:doc "Converts an S-expression to JavaScript."}
+  ->JavaScript
+  (let [make-js-vector #(str \[ (s/join ", " %) \])]
+    (make-infix-renderer
+     :precedence-map '{not 9, D 8, :apply 8, u- 7, * 5, / 5, - 3, + 3,
+                       = 2, > 2, < 2, >= 2, <= 2,
+                       and 1, or 1}
+     :infix? '#{* + - / u- =}
+     :rename-functions {'sin "Math.sin"
+                        'cos "Math.cos"
+                        'tan "Math.tan"
+                        'asin "Math.asin"
+                        'acos "Math.acos"
+                        'atan "Math.atan"
+                        'cosh "Math.cosh"
+                        'sinh "Math.sinh"
+                        'tanh "Math.tanh"
+                        'asinh "Math.asinh"
+                        'acosh "Math.acosh"
+                        'atanh "Math.atanh"
+                        'sqrt "Math.sqrt"
+                        'abs "Math.abs"
+                        'expt "Math.pow"
+                        'log "Math.log"
+                        'exp "Math.exp"
+                        'floor "Math.floor"
+                        'ceiling "Math.ceil"
+                        'integer-part "Math.trunc"
+                        'not "!"}
+     :render-primitive #(if (symbol? %) (munge %) %)
+     :special-handlers (let [parens (fn [x]
+                                      (str "(" x ")"))]
+                         {'up make-js-vector
+                          'down make-js-vector
+                          'modulo (fn [[a b]]
+                                    (-> (str a " % " b)
+                                        (parens)
+                                        (str " + " b)
+                                        (parens)
+                                        (str " % " b)
+                                        (parens)))
+                          'remainder (fn [[a b]]
+                                       (str a " % " b))
+                          'and (fn [[a b]] (str a " && " b))
+                          'or (fn [[a b]] (str a " || " b))
+                          '/ render-infix-ratio}))))
