@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+- #110: Move all docstrings that existed as metadata on defs (ie, `(def ^{:doc
+  "..."} sym ...)`) down below the symbol. I hadn't realized that this was a
+  valid way to attach a docstring!
+
 - #107:
 
   - move CSE to its own namespace to avoid the circular dependency
