@@ -426,7 +426,8 @@
 ;; This section exposes various differential operators as [[o/Operator]]
 ;; instances.
 
-(def ^{:doc "Derivative operator. Takes some function `f` and returns a function
+(def D
+  "Derivative operator. Takes some function `f` and returns a function
   whose value at some point can multiply an increment in the arguments, to
   produce the best linear estimate of the increment in the function value.
 
@@ -437,7 +438,7 @@
 
   The related [[Grad]] returns a function that produces a structure of the
   opposite orientation as [[D]]. Both of these functions use forward-mode
-  automatic differentiation."} D
+  automatic differentiation."
   (o/make-operator #(g/partial-derivative % [])
                    g/derivative-symbol))
 

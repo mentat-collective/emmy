@@ -39,11 +39,13 @@
 ;; Rules are composed from matchers and consequences; these functions are
 ;; politely aliased into this namespace to make it more self contained.
 
-(def ^{:doc "Convenient predicate that always passes."}
-  => (constantly true))
+(def =>
+  "Convenient predicate that always passes."
+  (constantly true))
 
-(def ^{:doc "Predicate that fails for all inputs."}
-  !=> (constantly false))
+(def !=>
+  "Predicate that fails for all inputs."
+  (constantly false))
 
 (import-def c/succeed)
 (import-def m/failure)

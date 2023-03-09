@@ -35,12 +35,12 @@
 ;;
 ;; Here are the default step sizes:
 
-(def ^{:doc "Default step sizes used by the Bulirsch-Stoer quadrature algorithm:
+(def bulirsch-stoer-steps
+  "Default step sizes used by the Bulirsch-Stoer quadrature algorithm:
 
   ```
-2, 3, 4, 6, 8, 12, 16, 24, 32, ...
-  ```"}
-  bulirsch-stoer-steps
+  2, 3, 4, 6, 8, 12, 16, 24, 32, ...
+  ```"
   (interleave
    (us/powers 2 2)
    (us/powers 2 3)))
@@ -140,7 +140,8 @@
        (extrapolate
         (map vector xs ys))))))
 
-(def ^{:doc "Returns a (lazy) sequence of successively refined estimates of the
+(def open-sequence
+  "Returns a (lazy) sequence of successively refined estimates of the
   integral of `f` over the closed interval $[a, b]$ by applying rational
   polynomial extrapolation to successive integral estimates from the Midpoint
   rule.
@@ -154,11 +155,11 @@
 
   `:bs-extrapolator`: Pass `:polynomial` to override the default rational
   function extrapolation and enable polynomial extrapolation using the modified
-  Neville's algorithm implemented in `poly/modified-neville`."}
-  open-sequence
+  Neville's algorithm implemented in `poly/modified-neville`."
   (bs-sequence-fn mid/midpoint-sequence))
 
-(def ^{:doc "Returns a (lazy) sequence of successively refined estimates of the
+(def closed-sequence
+  "Returns a (lazy) sequence of successively refined estimates of the
   integral of `f` over the closed interval $[a, b]$ by applying rational
   polynomial extrapolation to successive integral estimates from the Trapezoid
   rule.
@@ -170,10 +171,9 @@
 
   `:n`: If supplied, `:n` (sequence) overrides the sequence of steps to use.
 
- `:bs-extrapolator`: Pass `:polynomial` to override the default rational
+  `:bs-extrapolator`: Pass `:polynomial` to override the default rational
   function extrapolation and enable polynomial extrapolation using the modified
-  Neville's algorithm implemented in `poly/modified-neville`."}
-  closed-sequence
+  Neville's algorithm implemented in `poly/modified-neville`."
   (bs-sequence-fn trap/trapezoid-sequence))
 
 ;; ## Integration API

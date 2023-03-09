@@ -56,8 +56,8 @@
   with a symbolic first argument and positive integral second argument are the
   Stirling numbers of the first kind (see [[stirling-first-kind]]).")
 
-(def ^{:doc "Alias for [[falling-factorial]]."}
-  factorial-power
+(def factorial-power
+  "Alias for [[falling-factorial]]."
   falling-factorial)
 
 ;; The default implementation uses generic operations throughout, and requires
@@ -122,8 +122,8 @@
   to `(invert ([[falling-factorial]] (dec a) (- b)))`, or `##Inf` if the
   denominator evaluates to 0.")
 
-(def ^{:doc "Alias for [[falling-factorial]]."}
-  pochhammer
+(def pochhammer
+  "Alias for [[falling-factorial]]."
   rising-factorial)
 
 (defmethod rising-factorial :default [x n]

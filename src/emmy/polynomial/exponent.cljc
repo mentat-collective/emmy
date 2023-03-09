@@ -22,15 +22,15 @@
 ;;
 ;; ## Constructors
 
-(def ^{:doc "Accepts alternating pairs of integers representing <indeterminate
- index>, <exponent value> and returns a `sorted-map` representing the exponent
- portion of a polynomial term."
-       :arglists '([& i-expt-pairs])}
+(def ^{:arglists '([& i-expt-pairs])}
   make
+  "Accepts alternating pairs of integers representing <indeterminate index>,
+  <exponent value> and returns a `sorted-map` representing the exponent portion
+  of a polynomial term."
   #'sorted-map)
 
-(def ^{:doc "Singleton instance of an empty exponent map."}
-  empty
+(def empty
+  "Singleton instance of an empty exponent map."
   (make))
 
 (defn dense->exponents

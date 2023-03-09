@@ -4,9 +4,8 @@
   "Logic utilities!"
   (:require [taoensso.timbre :as log]))
 
-(def ^{:doc "If true, logs assumptions."
-       :dynamic true}
-  *log-assumptions?*
+(def ^:dynamic *log-assumptions?*
+  "If true, logs assumptions."
   true)
 
 (defn assume!

@@ -462,13 +462,12 @@
 ;; NOTE: Clojure vectors already implement this ordering properly, so we can
 ;; use [[clojure.core/compare]] to determine an ordering on a tag list.
 
-(def ^{:private true
-       :doc "Returns the sum of the two supplied sequences of differential terms; any terms
+(def ^:private terms:+
+  "Returns the sum of the two supplied sequences of differential terms; any terms
   in the result with a zero coefficient will be removed.
 
   Each input must be sequence of `[tag-set, coefficient]` pairs, sorted by
-  `tag-set`."}
-  terms:+
+  `tag-set`."
   (ua/merge-fn core/compare g/add v/zero? make-term))
 
 ;; Because we've decided to store terms as a vector, we can multiply two vectors

@@ -20,13 +20,13 @@
 ;; NOTE: As we bring in methods like `zbrent` it could be that the shell below
 ;; should be shared for ALL root finding methods.
 
-(def ^{:dynamic true
-       :doc "Controls the default behavior of [[bisect]]'s search.
-  See [[bisect]]'s docstring for more info."}
-  *bisect-break* 60)
+(def ^:dynamic *bisect-break*
+  "Controls the default behavior of [[bisect]]'s search.
+  See [[bisect]]'s docstring for more info."
+  60)
 
-(def ^{:doc "Set of all methods allowed as `:method` options to [[bisect]]."}
-  all-methods
+(def all-methods
+  "Set of all methods allowed as `:method` options to [[bisect]]."
   #{:bisection :secant :mixed})
 
 ;; ## Success / Failure Utilities

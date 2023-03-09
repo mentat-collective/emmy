@@ -23,28 +23,24 @@
 ;; Euclid's; for now it only contains a "classical" implementation of Euclid's
 ;; algorithm.
 
-(def ^{:dynamic true
-       :doc "Pair of the form [number
-  Keyword], where keyword is one of the supported units from
-  [[emmy.util.stopwatch]]. If Euclidean GCD takes longer than this time
-  limit, the system will bail out by throwing an exception."}
-  *poly-gcd-time-limit*
+(def ^:dynamic *poly-gcd-time-limit*
+  "Pair of the form [number Keyword], where keyword is one of the supported units
+  from [[emmy.util.stopwatch]]. If Euclidean GCD takes longer than this time
+  limit, the system will bail out by throwing an exception."
   [1000 :millis])
 
 (def ^:dynamic *clock* nil)
 
-(def ^{:dynamic true
-       :doc "When true, multivariate GCD will cache each recursive step in the
-  Euclidean GCD algorithm, and attempt to shortcut out on a successful cache
-  hit. True by default."}
-  *poly-gcd-cache-enable*
+(def ^:dynamic *poly-gcd-cache-enable*
+  "When true, multivariate GCD will cache each recursive step in the Euclidean GCD
+  algorithm, and attempt to shortcut out on a successful cache hit. True by
+  default."
   true)
 
-(def ^{:dynamic true
-       :doc "When true, multivariate GCD will log each `u` and `v` input and the
-  result of each step, along with the recursive level of the logged GCD
-  computation. False by default."}
-  *poly-gcd-debug*
+(def ^:dynamic *poly-gcd-debug*
+  "When true, multivariate GCD will log each `u` and `v` input and the result of
+  each step, along with the recursive level of the logged GCD computation. False
+  by default."
   false)
 
 ;; Stateful instances required for GCD memoization and stats tracking.
@@ -478,17 +474,16 @@
       (with-limited-time *poly-gcd-time-limit*
         (fn [] (classical-gcd u v)))))
 
-(def
-  ^{:doc "Returns the greatest common divisor of `u` and `v`, calculated by a
+(def ^{:arglists
+       '([]
+         [u]
+         [u v]
+         [u v & more])}
+  gcd
+  "Returns the greatest common divisor of `u` and `v`, calculated by a
   multivariate extension to the [Euclidean algorithm for multivariate
   polynomials](https://en.wikipedia.org/wiki/Polynomial_greatest_common_divisor#Euclidean_algorithm).
-
   `u` and `v` can be polynomials or non-polynomials coefficients."
-    :arglists '([]
-                [u]
-                [u v]
-                [u v & more])}
-  gcd
   (ua/monoid gcd-dispatch 0))
 
 (defn lcm

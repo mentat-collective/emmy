@@ -381,8 +381,8 @@
                  (+ (- x acc+x) acc))]
      [acc+x (+ c delta)])))
 
-(def ^{:doc "Alias for [[kahan-babushka-neumaier]]."}
-  kbn
+(def kbn
+  "Alias for [[kahan-babushka-neumaier]]."
   kahan-babushka-neumaier)
 
 ;; [[kbn]] returns the correct result for the example above:

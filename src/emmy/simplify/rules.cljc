@@ -33,147 +33,134 @@
 ;; rules that depend on these out to their own rulesets, and move the
 ;; configuration variables over to [[emmy.simplify]].
 
-(def ^{:dynamic true
-       :doc "If true, allows the following simplification to proceed:
+(def ^:dynamic *log-exp-simplify?*
+  "If true, allows the following simplification to proceed:
 
-```clojure
-(log (exp x)) => x.
-```
+  ```clojure
+  (log (exp x)) => x.
+  ```
 
-Because `exp(i*x) == exp(i*(x+n*2pi))` for all integral `n`, this setting can
-confuse `x` with `x+n*2pi`."}
-  *log-exp-simplify?*
+  Because `exp(i*x) == exp(i*(x+n*2pi))` for all integral `n`, this setting can
+  confuse `x` with `x+n*2pi`."
   true)
 
-(def ^{:dynamic true
-       :doc "Allows `(x^a)^b => x^(a*b)`.
+(def ^:dynamic *exponent-product-simplify?*
+  "Allows `(x^a)^b => x^(a*b)`.
 
-This is dangerous, because can lose or gain a root:
+  This is dangerous, because can lose or gain a root:
 
-```
-x = (x^(1/2))^2 != ((x^2)^1/2)=+-x
-```
-"}
-  *exponent-product-simplify?*
+  ```
+  x = (x^(1/2))^2 != ((x^2)^1/2)=+-x
+  ```"
   true)
 
-(def ^{:dynamic true
-       :doc " Traditionally, `sqrt(x)` is the positive square root, but
-`x^(1/2)` is both positive and negative roots.
+(def ^:dynamic *expt-half->sqrt?*
+  " Traditionally, `sqrt(x)` is the positive square root, but `x^(1/2)` is both
+  positive and negative roots.
 
-Setting [[*expt-half->sqrt?*]] to `true` maps `x^(1/2)` to `sqrt(x)`,
-potentially losing a root."}
-  *expt-half->sqrt?*
+  Setting [[*expt-half->sqrt?*]] to `true` maps `x^(1/2)` to `sqrt(x)`,
+  potentially losing a root."
   true)
 
-(def ^{:dynamic true
-       :doc "If x is real, then `(sqrt (square x)) = (abs x)`.
+(def ^:dynamic *sqrt-expt-simplify?*
+  "If x is real, then `(sqrt (square x)) = (abs x)`.
 
   Setting [[*sqrt-expt-simplify?*]] to `true` allows `(sqrt (square x)) = x`,
-  potentially causing a problem if `x` is in fact negative."}
-  *sqrt-expt-simplify?*
+  potentially causing a problem if `x` is in fact negative."
   true)
 
-(def ^{:dynamic true
-       :doc "If `x` and `y` are real and non-negative, then
+(def ^:dynamic *sqrt-factor-simplify?*
+  "If `x` and `y` are real and non-negative, then
 
-```
-(* (sqrt x) (sqrt y)) = (sqrt (* x y))
-```
+  ```
+  (* (sqrt x) (sqrt y)) = (sqrt (* x y))
+  ```
 
-This is not true for negative factors. Setting [[*sqrt-factor-simplify?*]] to
-true enables this simplification, causing a problem if `x` or `y` are in fact
-negative."}
-  *sqrt-factor-simplify?*
+  This is not true for negative factors. Setting [[*sqrt-factor-simplify?*]] to
+  true enables this simplification, causing a problem if `x` or `y` are in fact
+  negative."
   true)
 
-(def ^{:dynamic true
-       :doc "When `true`, allows:
+(def ^:dynamic *aggressive-atan-simplify?*
+  "When `true`, allows:
 
-```
-(atan y x) => (atan (/ y d) (/ x d))
-```
+  ```
+  (atan y x) => (atan (/ y d) (/ x d))
+  ```
 
-where `d=(gcd x y)`.
+  where `d=(gcd x y)`.
 
-This is fine if `d` is a number (Numeric `gcd` is always positive), but may lose
-quadrant information if `d` is a symbolic expression that can be negative for
-some values of its variables."}
-  *aggressive-atan-simplify?*
+  This is fine if `d` is a number (Numeric `gcd` is always positive), but may lose
+  quadrant information if `d` is a symbolic expression that can be negative for
+  some values of its variables."
   true)
 
-(def ^{:dynamic true
-       :doc "When `true`, allows trigonometric inverse functions to simplify:
+(def ^:dynamic *inverse-simplify?*
+  "When `true`, allows trigonometric inverse functions to simplify:
 
-```
-(asin (sin x)) => x
-```
+  ```
+  (asin (sin x)) => x
+  ```
 
-Because trigonometric functions like `sin` and `cos` are cyclic, this can lose
-multi-value info (as with [[*log-exp-simplify*]])."}
-  *inverse-simplify?*
+  Because trigonometric functions like `sin` and `cos` are cyclic, this can lose
+  multi-value info (as with [[*log-exp-simplify*]])."
   true)
 
-(def ^{:dynamic true
-       :doc "When `true`, allows arguments of `sin`, `cos` and `tan` that are
+(def ^:dynamic *sin-cos-simplify?*
+  "When `true`, allows arguments of `sin`, `cos` and `tan` that are
   rational multiples of `'pi` to be reduced. See [[trig:special]] for these
-  rules."}
-  *sin-cos-simplify?*
+  rules."
   true)
 
-(def ^{:dynamic true
-       :doc "When `true`, enables the half-angle reductions described in [[half-angle]].
+(def ^:dynamic *half-angle-simplify?*
+  "When `true`, enables the half-angle reductions described in [[half-angle]].
 
-Note from GJS: 'Sign of result is hairy!'"}
-  *half-angle-simplify?*
+  Note from GJS: 'Sign of result is hairy!'"
   true)
 
-(def ^{:dynamic true
-       :doc "When true, allows commutation of partial derivatives so that partial derivatives appear in order.
+(def ^:dynamic *commute-partials?*
+  "When true, allows commutation of partial derivatives so that partial
+  derivatives appear in order.
 
-For example:
+  For example:
 
-```clojure
-(((* (partial 2 1) (partial 1 1)) FF) (up t (up x y) (down p_x p_y)))
-```
+  ```clojure
+  (((* (partial 2 1) (partial 1 1)) FF) (up t (up x y) (down p_x p_y)))
+  ```
 
-Since the partial indices in the outer derivative are lexically greater than
-those of the inner, we canonicalize by swapping the order:
+  Since the partial indices in the outer derivative are lexically greater than
+  those of the inner, we canonicalize by swapping the order:
 
-```clojure
-(((* (partial 1 1) (partial 2 1)) FF) (up t (up x y) (down p_x p_y)))
-```
+  ```clojure
+  (((* (partial 1 1) (partial 2 1)) FF) (up t (up x y) (down p_x p_y)))
+  ```
 
-When the components selected by the partials are unstructured (e.g. real), this
-is okay due to the 'equality of mixed partials'."}
-  *commute-partials?*
+  When the components selected by the partials are unstructured (e.g. real),
+  this is okay due to the 'equality of mixed partials'."
   true)
 
-(def ^{:dynamic true
-       :doc "When `true`, allows division through the numerator by numbers in
-       the denominator:
+(def ^:dynamic *divide-numbers-through-simplify?*
+  "When `true`, allows division through the numerator by numbers in the
+  denominator:
 
-```
-(/ (+ (* 4 x) 5) 3) => (+ (* 4/3 x) 5/3)
-```
+  ```
+  (/ (+ (* 4 x) 5) 3) => (+ (* 4/3 x) 5/3)
+  ```
 
-This setting is `true` by default."}
-  *divide-numbers-through-simplify?*
+  This setting is `true` by default."
   true)
 
-(def ^{:dynamic true
-       :doc "Transforms products of trig functions into functions of sums of
-       angles.
+(def ^:dynamic *trig-product-to-sum-simplify?*
+  "Transforms products of trig functions into functions of sums of angles.
 
-For example:
+  For example:
 
-```
-(* (sin x) (cos y))
-;;=>
- (+ (* 1/2 (sin (+ x y)))
+  ```
+  (* (sin x) (cos y))
+  ;;=>
+  (+ (* 1/2 (sin (+ x y)))
     (* 1/2 (sin (+ x (* -1 y)))) )
-```"}
-  *trig-product-to-sum-simplify?*
+  ```"
   false)
 
 ;; ## Binding Predicates
@@ -345,9 +332,9 @@ For example:
                  (r/template
                   m (??pre ?x ??post)))))))))
 
-(def ^{:doc "Set of rules that collect adjacent products, exponents and nested
- exponents into exponent terms."}
-  exponent-contract
+(def exponent-contract
+  "Set of rules that collect adjacent products, exponents and nested exponents
+  into exponent terms."
   (ruleset
    ;; nested exponent case.
    (expt (expt ?op (? ?n v/integral?))
@@ -433,8 +420,8 @@ For example:
     (r/rule
      (log (sqrt ?x)) => (* (/ 1 2) (log ?x))))))
 
-(def ^{:doc "Rule simplifier for forms that contain `magnitude` entries."}
-  magnitude
+(def magnitude
+  "Rule simplifier for forms that contain `magnitude` entries."
   (rule-simplifier
    (ruleset
     (magnitude (? ?n v/real?))
@@ -1054,9 +1041,9 @@ For example:
         (tan (? _ pi-over-4-mod-pi?)) => +1
         (tan (? _ -pi-over-4-mod-pi?)) => -1)))))
 
-(def ^{:doc "`sin` is odd, and `cos` is even. we canonicalize by moving the sign
-out of the first term of the argument."}
-  angular-parity
+(def angular-parity
+  "`sin` is odd, and `cos` is even. we canonicalize by moving the sign out of the
+  first term of the argument."
   (rule-simplifier
    (ruleset
     (cos (? ?n negative-number?))

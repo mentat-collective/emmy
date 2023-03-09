@@ -685,20 +685,18 @@ v/Value
 ;; The `operator-table` represents the operations that can be understood from
 ;; the point of view of a rational function over some field.
 
-(def ^{:no-doc true
-       :doc "These operations are those allowed
-       between [[RationalFunction]], [[polynomial/Polynomial]] and coefficient
-       instances."}
-  operator-table
+(def ^:no-doc operator-table
+  "These operations are those allowed
+  between [[RationalFunction]], [[polynomial/Polynomial]] and coefficient
+  instances."
   (assoc p/operator-table
          '/ (ua/group g/div g/mul g/invert 1 v/zero?)
          'invert g/invert))
 
-(def ^{:no-doc true
-       :doc "Set of all arithmetic functions allowed
-       between [[RationalFunction]], [[polynomial/Polynomial]] and coefficient
-       instances."}
-  operators-known
+(def ^:no-doc operators-known
+  "Set of all arithmetic functions allowed
+  between [[RationalFunction]], [[polynomial/Polynomial]] and coefficient
+  instances."
   (u/keyset operator-table))
 
 (defn expression->

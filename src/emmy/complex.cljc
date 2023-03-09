@@ -15,17 +15,18 @@
   #?(:clj
      (:import (org.apache.commons.math3.complex Complex ComplexFormat))))
 
-(def ^{:doc "A [[Complex]] value equal to 0 (south pole on the Riemann Sphere)."}
-  ZERO
+(def ZERO
+  "A [[Complex]] value equal to 0 (south pole on the Riemann Sphere)."
   #?(:clj Complex/ZERO
      :cljs (obj/get Complex "ZERO")))
 
-(def ^{:doc "A [[Complex]] value equal to 1."}
-  ONE #?(:clj Complex/ONE
-         :cljs (obj/get Complex "ONE")))
+(def ONE
+  "A [[Complex]] value equal to 1."
+  #?(:clj Complex/ONE
+     :cljs (obj/get Complex "ONE")))
 
-(def ^{:doc "A [[Complex]] value equal to `i`."}
-  I
+(def I
+  "A [[Complex]] value equal to `i`."
   #?(:clj Complex/I
      :cljs (obj/get Complex "I")))
 
@@ -33,8 +34,8 @@
 ;; component too. So `(complex 0 -1)` does not equal `-I`... but `(complex -0.0
 ;; -1.0)` does. Once we get a native complex implementation in this issue will
 ;; disappear.
-(def ^{:doc "A [[Complex]] value equal to `-i`."}
-  -I
+(def -I
+  "A [[Complex]] value equal to `-i`."
   #?(:clj (.negate Complex/I)
      :cljs (.neg ^js (obj/get Complex "I"))))
 

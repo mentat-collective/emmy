@@ -478,9 +478,9 @@
 
 (defrecord Failure [])
 
-(def ^{:doc "Singleton object representing the failure of a matcher to match its
-  input. Check for failure with [[failed?]]"}
-  failure
+(def failure
+  "Singleton object representing the failure of a matcher to match its input.
+  Check for failure with [[failed?]]"
   (Failure.))
 
 (defn failed?

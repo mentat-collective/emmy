@@ -629,10 +629,10 @@
            0 (num-rows m)))
         (range (num-cols m)))))
 
-(def ^{:dynamic true
-       :doc "Set this dynamic variable to `false` to allow [[s->m]] to operate
-  on structures for which `(* ls ms rs)` does NOT yield a numerical value."}
-  *careful-conversion* true)
+(def ^:dynamic *careful-conversion*
+  "Set this dynamic variable to `false` to allow [[s->m]] to operate
+  on structures for which `(* ls ms rs)` does NOT yield a numerical value."
+  true)
 
 (defn s->m
   "Convert the structure `ms`, which would be a scalar if the (compatible)
@@ -931,11 +931,11 @@
           (reset! c-det (memoize c-det*))
           (@c-det 0 (range (dimension m))))))))
 
-(def ^{:doc "Returns the determinant of the supplied square matrix `m`.
+(def ^{:arglists '([m])}
+  determinant
+  "Returns the determinant of the supplied square matrix `m`.
 
   Generic operations are used, so this works on symbolic square matrices."
-       :arglists '([m])}
-  determinant
   (general-determinant g/+ g/- g/* v/numeric-zero?))
 
 (defn cofactors
@@ -977,9 +977,9 @@
                         (let [denom (if (even? (+ i j)) d -d)]
                           (div (det (without A j i)) denom))))))))))
 
-(def ^{:doc "Returns the inverse of the supplied square matrix `m`."
-       :arglists '([A])}
+(def ^{:arglists '([A])}
   invert
+  "Returns the inverse of the supplied square matrix `m`."
   (classical-adjoint-formula g/+ g/- g/* g// v/numeric-zero?))
 
 (defn- m-div-m [m1 m2]
@@ -1154,15 +1154,15 @@
                       d))
                (range bn)))))))
 
-(def ^{:doc "Given a matrix `A` and a column matrix `b`, computes the solution
+(def ^{:arglists '([A b])}
+  solve
+  "Given a matrix `A` and a column matrix `b`, computes the solution
   to an inhomogeneous system of linear equations, `A*x=b`, where the matrix `A`
   and the column matrix `b` are given.
 
- Returns the column matrix `x`.
+  Returns the column matrix `x`.
 
- Unlike LU decomposition, Cramer's rule generalizes to symbolic solutions."
-       :arglists '([A b])}
-  solve
+  Unlike LU decomposition, Cramer's rule generalizes to symbolic solutions."
   (cramers-rule g/+ g/- g/* g// v/numeric-zero?))
 
 (defn rsolve

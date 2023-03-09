@@ -158,9 +158,9 @@
 
 ;; ## Symbolic
 
-(def ^{:doc "generates symbols that won't clash with any of the symbols that
-  generic operations freeze to, like `*`, `+`, `-`, `/` etc."}
-  symbol
+(def symbol
+  "generates symbols that won't clash with any of the symbols that generic
+  operations freeze to, like `*`, `+`, `-`, `/` etc."
   (let [special-syms (set (keys @#'sym/symbolic-operator-table))]
     (gen/such-that (complement special-syms)
                    gen/symbol)))
@@ -224,10 +224,8 @@
   [elem-gen & args]
   (recursive #(apply structure1 % args) elem-gen))
 
-(def
-  ^{:doc
-    "Returns a generator that produces a valid structure orientation"}
-  orientation
+(def orientation
+  "Returns a generator that produces a valid structure orientation."
   (gen/elements [::s/up ::s/down]))
 
 ;; ## Matrices

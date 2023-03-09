@@ -232,8 +232,8 @@
   ([x y & more]
    (/ x (apply * y more))))
 
-(def ^{:doc "Alias for [[/]]."}
-  divide
+(def divide
+  "Alias for [[/]]."
   /)
 
 (defgeneric exact-divide 2

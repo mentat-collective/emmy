@@ -1569,10 +1569,9 @@
 ;; The `operator-table` represents the operations that can be understood from
 ;; the point of view of a polynomial over a commutative ring.
 
-(def ^{:no-doc true
-       :doc "These operations are those allowed between [[Polynomial]] and
-       coefficient instances."}
-  operator-table
+(def ^:no-doc operator-table
+  "These operations are those allowed between [[Polynomial]] and coefficient
+  instances."
   {'+ (ua/monoid g/add 0)
    '- (ua/group g/sub g/add g/negate 0)
    '* (ua/monoid g/mul 1 v/zero?)
@@ -1583,10 +1582,9 @@
    'gcd (ua/monoid g/gcd 0)
    'lcm (ua/monoid g/lcm 1 v/zero?)})
 
-(def ^{:no-doc true
-       :doc "Set of all arithmetic functions allowed between [[Polynomial]] and
-       coefficient instances."}
-  operators-known
+(def ^:no-doc operators-known
+  "Set of all arithmetic functions allowed between [[Polynomial]] and coefficient
+  instances."
   (u/keyset operator-table))
 
 (defn expression->
@@ -1661,9 +1659,8 @@
             high->low (rseq (bare-terms p))]
         (transduce xform + high->low)))))
 
-(def ^{:doc "Singleton [[emmy.expression.analyze/ICanonicalize]]
-  instance."}
-  analyzer
+(def analyzer
+  "Singleton [[emmy.expression.analyze/ICanonicalize]] instance."
   (reify a/ICanonicalize
     (expression-> [_ expr cont]
       (expression-> expr cont))

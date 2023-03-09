@@ -657,14 +657,13 @@
   [n]
   (->series (binomial* n)))
 
-;;
-
-(def ^{:doc "The sequence of [Harmonic
-  numbers](https://en.wikipedia.org/wiki/Harmonic_number), starting from n=1."}
-  harmonic
+(def harmonic
+  "The sequence of [Harmonic
+  numbers](https://en.wikipedia.org/wiki/Harmonic_number), starting from n=1."
   (reductions
    g/+ (map g// (iterate inc 1))))
 
-(def ^{:doc "The sequence of [Bell
-  numbers](https://en.wikipedia.org/wiki/Bell_number), starting from n=1."} bell
+(def bell
+  "The sequence of [Bell numbers](https://en.wikipedia.org/wiki/Bell_number),
+  starting from n=1."
   (map sf/bell (iterate inc 1)))

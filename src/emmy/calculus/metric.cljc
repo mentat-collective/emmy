@@ -180,12 +180,12 @@
          ~(v/freeze u)
          ~(v/freeze metric))))))
 
-(def ^{:doc "Alias for [[lower]]."}
-  vector-field->oneform-field
+(def vector-field->oneform-field
+  "Alias for [[lower]]."
   lower)
 
-(def ^{:doc "Alias for [[lower]]."}
-  drop1
+(def drop1
+  "Alias for [[lower]]."
   lower)
 
 (defn raise
@@ -204,12 +204,12 @@
            ~(v/freeze omega)
            ~(v/freeze metric)))))))
 
-(def ^{:doc "Alias for [[raise]]."}
-  oneform-field->vector-field
+(def oneform-field->vector-field
+  "Alias for [[raise]]."
   raise)
 
-(def ^{:doc "Alias for [[raise]]."}
-  raise1
+(def raise1
+  "Alias for [[raise]]."
   raise)
 
 (defn drop2

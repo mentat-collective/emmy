@@ -16,9 +16,9 @@
   #?(:clj
      (:import (clojure.lang IObj))))
 
-(def ^{:doc "These keywords reference 'abstract' types that stand in for some
-  concrete data type in the system."}
-  abstract-types
+(def abstract-types
+  "These keywords reference 'abstract' types that stand in for some
+  concrete data type in the system."
   #{::numeric
     ::vector
     ::abstract-down

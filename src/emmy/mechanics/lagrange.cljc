@@ -50,11 +50,13 @@
   [t q qdot & derivs]
   (apply up t q qdot derivs))
 
-(def ^{:doc "Alias for [[->L-state]]."}
-  ->local ->L-state)
+(def ->local
+  "Alias for [[->L-state]]."
+  ->L-state)
 
-(def ^{:doc "Alias for [[->L-state]]."}
-  ->state ->L-state)
+(def ->state
+  "Alias for [[->L-state]]."
+  ->L-state)
 
 ;; ### Local Tuple Selectors
 
@@ -109,35 +111,45 @@
 
 ;; Aliases for the selectors above, included for parity with scmutils:
 
-(def ^{:doc "Alias for [[time]]."}
-  state->t time)
+(def state->t
+  "Alias for [[time]]."
+  time)
 
-(def ^{:doc "Alias for [[coordinate]]."}
-  state->q coordinate)
+(def state->q
+  "Alias for [[coordinate]]."
+  coordinate)
 
-(def ^{:doc "Alias for [[velocity]]."}
-  state->qdot velocity)
+(def state->qdot
+  "Alias for [[velocity]]."
+  velocity)
 
-(def ^{:doc "Alias for [[acceleration]]."}
-  state->qddot acceleration)
+(def state->qddot
+  "Alias for [[acceleration]]."
+  acceleration)
 
-(def ^{:doc "Alias for [[coordinate]]."}
-  coordinates coordinate)
+(def coordinates
+  "Alias for [[coordinate]]."
+  coordinate)
 
-(def ^{:doc "Alias for [[velocity]]."}
-  velocities velocity)
+(def velocities
+  "Alias for [[velocity]]."
+  velocity)
 
-(def ^{:doc "Alias for [[acceleration]]."}
-  accelerations acceleration)
+(def accelerations
+  "Alias for [[acceleration]]."
+  acceleration)
 
-(def ^{:doc "Alias for [[coordinate]]."}
-  Q coordinate)
+(def Q
+  "Alias for [[coordinate]]."
+  coordinate)
 
-(def ^{:doc "Alias for [[velocity]]."}
-  Qdot velocity)
+(def Qdot
+  "Alias for [[velocity]]."
+  velocity)
 
-(def ^{:doc "Alias for [[acceleration]]."}
-  Qdotdot acceleration)
+(def Qdotdot
+  "Alias for [[acceleration]]."
+  acceleration)
 
 (defn literal-Lagrangian-state [n-dof]
   (up (gensym 't)
@@ -354,8 +366,8 @@
          (compose (Lagrangian->state-derivative L)
                   state-path)))))
 
-(def ^{:doc "Alias for [[Lagrange-equations-first-order]]."}
-  Lagrange-equations-1
+(def Lagrange-equations-1
+  "Alias for [[Lagrange-equations-first-order]]."
   Lagrange-equations-first-order)
 
 ;; Given a Lagrangian, we can make an energy function on (t, Q, Qdot).
@@ -481,12 +493,12 @@
   (- (Dt ((partial 2) L))
      (compose ((partial 1) L) trim-last-argument)))
 
-(def ^{:doc "Alias for [[Euler-lagrange-operator]]."}
-  LE
+(def LE
+  "Alias for [[Euler-lagrange-operator]]."
   Euler-Lagrange-operator)
 
-(def ^{:doc "Alias for [[Euler-lagrange-operator]]."}
-  Lagrange-equations-operator
+(def Lagrange-equations-operator
+  "Alias for [[Euler-lagrange-operator]]."
   Euler-Lagrange-operator)
 
 (defn generalized-LE [Lagrangian]
