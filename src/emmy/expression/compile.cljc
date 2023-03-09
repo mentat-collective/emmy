@@ -138,10 +138,6 @@
   (w/postwalk
    (fn [expr]
      (cond
-       ;; Native integers in Clojure are excused from promotion to double,
-       ;; as we don't want every `1` to become `1.0` in output formats
-       #?@(:clj [(or (instance? Long expr)
-                     (instance? Integer expr)) expr])
        (v/real? expr) (u/double expr)
        (sequential? expr)
        (let [[f & xs] expr]

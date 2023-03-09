@@ -2,7 +2,8 @@
 
 (ns emmy.sicm.ch3-test
   (:refer-clojure :exclude [+ - * / zero? partial])
-  (:require [clojure.test :refer [is deftest testing use-fixtures]]
+  (:require [clojure.string]
+            [clojure.test :refer [is deftest testing use-fixtures]]
             [emmy.env :as e
              :refer [+ zero? up down literal-function]]
             [emmy.examples.driven-pendulum :as driven]
@@ -15,6 +16,14 @@
             [emmy.simplify :refer [hermetic-simplify-fixture]]))
 
 (use-fixtures :each hermetic-simplify-fixture)
+
+(defn- maybe-defloatify
+  "Clojure renders integer doubles like 1.0, but Clojurescript like 1.
+   Our expected values come from the reference Clojure implementation,
+   and this function will convert to the Clojurescript expected form."
+  [s]
+  #?(:cljs (clojure.string/replace s #"\b(\d+)\.0\b" (fn [[_ m]] m))
+     :clj s))
 
 (def simplify
   (comp e/freeze e/simplify))
@@ -143,14 +152,15 @@
 
       (is (= ["[y01, y02, y03, y04, y05, y06, y07]"
               "_"
-              (str
-               "  const _08 = Math.sin(y02);\n"
-               "  const _09 = Math.cos(y02);\n"
-               "  const _12 = Math.pow(_08, 2);\n"
-               "  const _13 = Math.pow(_09, 2);\n"
-               "  return [1, [y05 / A, (- y07 * _09 + y06) / (A * _12), (A * y07 * _12 + C * y07 * _13 - C * y06 * _09) / (A * C * _12)], [(A * gMR * Math.pow(_09, 4) - 2 * A * gMR * _13 - y06 * y07 * _13 + Math.pow(y06, 2) * _09 + Math.pow(y07, 2) * _09 + A * gMR - y06 * y07) / (A * Math.pow(_08, 3)), 0, 0]];")]
-             (c/compile-state-fn* (fn [] sysder) [] top-state {:mode :js
-                                                               :gensym-fn (a/monotonic-symbol-generator 2)})))))
+              (maybe-defloatify
+               (str
+                "  const _08 = Math.sin(y02);\n"
+                "  const _09 = Math.cos(y02);\n"
+                "  const _12 = Math.pow(_08, 2.0);\n"
+                "  const _13 = Math.pow(_09, 2.0);\n"
+                "  return [1.0, [y05 / A, (- y07 * _09 + y06) / (A * _12), (A * y07 * _12 + C * y07 * _13 - C * y06 * _09) / (A * C * _12)], [(A * gMR * Math.pow(_09, 4.0) - 2.0 * A * gMR * _13 - y06 * y07 * _13 + Math.pow(y06, 2.0) * _09 + Math.pow(y07, 2.0) * _09 + A * gMR - y06 * y07) / (A * Math.pow(_08, 3.0)), 0.0, 0.0]];"))
+              (c/compile-state-fn* (fn [] sysder) [] top-state {:mode :js
+                                                                :gensym-fn (a/monotonic-symbol-generator 2)})]))))
 
   (deftest section-3-5
     (testing "p.221"
@@ -184,13 +194,14 @@
 
         (is (= ["[y01, y02, y03]"
                 "_"
-                (str
-                 "  const _04 = Math.sin(y02);\n"
-                 "  const _05 = Math.cos(y02);\n"
-                 "  const _06 = Math.pow(l, 2);\n"
-                 "  const _08 = omega * y01;\n"
-                 "  const _09 = Math.sin(_08);\n"
-                 "  return [1, (a * l * m * omega * _09 * _04 + y03) / (_06 * m), (- Math.pow(a, 2) * l * m * Math.pow(omega, 2) * Math.pow(_09, 2) * _04 * _05 - a * omega * y03 * _09 * _05 - g * _06 * m * _04) / l];")]
+                (maybe-defloatify
+                  (str
+                   "  const _04 = Math.sin(y02);\n"
+                   "  const _05 = Math.cos(y02);\n"
+                   "  const _06 = Math.pow(l, 2.0);\n"
+                   "  const _08 = omega * y01;\n"
+                   "  const _09 = Math.sin(_08);\n"
+                   "  return [1, (a * l * m * omega * _09 * _04 + y03) / (_06 * m), (- Math.pow(a, 2.0) * l * m * Math.pow(omega, 2.0) * Math.pow(_09, 2.0) * _04 * _05 - a * omega * y03 * _09 * _05 - g * _06 * m * _04) / l];"))]
                (c/compile-state-fn*
                 (fn []
                   (e/Hamiltonian->state-derivative

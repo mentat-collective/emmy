@@ -49,16 +49,6 @@
                (v/integral? denom))
           (str num "/" denom))))
 
-(defn- kebab->snake
-  "'foo-bar becomes 'foo_bar. Some other special characters are replaced by strings."
-  [s]
-  (-> (str s)
-      (s/replace #"-" "_")
-      (s/replace #"\*" "_star_")
-      (s/replace #"/" "_slash_")
-      (s/replace #"\+" "_plus_")
-      (symbol)))
-
 (defn- make-infix-renderer
   "Base function for infix renderers. This is meant to be specialized via
   options for the treatment desired. Returns a rendering function. The options are:
@@ -642,10 +632,7 @@
                         'ceiling "Math.ceil"
                         'integer-part "Math.trunc"
                         'not "!"}
-     :render-primitive (fn [x]
-                         (if (symbol? x)
-                           (kebab->snake x)
-                           x))
+     :render-primitive #(if (symbol? %) (munge %) %)
      :special-handlers (let [parens (fn [x]
                                       (str "(" x ")"))]
                          {'up make-js-vector
