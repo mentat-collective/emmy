@@ -47,7 +47,7 @@
 (def ^:dynamic *exponent-product-simplify?*
   "Allows `(x^a)^b => x^(a*b)`.
 
-  This is dangerous, because can lose or gain a root:
+  This is dangerous, because a root can be gained or lost:
 
   ```
   x = (x^(1/2))^2 != ((x^2)^1/2)=+-x

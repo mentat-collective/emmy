@@ -123,10 +123,11 @@
    'emmy.util.stream                    (ns-publics 'emmy.util.stream)})
 
 (def namespaces
-  "SCI namespace map generated from `ns->publics`. Consumers wishing
-  to use a more minmal SCI environment, should can select interested namespaces
-  from this map. Since in normal (not self-hosted) ClojureScript `ns-publics`
-  does not include macros, they are added explicitly."
+  "SCI namespace map generated from `ns->publics`. Consumers wishing to use a more
+  minimal SCI environment should select their desired namespaces from this map.
+
+  Since in normal (not self-hosted) ClojureScript `ns-publics` does not include
+  macros, they are added explicitly."
   (let [ns-map (u/map-vals sci-ns ns->publics)]
     (merge-with merge ns-map macros/ns-bindings)))
 
