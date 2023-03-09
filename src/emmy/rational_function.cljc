@@ -767,8 +767,8 @@ v/Value
      (p/->expression (bare-u r) vars)
      (p/->expression (bare-v r) vars))))
 
-(def ^{:doc "Singleton [[a/ICanonicalize]] instance."}
-  analyzer
+(def analyzer
+  "Singleton [[a/ICanonicalize]] instance."
   (reify a/ICanonicalize
     (expression-> [_ expr cont]
       (expression-> expr cont))
