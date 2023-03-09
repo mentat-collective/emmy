@@ -42,7 +42,7 @@
 
 (defn ^:no-doc procedure->vector-field
   "Accepts a function `f` and an optional symbolic `name`, and returns a vector
-  field, ie, a subtype of [[emmy.operator/Operator]].
+  field, i.e., a subtype of [[emmy.operator/Operator]].
 
   `f` should be a function from a smooth real-valued function `g` of a manifold
   to a new function on the manifold which computes the directional derivative of

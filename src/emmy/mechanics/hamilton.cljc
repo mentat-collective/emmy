@@ -30,7 +30,7 @@
 
 (defn ->H-state
   "Given a time `t`, coordinate tuple (or scalar) `q` and momentum tuple (or
-  scalar) `p`, returns a 'Hamiltonian state tuple', ie, the state expected by a
+  scalar) `p`, returns a 'Hamiltonian state tuple', i.e., the state expected by a
   Hamiltonian."
   [t q p]
   (up t q p))

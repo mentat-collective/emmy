@@ -217,7 +217,7 @@
 
 ;; The following example shows that for the sequence $1, 2, 4, 8, ..., 2^n$, the
 ;; incrementally-augmented `trapezoid-sequence` only performs $2^n + 1$ function
-;; evaluations; ie, the same number of evaluations as the
+;; evaluations; i.e., the same number of evaluations as the
 ;; non-incremental `(trapezoid-sum f2 0 1)` would perform for $2^n$ slices. (why
 ;; $2^n + 1$? each interior point is shared, so each trapezoid contributes one
 ;; evaluation, plus a final evaluation for the right side.)
@@ -317,7 +317,7 @@
 ;;
 ;; If you start with the trapezoid method, one single step of Richardson
 ;; extrapolation (taking the second column of the Richardson tableau) is
-;; equivalent to "Simpson's rule". One step using `t=3`, ie, when you /triple/
+;; equivalent to "Simpson's rule". One step using `t=3`, i.e., when you /triple/
 ;; the number of integration slices per step, gets you "Simpson's 3/8 Rule". Two
 ;; steps of Richardson extrapolation gives you "Boole's rule".
 ;;

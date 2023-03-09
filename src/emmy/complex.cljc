@@ -175,7 +175,7 @@
 
 (defn gaussian-integer?
   "Returns true if `z` is a [Gaussian
-  integer](https://en.wikipedia.org/wiki/Gaussian_integer), ie, a complex entry
+  integer](https://en.wikipedia.org/wiki/Gaussian_integer), i.e., a complex entry
   with integral real and imaginary components.
 
   [[gaussian-integer?]] will return true if the real and imaginary components
@@ -191,7 +191,7 @@
 ;; ## Complex GCD
 
 (defn ^:no-doc abs-real
-  "Returns a complex or real number with a positive real component. (ie, either z
+  "Returns a complex or real number with a positive real component. (i.e., either z
   or (* -1 z)), whichever number has a positive real component."
   [z]
   (cond (complex? z)

@@ -196,7 +196,7 @@
 
 (defn t*ts
   "Multiplies a single term on the left by a vector `v` of terms on the right.
-  Returns a new polynomial (ie, vector of terms)."
+  Returns a new polynomial (i.e., vector of terms)."
   [[tags coeff] v]
   (loop [acc (transient [])
          i 0]

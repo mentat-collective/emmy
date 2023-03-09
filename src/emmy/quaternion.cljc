@@ -527,7 +527,7 @@
 (declare magnitude-sq)
 
 (defn unit?
-  "Returns true if `q` is a unit quaternion (ie, a 'versor', a quaternion
+  "Returns true if `q` is a unit quaternion (i.e., a 'versor', a quaternion
   with [[magnitude]] equal to one), false otherwise.
 
   To check if the [[magnitude]] of `q` is /approximately/ equal to one, pass a
@@ -1241,7 +1241,7 @@
 
   Given an `axis` with numeric entries, [[from-angle-axis]] will explicitly
   normalize `axis` before calling [[from-angle-normal-axis]]. If any entries are
-  non-numerical (ie, symbolic), [[from-angle-axis]] will instead log an
+  non-numerical (i.e., symbolic), [[from-angle-axis]] will instead log an
   assumption that the magnitude of `axis` == 1 and proceed.
 
   NOTE: If you have an already-normalized axis,

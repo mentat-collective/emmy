@@ -236,7 +236,7 @@
 ;; Let's experiment instead with letting $h \to 0$. This next function takes a
 ;; function $f$, a value of $x$ and an initial $h$, and generates a stream of
 ;; central difference approximations to $Df(x)$ using successively halved values
-;; of $h$, ie, $(h, h/2, h/4, h/8, ....)$
+;; of $h$, i.e., $(h, h/2, h/4, h/8, ....)$
 
 (defn- central-diff-stream [f x h]
   (map (central-difference f x)
@@ -319,7 +319,7 @@
 ;; $$1 + floor(\lvert ratio \rvert)$$
 
 (defn- roundoff-units
-  "Returns the number of 'roundoff units', ie, multiples of the machine epsilon,
+  "Returns the number of 'roundoff units', i.e., multiples of the machine epsilon,
   that roundoff error contributes to the total relative error, given a relative
   error percentage estimated for some initial step size $h$."
   [rel-error-ratio]

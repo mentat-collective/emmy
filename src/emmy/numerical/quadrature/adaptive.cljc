@@ -60,7 +60,7 @@
 
 (defn- split-point
   "Returns a point within`fuzz-factor` of the midpoint of the interval $[a, b]$.
-  `fuzz-factor` defaults to 0 (ie, `split-point` returns the midpoint)."
+  `fuzz-factor` defaults to 0 (i.e., `split-point` returns the midpoint)."
   ([a b] (split-point a b 0))
   ([a b fuzz-factor]
    {:pre [(>= fuzz-factor 0)
@@ -88,7 +88,7 @@
          opts))
 
 (defn adaptive
-  "Accepts one or two 'integrators', ie, functions of:
+  "Accepts one or two 'integrators', i.e., functions of:
 
   - `f`: some integrand
   - `a` and `b`: the lower and upper endpoints of integration

@@ -267,13 +267,13 @@
   {:dfdx invert})
 
 (defgeneric log2 1
-  "Returns the base-2 logarithm of `x`, ie, $log_2(x)$.")
+  "Returns the base-2 logarithm of `x`, i.e., $log_2(x)$.")
 
 (let [l2 (Math/log 2)]
   (defmethod log2 :default [x] (div (log x) l2)))
 
 (defgeneric log10 1
-  "Returns the base-10 logarithm of `x`, ie, $log_10(x)$.")
+  "Returns the base-10 logarithm of `x`, i.e., $log_10(x)$.")
 
 (let [l10 (Math/log 10)]
   (defmethod log10 :default [x] (div (log x) l10)))
@@ -361,7 +361,7 @@
   (< a (v/zero-like a)))
 
 (defgeneric infinite? 1
-  "Returns true if `a` is either numerically infinite (ie, equal to `##Inf`) or
+  "Returns true if `a` is either numerically infinite (i.e., equal to `##Inf`) or
   a compound number (complex or quaterion, for example) with some infinite
   component.")
 

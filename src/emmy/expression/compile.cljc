@@ -220,7 +220,7 @@
 
 #_(fn [q [mass g]])
 
-;; IE, first the structure, then a vector of the original function's arguments.
+;; I.E., first the structure, then a vector of the original function's arguments.
 
 (defn- state-argv
   "Returns the argument vector for a compiled state function, given:
@@ -483,7 +483,7 @@
 
 (defn compile-fn*
   "Returns a compiled, simplified version of `f`, given a function `f` of arity
-  `n` (ie, able to accept `n` symbolic arguments).
+  `n` (i.e., able to accept `n` symbolic arguments).
 
   `n` defaults to `([[f/arity]] f)`.
 

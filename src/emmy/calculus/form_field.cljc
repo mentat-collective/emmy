@@ -117,7 +117,7 @@
 
 (defn ^:no-doc procedure->nform-field
   "Accepts a function `f` and an optional symbolic `name`, and returns an n-form
-  field, ie, a subtype of [[emmy.operator/Operator]].
+  field, i.e., a subtype of [[emmy.operator/Operator]].
 
   `f` should be a function from n vector field arguments to a smooth real-valued
   function `g` of a manifold.
@@ -139,7 +139,7 @@
 
 (defn ^:no-doc procedure->oneform-field
   "Accepts a function `f` and an optional symbolic `name`, and returns a one-form
-  field, ie, a subtype of [[emmy.operator/Operator]].
+  field, i.e., a subtype of [[emmy.operator/Operator]].
 
   `f` should be a function from a vector field to a smooth real-valued function
   `g` of a manifold."

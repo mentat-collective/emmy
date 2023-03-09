@@ -36,7 +36,7 @@
 ;; operations of addition, subtraction and multiplication of coefficients and
 ;; variables.
 ;;
-;; Here's an example of a polynomial of arity 2, ie, a polynomial in two
+;; Here's an example of a polynomial of arity 2, i.e., a polynomial in two
 ;; variables:
 ;;
 ;; $$4 + 3x^2y + 5y^3 + 6x^4$$
@@ -1040,7 +1040,7 @@
           :else (coeff-op l r))))
 
 (defn negate
-  "Returns the negation of polynomial `p`, ie, a polynomial with all coefficients
+  "Returns the negation of polynomial `p`, i.e., a polynomial with all coefficients
   negated."
   [p]
   (map-coefficients g/negate p))
@@ -1136,7 +1136,7 @@
                              (terms->polynomial a r)])))))
 
 (defn divisible?
-  "Returns true if the numerator `n` is evenly divisible by `d` (ie, leaves no
+  "Returns true if the numerator `n` is evenly divisible by `d` (i.e., leaves no
   remainder), false otherwise.
 
   NOTE that this performs a full division with [[divide]]. If you're planning on
@@ -1387,7 +1387,7 @@
 
   If `p` is a non-[[Polynomial]] coefficient, acts as identity.
 
-  Supplying too many arguments in `xs` (ie, a greater number than the [[arity]]
+  Supplying too many arguments in `xs` (i.e., a greater number than the [[arity]]
   of `p`) will throw an exception. Too few arguments will result in a partial
   evaluation of `p`, leaving the remaining indeterminates with their variable
   indices shifted down.
@@ -1589,7 +1589,7 @@
 
 (defn expression->
   "Converts the supplied symbolic expression `expr` into Flat Polynomial canonical
-  form (ie, a [[Polynomial]] instance). `expr` should be a bare, unwrapped
+  form (i.e., a [[Polynomial]] instance). `expr` should be a bare, unwrapped
   expression built out of Clojure data structures.
 
   Returns the result of calling continuation `cont` with the [[Polynomial]] and

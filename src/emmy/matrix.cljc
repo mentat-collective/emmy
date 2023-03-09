@@ -874,7 +874,7 @@
     (g/negate s)))
 
 (defn dimension
-  "Returns the 'dimension', ie, the number of rows & columns, of the supplied
+  "Returns the 'dimension', i.e., the number of rows & columns, of the supplied
   square matrix. Errors if some other type is supplied."
   [m]
   {:pre [(square? m)]}
@@ -1073,7 +1073,7 @@
    (generate n n #(if (= %1 %2) x 0))))
 
 (defn diagonal?
-  "Returns true if `m` is a diagonal matrix (ie, a square matrix where every
+  "Returns true if `m` is a diagonal matrix (i.e., a square matrix where every
   non-diagonal element is zero), false otherwise."
   [m]
   (and (square? m)
@@ -1086,7 +1086,7 @@
                    (v/zero? entry))))))
 
 (defn symmetric?
-  "Returns true if the supplied matrix `M` is equal to its own transpose (ie,
+  "Returns true if the supplied matrix `M` is equal to its own transpose (i.e.,
   symmetric), false otherwise."
   [M]
   (v/zero?
@@ -1095,7 +1095,7 @@
 
 (defn antisymmetric?
   "Returns true if the supplied matrix `M` is equal to the negation of its own
-  transpose (ie, antisymmetric), false otherwise."
+  transpose (i.e., antisymmetric), false otherwise."
   [M]
   (v/zero?
    (g/simplify

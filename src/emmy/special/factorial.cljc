@@ -22,7 +22,7 @@
        x)))
 
 (defn factorial
-  "Returns the factorial of `n`, ie, the product of 1 to `n` (inclusive).
+  "Returns the factorial of `n`, i.e., the product of 1 to `n` (inclusive).
 
   [[factorial]] will return a platform-specific [[emmy.util/bigint]] given
   some `n` that causes integer overflow."
@@ -71,7 +71,7 @@
 ;;
 ;; (A unital ring is an abelian group - a type with a `+`, `-` and a sensible
 ;; zero - as well as a `*` operation that distributes over addition.
-;; The "unital" part means there is a sensible one, ie, a multiplicative
+;; The "unital" part means there is a sensible one, i.e., a multiplicative
 ;; identity.)
 
 (defmethod falling-factorial :default [x n]
@@ -234,7 +234,7 @@
       div #?(:clj / :cljs g//)]
   (defn binomial-coefficient
     "Returns the [binomial
-  coefficient](https://en.wikipedia.org/wiki/Binomial_coefficient), ie, the
+  coefficient](https://en.wikipedia.org/wiki/Binomial_coefficient), i.e., the
   coefficient of the $x^k$ term in the polynomial expansion of the binomial
   power $(1 + x)^n$.
 
@@ -350,7 +350,7 @@
             :else (@rec n k))))
 
   (defn bell
-    "Returns the `n`th [Bell number](https://en.wikipedia.org/wiki/Bell_number), ie,
+    "Returns the `n`th [Bell number](https://en.wikipedia.org/wiki/Bell_number), i.e.,
   the number of ways a set of `n` elements can be partitioned into nonempty
   subsets.
 

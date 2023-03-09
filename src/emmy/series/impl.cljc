@@ -380,8 +380,8 @@
 ;; An example, inverting a series starting with 0:
 
 #_(let [f (cons 0 (iterate inc 1))]
-  (= [0 1 0 0 0]
-     (take 5 (compose f (revert f)))))
+    (= [0 1 0 0 0]
+       (take 5 (compose f (revert f)))))
 
 ;; ### Series Calculus
 ;;
@@ -390,7 +390,7 @@
 ;; $$D(a x^n)$ = aD(x^n) = a n x^{n-1}$$
 ;;
 ;; Implies that all entries shift left by 1, and each new entry gets multiplied
-;; by its former index (ie, its new index plus 1).
+;; by its former index (i.e., its new index plus 1).
 
 (defn deriv [f]
   (map g/* (rest f) (iterate inc 1)))
@@ -443,7 +443,7 @@
 ;; We can use `expt` to verify that $(1+x)^3$ expands to $1 + 3x + 3x^2 + x^3$:
 
 #_(= [1 3 3 1 0]
-   (take 5 (expt (->series [1 1]) 3)))
+     (take 5 (expt (->series [1 1]) 3)))
 
 ;; ### Square Root of a Series
 ;;
@@ -456,14 +456,14 @@
 ;;
 ;; D(Q) = {D(F) \over {2Q}}
 ;;
-;; When the head term of $F$ is nonzero, ie, $f != 0$, the head of $Q =
+;; When the head term of $F$ is nonzero, i.e., $f != 0$, the head of $Q =
 ;; \sqrt(F)$ must be $\sqrt(f)$ for the multiplication to work out.
 ;;
 ;; Integrate both sides:
 ;;
 ;; Q = \sqrt(f) + \int_0^x {D(F) \over {2Q}}
 ;;
-;; One optimization appears if the first two terms of $F$ vanish, ie,
+;; One optimization appears if the first two terms of $F$ vanish, i.e.,
 ;; $F=x^2F_2$. In this case $Q = 0 + x \sqrt(F_2)$.
 ;;
 ;; Here it is in Clojure:

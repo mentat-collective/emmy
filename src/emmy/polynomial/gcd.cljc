@@ -239,7 +239,7 @@
   `v` respectively.
 
   On return, [[with-content-removed]]'s returned function scales the result back
-  up by the `gcd` of the contents of `u` and `v` (ie, the greatest common
+  up by the `gcd` of the contents of `u` and `v` (i.e., the greatest common
   divisor across the coefficients of both polynomials).
 
   [[with-content-removed]] is intended for use with multivariate polynomials. In

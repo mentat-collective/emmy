@@ -312,7 +312,7 @@
     1))
 
 (defn dimension
-  "If `s` is sequential, returns its dimension, ie, the total number of
+  "If `s` is sequential, returns its dimension, i.e., the total number of
   non-sequential entries in the structure. Else, returns 1."
   [s]
   (if (sequential? s)
@@ -681,7 +681,7 @@
   to three arguments:
 
   - the entry in the structure
-  - a vector of its 'access chain', ie, the path you'd pass
+  - a vector of its 'access chain', i.e., the path you'd pass
     to [[clojure.core/get-in]] to access the entry
   - a vector of orientations associated with each index in the access chain
 

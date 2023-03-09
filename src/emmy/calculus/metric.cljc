@@ -168,7 +168,7 @@
 ;; ### Raising and lowering indices
 
 (defn lower
-  "To make a vector field into a one-form field, ie, a (1,0) tensor into a (0,1)
+  "To make a vector field into a one-form field, i.e., a (1,0) tensor into a (0,1)
   tensor."
   [metric]
   (fn [u]
@@ -189,7 +189,7 @@
   lower)
 
 (defn raise
-  "To make a one-form field into a vector field, ie, a (0,1) tensor into a (1,0)
+  "To make a one-form field into a vector field, i.e., a (0,1) tensor into a (1,0)
   tensor."
   [metric basis]
   (let [gi (invert metric basis)]

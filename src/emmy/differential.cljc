@@ -722,7 +722,7 @@
         :else (->Differential terms)))
 
 (defn from-terms
-  "Accepts a sequence of terms (ie, pairs of `[tag-list, coefficient]`), and
+  "Accepts a sequence of terms (i.e., pairs of `[tag-list, coefficient]`), and
   returns:
 
   - a well-formed [[Differential]] instance, if the terms resolve to a
@@ -864,7 +864,7 @@
   maximum ('highest order') tag found in the highest-order term of any of
   the [[Differential]] instances.
 
-  If there is NO maximal tag (ie, if you provide [[Differential]] instances with
+  If there is NO maximal tag (i.e., if you provide [[Differential]] instances with
   no non-zero tangent parts, or all non-[[Differential]]s), returns nil."
   ([dx]
    (when (differential? dx)
@@ -886,7 +886,7 @@
 
 (defn primal-part
   "Returns a [[Differential]] containing only the terms of `dx` that do NOT
-  contain the supplied `tag`, ie, the primal component of `dx` with respect to
+  contain the supplied `tag`, i.e., the primal component of `dx` with respect to
   `tag`.
 
   If no tag is supplied, defaults to `([[max-order-tag]] dx)`.
@@ -909,7 +909,7 @@
 
 (defn tangent-part
   "Returns a [[Differential]] containing only the terms of `dx` that contain the
-  supplied `tag`, ie, the tangent component of `dx` with respect to `tag`.
+  supplied `tag`, i.e., the tangent component of `dx` with respect to `tag`.
 
   If no tag is supplied, defaults to `([[max-order-tag]] dx)`.
 
@@ -962,7 +962,7 @@
   non-[[Differential]] value. If you know you want this, [[finite-term]] will
   get you there in one shot.
 
-  NOTE that this will only work with a well-formed [[Differential]], ie, an
+  NOTE that this will only work with a well-formed [[Differential]], i.e., an
   instance with all terms sorted by their list of tags."
   [dx]
   (if (differential? dx)

@@ -32,7 +32,7 @@
   (some-fn unquote? unquote-splice?))
 
 (def coll-node?
-  "Returns true if the supplied `node` is a collection, ie, a list,
+  "Returns true if the supplied `node` is a collection, i.e., a list,
   vector or map, false otherwise."
   (some-fn api/list-node? api/vector-node? api/map-node?))
 

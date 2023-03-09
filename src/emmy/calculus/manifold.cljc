@@ -788,7 +788,7 @@
   "Returns an [[ICoordinateSystem]] instance that converts between `manifold`
   points and spherical on the
   unit [n-sphere](https://en.wikipedia.org/wiki/N-sphere#Spherical_coordinates),
-  ie, S(n). The sphere is embedded in a space of dimension n+1.
+  i.e., S(n). The sphere is embedded in a space of dimension n+1.
 
   Also accepts an `orientation-function` from dimension `(+ n 1)` to a unitary
   `orientation` matrix (2-tensor, technically, a down of ups, dimension `n+1`

@@ -165,9 +165,9 @@
 
 (defn monomial-degree
   "Returns the [monomial degree](https://en.wikipedia.org/wiki/Monomial#Degree) of
-  the exponent vector `m`, ie, the sum of the powers of all variables in `m`.
+  the exponent vector `m`, i.e., the sum of the powers of all variables in `m`.
 
-  If the optional `i` is supplied, returns the degree of the `i`th variable, ie,
+  If the optional `i` is supplied, returns the degree of the `i`th variable, i.e.,
   the entry for `i` in `m`, defaulting to `0`."
   ([m]
    (apply + (vals m)))

@@ -135,7 +135,7 @@
 ;; this [paper by
 ;; Klein](https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.582.288&rep=rep1&type=pdf)
 ;; seems to describe a way to aggregate the intermediate states of compensated
-;; summation up through the binary addition tree (ie, implement a monoid on the
+;; summation up through the binary addition tree (i.e., implement a monoid on the
 ;; compensated summation state itself); but I couldn't figure out the indices!
 
 (defn pairwise-sum

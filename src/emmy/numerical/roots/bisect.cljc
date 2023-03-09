@@ -92,7 +92,7 @@
 
 (defn bisect
   "Given some function `f` and (inclusive) lower and upper bounds `a` and `b` on
-  the domain, attempts to find a root of `f` in that range, ie, a value `x` for
+  the domain, attempts to find a root of `f` in that range, i.e., a value `x` for
   which `(f x)` is equal to 0.
 
   Supports the following optional keyword arguments:
@@ -174,7 +174,7 @@
 
 (defn search-for-roots
   "Given a smooth function `f` and (inclusive) lower and upper bounds `a` and
-  `b` on the domain, attempts to find all roots of `f`, ie, a vector of values
+  `b` on the domain, attempts to find all roots of `f`, i.e., a vector of values
   `x_n` such that each `(f x_n)` is equal to 0.
 
   [[search-for-roots]] first attempts to cut the (inclusive) range `[a, b]`

@@ -482,7 +482,7 @@ v/Value
 ;; the full set of arithmetic functions for [[RationalFunction]] instances.
 
 (defn negate
-  "Returns the negation of rational function `r`, ie, a [[RationalFunction]] with
+  "Returns the negation of rational function `r`, i.e., a [[RationalFunction]] with
   its numerator negated.
 
   Acts as [[generic/negate]] for non-[[RationalFunction]] inputs."
@@ -569,7 +569,7 @@ v/Value
                           (meta r)))))
 
 (defn invert
-  "Given some rational function `r`, returns the inverse of `r`, ie, a rational
+  "Given some rational function `r`, returns the inverse of `r`, i.e., a rational
   function with numerator and denominator reversed. The returned rational
   function guarantees a positive denominator.
 
@@ -701,7 +701,7 @@ v/Value
 
 (defn expression->
   "Converts the supplied symbolic expression `expr` into Rational Function
-  canonical form (ie, a [[RationalFunction]] instance). `expr` should be a bare,
+  canonical form (i.e., a [[RationalFunction]] instance). `expr` should be a bare,
   unwrapped expression built out of Clojure data structures.
 
   Returns the result of calling continuation `cont` with

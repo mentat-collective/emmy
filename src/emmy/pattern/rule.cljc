@@ -305,7 +305,7 @@
   (pipe* (repeat n r)))
 
 (defn attempt?
-  "Returns `true` if `r` was marked as an 'attempt' rule, ie, a rule that will
+  "Returns `true` if `r` was marked as an 'attempt' rule, i.e., a rule that will
   never fail, but return its input on a failed match."
   [r]
   (::attempt? (meta r) false))

@@ -470,7 +470,7 @@
 
   Calling [[taylor-series]] with no arguments will return the [Maclaurin
   series](https://en.wikipedia.org/wiki/Taylor_series#List_of_Maclaurin_series_of_some_common_functions)
-  of `f`, ie, the Taylor series expansion at `(= x 0)`.
+  of `f`, i.e., the Taylor series expansion at `(= x 0)`.
 
   Calling the returned power series with incremental argument `dx` will produce
   a [[emmy.series/Series]] representing the terms of the Taylor series of

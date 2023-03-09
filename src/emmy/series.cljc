@@ -670,7 +670,7 @@
 
 (defn binomial-series
   "Returns a [[PowerSeries]] instance representing a
-  [Binomial series](https://en.wikipedia.org/wiki/Binomial_series), ie, the
+  [Binomial series](https://en.wikipedia.org/wiki/Binomial_series), i.e., the
   taylor series of the function $f$ given by
 
   ```
