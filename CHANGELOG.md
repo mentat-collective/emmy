@@ -2,9 +2,32 @@
 
 ## [unreleased]
 
-- #110: Move all docstrings that existed as metadata on defs (ie, `(def ^{:doc
-  "..."} sym ...)`) down below the symbol. I hadn't realized that this was a
-  valid way to attach a docstring!
+- #110:
+
+  - Moves all docstrings that existed as metadata on defs (ie, `(def ^{:doc
+    "..."} sym ...)`) down below the symbol. I hadn't realized that this was a
+    valid way to attach a docstring!
+
+  - Upgrades GitHub Actions `clj-kondo` invocation to version 2013.01.20 and
+    saves some work in the actions setup. Fix all linting errors that resulted.
+
+- #109:
+
+  - `->JavaScript` now produces expressions, and not function bodies.
+  This change makes `->JavaScript` do the same job as `->infix` and
+  `->TeX`. Initially, the JS rendering emitted a function in order to
+  facilitate experiments with embedding equations of motion in dynamic
+  web pages. This can still be done: `compile-state-fn` has been extended
+  to allow the compilation of a state function into either Clojure or
+  Javascript notation. The test directory contains many worked examples.
+
+  - numerous local `gensym` replacements found useful as part of test
+  fixtures have been gathered together into `monotonic-symbol-generator`.
+
+  - generation of sums and differences in all of the infix generators
+  has been improved to more closely approach standard mathematical
+  notation (e.g., instead of `-2 * x + -2 * y` you will see
+  `- 2 * x - 2 * y`).
 
 - #107:
 

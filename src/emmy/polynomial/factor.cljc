@@ -143,7 +143,7 @@
 (def analyzer
   "Expression analyzer, identical to [[polynomial/analyzer]] except the symbolic
   expressions returned are in factored form."
-  (let [symgen (a/monotonic-symbol-generator "-f-")]
+  (let [symgen (a/monotonic-symbol-generator 16 "-f-")]
     (-> (reify a/ICanonicalize
           (expression-> [_ expr cont v-compare]
             (poly/expression-> expr cont v-compare))
