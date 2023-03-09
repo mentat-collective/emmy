@@ -8,22 +8,10 @@
             [clojure.zip :as z]
             [emmy.generic :as g]
             [emmy.pattern.rule :as R :refer [=>]]
-            [emmy.simplify.rules :refer [negative-number?]]
             [emmy.ratio :as r]
+            [emmy.simplify.rules :refer [negative-number?]]
             [emmy.util :as u]
             [emmy.value :as v]))
-
-(defn- make-symbol-generator [p]
-  (let [i (atom 0)]
-    (fn [] (symbol
-           #?(:clj
-              (format "%s%04x" p (swap! i inc))
-
-              :cljs
-              (let [suffix (-> (swap! i inc)
-                               (.toString 16)
-                               (.padStart 4 "0"))]
-                (str p suffix)))))))
 
 (def ^{:private true
        :doc "Historical preference is to write `sin^2(x)` rather
@@ -60,6 +48,16 @@
                (v/integral? num)
                (v/integral? denom))
           (str num "/" denom))))
+
+(defn- kebab->snake
+  "'foo-bar becomes 'foo_bar. Some other special characters are replaced by strings."
+  [s]
+  (-> (str s)
+      (s/replace #"-" "_")
+      (s/replace #"\*" "_star_")
+      (s/replace #"/" "_slash_")
+      (s/replace #"\+" "_plus_")
+      (symbol)))
 
 (defn- make-infix-renderer
   "Base function for infix renderers. This is meant to be specialized via
@@ -644,6 +642,10 @@
                         'ceiling "Math.ceil"
                         'integer-part "Math.trunc"
                         'not "!"}
+     :render-primitive (fn [x]
+                         (if (symbol? x)
+                           (kebab->snake x)
+                           x))
      :special-handlers (let [parens (fn [x]
                                       (str "(" x ")"))]
                          {'up make-js-vector

@@ -408,6 +408,10 @@
             "- a * b * c"
             "- a\\,b\\,c"]
            (all-formats (- (* 'a 'b 'c)))))
+    (is (= ["- -baz-qux + foo-bar - star*power - terminus/est"
+            "- _baz_qux + foo_bar - star_star_power - terminus_slash_est"
+            "- \\mathsf{-baz-qux} + \\bar {foo-} - \\mathsf{star*power} - \\mathsf{terminus/est}"]
+           (all-formats (- 'foo-bar '-baz-qux 'star*power 'terminus/est))))
     (let [f (af/literal-function 'f)]
       (is (= ["Df(x)"
               "D(f)(x)"
