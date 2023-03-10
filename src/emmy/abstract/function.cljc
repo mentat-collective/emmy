@@ -5,7 +5,13 @@
   applied to structures and numeric inputs, and differentiated.
 
   The namespace also contains an implementation of a small language for
-  declaring the input and output types of [[literal-function]] instances."
+  declaring the input and output types of [[literal-function]] instances.
+
+  NOTE:
+
+  - a typed function is a function with typed metadata.
+  - This MIGHT be a thing we want now, given all of the stuff from the calc
+    work...  "
   (:refer-clojure :exclude [name])
   (:require [emmy.abstract.number :as an]
             [emmy.differential :as d]
@@ -34,6 +40,145 @@
 
 (derive ::function ::v/function)
 
+;; The descriptors for literal functions look like prefix versions of the
+;; standard function types. Thus, we want to be able to say:
+;;
+;; (literal-function 'V (-> (X Real Real) Real))
+;;
+;; The base types are the real numbers, designated by "Real". We will later
+;; extend the system to include complex numbers, designated by "Complex".
+;;
+;; Types can be combined in several ways. The cartesian product of types is
+;; designated by:
+
+;; (X <type1> <type2> ...)
+;;
+;; We use this to specify an argument tuple of objects of the given types
+;; arranged in the given order.
+;;
+;; Similarly, we can specify an up tuple or a down tuple with:
+;;
+;; (UP <type1> <type2> ...)
+;; (DOWN <type1> <type2> ...)
+;;
+;; We can also specify a uniform tuple of a number of elements of the
+;; same type using:
+;;
+;; (UP* <type> [n])
+;; (DOWN* <type> [n])
+;;
+;; To get started... Type expressions are self-evaluating.
+
+(def Real 'Real)
+
+(defn X
+  ([] (u/illegal "Null type argument -- X"))
+  ([t] t)
+  ([t & ts] (apply list 'X t ts)))
+
+(defn UP
+  ([] (u/illegal "Null type argument -- UP"))
+  ([t] t)
+  ([t & ts] (apply list 'UP t ts)))
+
+(defn DOWN
+  ([] (u/illegal "Null type argument -- DOWN"))
+  ([t] t)
+  ([t & ts] (apply list 'DOWN t ts)))
+
+(defn EXPT [t n]
+  (apply X (repeat n t)))
+
+;; Examples:
+;; (UP* Real 2 (UP Real Real) 2)
+;; => (UP Real Real (UP Real Real) (UP Real Real))
+;;
+;; (UP* Real 2 (UP Real Real) 2 Real)
+;; => (UP* Real Real (UP Real Real) (UP Real Real) Real)
+
+(defn- starify [xs starred-sym unstarred-fn]
+  (if (empty? xs)
+    (u/illegal (str "Null type argument -- " starred-sym))
+	  (loop [xs xs
+           current nil
+           explicit? false
+           types []]
+	    (if (empty? xs)
+        (if explicit?
+          (apply unstarred-fn types)
+          (cons starred-sym types))
+        (let [[x & more] xs]
+		      (if (integer? x)
+		        (if current
+		          (recur more
+                     false
+                     true
+			               (into types (repeat (dec x) current)))
+		          (u/illegal "Bad type arguments" starred-sym xs))
+            (recur more x false (conj types x))))))))
+
+(defn X* [& rest]
+  (starify rest 'X* X))
+
+(defn UP* [& rest]
+  (starify rest 'UP* UP))
+
+(defn DOWN* [& rest]
+  (starify rest 'DOWN* DOWN))
+
+(defn -> [domain range]
+  (list '-> domain range))
+
+(def Any 'Any)
+
+(defn default-type [n]
+  (if (= n 1)
+    (-> Real Real)
+    (-> (X* Real n) Real)))
+
+(defn permissive-type [n]
+  (-> (X* Any n) Real))
+
+;; Some useful types
+
+(defn Lagrangian
+  "n = #degrees-of-freedom"
+  ([] (-> (UP* Real (UP* Real) (UP* Real)) Real))
+  ([n] (-> (UP Real (UP* Real n) (UP* Real n)) Real)))
+
+(defn Hamiltonian
+  "n = #degrees-of-freedom"
+  ([] (-> (UP Real (UP* Real) (DOWN* Real)) Real))
+  ([n] (-> (UP Real (UP* Real n) (DOWN* Real n)) Real)))
+
+(defn process-type
+  "combo of all type-> functions."
+  [t]
+  {:pre [(sequential? t)]}
+  (let [[arrow domain range] t]
+    (if-not (and (= '-> arrow) domain range)
+      (u/illegal
+       (str "A SICM signature is of the form '(-> domain range), got: "
+            arrow domain range))
+      (let [[dtypes arity]
+            (cond (and (sequential? domain)
+                       (= (first domain) 'X))
+                  (let [types (into [] (rest domain))]
+                    [types [:exactly (count types)]])
+
+                  (and (sequential? domain)
+                       (= (first domain) 'X*))
+                  [[domain] [:at-least 0]]
+
+                  :else [domain [:exactly 1]])]
+        {:domain domain
+         :range-type range
+         :domain-types dtypes
+         :arity arity}))))
+
+;; Existing Stuff. There is a BIT more in `litfun.scm` that we should read to
+;; figure out what is going on.
+
 (defn ^:private sicm-set->exemplar
   "Convert a SICM-style set (e.g., Real or (UP Real Real)) to
   an exemplar (an instance of the relevant type)."
@@ -51,15 +196,24 @@
         DOWN* (apply s/down (repeat (second args) (sicm-set->exemplar (first args))))
         X*    (into [] (repeat (second args) (sicm-set->exemplar (first args))))))))
 
+;; TODO SHOULD NOT handle an "X" type in the range.
+
 (defn ^:no-doc sicm-signature->domain-range
   "Convert a SICM-style literal function signature (e.g.,
   '(-> Real (X Real Real)) ) to our 'exemplar' format."
   [[arrow domain range]]
   (when-not (and (= '-> arrow) domain range)
-    (u/illegal (str "A SICM signature is of the form '(-> domain range), got: " arrow domain range)))
-  [(let [d (sicm-set->exemplar domain)]
-     (if (vector? d) d [d]))
-   (sicm-set->exemplar range)])
+    (u/illegal (str "A SICM signature is of the form '(-> domain range), got: "
+                    arrow domain range)))
+  (let [d (sicm-set->exemplar domain)
+        d (if (vector? d) d [d])
+        r (sicm-set->exemplar range)]
+    [d r]))
+
+;; TODO add metadata!! How did we get away with not having this yet?
+
+;; TODO trawl for other uses of the star constructors, replace those around the
+;; library.
 
 (deftype Function [name arity domain range]
   v/Value
@@ -180,6 +334,11 @@
        (= (name a) (name b))
        (= (domain-types a) (domain-types b))
        (= (range-type a) (range-type b))))
+
+;; TODO allow for functions in range!
+;;
+;; (((literal-function 'f (-> Real (-> Real Real))) 'x) 'y)
+;; ((f x) y)
 
 (defn literal-function
   ([f] (->Function f [:exactly 1] [0] 0))
