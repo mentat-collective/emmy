@@ -15,7 +15,7 @@ jobs:
       - name: Install babashka
         uses: just-sultanov/setup-babashka@v2
         with:
-          version: '0.8.156'
+          version: '1.2.174'
 
       - name: Cache kondo directory
         uses: actions/cache@v2
