@@ -482,7 +482,7 @@ v/Value
 ;; the full set of arithmetic functions for [[RationalFunction]] instances.
 
 (defn negate
-  "Returns the negation of rational function `r`, ie, a [[RationalFunction]] with
+  "Returns the negation of rational function `r`, i.e., a [[RationalFunction]] with
   its numerator negated.
 
   Acts as [[generic/negate]] for non-[[RationalFunction]] inputs."
@@ -569,7 +569,7 @@ v/Value
                           (meta r)))))
 
 (defn invert
-  "Given some rational function `r`, returns the inverse of `r`, ie, a rational
+  "Given some rational function `r`, returns the inverse of `r`, i.e., a rational
   function with numerator and denominator reversed. The returned rational
   function guarantees a positive denominator.
 
@@ -685,25 +685,23 @@ v/Value
 ;; The `operator-table` represents the operations that can be understood from
 ;; the point of view of a rational function over some field.
 
-(def ^{:no-doc true
-       :doc "These operations are those allowed
-       between [[RationalFunction]], [[polynomial/Polynomial]] and coefficient
-       instances."}
-  operator-table
+(def ^:no-doc operator-table
+  "These operations are those allowed
+  between [[RationalFunction]], [[polynomial/Polynomial]] and coefficient
+  instances."
   (assoc p/operator-table
          '/ (ua/group g/div g/mul g/invert 1 v/zero?)
          'invert g/invert))
 
-(def ^{:no-doc true
-       :doc "Set of all arithmetic functions allowed
-       between [[RationalFunction]], [[polynomial/Polynomial]] and coefficient
-       instances."}
-  operators-known
+(def ^:no-doc operators-known
+  "Set of all arithmetic functions allowed
+  between [[RationalFunction]], [[polynomial/Polynomial]] and coefficient
+  instances."
   (u/keyset operator-table))
 
 (defn expression->
   "Converts the supplied symbolic expression `expr` into Rational Function
-  canonical form (ie, a [[RationalFunction]] instance). `expr` should be a bare,
+  canonical form (i.e., a [[RationalFunction]] instance). `expr` should be a bare,
   unwrapped expression built out of Clojure data structures.
 
   Returns the result of calling continuation `cont` with
@@ -769,8 +767,8 @@ v/Value
      (p/->expression (bare-u r) vars)
      (p/->expression (bare-v r) vars))))
 
-(def ^{:doc "Singleton [[a/ICanonicalize]] instance."}
-  analyzer
+(def analyzer
+  "Singleton [[a/ICanonicalize]] instance."
   (reify a/ICanonicalize
     (expression-> [_ expr cont]
       (expression-> expr cont))

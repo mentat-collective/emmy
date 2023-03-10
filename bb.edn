@@ -1,4 +1,4 @@
-{:pods {clj-kondo/clj-kondo {:version "2022.12.10"}}
+{:pods {clj-kondo/clj-kondo {:version "2023.01.20"}}
  :tasks
  {:requires ([pod.borkdude.clj-kondo :as clj-kondo])
 

@@ -2,6 +2,15 @@
 
 ## [unreleased]
 
+- #110:
+
+  - Moves all docstrings that existed as metadata on defs (i.e., `(def ^{:doc
+    "..."} sym ...)`) down below the symbol. I hadn't realized that this was a
+    valid way to attach a docstring!
+
+  - Upgrades GitHub Actions `clj-kondo` invocation to version 2013.01.20 and
+    saves some work in the actions setup. Fix all linting errors that resulted.
+
 - #109:
 
   - `->JavaScript` now produces expressions, and not function bodies.
@@ -521,7 +530,7 @@
 
   - `sicmutils.structure` gains `down-of-ups?`, `up-of-downs?`, `two-up?`,
     `two-down?`, `two-tensor?` and `two-tensor-info` for working with "2
-    tensors", ie, structures that contain structural entries of matching
+    tensors", i.e., structures that contain structural entries of matching
     orientation and size.
 
   - New `g/acot` generic method installed for Operator instances.
@@ -3017,7 +3026,7 @@ I can now make some comments that clear up my former misunderstandings:
   it will pass it through the symbolic expressions defined in
   `sicmutils.numsymb`. A few notes on these expressions:
 
-  - They will try to preserve exactness, but if they can't - ie, if you do
+  - They will try to preserve exactness, but if they can't - i.e., if you do
     something like `(cos (an/literal-number 2.2))` - the system will return
     `-.588`. If you call `(cos (an/literal-number 2))`, you'll get the
     expression `(cos 2)`, preserving exactness.
@@ -3101,9 +3110,9 @@ https://github.com/mentat-collective/sicmutils/pull/154):
 - `tanh`: hyperbolic tangent, ie sinh/cosh
 - `sech`: hyperbolic secant, ie 1/cosh
 - `csch`: hyperbolic secant, ie 1/sinh
-- `acosh`: inverse hyperbolic cosine, ie, `(= x (cosh (acosh x)))`
-- `asinh`: inverse hyperbolic sine, ie, `(= x (sinh (asinh x)))`
-- `atanh`: inverse hyperbolic tangent, ie, `(= x (tanh (atanh x)))`
+- `acosh`: inverse hyperbolic cosine, i.e., `(= x (cosh (acosh x)))`
+- `asinh`: inverse hyperbolic sine, i.e., `(= x (sinh (asinh x)))`
+- `atanh`: inverse hyperbolic tangent, i.e., `(= x (tanh (atanh x)))`
 
 These three methods existed in `sicmutils.env`, but not as extensible generics.
 Now they're fully extensible:

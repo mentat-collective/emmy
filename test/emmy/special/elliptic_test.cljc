@@ -23,8 +23,8 @@
   (gen/tuple (sg/reasonable-double)
              gen-k))
 
-(def ^{:doc "valid arguments for the Legendre form of the elliptic functions."}
-  legendre-phi-k
+(def legendre-phi-k
+  "valid arguments for the Legendre form of the elliptic functions."
   (gen/bind
    (gen/double* {:infinite? false
                  :NaN? false

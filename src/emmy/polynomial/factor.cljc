@@ -86,11 +86,10 @@
                   (expt f i)))
               factors))))
 
-(def ^{:private true
-       :doc "Simplifier that flattens nested products, converts singleton calls
-  like `(* x) => x`, and squashes no-argument products like `(*)` into a
-  constant `1`."}
+(def ^:private
   simplify-product
+  "Simplifier that flattens nested products, converts singleton calls like `(* x)
+  => x`, and squashes no-argument products like `(*)` into a constant `1`."
   (rule-simplifier
    (rules/associative '*)
    (rules/unary-elimination '*)
@@ -141,9 +140,9 @@
          cont #(poly->factored-expression %1 %2 simplify)]
      (poly/expression-> unwrapped cont))))
 
-(def ^{:doc "Expression analyzer, identical to [[polynomial/analyzer]] except
-  the symbolic expressions returned are in factored form."}
-  analyzer
+(def analyzer
+  "Expression analyzer, identical to [[polynomial/analyzer]] except the symbolic
+  expressions returned are in factored form."
   (let [symgen (a/monotonic-symbol-generator 16 "-f-")]
     (-> (reify a/ICanonicalize
           (expression-> [_ expr cont v-compare]
@@ -154,13 +153,13 @@
             (a/known-operation? poly/analyzer o)))
         (a/make-analyzer symgen))))
 
-(def ^{:doc "Accepts a single symbolic expression and returns a factored version
- of that expression.
-
- Differs from [[factor-expression]] in that it can handle any expression, not
- just expressions limited to polynomial operations."
-       :arglists '([expr])}
+(def ^{:arglists '([expr])}
   factor
+  "Accepts a single symbolic expression and returns a factored version of that
+  expression.
+
+  Differs from [[factor-expression]] in that it can handle any expression, not
+  just expressions limited to polynomial operations."
   (a/default-simplifier analyzer))
 
 ;; ## Square Root Simplification

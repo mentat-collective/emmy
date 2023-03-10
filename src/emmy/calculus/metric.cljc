@@ -168,7 +168,7 @@
 ;; ### Raising and lowering indices
 
 (defn lower
-  "To make a vector field into a one-form field, ie, a (1,0) tensor into a (0,1)
+  "To make a vector field into a one-form field, i.e., a (1,0) tensor into a (0,1)
   tensor."
   [metric]
   (fn [u]
@@ -180,16 +180,16 @@
          ~(v/freeze u)
          ~(v/freeze metric))))))
 
-(def ^{:doc "Alias for [[lower]]."}
-  vector-field->oneform-field
+(def vector-field->oneform-field
+  "Alias for [[lower]]."
   lower)
 
-(def ^{:doc "Alias for [[lower]]."}
-  drop1
+(def drop1
+  "Alias for [[lower]]."
   lower)
 
 (defn raise
-  "To make a one-form field into a vector field, ie, a (0,1) tensor into a (1,0)
+  "To make a one-form field into a vector field, i.e., a (0,1) tensor into a (1,0)
   tensor."
   [metric basis]
   (let [gi (invert metric basis)]
@@ -204,12 +204,12 @@
            ~(v/freeze omega)
            ~(v/freeze metric)))))))
 
-(def ^{:doc "Alias for [[raise]]."}
-  oneform-field->vector-field
+(def oneform-field->vector-field
+  "Alias for [[raise]]."
   raise)
 
-(def ^{:doc "Alias for [[raise]]."}
-  raise1
+(def raise1
+  "Alias for [[raise]]."
   raise)
 
 (defn drop2

@@ -72,13 +72,12 @@
 ;; `emmy.polynomial.exponent` supplies a few of these that you can choose.
 ;; Set the ordering via the [[*monomial-order*]] dynamic variable.
 
-(def ^{:dynamic true
-       :doc "This variable defines monomial order used in the construction and
-  arithmetic of polynomials. Bind this variable to a comparator on the exponents
-  of each monomial term.
+(def ^:dynamic *monomial-order*
+  "This variable defines monomial order used in the construction and arithmetic of
+  polynomials. Bind this variable to a comparator on the exponents of each
+  monomial term.
 
-  Defaults to [[exponent/graded-lex-order]]."}
-  *monomial-order*
+  Defaults to [[exponent/graded-lex-order]]."
   xpt/graded-lex-order)
 
 ;; The next-simplest polynomial is a constant polynomial:
@@ -177,10 +176,10 @@
               :when (not (v/zero? f-c))]
           (make-term expts f-c))))
 
-(def ^{:doc "Returns the sum of polynomials `u` and `v`. Coefficients paired
-  with matching exponents are combined with [[emmy.generic/add]]."
-       :arglists '([u v])}
+(def ^{:arglists '([u v])}
   add
+  "Returns the sum of polynomials `u` and `v`. Coefficients paired with matching
+  exponents are combined with [[emmy.generic/add]]."
   (ua/merge-fn #'*monomial-order* g/add v/zero? make-term))
 
 (defn sub
@@ -197,7 +196,7 @@
 
 (defn t*ts
   "Multiplies a single term on the left by a vector `v` of terms on the right.
-  Returns a new polynomial (ie, vector of terms)."
+  Returns a new polynomial (i.e., vector of terms)."
   [[tags coeff] v]
   (loop [acc (transient [])
          i 0]

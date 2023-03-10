@@ -14,13 +14,13 @@
             [emmy.util.logic :as ul]
             [emmy.value :as v]))
 
-(def ^{:dynamic true
-       :doc "When bound to a simplifier (a function from symbolic expression =>
-  symbolic expression), this simplifier will be called after every operation
-  performed on `emmy.abstract.number` instances.
+(def ^:dynamic *incremental-simplifier*
+  "When bound to a simplifier (a function from symbolic expression => symbolic
+  expression), this simplifier will be called after every operation performed on
+  `emmy.abstract.number` instances.
 
-  `nil` by default."}
-  *incremental-simplifier* nil)
+  `nil` by default."
+  nil)
 
 (def operator first)
 (def operands rest)

@@ -41,11 +41,11 @@
               :else [[sym @var]]))]
     (into {} (mapcat process) sym->var)))
 
-(def ^{:doc "Map whose values are the symbols of of all namespaces explicitly
- checked and whitelisted for SCI compilation and interesting enough in their own
- right to expose to a user by default. Each value is the sym->var map for the
- corresponding namespace."}
-  ns->publics
+(def ns->publics
+  "Map whose values are the symbols of of all namespaces explicitly
+  checked and whitelisted for SCI compilation and interesting enough in their own
+  right to expose to a user by default. Each value is the sym->var map for the
+  corresponding namespace."
   {'emmy.algebra.fold                   (ns-publics 'emmy.algebra.fold)
    'emmy.complex                        (ns-publics 'emmy.complex)
    'emmy.differential                   (ns-publics 'emmy.differential)
@@ -122,18 +122,19 @@
    'emmy.util.permute                   (ns-publics 'emmy.util.permute)
    'emmy.util.stream                    (ns-publics 'emmy.util.stream)})
 
-(def ^{:doc "SCI namespace map generated from `ns->publics`. Consumers wishing
- to use a more minmal SCI environment, should can select interested namespaces
- from this map. Since in normal (not self-hosted) ClojureScript `ns-publics`
- does not include macros, they are added explicitly."}
-  namespaces
+(def namespaces
+  "SCI namespace map generated from `ns->publics`. Consumers wishing to use a more
+  minimal SCI environment should select their desired namespaces from this map.
+
+  Since in normal (not self-hosted) ClojureScript `ns-publics` does not include
+  macros, they are added explicitly."
   (let [ns-map (u/map-vals sci-ns ns->publics)]
     (merge-with merge ns-map macros/ns-bindings)))
 
-(def ^{:doc "Default sci context options required (currently only `:namespace`
+(def context-opts
+  "Default sci context options required (currently only `:namespace`
   bindings) required to evaluate Emmy forms from inside of an SCI
-  context. Pass these to `sci/init` to generate an sci context."}
-  context-opts
+  context. Pass these to `sci/init` to generate an sci context."
   {:namespaces namespaces
 
    ;; NOTE that these entries are required if you'd like to call the
@@ -142,7 +143,7 @@
    :classes #?(:clj  {'java.lang.Math java.lang.Math}
                :cljs {'js goog/global :allow :all})})
 
-(def ^{:doc "sci context (currently only `:namespace` bindings) required to
-  evaluate Emmy forms via SCI"}
-  context
+(def context
+  "sci context (currently only `:namespace` bindings) required to
+  evaluate Emmy forms via SCI"
   (sci/init context-opts))

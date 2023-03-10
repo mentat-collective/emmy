@@ -67,15 +67,14 @@
 ;; from a var. But forms like `Math/pow` make this tricky, so we go with the map
 ;; described below.
 
-(def ^{:private true
-       :doc "Dict of `<symbol> -> {:sym <symbolic-fn>, :f <evaluated-fn>}`. The
-       keys constitute the set of operations allowed to appear within the body
-       of the compiled function.
+(def ^:private compiled-fn-whitelist
+  "Dict of `<symbol> -> {:sym <symbolic-fn>, :f <evaluated-fn>}`. The keys
+  constitute the set of operations allowed to appear within the body of the
+  compiled function.
 
-       If you're compiling a function for use with the numerical routines, the
-       library assumes that your function operates only on doubles (even though
-       you wrote it with generic routines)."}
-  compiled-fn-whitelist
+  If you're compiling a function for use with the numerical routines, the
+  library assumes that your function operates only on doubles (even though you
+  wrote it with generic routines)."
   {'up {:sym `vector :f vector}
    'down {:sym 'emmy.structure/down
           :f struct/down}
@@ -118,16 +117,13 @@
         'asinh {:sym 'Math/asinh :f #(Math/asinh %)}
         'atanh {:sym 'Math/atanh :f #(Math/atanh %)}])})
 
-(def ^{:private true
-       :doc "Dict of `<symbol> -> <symbolic-fn>`. See [[compiled-fn-whitelist]]
-       for more detail."}
-  sym->resolved-form
+(def ^:private sym->resolved-form
+  "Dict of `<symbol> -> <symbolic-fn>`. See [[compiled-fn-whitelist]] for more
+  detail."
   (u/map-vals :sym compiled-fn-whitelist))
 
-(def ^{:private true
-       :doc "Similar to [[compiled-fn-whitelist]], but restricted to numeric
-  operations."}
-  numeric-whitelist
+(def ^:private numeric-whitelist
+  "Similar to [[compiled-fn-whitelist]], but restricted to numeric operations."
   (dissoc compiled-fn-whitelist 'up 'down))
 
 (defn ^:no-doc apply-numeric-ops
@@ -170,8 +166,8 @@
   *mode*
   :native)
 
-(def ^{:doc "Set of all supported compilation modes."}
-  valid-modes
+(def valid-modes
+  "Set of all supported compilation modes."
   #{:sci :native :source :js :clj})
 
 (defn validate-mode!
@@ -224,7 +220,7 @@
 
 #_(fn [q [mass g]])
 
-;; IE, first the structure, then a vector of the original function's arguments.
+;; I.E., first the structure, then a vector of the original function's arguments.
 
 (defn- state-argv
   "Returns the argument vector for a compiled state function, given:
@@ -255,11 +251,9 @@
 ;; SCI handles this behind its interface, and simply takes a reusable context
 ;; that wraps the fn replacement mapping.
 
-(def ^{:private true
-       :doc "Reuseable context for SCI compilation. Fork with `sci/fork` to
-  ensure that no call to `sci/eval-*` can inject state that another call can
-  see."}
-  sci-context
+(def ^:private sci-context
+  "Reuseable context for SCI compilation. Fork with `sci/fork` to ensure that no
+  call to `sci/eval-*` can inject state that another call can see."
   (sci/init
    {:classes {'Math #?(:cljs js/Math :clj java.lang.Math)}
 
@@ -489,7 +483,7 @@
 
 (defn compile-fn*
   "Returns a compiled, simplified version of `f`, given a function `f` of arity
-  `n` (ie, able to accept `n` symbolic arguments).
+  `n` (i.e., able to accept `n` symbolic arguments).
 
   `n` defaults to `([[f/arity]] f)`.
 

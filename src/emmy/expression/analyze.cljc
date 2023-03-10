@@ -50,12 +50,11 @@
 ;;
 ;; ## Implementation
 
-(def ^{:dynamic true
-       :doc "Exponential expressions with non-integer exponents must become
-       kernels, because they cannot become polynomial exponentials.
+(def ^:dynamic *inhibit-expt-simplify*
+  "Exponential expressions with non-integer exponents must become kernels, because
+  they cannot become polynomial exponentials.
 
-       To disable this guard, bind this variable to `false`."}
-  *inhibit-expt-simplify*
+  To disable this guard, bind this variable to `false`."
   true)
 
 ;; ### Utilities

@@ -9,8 +9,7 @@
             [emmy.expression.analyze :as a]
             [emmy.expression.compile :as c]
             [emmy.simplify :refer [hermetic-simplify-fixture]]
-            [emmy.value :as v]
-            [emmy.structure :as s]))
+            [emmy.value :as v]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 

@@ -112,16 +112,18 @@
     ((T-body A B C)
      (Euler-state->omega-body local))))
 
-(def ^{:doc "Alias for [[T-body-Euler]]."}
-  T-rigid-body T-body-Euler)
+(def T-rigid-body
+  "Alias for [[T-body-Euler]]."
+  T-body-Euler)
 
 (defn L-body-Euler [A B C]
   (fn [local]
     ((L-body A B C)
      (Euler-state->omega-body local))))
 
-(def ^{:doc "Alias for [[L-body-Euler]]."}
-  Euler-state->L-body L-body-Euler)
+(def Euler-state->L-body
+  "Alias for [[L-body-Euler]]."
+  L-body-Euler)
 
 (defn L-space-Euler [A B C]
   (fn [local]
@@ -129,8 +131,9 @@
       (* ((L-body-Euler A B C) local)
          (g/transpose (r/Euler->M angles))))))
 
-(def ^{:doc "Alias for [[L-space-Euler]]."}
-  Euler-state->L-space L-space-Euler)
+(def Euler-state->L-space
+  "Alias for [[L-space-Euler]]."
+  L-space-Euler)
 
 (defn rigid-sysder [A B C]
   (L/Lagrangian->state-derivative

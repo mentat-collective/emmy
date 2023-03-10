@@ -527,7 +527,7 @@
 (declare magnitude-sq)
 
 (defn unit?
-  "Returns true if `q` is a unit quaternion (ie, a 'versor', a quaternion
+  "Returns true if `q` is a unit quaternion (i.e., a 'versor', a quaternion
   with [[magnitude]] equal to one), false otherwise.
 
   To check if the [[magnitude]] of `q` is /approximately/ equal to one, pass a
@@ -587,24 +587,29 @@
 
 ;; ## Constructors
 
-(def ^{:doc "The zero quaternion. All coefficients are equal to 0."}
-  ZERO (->Quaternion 0 0 0 0))
+(def ZERO
+  "The zero quaternion. All coefficients are equal to 0."
+  (->Quaternion 0 0 0 0))
 
-(def ^{:doc "The identity quaternion. The real coefficient is equal to 1, and
-  all coefficients are equal to 0."}
-  ONE (->Quaternion 1 0 0 0))
+(def ONE
+  "The identity quaternion. The real coefficient is equal to 1, and all
+  coefficients are equal to 0."
+  (->Quaternion 1 0 0 0))
 
-(def ^{:doc "Unit quaternion with `i` coefficient equal to 1, all other
-  coefficients equal to 0."}
-  I (->Quaternion 0 1 0 0))
+(def I
+  "Unit quaternion with `i` coefficient equal to 1, all other coefficients equal
+  to 0."
+  (->Quaternion 0 1 0 0))
 
-(def ^{:doc "Unit quaternion with `j` coefficient equal to 1, all other
-  coefficients equal to 0."}
-  J (->Quaternion 0 0 1 0))
+(def J
+  "Unit quaternion with `j` coefficient equal to 1, all other coefficients equal
+  to 0."
+  (->Quaternion 0 0 1 0))
 
-(def ^{:doc "Unit quaternion with `k` coefficient equal to 1, all other
-  coefficients equal to 0."}
-  K (->Quaternion 0 0 0 1))
+(def K
+  "Unit quaternion with `k` coefficient equal to 1, all other coefficients equal
+  to 0."
+  (->Quaternion 0 0 0 1))
 
 (defn make
   "Constructor that builds [[Quaternion]] instances out of a variety of types.
@@ -1236,7 +1241,7 @@
 
   Given an `axis` with numeric entries, [[from-angle-axis]] will explicitly
   normalize `axis` before calling [[from-angle-normal-axis]]. If any entries are
-  non-numerical (ie, symbolic), [[from-angle-axis]] will instead log an
+  non-numerical (i.e., symbolic), [[from-angle-axis]] will instead log an
   assumption that the magnitude of `axis` == 1 and proceed.
 
   NOTE: If you have an already-normalized axis,
@@ -1269,9 +1274,8 @@
   [angle]
   (from-angle-normal-axis angle [0 0 1]))
 
-(def ^{:dynamic true
-       :doc "Tolerance setting for [[->angle-axis]]."}
-  *angle-axis-tolerance*
+(def ^:dynamic *angle-axis-tolerance*
+  "Tolerance setting for [[->angle-axis]]."
   1e-8)
 
 (defn ->angle-axis
@@ -1346,32 +1350,32 @@
 
 ;; ### Real 4x4 matrices
 
-(def ^{:doc "4x4 matrix representation of the quaternion [[ONE]]."}
-  ONE-matrix
+(def ONE-matrix
+  "4x4 matrix representation of the quaternion [[ONE]]."
   (m/by-rows
    [1 0 0 0]
    [0 1 0 0]
    [0 0 1 0]
    [0 0 0 1]))
 
-(def ^{:doc "4x4 matrix representation of the quaternion [[I]]."}
-  I-matrix
+(def I-matrix
+  "4x4 matrix representation of the quaternion [[I]]."
   (m/by-rows
    [0 1 0 0]
    [-1 0 0 0]
    [0 0 0 -1]
    [0 0 1 0]))
 
-(def ^{:doc "4x4 matrix representation of the quaternion [[J]]."}
-  J-matrix
+(def J-matrix
+  "4x4 matrix representation of the quaternion [[J]]."
   (m/by-rows
    [0 0 1 0]
    [0 0 0 1]
    [-1 0 0 0]
    [0 -1 0 0]))
 
-(def ^{:doc "4x4 matrix representation of the quaternion [[K]]."}
-  K-matrix
+(def K-matrix
+  "4x4 matrix representation of the quaternion [[K]]."
   (m/by-rows
    [0 0 0 1]
    [0 0 -1 0]
@@ -1395,20 +1399,20 @@
 
 ;; ### Tensor Representations of Quaternions
 
-(def ^{:doc "4x4 down-up tensor representation of the quaternion [[ONE]]."}
-  ONE-tensor
+(def ONE-tensor
+  "4x4 down-up tensor representation of the quaternion [[ONE]]."
   (m/->structure ONE-matrix))
 
-(def ^{:doc "4x4 down-up tensor representation of the quaternion [[I]]."}
-  I-tensor
+(def I-tensor
+  "4x4 down-up tensor representation of the quaternion [[I]]."
   (m/->structure I-matrix))
 
-(def ^{:doc "4x4 down-up tensor representation of the quaternion [[J]]."}
-  J-tensor
+(def J-tensor
+  "4x4 down-up tensor representation of the quaternion [[J]]."
   (m/->structure J-matrix))
 
-(def ^{:doc "4x4 down-up tensor representation of the quaternion [[K]]."}
-  K-tensor
+(def K-tensor
+  "4x4 down-up tensor representation of the quaternion [[K]]."
   (m/->structure K-matrix))
 
 ;; ### 3x3 Rotation Matrix Representations

@@ -47,7 +47,7 @@
 ;; so as $n \to \infty$, $P_n$ should approach $\pi$, the half-perimeter of a
 ;; circle.
 ;;
-;; Let's start with a square, ie, $n = 4$ and $s_4 = \sqrt{2}$. Clojure's
+;; Let's start with a square, i.e., $n = 4$ and $s_4 = \sqrt{2}$. Clojure's
 ;; `iterate` function will let us create an infinite sequence of side lengths:
 
 (def ^:private side-lengths
@@ -326,8 +326,8 @@
 ;; - $x_l$ is the coordinate of the LEFTmost point, $x_a$
 ;; - $x_r$ is the rightmost point, say, $x_c$ in this example
 ;; - $x$ is the coordinate where we want to evaluate $P(x)$
-;; - $P_l(x)$ is the estimate with all points but the first, ie, $P_{bc}(x)$
-;; - $P_l(x)$ is the estimate with all points but the LAST, ie, $P_{ab}(x)$
+;; - $P_l(x)$ is the estimate with all points but the first, i.e., $P_{bc}(x)$
+;; - $P_l(x)$ is the estimate with all points but the LAST, i.e., $P_{ab}(x)$
 ;;
 ;; Fill in $x = 0$ and rearrange:
 ;;

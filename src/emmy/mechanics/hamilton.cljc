@@ -30,7 +30,7 @@
 
 (defn ->H-state
   "Given a time `t`, coordinate tuple (or scalar) `q` and momentum tuple (or
-  scalar) `p`, returns a 'Hamiltonian state tuple', ie, the state expected by a
+  scalar) `p`, returns a 'Hamiltonian state tuple', i.e., the state expected by a
   Hamiltonian."
   [t q p]
   (up t q p))
@@ -75,14 +75,17 @@
   {:pre [(s/up? H-state) (> (count H-state) 2)]}
   (nth H-state 2))
 
-(def ^{:doc "Alias for [[momentum]]."}
-  state->p momentum)
+(def state->p
+  "Alias for [[momentum]]."
+  momentum)
 
-(def ^{:doc "Alias for [[momentum]]."}
-  momenta momentum)
+(def momenta
+  "Alias for [[momentum]]."
+  momentum)
 
-(def ^{:doc "Alias for [[momentum]]."}
-  P momentum)
+(def P
+  "Alias for [[momentum]]."
+  momentum)
 
 (defn state->qp
   "Given a hamiltonian state, returns a [[emmy.structure/up]] containing the
@@ -136,9 +139,9 @@
                (((partial 2) H) H-state)
                (- (((partial 1) H) H-state)))))
 
-(def ^{:doc "Alias for [[Hamiltonian->state-derivative]], for compatibility with
-  1st edition of SICM."}
-  phase-space-derivative
+(def phase-space-derivative
+  "Alias for [[Hamiltonian->state-derivative]], for compatibility with
+  1st edition of SICM."
   Hamiltonian->state-derivative)
 
 (defn Hamilton-equations [Hamiltonian]
@@ -200,13 +203,12 @@
 ;;  F(u) = 1/2 A u u + b u + c
 ;;  then v = A u + b, so u = A^(-1) (v - b)
 
-(def ^{:dynamic true
-       :doc "If true, the state passed to the fn returned
-       by [[Legendre-transform]] is checked for correctness. If `false` errors
-       may occur. See the code body for more detail.
+(def ^:dynamic *validate-Legendre-transform?*
+  "If true, the state passed to the fn returned by [[Legendre-transform]] is
+  checked for correctness. If `false` errors may occur. See the code body for
+  more detail.
 
-       Defaults to `false`."}
-  *validate-Legendre-transform?*
+  Defaults to `false`."
   false)
 
 (defn ^:no-doc Legendre-transform-procedure
@@ -376,8 +378,9 @@
          p
          (((partial 1) F) H-state)))))
 
-(def ^{:doc "Alias for [[F->CH]]."}
-  F->CT F->CH)
+(def F->CT
+  "Alias for [[F->CH]]."
+  F->CH)
 
 ;; This is used in conjunction with a symplectic test for the C to establish
 ;; that a time-dependent transformation is canonical.

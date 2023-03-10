@@ -343,7 +343,7 @@
                        (@#'sym/n:pi-over-2-mod-pi? x))
                 (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
                              (g/tan (an/literal-number x)))
-                    "if `x` sits on the vertical axis (ie, the angle minus pi/2
+                    "if `x` sits on the vertical axis (i.e., the angle minus pi/2
                     is zero, mod pi), then the cosine is 0 and tan is
                     undefined.")
 

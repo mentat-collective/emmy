@@ -117,7 +117,7 @@
 
 (defn ^:no-doc procedure->nform-field
   "Accepts a function `f` and an optional symbolic `name`, and returns an n-form
-  field, ie, a subtype of [[emmy.operator/Operator]].
+  field, i.e., a subtype of [[emmy.operator/Operator]].
 
   `f` should be a function from n vector field arguments to a smooth real-valued
   function `g` of a manifold.
@@ -139,7 +139,7 @@
 
 (defn ^:no-doc procedure->oneform-field
   "Accepts a function `f` and an optional symbolic `name`, and returns a one-form
-  field, ie, a subtype of [[emmy.operator/Operator]].
+  field, i.e., a subtype of [[emmy.operator/Operator]].
 
   `f` should be a function from a vector field to a smooth real-valued function
   `g` of a manifold."
@@ -355,12 +355,12 @@
         name `(~'d ~(v/freeze f))]
     (procedure->oneform-field op name)))
 
-(def ^{:doc "Alias for [[function->oneform-field]].
+(def differential-of-function
+  "Alias for [[function->oneform-field]].
   One of the two incompatible definitions of differential.
 
   This differential is a special case of exterior derivative. The other one
-  lives at [[map/differential]]."}
-  differential-of-function
+  lives at [[map/differential]]."
   function->oneform-field)
 
 ;; ## Wedge Product (from Wedge.scm)

@@ -141,8 +141,8 @@
           (v/one-like (apply f args)))
         (with-meta meta))))
 
-(def ^{:doc "Identity function. Returns its argument."}
-  I
+(def I
+  "Identity function. Returns its argument."
   identity)
 
 (defn- identity-like [f]
@@ -343,19 +343,17 @@
                       (first arities)
                       (last arities)])))))
 
-(def ^{:no-doc true
-       :doc "Returns the arity of the function f. Computing arities of clojure
+(def ^:no-doc reflect-on-arity
+  "Returns the arity of the function f. Computing arities of clojure
   functions is a bit complicated. It involves reflection, so the results are
-  definitely worth memoizing."}
-  reflect-on-arity
+  definitely worth memoizing."
   (core/memoize
    #?(:cljs js-arity :clj jvm-arity)))
 
-(def ^{:dynamic true
-       :doc "If true, attempting to pass two functions of incompatible arity
+(def ^:dynamic *strict-arity-checks*
+  "If true, attempting to pass two functions of incompatible arity
   into any binary function, or into [[combine-arities]], will throw. False by
-  default."}
-  *strict-arity-checks*
+  default."
   false)
 
 #?(:clj

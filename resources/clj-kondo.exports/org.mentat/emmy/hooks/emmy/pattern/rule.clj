@@ -26,14 +26,14 @@
   [node]
   (= :unquote-splicing (:tag node)))
 
-(def ^{:doc "Returns true if the supplied `node` is either of the unquote
-forms (`:unquote` or `:unquote-splicing`, false otherwise.)"}
-  any-unquote?
+(def any-unquote?
+  "Returns true if the supplied `node` is either of the unquote
+  forms (`:unquote` or `:unquote-splicing`, false otherwise.)"
   (some-fn unquote? unquote-splice?))
 
-(def ^{:doc "Returns true if the supplied `node` is a collection, ie, a list,
-  vector or map, false otherwise."}
-  coll-node?
+(def coll-node?
+  "Returns true if the supplied `node` is a collection, i.e., a list,
+  vector or map, false otherwise."
   (some-fn api/list-node? api/vector-node? api/map-node?))
 
 (defn binding-form?
@@ -50,12 +50,12 @@ forms (`:unquote` or `:unquote-splicing`, false otherwise.)"}
   [sym]
   (contains? #{'?? '$$} (:value sym)))
 
-(def ^{:doc "Given any number of nil-or-result producing functions, returns a
+(def match-first
+  "Given any number of nil-or-result producing functions, returns a
   new function (of a single `node`) that will
 
-- try all functions from left to right on the `node`
-- return the first non-nil result encountered."}
-  match-first
+  - try all functions from left to right on the `node`
+  - return the first non-nil result encountered."
   some-fn)
 
 (defn match-any

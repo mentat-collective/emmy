@@ -349,16 +349,16 @@
 ;; zero, one and identity don't make sense unless you interpret these as
 ;; coefficients on a power series.
 
-(def ^{:doc "[[PowerSeries]] instance representing the constant 0."}
-  zero
+(def zero
+  "[[PowerSeries]] instance representing the constant 0."
   (power-series* [0]))
 
-(def ^{:doc "[[PowerSeries]] instance representing the constant 1."}
-  one
+(def one
+  "[[PowerSeries]] instance representing the constant 1."
   (power-series* [1]))
 
-(def ^{:doc "[[PowerSeries]] instance representing the identity function."}
-  identity
+(def identity
+  "[[PowerSeries]] instance representing the identity function."
   (power-series* [0 1]))
 
 (defn constant
@@ -670,7 +670,7 @@
 
 (defn binomial-series
   "Returns a [[PowerSeries]] instance representing a
-  [Binomial series](https://en.wikipedia.org/wiki/Binomial_series), ie, the
+  [Binomial series](https://en.wikipedia.org/wiki/Binomial_series), i.e., the
   taylor series of the function $f$ given by
 
   ```

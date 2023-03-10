@@ -13,20 +13,16 @@
             [emmy.util :as u]
             [emmy.value :as v]))
 
-(def ^{:private true
-       :doc "Historical preference is to write `sin^2(x)` rather
-       than `(sin(x))^2`."}
-  rewrite-trig-powers
+(def ^:private rewrite-trig-powers
+  "Historical preference is to write `sin^2(x)` rather than `(sin(x))^2`."
   (R/choice
    (R/rule (expt ((? f #{'sin 'cos 'tan}) ?x) 2) => ((expt (? f) 2) ?x))
    (R/return nil)))
 
-(def ^{:private true
-       :doc "The simplifier returns sums of products; for negative summands the
-  simplifier negates by wrapping with `(* -1 ...)`. For rendering, we prefer to
-  use a unary minus."}
-  rewrite-negation
-
+(def ^:private rewrite-negation
+  "The simplifier returns sums of products; for negative summands the simplifier
+  negates by wrapping with `(* -1 ...)`. For rendering, we prefer to use a unary
+  minus."
   (R/ruleset
    (* (? _ #{-1 -1.0}) ?x)               => (u- ?x)
    (* (? _ #{-1 -1.0}) ??x)              => (u- (* ??x))
@@ -237,10 +233,9 @@
 (def ^:private superscript-pattern
   #"(.+)↑([0-9a-zA-ZϖγηΦνΩδυσιΔρϵωϱςψΠπϑΞκφχζΨτΓΛΘΥμθαℓβΣξλφε]+)$")
 
-(def ^{:private true
-       :doc "Greek letter names we want to recognize that aren't supported by
-  TeX, mapped to their unicode characters."}
-  non-TeX-greek
+(def ^:private non-TeX-greek
+  "Greek letter names we want to recognize that aren't supported by TeX, mapped to
+  their unicode characters."
   {"Alpha" "Α"
    "Beta" "Β"
    "Epsilon" "Ε"
@@ -255,10 +250,9 @@
    "Tau" "Τ"
    "Chi" "Χ"})
 
-(def  ^{:private true
-        :doc "Mapping of TeX-supported characters (Greek letter names and a few
-  others) to their corresponding unicode characters."}
-  sym->unicode
+(def ^:private sym->unicode
+  "Mapping of TeX-supported characters (Greek letter names and a few others) to
+  their corresponding unicode characters."
   {"alpha" "α"
    "beta" "β"
    "gamma" "γ" "Gamma" "Γ"
@@ -285,19 +279,17 @@
    "ell" "ℓ"
    "ldots" "..."})
 
-(def ^{:private true
-       :doc "Map of of TeX-compatible greek letter names to their \\-prefixed
-  LaTeX code versions. alpha -> \\alpha, for example."}
-  TeX-letters
+(def ^:private TeX-letters
+  "Map of of TeX-compatible greek letter names to their \\-prefixed LaTeX code
+  versions. alpha -> \\alpha, for example."
   (into {} (map (fn [[k]]
                   [k (str "\\" k)]))
         sym->unicode))
 
-(def ^{:private true
-       :doc "Full mapping of special-cased TeX symbols to their TeX codes. This
-  includes all greek letters in both english ('alpha') and unicode ('α')
-  versions, plus a few more special-cased symbols."}
-  TeX-map
+(def ^:private TeX-map
+  "Full mapping of special-cased TeX symbols to their TeX codes. This includes all
+  greek letters in both english ('alpha') and unicode ('α') versions, plus a few
+  more special-cased symbols."
   (let [sym->tex (->> (set/map-invert sym->unicode)
                       (u/map-vals #(str "\\" %)))]
     (merge TeX-letters
@@ -345,9 +337,9 @@
     ##-Inf "-∞"
     nil))
 
-(def ^{:doc "Converts an S-expression to printable infix form. Numeric exponents
-  are written as superscripts. Partial derivatives get subscripts."}
-  ->infix
+(def ->infix
+  "Converts an S-expression to printable infix form. Numeric exponents are
+  written as superscripts. Partial derivatives get subscripts."
   (make-infix-renderer
    :precedence-map '{D 9, partial 9,
                      expt 8,
@@ -420,16 +412,14 @@
     ##-Inf "-\\infty"
     nil))
 
-(def ^{:dynamic true
-       :doc "If true, [[->TeX]] will render down tuples as vertical matrices
-  with square braces. Defaults to false."}
-  *TeX-vertical-down-tuples*
-  false)
+(def ^:dynamic *TeX-vertical-down-tuples*
+  "If true, [[->TeX]] will render down tuples as vertical matrices with square
+  braces. Defaults to false." false)
 
-(def ^{:dynamic true
-       :doc "If true, [[->TeX]] will render symbols with more than 1 character
-  using a sans-serif typestyle via `\\mathsf`. Defaults to true."}
-  *TeX-sans-serif-symbols* true)
+(def ^:dynamic *TeX-sans-serif-symbols*
+  "If true, [[->TeX]] will render symbols with more than 1 character
+  using a sans-serif typestyle via `\\mathsf`. Defaults to true."
+  true)
 
 (defn- displaystyle [s]
   (str "\\displaystyle{" s "}"))
@@ -603,8 +593,8 @@
              "\n\\end{equation}"))
       tex-string)))
 
-(def ^{:doc "Converts an S-expression to JavaScript."}
-  ->JavaScript
+(def ->JavaScript
+  "Converts an S-expression to JavaScript."
   (let [make-js-vector #(str \[ (s/join ", " %) \])]
     (make-infix-renderer
      :precedence-map '{not 9, D 8, :apply 8, u- 7, * 5, / 5, - 3, + 3,

@@ -2,8 +2,7 @@
 
 (ns emmy.expression.render-test
   (:refer-clojure :exclude [+ - * /])
-  (:require #?(:cljs [goog.string :refer [format]])
-            [clojure.test :refer [is deftest testing use-fixtures]]
+  (:require [clojure.test :refer [is deftest testing use-fixtures]]
             [emmy.abstract.function :as af]
             [emmy.calculus.derivative :refer [D taylor-series]]
             [emmy.expression.render :as r :refer [->infix ->TeX ->JavaScript]]
@@ -309,11 +308,6 @@
          (->infix ((series/power-series 1 2 3 4) 'x))))
   (is (= "1 + 2\\,x + 3\\,{x}^{2} + 4\\,{x}^{3} + \\ldots"
          (->TeX ((series/power-series 1 2 3 4) 'x)))))
-
-(defn ^:private make-symbol-generator
-  [p]
-  (let [i (atom 0)]
-    (fn [] (symbol (format "%s%d" p (swap! i inc))))))
 
 (deftest JS
   (is (= "a + b + Math.sin(theta)"

@@ -312,7 +312,7 @@
     1))
 
 (defn dimension
-  "If `s` is sequential, returns its dimension, ie, the total number of
+  "If `s` is sequential, returns its dimension, i.e., the total number of
   non-sequential entries in the structure. Else, returns 1."
   [s]
   (if (sequential? s)
@@ -456,28 +456,28 @@
   (boolean
    (two-tensor-info s)))
 
-(def ^{:doc "Returns true if `s` is a `down` structure containing all `down`
-structures of the same size, false otherwise."
-       :arglists '([s])}
+(def ^{:arglists '([s])}
   two-down?
+  "Returns true if `s` is a `down` structure containing all `down` structures of
+  the same size, false otherwise."
   (tensor-pred ::down ::down))
 
-(def ^{:doc "Returns true if `s` is an `up` structure containing all `up`
-structures of the same size, false otherwise."
-       :arglists '([s])}
+(def ^{:arglists '([s])}
   two-up?
+  "Returns true if `s` is an `up` structure containing all `up` structures of the
+  same size, false otherwise."
   (tensor-pred ::up ::up))
 
-(def ^{:doc "Returns true if `s` is an `up` structure containing all `down`
-structures of the same size, false otherwise."
-       :arglists '([s])}
+(def ^{:arglists '([s])}
   up-of-downs?
+  "Returns true if `s` is an `up` structure containing all `down` structures of
+  the same size, false otherwise."
   (tensor-pred ::up ::down))
 
-(def ^{:doc "Returns true if `s` is a `down` structure containing all `up`
- structures of the same size, false otherwise."
-       :arglists '([s])}
+(def ^{:arglists '([s])}
   down-of-ups?
+  "Returns true if `s` is a `down` structure containing all `up` structures of
+  the same size, false otherwise."
   (tensor-pred ::down ::up))
 
 ;; ## Constructors
@@ -681,7 +681,7 @@ structures of the same size, false otherwise."
   to three arguments:
 
   - the entry in the structure
-  - a vector of its 'access chain', ie, the path you'd pass
+  - a vector of its 'access chain', i.e., the path you'd pass
     to [[clojure.core/get-in]] to access the entry
   - a vector of orientations associated with each index in the access chain
 
@@ -811,8 +811,8 @@ structures of the same size, false otherwise."
   (v/zero-like
    (transpose s)))
 
-(def ^{:doc "Alias for [[compatible-zero]]."}
-  dual-zero
+(def dual-zero
+  "Alias for [[compatible-zero]]."
   compatible-zero)
 
 (defn compatible-shape

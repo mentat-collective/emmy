@@ -365,7 +365,7 @@
                           (q/complex-2 q)))))))
 
 (deftest arithmetic-tests
-  (testing "Quaternions form a skew field, ie, a division ring."
+  (testing "Quaternions form a skew field, i.e., a division ring."
     (with-comparator (v/within 5e-4)
       (sl/field 100
                 (sg/quaternion (sg/reasonable-double))
