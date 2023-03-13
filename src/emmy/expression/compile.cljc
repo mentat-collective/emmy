@@ -195,6 +195,13 @@
   #?(:cljs (set! *mode* mode)
      :clj  (alter-var-root #'*mode* (constantly mode))))
 
+(def ^{:private true}
+  primitive-state-symbols
+  "Fixed compiled function parameter symbols for input and output state and
+  parameters when compiling in primitive mode. A type hint is attached to
+  the symbols to avoid reflection."
+  (mapv #(with-meta % {:tag 'doubles}) '(ys yps ps)))
+
 ;; Native compilation works on the JVM and in ClojureScript. Enable this mode
 ;; by wrapping your call in
 ;;
@@ -223,25 +230,73 @@
 ;; I.E., first the structure, then a vector of the original function's arguments.
 
 (defn- state-argv
-  "Returns the argument vector for a compiled state function, given:
+  "Computes the argument list corresponding to `state-model` according to
+  the `:calling-convention` in the code object. The argument list will be
+  placed stored in the `:argv` key, and the original state model itself
+  in `:model`.
 
-  - `params`: a seq of symbols equal in count to the original state function's
-    args
-  - `state-model`: a sequence of variables representing the structure of the
-    nested function returned by the state function
-  - `opts`, a dictionary of compilation options.
+  - `state-model`: a structure of symbols representing the state value
+    operated on by the state derivative
 
-  See [[compile-state-fn*]] for a description of the options accepted in
-  `opts`."
-  [params state-model {:keys [flatten? generic-params?]
-                       :or {flatten? true
-                            generic-params? true}}]
-  (let [state (into [] (if flatten?
-                         (flatten state-model)
-                         state-model))]
-    (if generic-params?
-      [state (into [] params)]
-      [state])))
+  Effectively, there are four classes of signature handled here.
+
+  In each of the following displays, the parameter argument list
+  `[p0...]` will be present only if the key `:params` is present
+  on the code object, corresponding to the use of the
+  `:generic-params?` compilation option.
+
+  - `:structure => (fn [[t [x0 x1] [v0 v1]] [p0 p1 ...]] ...) `
+
+  This is the typical signature for a state derivative discussed in
+  SICM. It maps a state tuple to its time derivative; structure in,
+  structure out.
+
+  - `:flat => (fn [[t x0 x1 v0 v1] [p0 p1 ...]] ...)`
+
+  ODE solvers prefer to work with flat vectors, and so this calling
+  convention unrolls the state model into an ordered list of parameters.
+
+  - `:primitive => (fn [ys yps ps])`
+
+  ODE solvers can gain yet more efficiency if they may allocate
+  long-lived input and output vectors. Bindings for the individual
+  state elements are inserted into the code's local variables.
+  The input vector `ys` should have the same length as the flat
+  form of `state-model`. The derivative should be returned by
+  mutating the array `yps`. The parameters `ps` will also be a
+  primitive array, which (like `ys`) should be considered read-only.
+
+  = `:native => (fn [t [x0 x1] [v0 v1]] ...)
+
+  It is useful to compile functions with arbitrary argument structure
+  too. The native convention allows you to get the same argument list
+  that you provide to `fn` to create the function. This is convenient
+  for use with univariate integration libraries."
+  [{:keys [calling-convention params] :as code} state-model]
+  (let [argv (case calling-convention
+               ;; TODO: having these be fixed is unhygienic
+               :primitive primitive-state-symbols
+               :structure [(into [] state-model)]
+               :flat [(into [] (flatten state-model))]
+               :native state-model
+               :else (u/unsupported (str "Unsupported calling-convention " calling-convention)))]
+    (assoc code
+           :model state-model
+           :argv (if (and params (not= calling-convention :primitive))
+                   (conj argv (into [] params))
+                   argv))))
+
+(defn- primitive-bindings
+  [{:keys [argv target calling-convention model] :as code}]
+  (case calling-convention
+    :primitive (update code :locals concat
+                       (map-indexed (fn [i v]
+                                      [v (case target
+                                           :clj `(aget ~(first argv) ~i)
+                                           :js (str (first argv) "[" i "]"))])
+                                    (flatten model))
+                       )
+    code))
 
 ;; The following functions compile state functions in either native or SCI
 ;; mode. The primary difference is that native compilation requires us to
@@ -268,7 +323,7 @@
 
    [a [b c [d e] f]] -> \"[a, [b, c, [d, e], f]]\"
 
-   However, [] (which occurs in parameterless state functions)
+   However, [] (which occurs in parameter-free state functions)
    will appear as \"_\" in the argument list. While it's not
    wrong to destructure an empty list in JavaScript, nil is
    not iterable, and so can't serve as an empty list argument
@@ -302,55 +357,44 @@
     The vector may be nested for sequence destructuring.
 
   - `body`: a function body making use of any symbol in argv above"
-  [argv {:keys [bindings body]}]
+  [{:keys [argv locals body]}]
   (w/postwalk-replace
    sym->resolved-form
-   (if (seq bindings)
+   (if (seq locals)
      `(fn [~@argv]
-        (let ~(into [] cat bindings)
+        (let ~(into [] cat locals)
           ~body))
      `(fn [~@argv]
         ~body))))
 
 (defn- compile->js
   "Returns an array containing JavaScript source for a function that implements
-  `body` in a form suitable for application of the Function constructor, given:
-
-  - `argv`: a vector of symbols to serve as the function's arguments.
-    The vector may be nested for sequence destructuring.
-
-  - `body`: a function body making use of any symbol in argv above"
-  [argv {:keys [bindings body]}]
+  its code object argument in a form suitable for application of the Function
+  constructor."
+  [{:keys [argv locals body]}]
   (let [argv        (map commafy-arglist argv)
         code        (s/join
                      (concat
-                      (for [[var val] bindings]
+                      (for [[var val] locals]
                         (str "  const " var " = " (render/->JavaScript val) ";\n"))
                       ["  return " (render/->JavaScript body) ";"]))]
     (into [] (concat argv [code]))))
 
 (defn- compile-native
-  "Returns a natively-evaluated function that implements `body`, given:
-
-  - `argv`: a vector of symbols to serve as the function's arguments.
-    The vector may be nested for sequence destructuring.
-
-  - `code`: a map containing `bindings` and `body` keys"
-  [argv code]
-  #?(:clj (eval (compile->clj argv code))
-     :cljs (comp js->clj (apply js/Function (compile->js argv code)))))
+  "Dispatches the `code` object to the compiler corresponding to the
+  current runtime environment."
+  [code]
+  #?(:clj (eval (compile->clj code))
+     :cljs (comp js->clj (apply js/Function (compile->js code)))))
 
 (defn- compile-sci
   "Returns a Clojure function evaluated using SCI. The returned fn implements
-  `body`, given:
+  `code`, given:
 
-  - `argv`: a vector of symbols to serve as the function's arguments.
-    The vector may be nested for sequence destructuring.
-
-  - `body`: a function body making use of any symbol in argv above"
-  ([argv body]
+ - `code`: a code object, which we hand off to the Clojure compiler"
+  ([code]
    (sci-eval
-    (compile->clj argv body))))
+    (compile->clj code))))
 
 ;; ### State Fn Interface
 ;;
@@ -364,28 +408,35 @@
   and all non-structural elements to gensymmed symbols."
   [state gensym-fn]
   (letfn [(rec [s]
-            (if (struct/structure? s)
-              (mapv rec s)
-              (gensym-fn 'y)))]
-    (rec state)))
+               (if (struct/structure? s)
+                 (mapv rec s)
+                 (gensym-fn 'y)))]
+      (rec state)))
 
 (defn- cse
   "Invokes [[emmy.expression.cse/extract-common-subexpressions]] on `x`.
 
-   The results of the elimination are operated on by a constant-folding
-   pass and presented in a map with the keys `:bindings` and `body`.
-   If no suitable subexpressions were found, the binding list will
-   be empty (though body might still reflect changes due to the constant
-   folding)."
+  Local bindings for the common subexpressions found are appended to the
+  `:locals` field of the code object, and the (possibly) simplified
+  code replaces that int the `:body` field."
   ([x]
    (cse x {}))
   ([x opts]
    (extract-common-subexpressions
-    x
-    (fn [body bindings]
-      {:bindings (mapv (fn [[k v]] [k (apply-numeric-ops v)]) bindings)
-       :body (apply-numeric-ops body)})
-    opts)))
+    (:body x)
+    (fn [new-body new-locals]
+      (-> x
+          (update :locals into new-locals)
+          (assoc :body new-body)))
+     opts)))
+
+(defn- constant-fold
+  "Applies a constant-folding pass to the local expressions and the body
+   of a code object."
+  [code]
+  (-> code
+      (update :locals #(mapv (fn [[k v]] [k (apply-numeric-ops v)]) %))
+      (update :body apply-numeric-ops)))
 
 (defn compile-state-fn*
   "Returns a compiled, simplified function with signature `(f state params)`,
@@ -394,7 +445,9 @@
   - a state function that can accept a symbolic arguments
 
   - `params`; really any sequence of count equal to the number of arguments
-    taken by `f`. The values are ignored.
+    taken by `f`. The values are ignored. If the specific value `false` is
+    provided, then `f` is considered to be the function to compile itself,
+    and not the producer of such a function via application of parameters.
 
   - `initial-state`: Some structure of the same shape as the argument expected
     by the fn returned by the state function `f`. Only the shape matters; the
@@ -402,9 +455,40 @@
 
   - an optional argument `opts`. Options accepted are:
 
-    - `:flatten?`: if `true` (default), the returned function will have
-      signature `(f <flattened-state> [params])`. If `false`, the first arg of the
-      returned function will be expected to have the same shape as `initial-state`
+    - `:calling-convention`: May have one of the following values. (In
+      each of these examples, assume that the initial state
+      `(up 1 (up 2 3) (up 3 4)) has been provided.)
+
+      - `:structure`: The arguments to the compiled function will have
+        the same shape as the initial-state, and elements of that state
+        will be made available to the function via argument destructuring
+        in function signature, e.g.:
+
+        ```clojure
+        (fn [[y1 [y2 y3] [y4 y5]]] [p1 ...] ...)
+        ```
+
+      - `:flat`: The compiled function will expect the state in flattend
+        form, which may be provided by any flat Clojure sequence:
+
+        ```clojure
+        (fn [[y1 y2 y3 y4 y5] [p1 ...]] ...)
+        ```
+
+      - `:primitive`: The compiled function will expect a primitve array
+        containing the state in flat form to be passed as the first
+        argument, and will return its value by mutating its second argument,
+        which will also be a primitive array of the same size. The parameters
+        will be provided via a third primitive array:
+
+        ```clojure
+        (fn [ys yps ps] ...)
+        ```
+
+        This is the fastest form, as no allocations are needed to destructure
+        arguments list or to construct the return value, but requires the use
+        of primitive arrays (not general Clojure sequences, even if mutable) by
+        the caller. The generated code will use `aget` and `aset` on the arrays.
 
     - `:generic-params?`: if `true` (default), the returned function will take a
       second argument for the parameters of the state derivative and keep params
@@ -423,33 +507,51 @@
   cache, see `compile-state-fn`."
   ([f params initial-state]
    (compile-state-fn* f params initial-state {}))
-  ([f params initial-state {:keys [generic-params?
+  ([f params initial-state {:keys [mode
+                                   calling-convention
+                                   generic-params?
                                    gensym-fn
-                                   mode
                                    deterministic?]
-                            :or {generic-params? true
+                            :or {mode *mode*
+                                 calling-convention :structure
+                                 generic-params? true
                                  gensym-fn (a/monotonic-symbol-generator 4)
-                                 deterministic? false}
-                            :as opts}]
+                                 deterministic? false}}]
    (let [sw            (us/stopwatch)
-         params        (if generic-params?
-                         (for [_ params] (gensym-fn 'p))
-                         params)
+         mode          (validate-mode! mode)
+         target        (case mode
+                         (:clj :sci) :clj
+                         (:source :native) #?(:clj :clj :cljs :js)
+                         :js :js)
+         wrap          (fn [code & {:as opts}] (merge {:body code :locals []} opts))
          generic-state (state->argv initial-state gensym-fn)
-         g             (apply f params)
-         code          (-> (g generic-state)
+         params        (and params
+                            (if generic-params?
+                              (for [_ params] (gensym-fn 'p))
+                              params))
+         g             (if-not (false? params) (apply f params) f)
+         h             (case calling-convention
+                         :native (apply g generic-state)
+                         (g generic-state))
+         _             (println "generic-state" generic-state "initial-state" initial-state)
+         code          (-> h
                            (g/simplify)
                            (v/freeze)
-                           (cse {:gensym-fn #(gensym-fn '_) :deterministic? deterministic?}))
-         compiler      (case (validate-mode! (or mode *mode*))
+                           (wrap :target target
+                                 :calling-convention calling-convention
+                                 :params (when generic-params? params))
+                           (cse {:gensym-fn #(gensym-fn '_) :deterministic? deterministic?})
+                           (state-argv generic-state)
+                           (constant-fold)
+                           (primitive-bindings))
+         compiler      (case mode
                          :source #?(:clj compile->clj :cljs compile->js)
                          :clj compile->clj
                          :js compile->js
                          :native compile-native
                          :sci compile-sci)
-         argv          (state-argv params generic-state opts)
-         compiled-fn   (compiler argv code)]
-     (log/info "compiled state function in" (us/repr sw))
+         compiled-fn   (compiler code)]
+     (log/info "compiled function in" (us/repr sw))
      compiled-fn)))
 
 ;; TODO: `compile-state-fn` should be more discerning in how it caches!
@@ -495,20 +597,8 @@
   cache, see `compile-fn`."
   ([f] (compile-fn* f (retrieve-arity f)))
   ([f n]
-   (let [sw       (us/stopwatch)
-         args     (repeatedly n #(gensym 'x))
-         body     (-> (apply f args)
-                      (g/simplify)
-                      (v/freeze)
-                      (cse))
-         compiled (case (compiler-mode)
-                    :source (#?(:clj compile->clj :cljs compile->js) args body)
-                    :js (compile->js args body)
-                    :clj (compile->clj args body)
-                    :native (compile-native args body)
-                    :sci (compile-sci args body))]
-     (log/info "compiled function of arity" n "in" (us/repr sw) "with mode" *mode*)
-     compiled)))
+   (let [argv     (into [] (repeatedly n #(gensym 'x)))]
+     (compile-state-fn* f false argv {:calling-convention :native}))))
 
 (defn compile-fn
   "Memoized version of [[compile-fn*]]. See that function's docs for more detail.
@@ -531,3 +621,16 @@
          (let [compiled (compile-fn* f n)]
            (swap! fn-cache assoc [f n mode] compiled)
            compiled))))))
+
+(comment
+  (compile-fn* g/+ 2)
+  ((compile-fn* g/+ 2) 6 7)
+  ((compile-fn* g/+ 3) 'y 'x 7)
+  (def c (compile-state-fn* g/+ false ['x 'y 'z]
+                            {:calling-convention :native
+                             :mode :native}))
+
+  c
+
+  (c 1 2 4)
+  )

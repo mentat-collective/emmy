@@ -90,7 +90,7 @@
                             '[m1 m2 l1 l2 g]
                             (up 't (up 'theta 'phi) (up 'thetadot 'phidot))
                             {:mode :js
-                             :flatten? false
+                             :calling-convention :structure
                              :generic-params? false
                              :gensym-fn (a/monotonic-symbol-generator 2)
                              :deterministic? true})))
@@ -115,6 +115,7 @@
           '[1 1 1 1 'g]
           (up 't (up 'theta 'phi) (up 'thetadot 'phidot))
           {:mode :js
+           :calling-convention :flat
            :gensym-fn (a/monotonic-symbol-generator 2)
            :deterministic? true})))
 
@@ -164,5 +165,6 @@
                []
                (e/->H-state 't (up 'theta 'psi) (down 'p_theta 'p_psi))
                {:mode :js
+                :calling-convention :flat
                 :gensym-fn (a/monotonic-symbol-generator 2)
                 :deterministic? true}))))))

@@ -159,8 +159,10 @@
                 "  const _12 = Math.pow(_08, 2.0);\n"
                 "  const _13 = Math.pow(_09, 2.0);\n"
                 "  return [1.0, [y05 / A, (- y07 * _09 + y06) / (A * _12), (A * y07 * _12 + C * y07 * _13 - C * y06 * _09) / (A * C * _12)], [(A * gMR * Math.pow(_09, 4.0) - 2.0 * A * gMR * _13 - y06 * y07 * _13 + Math.pow(y06, 2.0) * _09 + Math.pow(y07, 2.0) * _09 + A * gMR - y06 * y07) / (A * Math.pow(_08, 3.0)), 0.0, 0.0]];"))]
-             (c/compile-state-fn* (fn [] sysder) [] top-state {:mode :js
-                                                              :gensym-fn (a/monotonic-symbol-generator 2)})))))
+             (c/compile-state-fn* (fn [] sysder) [] top-state
+               {:mode :js
+                :calling-convention :flat
+                :gensym-fn (a/monotonic-symbol-generator 2)})))))
 
   (deftest section-3-5
     (testing "p.221"

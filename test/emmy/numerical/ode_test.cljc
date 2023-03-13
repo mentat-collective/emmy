@@ -37,14 +37,14 @@
           (is (near? (Math/exp 1) (first result)))))))
 
   (testing "y' = y, new interface"
-    (let [f (o/stream-integrator (fn [_ y out] (aset-double out 0 (aget y 0))) 0 [1] {:epsilon 1e-8})]
+    (let [f (o/stream-integrator (fn [_ ^doubles y ^doubles out] (aset-double out 0 (aget y 0))) 0 [1] {:epsilon 1e-8})]
       (doseq [x (range 0 1 0.01)]
         (let [[ex] (f x)]
           (is (near? (Math/exp x) ex))))
       (f)))
 
   (testing "y'' = - y, new interface"
-    (let [f (o/stream-integrator (fn [_ y out]
+    (let [f (o/stream-integrator (fn [_ ^doubles y ^doubles out]
                                    (aset-double out 0 (aget y 1))
                                    (aset-double out 1 (- (aget y 0))))
                                  0 [1 0] {:epsilon 1e-8})]
@@ -55,7 +55,7 @@
       (f)))
 
   (testing "stream integrator throws if used backwards"
-    (let [f (o/stream-integrator (fn [_ y out]
+    (let [f (o/stream-integrator (fn [_ ^doubles y ^doubles out]
                                    (aset-double out 0 (aget y 0)))
                                  0 [1] {:epsilon 1e-8})]
       (is (f 10))

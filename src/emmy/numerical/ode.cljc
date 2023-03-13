@@ -173,7 +173,7 @@
 
 
 
-(defn integration-opts
+(defn- integration-opts
   "Returns a map with the following kv pairs:
 
   - `:integrator` an instance of `GraggBulirschStoerIntegrator`
@@ -187,9 +187,15 @@
         evaluation-count   (atom 0)
         flat-initial-state (flatten initial-state)
         derivative-fn      (if compile?
-                             (let [f' (c/compile-state-fn state-derivative derivative-args initial-state)]
-                               (fn [y]
-                                 (f' y (or derivative-args []))))
+                             ;; we have to use the starred version of the compiler here,
+                             ;; because the `evolve` and `state-advancer` interfaces do
+                             ;; not provide a means of working with generic parameters,
+                             ;; so we might as well bake the parameters into the function
+                             ;; body...but the compiled function cache currently ignores
+                             ;; this. TODO: expand the memoization key
+                             (c/compile-state-fn* state-derivative derivative-args initial-state
+                                                  {:calling-convention :flat
+                                                   :generic-params? false})
                              (do (log/warn "Not compiling function for ODE analysis")
                                  (let [d:dt (apply state-derivative derivative-args)
                                        array->state #(struct/unflatten % initial-state)]
