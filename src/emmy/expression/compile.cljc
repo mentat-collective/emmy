@@ -195,12 +195,13 @@
   #?(:cljs (set! *mode* mode)
      :clj  (alter-var-root #'*mode* (constantly mode))))
 
-(def ^{:private true}
+(defn-
   primitive-state-symbols
-  "Fixed compiled function parameter symbols for input and output state and
+  "Generates compiled function argument symbols for input and output state and
   parameters when compiling in primitive mode. A type hint is attached to
   the symbols to avoid reflection."
-  (mapv #(with-meta % {:tag 'doubles}) '(ys yps ps)))
+  [gensym]
+  (mapv #(with-meta % {:tag 'doubles}) (repeatedly 3 gensym)))
 
 ;; Native compilation works on the JVM and in ClojureScript. Enable this mode
 ;; by wrapping your call in
@@ -272,14 +273,14 @@
   too. The native convention allows you to get the same argument list
   that you provide to `fn` to create the function. This is convenient
   for use with univariate integration libraries."
-  [{:keys [calling-convention params] :as code} state-model]
+  [{:keys [calling-convention params] :as code} gensym-fn state-model]
   (let [argv (case calling-convention
-               ;; TODO: having these be fixed is unhygienic
-               :primitive primitive-state-symbols
+               :primitive (primitive-state-symbols #(gensym-fn "a"))
                :structure [(into [] state-model)]
                :flat [(into [] (flatten state-model))]
                :native state-model
-               :else (u/unsupported (str "Unsupported calling-convention " calling-convention)))]
+               (throw (ex-info "Invalid calling convention supplied"
+                               {:calling-convention calling-convention})))]
     (assoc code
            :model state-model
            :argv (if (and params (not= calling-convention :primitive))
@@ -287,16 +288,19 @@
                    argv))))
 
 (defn- primitive-bindings
-  [{:keys [argv target calling-convention model] :as code}]
-  (case calling-convention
-    :primitive (update code :locals concat
-                       (map-indexed (fn [i v]
-                                      [v (case target
-                                           :clj `(aget ~(first argv) ~i)
-                                           :js (str (first argv) "[" i "]"))])
-                                    (flatten model))
-                       )
-    code))
+  [{:keys [argv target calling-convention model params] :as code}]
+  (letfn [(local-vars-from-array
+           [array-symbol vars]
+           (map-indexed (fn [i v]
+                          [v (case target
+                               :clj `(aget ~array-symbol ~i)
+                               :js (str array-symbol "[" i "]"))])
+                        vars))]
+    (case calling-convention
+     :primitive (update code :locals concat
+                        (local-vars-from-array (first argv) (flatten model))
+                        (local-vars-from-array (nth argv 2) params))
+     code)))
 
 ;; The following functions compile state functions in either native or SCI
 ;; mode. The primary difference is that native compilation requires us to
@@ -419,16 +423,14 @@
   Local bindings for the common subexpressions found are appended to the
   `:locals` field of the code object, and the (possibly) simplified
   code replaces that int the `:body` field."
-  ([x]
-   (cse x {}))
-  ([x opts]
-   (extract-common-subexpressions
-    (:body x)
-    (fn [new-body new-locals]
-      (-> x
-          (update :locals into new-locals)
-          (assoc :body new-body)))
-     opts)))
+  [x gensym-fn deterministic?]
+  (extract-common-subexpressions
+   (:body x)
+   (fn [new-body new-locals]
+     (-> x
+         (update :locals into new-locals)
+         (assoc :body new-body)))
+   {:gensym-fn gensym-fn :deterministic? deterministic?}))
 
 (defn- constant-fold
   "Applies a constant-folding pass to the local expressions and the body
@@ -540,8 +542,8 @@
                            (wrap :target target
                                  :calling-convention calling-convention
                                  :params (when generic-params? params))
-                           (cse {:gensym-fn #(gensym-fn '_) :deterministic? deterministic?})
-                           (state-argv generic-state)
+                           (cse #(gensym-fn "_") deterministic?)
+                           (state-argv gensym-fn generic-state)
                            (constant-fold)
                            (primitive-bindings))
          compiler      (case mode

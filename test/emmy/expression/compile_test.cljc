@@ -35,37 +35,42 @@
   (testing "argv generation"
     (let [f (fn [m]
               (fn [[t _ _]]
-                t))
+                (g/* m t)))
           compile (fn [opts]
                     (c/compile-state-fn* f '[m] (up 't (up 'x0 'x1) (up 'v0 'v1))
                                          (merge {:gensym-fn (a/monotonic-symbol-generator 1)}
                                                 opts)))]
-      (is (= `(fn [[~'y1 [~'y2 ~'y3] [~'y4 ~'y5]] [~'p6]] ~'y1)
+      (is (= `(fn [[~'y1 [~'y2 ~'y3] [~'y4 ~'y5]] [~'p6]] (* ~'p6 ~'y1))
              (compile {:mode :clj :calling-convention :structure})))
-      (is (= `(fn [[~'y1 ~'y2 ~'y3 ~'y4 ~'y5] [~'p6]] ~'y1)
+      (is (= `(fn [[~'y1 ~'y2 ~'y3 ~'y4 ~'y5] [~'p6]] (* ~'p6 ~'y1))
              (compile {:mode :clj :calling-convention :flat})))
-      (is (= `(fn [~'ys ~'yps ~'ps]
-                (let [~'y1 (aget ~'ys 0)
-                      ~'y2 (aget ~'ys 1)
-                      ~'y3 (aget ~'ys 2)
-                      ~'y4 (aget ~'ys 3)
-                      ~'y5 (aget ~'ys 4)] ~'y1))
+      (is (= `(fn [~'a7 ~'a8 ~'a9]
+                (let [~'y1 (aget ~'a7 0)
+                      ~'y2 (aget ~'a7 1)
+                      ~'y3 (aget ~'a7 2)
+                      ~'y4 (aget ~'a7 3)
+                      ~'y5 (aget ~'a7 4)
+                      ~'p6 (aget ~'a9 0)] (* ~'p6 ~'y1)))
              (compile {:mode :clj :calling-convention :primitive})))
-      (is (= ["[y1, [y2, y3], [y4, y5]]" "[p6]" "  return y1;"]
+      (is (= ["[y1, [y2, y3], [y4, y5]]" "[p6]" "  return p6 * y1;"]
            (compile {:mode :js :calling-convention :structure})))
-      (is (= ["[y1, y2, y3, y4, y5]" "[p6]" "  return y1;"]
+      (is (= ["[y1, y2, y3, y4, y5]" "[p6]" "  return p6 * y1;"]
            (compile {:mode :js :calling-convention :flat})))
-      (is (= ["ys"
-              "yps"
-              "ps"
+      (is (= ["a7"
+              "a8"
+              "a9"
               (str
-               "  const y1 = ys[0];\n"
-               "  const y2 = ys[1];\n"
-               "  const y3 = ys[2];\n"
-               "  const y4 = ys[3];\n"
-               "  const y5 = ys[4];\n"
-               "  return y1;")]
-             (compile {:mode :js :calling-convention :primitive})))))
+               "  const y1 = a7[0];\n"
+               "  const y2 = a7[1];\n"
+               "  const y3 = a7[2];\n"
+               "  const y4 = a7[3];\n"
+               "  const y5 = a7[4];\n"
+               "  const p6 = a9[0];\n"
+               "  return p6 * y1;")]
+             (compile {:mode :js :calling-convention :primitive})))
+      (is (thrown? ExceptionInfo
+                   (compile {:calling-convention :bogus}))
+          "unknown calling convention will throw")))
   (testing "state-fn compilation"
     (let [f (fn [scale]
               (fn [[t]]
