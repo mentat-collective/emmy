@@ -193,9 +193,9 @@
                              ;; so we might as well bake the parameters into the function
                              ;; body...but the compiled function cache currently ignores
                              ;; this. TODO: expand the memoization key
-                             (c/compile-state-fn* state-derivative derivative-args initial-state
-                                                  {:calling-convention :flat
-                                                   :generic-params? false})
+                             (c/compile-state-fn state-derivative derivative-args initial-state
+                                                 {:calling-convention :flat
+                                                  :generic-params? false})
                              (do (log/warn "Not compiling function for ODE analysis")
                                  (let [d:dt (apply state-derivative derivative-args)
                                        array->state #(struct/unflatten % initial-state)]

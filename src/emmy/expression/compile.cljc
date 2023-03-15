@@ -6,6 +6,7 @@
   functions."
   (:require [clojure.string :as s]
             [clojure.walk :as w]
+            [clojure.zip :as z]
             [emmy.expression.analyze :as a]
             [emmy.expression.cse :refer [extract-common-subexpressions]]
             [emmy.expression.render :as render]
@@ -111,6 +112,8 @@
                              (- ~'x (~'Math/floor ~'x)))
                      :fn (fn [^double x]
                            (- x (Math/floor x)))}
+   'aset-double #?(:clj {:sym 'clojure.core/aset-double :f aset-double}
+                   :cljs {:sym 'cljs.core/aset :f aset})
    #?@(:cljs
        ;; JS-only entries.
        ['acosh {:sym 'Math/acosh :f #(Math/acosh %)}
@@ -234,7 +237,7 @@
   "Computes the argument list corresponding to `state-model` according to
   the `:calling-convention` in the code object. The argument list will be
   placed stored in the `:argv` key, and the original state model itself
-  in `:model`.
+  in `:state-model`.
 
   - `state-model`: a structure of symbols representing the state value
     operated on by the state derivative
@@ -273,7 +276,7 @@
   too. The native convention allows you to get the same argument list
   that you provide to `fn` to create the function. This is convenient
   for use with univariate integration libraries."
-  [{:keys [calling-convention params] :as code} gensym-fn state-model]
+  [{:keys [calling-convention params state-model] :as code} gensym-fn]
   (let [argv (case calling-convention
                :primitive (primitive-state-symbols #(gensym-fn "a"))
                :structure [(into [] state-model)]
@@ -282,25 +285,91 @@
                (throw (ex-info "Invalid calling convention supplied"
                                {:calling-convention calling-convention})))]
     (assoc code
-           :model state-model
            :argv (if (and params (not= calling-convention :primitive))
                    (conj argv (into [] params))
                    argv))))
 
+(defn- append-bindings
+  "Returns a new let expression with the supplied `bindings`
+  wrapping `exp`. If `exp` is already a let expression, the
+  `bindings` will be appended to the existing ones. Each binding
+  is a two-element list [var value]."
+  [exp bindings]
+  (let [z (z/seq-zip exp)
+        unpaired-bindings (for [kv bindings a kv] a)]
+    (z/root (if (= (z/node (z/next z)) `let)
+              (z/edit (z/right (z/next z)) into unpaired-bindings)
+              (z/replace z `(let ~(vec unpaired-bindings) ~(z/node z)))))))
+
+(defn- cse
+  "Invokes [[emmy.expression.cse/extract-common-subexpressions]] on `x`.
+
+  Local bindings for the common sub-expressions found are appended to the
+  binding structure of the body, and the (possibly) simplified
+  code replaces that in the previous code body."
+  [x gensym-fn deterministic?]
+  (extract-common-subexpressions
+   (:body x)
+   (fn [new-body new-locals]
+     (assoc x :body (if (seq new-locals)
+                      (append-bindings new-body new-locals)
+                      new-body)))
+   {:gensym-fn gensym-fn :deterministic? deterministic?}))
+
 (defn- primitive-bindings
-  [{:keys [argv target calling-convention model params] :as code}]
+  "In the primitive calling convention case, introduces a sequence of
+  local variables for each of the state variables, retrieving the values
+  from the primitive input array. Returns an updated code object."
+
+  [{:keys [argv calling-convention state-model params] :as code}]
   (letfn [(local-vars-from-array
+           ;; Arranges for the local variables given in `vars` to be bound,
+           ;; one by one, to the elements of the primitive array denoted by
+           ;; `array-symbol `.
            [array-symbol vars]
-           (map-indexed (fn [i v]
-                          [v (case target
-                               :clj `(aget ~array-symbol ~i)
-                               :js (str array-symbol "[" i "]"))])
-                        vars))]
+           (map-indexed (fn [i v] [v `(aget ~array-symbol ~i)]) vars))
+          ]
     (case calling-convention
-     :primitive (update code :locals concat
-                        (local-vars-from-array (first argv) (flatten model))
-                        (local-vars-from-array (nth argv 2) params))
-     code)))
+      :primitive (let [[ys _ ps] argv]
+                   (update code :body append-bindings
+                           (concat (local-vars-from-array ys (flatten state-model))
+                                   (local-vars-from-array ps params))))
+      code)))
+
+(defn- primitive-body
+  "In the case of primitive calling convention, unrolls the source of the
+  vector-producing statement of the body into a sequence of `aset-double`
+  calls to populate the derivative output array. Returns an updated code
+  object."
+  [{:keys [calling-convention argv] :as code}]
+  (letfn [(vector-sequence?
+           ;; Returns true if the expression `x` is a vector constructor,
+           ;; i.e., a sequence commencing with `up`, `down` or `vector`.
+           [x]
+           (and (sequential? x) (#{'up 'down 'vector} (first x))))
+          (flatten-state-vector
+           ;; "Returns a flat sequence of expressions making up a state vector."
+           [v]
+           (filter (complement vector-sequence?)
+                   (tree-seq vector-sequence? rest v)))
+          (expressions-to-array
+           ;; Returns a (possibly compound) statement which will arrange for the
+           ;; expressions in `exps `to be stored, one by one, into the elements
+           ;; of the primitive array denoted by `array-symbol `.
+           [array-symbol exps]
+           `(doto ~array-symbol
+              ~@(map-indexed (fn [i v] `(~'aset-double ~i ~v)) exps)))]
+    (case calling-convention
+      :primitive
+      (update code :body (fn [body]
+                           (let [z (z/seq-zip body)
+                                 z (if (= `let (z/node (z/next z)))
+                                     (z/next (z/next (z/next z)))
+                                     z)]
+                             (z/root
+                              (z/replace z (expressions-to-array (nth argv 1) (flatten-state-vector (z/node z)))))
+                             )) )
+      code)))
 
 ;; The following functions compile state functions in either native or SCI
 ;; mode. The primary difference is that native compilation requires us to
@@ -355,34 +424,44 @@
   (sci/eval-form (sci/fork sci-context) f-form))
 
 (defn- compile->clj
-  "Returns Clojure source for a function that implements `body`, given:
+  "Returns Clojure source for a function that implements `body`, given
+  a map with keys:
 
-  - `argv`: a vector of symbols to serve as the function's arguments.
+  - `:argv`: a vector of symbols to serve as the function's arguments.
     The vector may be nested for sequence destructuring.
 
-  - `body`: a function body making use of any symbol in argv above"
-  [{:keys [argv locals body]}]
-  (w/postwalk-replace
-   sym->resolved-form
-   (if (seq locals)
-     `(fn [~@argv]
-        (let ~(into [] cat locals)
-          ~body))
-     `(fn [~@argv]
-        ~body))))
+  - `:body`: a function body making use of any symbol in argv above"
+  [{:keys [argv body]}]
+  (w/postwalk-replace sym->resolved-form `(fn [~@argv] ~body)))
 
 (defn- compile->js
   "Returns an array containing JavaScript source for a function that implements
   its code object argument in a form suitable for application of the Function
   constructor."
-  [{:keys [argv locals body]}]
-  (let [argv        (map commafy-arglist argv)
-        code        (s/join
-                     (concat
-                      (for [[var val] locals]
-                        (str "  const " var " = " (render/->JavaScript val) ";\n"))
-                      ["  return " (render/->JavaScript body) ";"]))]
-    (into [] (concat argv [code]))))
+  [{:keys [argv body]}]
+  (let [argv    (mapv commafy-arglist argv)
+        buffer  (atom [])
+        do-body (fn [z]
+                  (if (and (z/branch? z) (= (z/node (z/next z)) `doto))
+                    (let [z (z/next (z/next z))
+                          var (z/node z)]
+                      (doseq [[_ ix value] (z/rights z)]
+                        (swap! buffer conj (str "  " var "[" ix "] = " (render/->JavaScript value) ";")))
+                      (z/next z))
+                    (swap! buffer conj
+                           (str "  return " (render/->JavaScript (z/node z)) ";"))))
+        do-let (fn [z]
+          (if (and (z/branch? z) (= (z/node (z/next z)) `let))
+            (let [z (z/next (z/next z))]
+              (doseq [[var value] (partition 2 (z/node z))]
+                (if (and (seq? value) (= (first value) `aget))
+                  (swap! buffer conj (str "  const " var " = " (nth value 1) "[" (nth value 2) "];"))
+                  (swap! buffer conj (str "  const " var " = " (render/->JavaScript value) ";"))))
+              (z/next z))
+            z))
+        ]
+    (-> body z/seq-zip do-let do-body)
+    (conj argv (s/join "\n" @buffer))))
 
 (defn- compile-native
   "Dispatches the `code` object to the compiler corresponding to the
@@ -417,31 +496,8 @@
                  (gensym-fn 'y)))]
       (rec state)))
 
-(defn- cse
-  "Invokes [[emmy.expression.cse/extract-common-subexpressions]] on `x`.
-
-  Local bindings for the common subexpressions found are appended to the
-  `:locals` field of the code object, and the (possibly) simplified
-  code replaces that int the `:body` field."
-  [x gensym-fn deterministic?]
-  (extract-common-subexpressions
-   (:body x)
-   (fn [new-body new-locals]
-     (-> x
-         (update :locals into new-locals)
-         (assoc :body new-body)))
-   {:gensym-fn gensym-fn :deterministic? deterministic?}))
-
-(defn- constant-fold
-  "Applies a constant-folding pass to the local expressions and the body
-   of a code object."
-  [code]
-  (-> code
-      (update :locals #(mapv (fn [[k v]] [k (apply-numeric-ops v)]) %))
-      (update :body apply-numeric-ops)))
-
-(defn compile-state-fn*
-  "Returns a compiled, simplified function with signature `(f state params)`,
+(defn compile-state-fn
+  "Returns a compiled, simplified function with signature `(f state params?)`,
   given:
 
   - a state function that can accept a symbolic arguments
@@ -470,14 +526,14 @@
         (fn [[y1 [y2 y3] [y4 y5]]] [p1 ...] ...)
         ```
 
-      - `:flat`: The compiled function will expect the state in flattend
+      - `:flat`: The compiled function will expect the state in flattened
         form, which may be provided by any flat Clojure sequence:
 
         ```clojure
         (fn [[y1 y2 y3 y4 y5] [p1 ...]] ...)
         ```
 
-      - `:primitive`: The compiled function will expect a primitve array
+      - `:primitive`: The compiled function will expect a primitive array
         containing the state in flat form to be passed as the first
         argument, and will return its value by mutating its second argument,
         which will also be a primitive array of the same size. The parameters
@@ -495,87 +551,92 @@
     - `:generic-params?`: if `true` (default), the returned function will take a
       second argument for the parameters of the state derivative and keep params
       generic. If false, the returned function will take a single state argument,
-      and the supplied params will be hardcoded.
+      and the supplied params will be hardcoded; moreover, the resulting compiled
+      function will not be cached.
 
     - `:mode`: Explicitly set the compilation mode to one of the values
       in [[valid-modes]]. Explicit alternative to dynamically binding [[*mode*]].
+
+    - `:cache`: If falsy, the compilation cache is avoided (it will neither
+      be consulted nor updated).
+
+    - `:deterministic?` requests that the compiler expend some effort to get
+      reproducible results down to the symbol name level for tests. It has
+      no observable effect on the compiled function's behavior.
+
+    - `:gensym-fn` allows injection of a symbol generator for unit test
+      purposes
+
+    - `:arity` records the arity selected for a compiled non-state function
+      and is ordinarily provided automatically by [[compile-fn]].
 
   The returned, compiled function expects all `Double` (or `js/Number`) for all
   state primitives. The function body is simplified and all common
   subexpressions identified during compilation are extracted and computed only
   once.
 
-  NOTE this function uses no cache. To take advantage of the global compilation
-  cache, see `compile-state-fn`."
+  Function compilations are cached with a key that attempts to capture all
+  of the relevant information "
   ([f params initial-state]
-   (compile-state-fn* f params initial-state {}))
+   (compile-state-fn f params initial-state {}))
   ([f params initial-state {:keys [mode
                                    calling-convention
+                                   arity
                                    generic-params?
                                    gensym-fn
-                                   deterministic?]
+                                   deterministic?
+                                   cache?]
                             :or {mode *mode*
                                  calling-convention :structure
                                  generic-params? true
                                  gensym-fn (a/monotonic-symbol-generator 4)
-                                 deterministic? false}}]
-   (let [sw            (us/stopwatch)
-         mode          (validate-mode! mode)
-         target        (case mode
-                         (:clj :sci) :clj
-                         (:source :native) #?(:clj :clj :cljs :js)
-                         :js :js)
-         wrap          (fn [code & {:as opts}] (merge {:body code :locals []} opts))
-         generic-state (state->argv initial-state gensym-fn)
-         params        (and params
-                            (if generic-params?
-                              (for [_ params] (gensym-fn 'p))
-                              params))
-         g             (if-not (false? params) (apply f params) f)
-         h             (case calling-convention
-                         :native (apply g generic-state)
-                         (g generic-state))
-         _             (println "generic-state" generic-state "initial-state" initial-state)
-         code          (-> h
-                           (g/simplify)
-                           (v/freeze)
-                           (wrap :target target
-                                 :calling-convention calling-convention
-                                 :params (when generic-params? params))
-                           (cse #(gensym-fn "_") deterministic?)
-                           (state-argv gensym-fn generic-state)
-                           (constant-fold)
-                           (primitive-bindings))
-         compiler      (case mode
-                         :source #?(:clj compile->clj :cljs compile->js)
-                         :clj compile->clj
-                         :js compile->js
-                         :native compile-native
-                         :sci compile-sci)
-         compiled-fn   (compiler code)]
-     (log/info "compiled function in" (us/repr sw))
-     compiled-fn)))
+                                 deterministic? false
+                                 cache? true}}]
 
-;; TODO: `compile-state-fn` should be more discerning in how it caches!
-
-(defn compile-state-fn
-  "Version of [[compile-state-fn*]] memoized on the `f` parameter only.
-  See that function's docs for more detail.
-
-  NOTE that this function makes use of a global compilation cache, keyed by the
-  value of `f`. Passing in the same `f` twice, even with different arguments for
-  `param` and `initial-state` and different compilation modes, will return the
-  cached value. See `compile-state-fn*` to avoid the cache."
-  ([f params initial-state]
-   (compile-state-fn f params initial-state {}))
-  ([f params initial-state opts]
-   (if-let [cached (@fn-cache f)]
-     (do
-       (log/info "compiled state function cache hit")
-       cached)
-     (let [compiled (compile-state-fn* f params initial-state opts)]
-       (swap! fn-cache assoc f compiled)
-       compiled))))
+   (let [key {:calling-convention calling-convention
+              :generic-params? generic-params?
+              :deterministic? deterministic?
+              :mode mode
+              :arity arity
+              :f f}]
+     (if-let [cached-fn (and cache? (@fn-cache key))]
+       (do
+         (log/info "compiled state function cache hit")
+         cached-fn)
+       (let [sw            (us/stopwatch)
+             mode          (validate-mode! mode)
+             wrap          (fn [code & {:as opts}] (merge {:body code} opts))
+             generic-state (state->argv initial-state gensym-fn)
+             params        (and params
+                                (if generic-params?
+                                  (for [_ params] (gensym-fn 'p))
+                                  params))
+             g             (if-not (false? params) (apply f params) f)
+             h             (case calling-convention
+                             :native (apply g generic-state)
+                             (g generic-state))
+             code          (-> h
+                               (g/simplify)
+                               (v/freeze)
+                               (wrap :calling-convention calling-convention
+                                     :params (when generic-params? params)
+                                     :state-model generic-state)
+                               (state-argv gensym-fn)
+                               (cse #(gensym-fn "_") deterministic?)
+                               (update :body apply-numeric-ops)
+                               (primitive-bindings)
+                               (primitive-body))
+             compiler      (case mode
+                             :source #?(:clj compile->clj :cljs compile->js)
+                             :clj compile->clj
+                             :js compile->js
+                             :native compile-native
+                             :sci compile-sci)
+             compiled-fn   (compiler code)]
+         (log/info "compiled function in" (us/repr sw))
+         (when (and cache? generic-params?)
+           (swap! fn-cache assoc key compiled-fn))
+         compiled-fn)))))
 
 (defn- retrieve-arity [f]
   (let [[kwd n :as arity] (f/arity f)]
@@ -585,54 +646,23 @@
        (str "`compile-fn` can only infer arity for functions with just one
            arity, not " arity ". Please pass an explicit `n`.")))))
 
-(defn compile-fn*
+(defn compile-fn
   "Returns a compiled, simplified version of `f`, given a function `f` of arity
   `n` (i.e., able to accept `n` symbolic arguments).
 
   `n` defaults to `([[f/arity]] f)`.
 
+  You may also specify options in the third argument. See [[compile-state-fn]]
+  for information on the options supported.
+
   The returned, compiled function expects `n` `Double` (or `js/Number`)
   arguments. The function body is simplified and all common subexpressions
-  identified during compilation are extracted and computed only once.
-
-  NOTE: this function uses no cache. To take advantage of the global compilation
-  cache, see `compile-fn`."
-  ([f] (compile-fn* f (retrieve-arity f)))
+  identified during compilation are extracted and computed only once."
+  ([f] (compile-fn f (retrieve-arity f)))
   ([f n]
-   (let [argv     (into [] (repeatedly n #(gensym 'x)))]
-     (compile-state-fn* f false argv {:calling-convention :native}))))
-
-(defn compile-fn
-  "Memoized version of [[compile-fn*]]. See that function's docs for more detail.
-
-  NOTE: that this function makes use of a global compilation cache, keyed by the
-  vector `[f n *mode*]`. See `compile-fn*` to avoid the cache."
-  ([f] (let [[kwd n :as arity] (f/arity f)]
-         (when-not (= kwd :exactly)
-           (u/illegal
-            (str "`compile-fn` can only infer arity for functions with just one
-           arity, not " arity ". Please pass an explicit `n`.")))
-         (compile-fn f n)))
-  ([f n]
-   (let [mode *mode*]
-     (if-let [cached (@fn-cache [f n mode])]
-       (do
-         (log/info "compiled function cache hit - arity " n ", mode " mode)
-         cached)
-       (binding [*mode* mode]
-         (let [compiled (compile-fn* f n)]
-           (swap! fn-cache assoc [f n mode] compiled)
-           compiled))))))
-
-(comment
-  (compile-fn* g/+ 2)
-  ((compile-fn* g/+ 2) 6 7)
-  ((compile-fn* g/+ 3) 'y 'x 7)
-  (def c (compile-state-fn* g/+ false ['x 'y 'z]
-                            {:calling-convention :native
-                             :mode :native}))
-
-  c
-
-  (c 1 2 4)
-  )
+   (compile-fn f n {}))
+  ([f n opts]
+   (let [argv (into [] (repeatedly n #(gensym 'x)))]
+     (compile-state-fn f false argv (merge {:calling-convention :native
+                                            :arity n}
+                                           opts)))))
