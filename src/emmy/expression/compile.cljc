@@ -441,24 +441,42 @@
   [{:keys [argv body]}]
   (let [argv    (mapv commafy-arglist argv)
         buffer  (atom [])
+        ;; do-body accepts a zipper location. If the location is a `(doto)` form,
+        ;; it is assumed to be of the form `(doto array (aset index value)...)` and is
+        ;; then unrolled into the corresponding Javascript array mutation statements
+        ;; which are appended to `buffer`. If not, a return statement is generated for
+        ;; the expression at `z`. Nothing is returned.
         do-body (fn [z]
                   (if (and (z/branch? z) (= (z/node (z/next z)) `doto))
                     (let [z (z/next (z/next z))
                           var (z/node z)]
-                      (doseq [[_ ix value] (z/rights z)]
+                      (when-not (symbol? var)
+                        (throw (ex-info "Expecting a symbol (referring to a primitive array)"
+                                        {:unexpected var})))
+                      (doseq [[aset ix value] (z/rights z)]
+                        (when-not (= aset 'aset-double)
+                          (throw (ex-info "Expecting an aset-double statement"
+                                          {:unexpected aset})))
                         (swap! buffer conj (str "  " var "[" ix "] = " (render/->JavaScript value) ";")))
                       (z/next z))
                     (swap! buffer conj
                            (str "  return " (render/->JavaScript (z/node z)) ";"))))
+        ;; do-let accepts a zipper location. If the location is a `(let)` form,
+        ;; the bindings are unrolled into the corresponding sequence of assignment
+        ;; statements which are then appended to `buffer`. If the RHS of a binding
+        ;; pair is of the form `(aget var index)` this will be converted to an
+        ;; array reference; otherwise the usual Javascript renderer is used for the
+        ;; RHS of the assignment. The zipper position immediately following the let
+        ;; form is returned, facilitating this function's use in a parsing chain.
         do-let (fn [z]
-          (if (and (z/branch? z) (= (z/node (z/next z)) `let))
-            (let [z (z/next (z/next z))]
-              (doseq [[var value] (partition 2 (z/node z))]
-                (if (and (seq? value) (= (first value) `aget))
-                  (swap! buffer conj (str "  const " var " = " (nth value 1) "[" (nth value 2) "];"))
-                  (swap! buffer conj (str "  const " var " = " (render/->JavaScript value) ";"))))
-              (z/next z))
-            z))
+                 (if (and (z/branch? z) (= (z/node (z/next z)) `let))
+                   (let [z (z/next (z/next z))]
+                     (doseq [[var value] (partition 2 (z/node z))]
+                       (if (and (seq? value) (= (first value) `aget))
+                         (swap! buffer conj (str "  const " var " = " (nth value 1) "[" (nth value 2) "];"))
+                         (swap! buffer conj (str "  const " var " = " (render/->JavaScript value) ";"))))
+                     (z/next z))
+                   z))
         ]
     (-> body z/seq-zip do-let do-body)
     (conj argv (s/join "\n" @buffer))))
