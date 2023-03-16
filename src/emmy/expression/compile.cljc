@@ -292,13 +292,17 @@
 (defn- append-bindings
   "Returns a new let expression with the supplied `bindings`
   wrapping `exp`. If `exp` is already a let expression, the
-  `bindings` will be appended to the existing ones. Each binding
+  `bindings` will be appended (or prepended, if `prepend?`)
+  to the existing ones. Each binding
   is a two-element list [var value]."
-  [exp bindings]
+  [exp bindings & prepend?]
   (let [z (z/seq-zip exp)
         unpaired-bindings (for [kv bindings a kv] a)]
     (z/root (if (= (z/node (z/next z)) `let)
-              (z/edit (z/right (z/next z)) into unpaired-bindings)
+              (z/edit (z/right (z/next z)) (fn [existing-bindings]
+                                             (if prepend?
+                                               (into [] (concat unpaired-bindings existing-bindings))
+                                               (into existing-bindings unpaired-bindings))))
               (z/replace z `(let ~(vec unpaired-bindings) ~(z/node z)))))))
 
 (defn- cse
@@ -333,7 +337,8 @@
       :primitive (let [[ys _ ps] argv]
                    (update code :body append-bindings
                            (concat (local-vars-from-array ys (flatten state-model))
-                                   (local-vars-from-array ps params))))
+                                   (local-vars-from-array ps params))
+                           :prepend))
       code)))
 
 (defn- primitive-body

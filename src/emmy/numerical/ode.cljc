@@ -186,6 +186,7 @@
   (let [evaluation-time    (us/stopwatch :started? false)
         evaluation-count   (atom 0)
         flat-initial-state (flatten initial-state)
+        primitive-params   (double-array derivative-args)
         derivative-fn      (if compile?
                              ;; we have to use the starred version of the compiler here,
                              ;; because the `evolve` and `state-advancer` interfaces do
@@ -194,17 +195,18 @@
                              ;; body...but the compiled function cache currently ignores
                              ;; this. TODO: expand the memoization key
                              (c/compile-state-fn state-derivative derivative-args initial-state
-                                                 {:calling-convention :flat
+                                                 {:calling-convention :primitive
                                                   :generic-params? false})
                              (do (log/warn "Not compiling function for ODE analysis")
-                                 (let [d:dt (apply state-derivative derivative-args)
-                                       array->state #(struct/unflatten % initial-state)]
-                                   (comp d:dt array->state))))
+                                 (let [d:dt (apply state-derivative derivative-args)]
+                                   (fn [ys yps ps]
+                                     (flatten-into-primitive-array yps (d:dt (struct/unflatten ys initial-state))))
+                                   )))
         equations        (fn [_ y out]
                            (us/start evaluation-time)
-                           (swap! evaluation-count inc)
-                           (flatten-into-primitive-array out (derivative-fn y))
-                           (us/stop evaluation-time))
+                           (derivative-fn y out primitive-params)
+                           (us/stop evaluation-time)
+                           (swap! evaluation-count inc))
 
         integrator (stream-integrator equations 0 flat-initial-state opts)]
     {:integrator integrator

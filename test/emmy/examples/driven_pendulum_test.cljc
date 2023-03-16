@@ -58,15 +58,15 @@
       (is (= `(clojure.core/fn
                 [~'a09 ~'a10 ~'a11]
                 (clojure.core/let
-                 [~'_12 (~'Math/sin ~'y02)
-                  ~'y01 (clojure.core/aget ~'a09 0)
+                 [~'y01 (clojure.core/aget ~'a09 0)
                   ~'y02 (clojure.core/aget ~'a09 1)
                   ~'y03 (clojure.core/aget ~'a09 2)
                   ~'p04 (clojure.core/aget ~'a11 0)
                   ~'p05 (clojure.core/aget ~'a11 1)
                   ~'p06 (clojure.core/aget ~'a11 2)
                   ~'p07 (clojure.core/aget ~'a11 3)
-                  ~'p08 (clojure.core/aget ~'a11 4)]
+                  ~'p08 (clojure.core/aget ~'a11 4)
+                  ~'_12 (~'Math/sin ~'y02)]
                   (clojure.core/doto
                    ~'a10
                     (~aset-symbol 0 1.0)
@@ -100,7 +100,6 @@
   (is (= ["a09" "a10" "a11"
           (maybe-defloatify
            (str
-            "  const _12 = Math.sin(y02);\n"
             "  const y01 = a09[0];\n"
             "  const y02 = a09[1];\n"
             "  const y03 = a09[2];\n"
@@ -109,6 +108,7 @@
             "  const p06 = a11[2];\n"
             "  const p07 = a11[3];\n"
             "  const p08 = a11[4];\n"
+            "  const _12 = Math.sin(y02);\n"
             "  a10[0] = 1.0;\n"
             "  a10[1] = y03;\n"
             "  a10[2] = (p07 * Math.pow(p08, 2.0) * _12 * Math.cos(p08 * y01) - p06 * _12) / p05;"))]
@@ -129,7 +129,7 @@
              "  const _06 = Math.pow(l, 2.0);\n"
              "  const _08 = Math.sin(y02);\n"
              "  const _09 = Math.sin(_04);\n"
-             "  return [1.0, (a * l * m * omega * _08 * _09 + y03) / (_06 * m), (- Math.pow(a, 2.0) * l * m * Math.pow(omega, 2.0) * _08 * Math.pow(_09, 2.0) * _05 - a * omega * y03 * _09 * _05 - g * _06 * m * _08) / l];"))]
+             "  return [1.0, (a * l * m * omega * _09 * _08 + y03) / (_06 * m), (- Math.pow(a, 2.0) * l * m * Math.pow(omega, 2.0) * Math.pow(_09, 2.0) * _08 * _05 - a * omega * y03 * _09 * _05 - g * _06 * m * _08) / l];"))]
          (compile-state-fn
           #(e/Hamiltonian->state-derivative
             (e/Lagrangian->Hamiltonian
