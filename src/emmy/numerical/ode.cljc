@@ -188,21 +188,18 @@
         flat-initial-state (flatten initial-state)
         primitive-params   (double-array derivative-args)
         derivative-fn      (if compile?
-                             ;; we have to use the starred version of the compiler here,
-                             ;; because the `evolve` and `state-advancer` interfaces do
-                             ;; not provide a means of working with generic parameters,
-                             ;; so we might as well bake the parameters into the function
-                             ;; body...but the compiled function cache currently ignores
-                             ;; this. TODO: expand the memoization key
                              (c/compile-state-fn state-derivative derivative-args initial-state
                                                  {:calling-convention :primitive
                                                   :generic-params? false})
                              (do (log/warn "Not compiling function for ODE analysis")
                                  (let [d:dt (apply state-derivative derivative-args)]
-                                   (fn [ys yps ps]
+                                   (fn [ys yps _]
                                      (flatten-into-primitive-array yps (d:dt (struct/unflatten ys initial-state))))
                                    )))
         equations        (fn [_ y out]
+                           ;; TODO: should we consider allowing an option to add a dummy
+                           ;; x-parameter in the compiled code, which would allow unwrapping
+                           ;; this last layer?
                            (us/start evaluation-time)
                            (derivative-fn y out primitive-params)
                            (us/stop evaluation-time)
