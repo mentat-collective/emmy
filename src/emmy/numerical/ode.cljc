@@ -22,11 +22,10 @@
 
 (defn- flatten-into-primitive-array
   "Copy the sequence `xs` into the primitive double array `arr`."
-  [arr xs]
-  (let [ix (atom -1)
-        asetter #?(:clj aset-double :cljs aset)]
-    (r/reduce (fn [a x]
-                (asetter a (swap! ix unchecked-inc) x)
+  [^doubles arr xs]
+  (let [ix (atom -1)]
+    (r/reduce (fn [^doubles a ^double x]
+                (aset a (swap! ix unchecked-inc) x)
                 a)
               arr
               (r/flatten xs))))
@@ -171,9 +170,7 @@
                           :rawFunction true})]
          (comp js->clj (.integrate solver x0 (double-array y0)))))))
 
-
-
-(defn- integration-opts
+(defn ^:no-doc integration-opts
   "Returns a map with the following kv pairs:
 
   - `:integrator` an instance of `GraggBulirschStoerIntegrator`

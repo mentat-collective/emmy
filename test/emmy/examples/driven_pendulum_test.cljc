@@ -38,12 +38,12 @@
 (deftest as-clojure
   (let [compile (fn [calling-convention]
                   (compile-state-fn driven/state-derivative
-                                     '[m l g a omega]
-                                     (up 't 'theta 'thetadot)
-                                     {:mode :clj
-                                      :gensym-fn (a/monotonic-symbol-generator 2)
-                                      :deterministic? true
-                                      :calling-convention calling-convention}))]
+                                    '[m l g a omega]
+                                    (up 't 'theta 'thetadot)
+                                    {:mode :clj
+                                     :gensym-fn (a/monotonic-symbol-generator 2)
+                                     :deterministic? true
+                                     :calling-convention calling-convention}))]
     (is (= `(fn [[~'y01 ~'y02 ~'y03] [~'p04 ~'p05 ~'p06 ~'p07 ~'p08]]
               (let [~'_09 (~'Math/sin ~'y02)]
                 (clojure.core/vector 1.0
@@ -54,35 +54,34 @@
                                        (clojure.core/* -1.0 ~'p06 ~'_09))
                                       ~'p05))))
            (compile :structure)))
-    (let [aset-symbol #?(:clj 'clojure.core/aset-double :cljs 'cljs.core/aset)]
-      (is (= `(clojure.core/fn
-                [~'a09 ~'a10 ~'a11]
-                (clojure.core/let
-                 [~'y01 (clojure.core/aget ~'a09 0)
-                  ~'y02 (clojure.core/aget ~'a09 1)
-                  ~'y03 (clojure.core/aget ~'a09 2)
-                  ~'p04 (clojure.core/aget ~'a11 0)
-                  ~'p05 (clojure.core/aget ~'a11 1)
-                  ~'p06 (clojure.core/aget ~'a11 2)
-                  ~'p07 (clojure.core/aget ~'a11 3)
-                  ~'p08 (clojure.core/aget ~'a11 4)
-                  ~'_12 (~'Math/sin ~'y02)]
-                  (clojure.core/doto
-                   ~'a10
-                    (~aset-symbol 0 1.0)
-                    (~aset-symbol 1 ~'y03)
-                    (~aset-symbol
-                     2
-                     (clojure.core//
-                      (clojure.core/+
-                       (clojure.core/*
-                        ~'p07
-                        (~'Math/pow ~'p08 2.0)
-                        ~'_12
-                        (~'Math/cos (clojure.core/* ~'p08 ~'y01)))
-                       (clojure.core/* -1.0 ~'p06 ~'_12))
-                      ~'p05)))))
-             (compile :primitive))))))
+    (is (= `(clojure.core/fn
+              [~'a09 ~'a10 ~'a11]
+              (clojure.core/let
+               [~'y01 (clojure.core/aget ~'a09 0)
+                ~'y02 (clojure.core/aget ~'a09 1)
+                ~'y03 (clojure.core/aget ~'a09 2)
+                ~'p04 (clojure.core/aget ~'a11 0)
+                ~'p05 (clojure.core/aget ~'a11 1)
+                ~'p06 (clojure.core/aget ~'a11 2)
+                ~'p07 (clojure.core/aget ~'a11 3)
+                ~'p08 (clojure.core/aget ~'a11 4)
+                ~'_12 (~'Math/sin ~'y02)]
+                (clojure.core/doto
+                 ~'a10
+                  (clojure.core/aset 0 1.0)
+                  (clojure.core/aset 1 ~'y03)
+                  (clojure.core/aset
+                   2
+                   (clojure.core//
+                    (clojure.core/+
+                     (clojure.core/*
+                      ~'p07
+                      (~'Math/pow ~'p08 2.0)
+                      ~'_12
+                      (~'Math/cos (clojure.core/* ~'p08 ~'y01)))
+                     (clojure.core/* -1.0 ~'p06 ~'_12))
+                    ~'p05)))))
+           (compile :primitive)))))
 
 (deftest as-javascript
   (is (= ["[y01, y02, y03]"

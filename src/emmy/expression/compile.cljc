@@ -112,8 +112,6 @@
                              (- ~'x (~'Math/floor ~'x)))
                      :fn (fn [^double x]
                            (- x (Math/floor x)))}
-   'aset-double #?(:clj {:sym 'clojure.core/aset-double :f aset-double}
-                   :cljs {:sym 'cljs.core/aset :f aset})
    #?@(:cljs
        ;; JS-only entries.
        ['acosh {:sym 'Math/acosh :f #(Math/acosh %)}
@@ -343,7 +341,7 @@
 
 (defn- primitive-body
   "In the case of primitive calling convention, unrolls the source of the
-  vector-producing statement of the body into a sequence of `aset-double`
+  vector-producing statement of the body into a sequence of `aset`
   calls to populate the derivative output array. Returns an updated code
   object."
   [{:keys [calling-convention argv] :as code}]
@@ -363,7 +361,7 @@
            ;; of the primitive array denoted by `array-symbol `.
            [array-symbol exps]
            `(doto ~array-symbol
-              ~@(map-indexed (fn [i v] `(~'aset-double ~i ~v)) exps)))]
+              ~@(map-indexed (fn [i v] `(aset ~i ~v)) exps)))]
     (case calling-convention
       :primitive
       (update code :body (fn [body]
@@ -459,8 +457,8 @@
                         (throw (ex-info "Expecting a symbol (referring to a primitive array)"
                                         {:unexpected var})))
                       (doseq [[aset ix value] (z/rights z)]
-                        (when-not (= aset 'aset-double)
-                          (throw (ex-info "Expecting an aset-double statement"
+                        (when-not (= aset `aset)
+                          (throw (ex-info "Expecting an aset statement"
                                           {:unexpected aset})))
                         (swap! buffer conj (str "  " var "[" ix "] = " (render/->JavaScript value) ";")))
                       (z/next z))
