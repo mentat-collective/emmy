@@ -8,7 +8,6 @@
             [emmy.expression.compile :as c]
             [emmy.structure :as struct]
             #?(:clj [emmy.util :as u])
-            [emmy.util.stopwatch :as us]
             [emmy.value :as v]
             [taoensso.timbre :as log])
   #?(:clj
@@ -22,7 +21,7 @@
 
 (defn- flatten-into-primitive-array
   "Copy the sequence `xs` into the primitive double array `arr`."
-  [^doubles arr xs]
+  [xs ^doubles arr]
   (let [ix (atom -1)]
     (r/reduce (fn [^doubles a ^double x]
                 (aset a (swap! ix unchecked-inc) x)
@@ -170,42 +169,33 @@
                           :rawFunction true})]
          (comp js->clj (.integrate solver x0 (double-array y0)))))))
 
-(defn ^:no-doc integration-opts
-  "Returns a map with the following kv pairs:
-
-  - `:integrator` an instance of `GraggBulirschStoerIntegrator`
-  - `:stopwatch` [[IStopwatch]] instance that records total evaluation time inside
-    the derivative function
-  - `:counter` an atom containing a `Long` that increments every time derivative fn
-    is called."
+(defn ^:no-doc make-integrator*
+  "Returns a stream integrator configured to integrate a SICM state function.
+  The function is compiled (unless `compile?` is falsy in the `opts` map) with
+  the primitive calling convention to allow efficient transition between the
+  flat representation preferred by integrators and the structured form used in
+  the book. If the function is not compiled, a wrapper function is created to
+  accomplish the same thing."
   [state-derivative derivative-args initial-state
    {:keys [compile?] :as opts}]
-  (let [evaluation-time    (us/stopwatch :started? false)
-        evaluation-count   (atom 0)
-        flat-initial-state (flatten initial-state)
+  (let [flat-initial-state (flatten initial-state)
         primitive-params   (double-array derivative-args)
         derivative-fn      (if compile?
                              (c/compile-state-fn state-derivative derivative-args initial-state
-                                                 {:calling-convention :primitive
-                                                  :generic-params? false})
+                                                 {:calling-convention :primitive})
                              (do (log/warn "Not compiling function for ODE analysis")
-                                 (let [d:dt (apply state-derivative derivative-args)]
+                                 (let [f' (apply state-derivative derivative-args)]
                                    (fn [ys yps _]
-                                     (flatten-into-primitive-array yps (d:dt (struct/unflatten ys initial-state))))
-                                   )))
-        equations        (fn [_ y out]
+                                     (-> ys
+                                         (struct/unflatten initial-state)
+                                         f'
+                                         (flatten-into-primitive-array yps))))))
+        equations        (fn [_ ys yps]
                            ;; TODO: should we consider allowing an option to add a dummy
                            ;; x-parameter in the compiled code, which would allow unwrapping
                            ;; this last layer?
-                           (us/start evaluation-time)
-                           (derivative-fn y out primitive-params)
-                           (us/stop evaluation-time)
-                           (swap! evaluation-count inc))
-
-        integrator (stream-integrator equations 0 flat-initial-state opts)]
-    {:integrator integrator
-     :stopwatch evaluation-time
-     :counter evaluation-count}))
+                           (derivative-fn ys yps primitive-params))]
+    (stream-integrator equations 0 flat-initial-state opts)))
 
 (defn make-integrator
   "make-integrator takes a state derivative function (which in this
@@ -227,10 +217,8 @@
     ([initial-state step-size t]
      (call initial-state step-size t {}))
     ([initial-state step-size t {:keys [observe] :as opts}]
-     (let [total-time (us/stopwatch :started? true)
-           latest     (atom [0 nil])
-           {:keys [integrator stopwatch counter]}
-           (integration-opts state-derivative derivative-args initial-state opts)
+     (let [latest     (atom [0 nil])
+           integrator (make-integrator* state-derivative derivative-args initial-state opts)
            array->state #(struct/unflatten % initial-state)
            step (fn [x]
                   (let [y (array->state (integrator x))]
@@ -242,8 +230,6 @@
        (when (not (near? t (nth @latest 0)))
          (step t))
        (integrator)
-       (us/stop total-time)
-       (log/info "#" @counter "total" (us/repr total-time) "f" (us/repr stopwatch))
        (nth @latest 1)))))
 
 (defn state-advancer
@@ -289,11 +275,7 @@
   state derivative (and its argument package) from [0 to t1] in steps
   of size dt"
   [state-derivative state-derivative-args initial-state t1 dt]
-  (let [opts (integration-opts state-derivative
-                               state-derivative-args
-                               initial-state
-                               {})
-        f (:integrator opts)]
+  (let [f (make-integrator* state-derivative state-derivative-args initial-state {})]
     (try
       (mapv f (for [x (range 0 (+ t1 dt) dt)
                     :when (< x (+ t1 (/ dt 2)))]

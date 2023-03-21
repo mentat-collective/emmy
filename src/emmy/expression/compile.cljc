@@ -489,7 +489,10 @@
   current runtime environment."
   [code]
   #?(:clj (eval (compile->clj code))
-     :cljs (comp js->clj (apply js/Function (compile->js code)))))
+     :cljs (let [g (apply js/Function (compile->js code))]
+             (if (= (:calling-convention code) :primitive)
+               g
+               (comp js->clj g)))))
 
 (defn- compile-sci
   "Returns a Clojure function evaluated using SCI. The returned fn implements
@@ -609,7 +612,7 @@
                                    cache?]
                             :or {mode *mode*
                                  calling-convention :structure
-                                 generic-params? true
+                                 generic-params? (boolean params)
                                  gensym-fn (a/monotonic-symbol-generator 4)
                                  deterministic? false
                                  cache? true}}]
