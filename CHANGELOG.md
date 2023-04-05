@@ -2,6 +2,14 @@
 
 ## [unreleased]
 
+- #118:
+
+  - Updates `complex.js` and `fraction.js` dependencies.
+
+  - `odex` updated
+
+  - new `:js?` option in ODE
+
 - #115:
 
   This PR introduces significant upgrades to the functions in

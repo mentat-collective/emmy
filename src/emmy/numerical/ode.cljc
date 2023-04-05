@@ -64,8 +64,9 @@
    use an auxiliary thread to enable this style of flow control.  If
    JavaScript, we expect the solver to provide a generator of solution
    segments."
-  [f' x0 y0 {:keys [epsilon js?] :or {epsilon default-epsilon
-                                      js? false}}]
+  [f' x0 y0 {:keys [epsilon #?(:cljs js?)]
+             :or {epsilon default-epsilon
+                  #?@(:cljs [js? false])}}]
   (let [dimension (count y0)]
     #?(:clj
        (let [gbs               (GraggBulirschStoerIntegrator. 0. 1. (double epsilon) (double epsilon))

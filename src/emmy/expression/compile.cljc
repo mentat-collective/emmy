@@ -634,7 +634,6 @@
                                   (for [_ params] (gensym-fn 'p))
                                   params))
              g             (if-not (false? params) (apply f params) f)
-
              h             (case calling-convention
                              :native (apply g generic-state)
                              (g generic-state))
