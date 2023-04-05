@@ -11,7 +11,6 @@
             [same :refer [ish? with-comparator] :include-macros true]))
 
 (def ^:private near? (v/within 1e-8))
-#?(:cljs (def ^:private aset-double aset))
 
 (deftest simple-odes
   (testing "y' = y"
@@ -37,16 +36,16 @@
           (is (near? (Math/exp 1) (first result)))))))
 
   (testing "y' = y, new interface"
-    (let [f (o/stream-integrator (fn [_ y out] (aset-double out 0 (aget y 0))) 0 [1] {:epsilon 1e-8})]
+    (let [f (o/stream-integrator (fn [_ ^doubles y ^doubles out] (aset out 0 (aget y 0))) 0 [1] {:epsilon 1e-8})]
       (doseq [x (range 0 1 0.01)]
         (let [[ex] (f x)]
           (is (near? (Math/exp x) ex))))
       (f)))
 
   (testing "y'' = - y, new interface"
-    (let [f (o/stream-integrator (fn [_ y out]
-                                   (aset-double out 0 (aget y 1))
-                                   (aset-double out 1 (- (aget y 0))))
+    (let [f (o/stream-integrator (fn [_ ^doubles y ^doubles out]
+                                   (aset out 0 (aget y 1))
+                                   (aset out 1 (- (aget y 0))))
                                  0 [1 0] {:epsilon 1e-8})]
       (doseq [x (range 0 (* 2 Math/PI) 0.1)]
         (let [[c ms] (f x)]
@@ -55,19 +54,19 @@
       (f)))
 
   (testing "stream integrator throws if used backwards"
-    (let [f (o/stream-integrator (fn [_ y out]
-                                   (aset-double out 0 (aget y 0)))
+    (let [f (o/stream-integrator (fn [_ ^doubles y ^doubles out]
+                                   (aset out 0 (aget y 0)))
                                  0 [1] {:epsilon 1e-8})]
       (is (f 10))
       (is (thrown? #?(:clj IllegalStateException :cljs js/Error) (f 1)))
       (f)))
 
   (testing "throwing from derivative can be caught"
-    (let [f' (fn [x [y0 y1] out]
+    (let [f' (fn [x [y0 y1] ^doubles out]
                (when (> x (* 1.5 Math/PI))
                  (throw (u/exception "bad derivative")))
-               (aset-double out 0 y1)
-               (aset-double out 1 (- y0)))
+               (aset out 0 y1)
+               (aset out 1 (- y0)))
           f (o/stream-integrator f' 0 [1 0] {})]
       (let [[y0 y1] (f Math/PI)]
         (is (near? -1 y0))

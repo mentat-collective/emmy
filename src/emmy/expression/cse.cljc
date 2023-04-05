@@ -13,7 +13,7 @@
 ;;  The goal of this process is to split some symbolic expression into:
 ;;
 ;;  - a map of symbol -> redundant subexpression
-;;  - a new expression with each redundant subexpr replaced with its
+;;  - a new expression with each redundant subexpression replaced with its
 ;;    corresponding symbol.
 ;;
 ;;  The invariant we want to achieve is that the new expression, rehydrated using
@@ -40,7 +40,7 @@
 ;; earlier. We want to be careful that we only generate and bind subexpressions
 ;; that are actually used in the final computation.
 ;;
-;; `discard-unferenced-syms` ensures this by removing any entry from our
+;; `discard-unreferenced-syms` ensures this by removing any entry from our
 ;; replacement map that doesn't appear in the expression it's passed, or any
 ;; subexpression referenced by a symbol in the expression, etc etc.
 ;;
@@ -159,7 +159,7 @@
 
   `:gensym-fn`: side-effecting function that returns a new, unique
   variable name prefixed by its argument on each invocation.
-   `monotonic-symbol-genπerator` by default.
+   `monotonic-symbol-generator` by default.
 
   NOTE that the symbols should appear in sorted order! Otherwise we can't
   guarantee that the binding sequence passed to `continue` won't contain entries
