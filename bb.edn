@@ -1,8 +1,9 @@
-{:pods {clj-kondo/clj-kondo {:version "2023.01.20"}}
- :tasks
- {:requires ([pod.borkdude.clj-kondo :as clj-kondo])
+{:deps
+ {io.github.clj-kondo/clj-kondo-bb
+  {:git/tag "v2023.01.20" :git/sha "adfc7df"}}
 
-  test:clj
+ :tasks
+ {test:clj
   {:doc "Run CLJ tests."
    :task (shell "clojure -X:test:runner")}
 
@@ -16,5 +17,5 @@
 
   lint
   {:doc "Lint with clj-kondo."
-   :task (clj-kondo/print!
-          (clj-kondo/run! {:lint ["src" "test"]}))}}}
+   :task (exec 'clj-kondo.core/exec)
+   :exec-args {:lint ["src" "test"]}}}}
