@@ -4,11 +4,18 @@
 
 - #118:
 
-  - Updates `complex.js` and `fraction.js` dependencies.
+  - Updates `Complex.js` and `Fraction.js` dependencies to their latest NPM
+    versions.
 
-  - `odex` updated
+  - Updates `odex` to the latest release candidate on NPM.
 
-  - new `:js?` option in ODE
+  - The `cljs` side of `emmy.numerical.ode/stream-integrator` gains a `:js?`
+    option that defaults to `true`. If `false`, the returned function will
+    return native JS arrays vs converting the return value to Clojure.
+
+  - In `emmy.expression.compile`, `compile-fn` and `compile-state-fn` gain a
+    `:simplify?` argument that defaults to `true`. If `false`, compilation will
+    not attempt to simplify the function body before proceeding.
 
 - #115:
 

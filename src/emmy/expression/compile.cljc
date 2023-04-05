@@ -592,6 +592,10 @@
     - `:arity` records the arity selected for a compiled non-state function
       and is ordinarily provided automatically by [[compile-fn]].
 
+    - `:simplify?` If `true`, simplify the expanded function body before proceeding
+      to subexpression elimination and successive steps. If `false`, skip this step.
+      Defaults to `true`.
+
   The returned, compiled function expects all `Double` (or `js/Number`) for all
   state primitives. The function body is simplified and all common
   subexpressions identified during compilation are extracted and computed only
@@ -607,13 +611,15 @@
                                    generic-params?
                                    gensym-fn
                                    deterministic?
-                                   cache?]
+                                   cache?
+                                   simplify?]
                             :or {mode *mode*
                                  calling-convention :structure
                                  generic-params? (boolean params)
                                  gensym-fn (a/monotonic-symbol-generator 4)
                                  deterministic? false
-                                 cache? true}}]
+                                 cache? true
+                                 simplify? true}}]
 
    (let [key {:calling-convention calling-convention
               :generic-params? generic-params?
@@ -637,8 +643,9 @@
              h             (case calling-convention
                              :native (apply g generic-state)
                              (g generic-state))
-             code          (-> h
-                               (g/simplify)
+             code          (-> (if simplify?
+                                 (g/simplify h)
+                                 h)
                                (v/freeze)
                                (wrap :calling-convention calling-convention
                                      :params (when generic-params? params)
