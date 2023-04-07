@@ -4,6 +4,9 @@
 
 - #118:
 
+  - Fixes problems with the `resolve` calls in `emmy.util.def` triggered by
+    vanilla (non-shadow) cljs compilation.
+
   - Updates `Complex.js` and `Fraction.js` dependencies to their latest NPM
     versions.
 
