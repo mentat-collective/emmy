@@ -255,15 +255,17 @@
   (testing "simplify?"
     (let [f (fn [x]
               (g/+ (g/square (g/sin x))
-                   (g/square (g/cos x))))]
-      (is (= `(fn [~'y0001] 1)
-             (c/compile-fn f 1{:mode :clj :simplify? true}))
+                   (g/square (g/cos x))))
+          one #?(:clj 1.0 :cljs 1)
+          two #?(:clj 2.0 :cljs 2)]
+      (is (= `(fn [~'y0001] ~one)
+             (c/compile-fn f 1 {:mode :clj :simplify? true}))
           "simplify? true triggers body simplification.")
 
       (is (= `(fn [~'y0001]
-                (+ (~'Math/pow (~'Math/sin ~'y0001) 2)
-                   (~'Math/pow (~'Math/cos ~'y0001) 2)))
-             (c/compile-fn f 1{:mode :clj :simplify? false}))
+                (+ (~'Math/pow (~'Math/sin ~'y0001) ~two)
+                   (~'Math/pow (~'Math/cos ~'y0001) ~two)))
+             (c/compile-fn f 1 {:mode :clj :simplify? false}))
           "simplify? false leaves body untouched."))))
 
 (deftest compile-state-tests
