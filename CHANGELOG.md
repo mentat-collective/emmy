@@ -2,6 +2,15 @@
 
 ## [unreleased]
 
+- #119:
+
+  - Removes support for `:flat` compilation mode (this was a step toward
+    what is now called :primitive). Flat has no further use case.
+
+  - You can now "bring your own array" to the function provided by
+    `stream-integrator`, avoiding an allocation in performance-sensitive
+    contexts.
+
 - #118:
 
   - Fixes problems with the `resolve` calls in `emmy.util.def` triggered by
