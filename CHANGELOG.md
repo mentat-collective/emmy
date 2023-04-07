@@ -2,6 +2,55 @@
 
 ## [unreleased]
 
+- #118:
+
+  - Fixes problems with the `resolve` calls in `emmy.util.def` triggered by
+    vanilla (non-shadow) cljs compilation.
+
+  - Updates `Complex.js` and `Fraction.js` dependencies to their latest NPM
+    versions.
+
+  - Updates `odex` to the latest release candidate on NPM.
+
+  - The `cljs` side of `emmy.numerical.ode/stream-integrator` gains a `:js?`
+    option that defaults to `true`. If `false`, the returned function will
+    return native JS arrays vs converting the return value to Clojure.
+
+  - In `emmy.expression.compile`, `compile-fn` and `compile-state-fn` gain a
+    `:simplify?` argument that defaults to `true`. If `false`, compilation will
+    not attempt to simplify the function body before proceeding.
+
+- #115:
+
+  This PR introduces significant upgrades to the functions in
+  `emmy.expression.compile`. `compile-state-fn` and `compile-fn` now share the
+  same code. Expect some more shifts here as we work on animations.
+
+  Specifically, this update:
+
+  - Removes timers from the code in `emmy.numerical.ode`. If you want timing
+    data you can generate an derivative yourself that performs timing. Including
+    this by default introduced a significant performance cost.
+
+  - Renames `emmy.numerical.ode/integration-opts` to `make-integrator*`; it now
+    returns only a call to `stream-integrator` instead of the old map of this
+    result and timers.
+
+  - In `emmy.expression.compile`:
+
+    - `compile-state-fn*` and `compile-fn*` are now removed, in favor of the
+      non-starred versions with option `:cache? false` supplied.
+
+    - `compile-fn` now calls `compile-state-fn` with `params` set to `false` and
+      an `:arity` option supplied, vs using its own mostly-duplicated
+      implementation.
+
+    - `:flatten?` option removed in favor of the more granular
+      `:calling-convention`. This option supports values of `:structure`,
+      `:flat` and `:primitive`. See the docstring for details.
+
+    - `:mode` supports `:js`, `:source`, `:clj`, `:native` or `:sci`.
+
 - #110:
 
   - Moves all docstrings that existed as metadata on defs (i.e., `(def ^{:doc

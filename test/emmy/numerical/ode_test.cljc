@@ -36,7 +36,11 @@
           (is (near? (Math/exp 1) (first result)))))))
 
   (testing "y' = y, new interface"
-    (let [f (o/stream-integrator (fn [_ ^doubles y ^doubles out] (aset out 0 (aget y 0))) 0 [1] {:epsilon 1e-8})]
+    (let [f (o/stream-integrator (fn [_ ^doubles y ^doubles out]
+                                   (aset out 0 (aget y 0)))
+                                 0
+                                 [1]
+                                 {:epsilon 1e-8})]
       (doseq [x (range 0 1 0.01)]
         (let [[ex] (f x)]
           (is (near? (Math/exp x) ex))))
@@ -60,6 +64,24 @@
       (is (f 10))
       (is (thrown? #?(:clj IllegalStateException :cljs js/Error) (f 1)))
       (f)))
+
+  #?(:cljs
+     (testing "stream integrator js option returns js array"
+       (let [js-true (o/stream-integrator
+                      (fn [_ ^doubles y ^doubles out]
+                        (aset out 0 (aget y 0)))
+                      0 [1] {:js? true})]
+         (is (array? (js-true 10))
+             "When js? is true, the return value is a JS array.")
+         (js-true))
+
+       (let [js-false (o/stream-integrator
+                       (fn [_ ^doubles y ^doubles out]
+                         (aset out 0 (aget y 0)))
+                       0 [1] {:js? false})]
+         (is (vector? (js-false 10))
+             "When js? is true, the return value is a vector.")
+         (js-false))))
 
   (testing "throwing from derivative can be caught"
     (let [f' (fn [x [y0 y1] ^doubles out]

@@ -64,7 +64,9 @@
    use an auxiliary thread to enable this style of flow control.  If
    JavaScript, we expect the solver to provide a generator of solution
    segments."
-  [f' x0 y0 {:keys [epsilon] :or {epsilon default-epsilon}}]
+  [f' x0 y0 {:keys [epsilon #?(:cljs js?)]
+             :or {epsilon default-epsilon
+                  #?@(:cljs [js? false])}}]
   (let [dimension (count y0)]
     #?(:clj
        (let [gbs               (GraggBulirschStoerIntegrator. 0. 1. (double epsilon) (double epsilon))
@@ -82,7 +84,7 @@
           (reify StepHandler
             (init [_ _ _ _])
             (handleStep
-             [_ interpolator _]
+                [_ interpolator _]
               ;; The `step-requests` channel sends `true` each time a new segment of
               ;; the solution is demanded; `false` is a signal that the consumer
               ;; has no further need of them. When sending segments back, receiving
@@ -103,20 +105,20 @@
               ;; overwritten when the next state is computed. Use of the function
               ;; after the next step-request is made will result in undefined
               ;; behavior.
-             (when-not (and (a/>!! solution-segments
-                                   (let [x0 (.getPreviousTime interpolator)
-                                         x1 (.getCurrentTime interpolator)]
-                                     {:x0 x0
-                                      :x1 x1
-                                      :f  (fn [x]
-                                            (assert (and (>= x x0)
-                                                         (<= x x1))
-                                                    (format "ODE interpolation request %g out of range [%g, %g]"
-                                                            x x0 x1))
-                                            (.setInterpolatedTime interpolator x)
-                                            (.getInterpolatedState interpolator))}))
-                            (a/<!! step-requests))
-               (u/interrupted "end of integration")))))
+              (when-not (and (a/>!! solution-segments
+                                    (let [x0 (.getPreviousTime interpolator)
+                                          x1 (.getCurrentTime interpolator)]
+                                      {:x0 x0
+                                       :x1 x1
+                                       :f  (fn [x]
+                                             (assert (and (>= x x0)
+                                                          (<= x x1))
+                                                     (format "ODE interpolation request %g out of range [%g, %g]"
+                                                             x x0 x1))
+                                             (.setInterpolatedTime interpolator x)
+                                             (.getInterpolatedState interpolator))}))
+                             (a/<!! step-requests))
+                (u/interrupted "end of integration")))))
          (doto (Thread.
                 (fn []
                   ;; Wait for the first step request before calling integrate.
@@ -166,8 +168,11 @@
                      dimension
                      #js {:absoluteTolerance epsilon
                           :relativeTolerance epsilon
-                          :rawFunction true})]
-         (comp js->clj (.integrate solver x0 (double-array y0)))))))
+                          :rawFunction true})
+             f (.integrate solver x0 (double-array y0))]
+         (if js?
+           f
+           (comp js->clj f))))))
 
 (defn ^:no-doc make-integrator*
   "Returns a stream integrator configured to integrate a SICM state function.
@@ -181,8 +186,9 @@
   (let [flat-initial-state (flatten initial-state)
         primitive-params   (double-array derivative-args)
         derivative-fn      (if compile?
-                             (c/compile-state-fn state-derivative derivative-args initial-state
-                                                 {:calling-convention :primitive})
+                             (c/compile-state-fn
+                              state-derivative derivative-args initial-state
+                              {:calling-convention :primitive})
                              (do (log/warn "Not compiling function for ODE analysis")
                                  (let [f' (apply state-derivative derivative-args)]
                                    (fn [ys yps _]
@@ -191,9 +197,9 @@
                                          f'
                                          (flatten-into-primitive-array yps))))))
         equations        (fn [_ ys yps]
-                           ;; TODO: should we consider allowing an option to add a dummy
-                           ;; x-parameter in the compiled code, which would allow unwrapping
-                           ;; this last layer?
+                           ;; TODO: should we consider allowing an option to add
+                           ;; a dummy x-parameter in the compiled code, which
+                           ;; would allow unwrapping this last layer?
                            (derivative-fn ys yps primitive-params))]
     (stream-integrator equations 0 flat-initial-state opts)))
 

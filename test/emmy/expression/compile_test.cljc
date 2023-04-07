@@ -119,8 +119,8 @@
                     "explicit invalid modes will throw!")))
 
             (is (= expected ((c/sci-eval (c/compile-state-fn
-                                           f params initial-state
-                                           {:mode :sci}))
+                                          f params initial-state
+                                          {:mode :sci}))
                              initial-state params))
                 "source compiles to SCI and gives us the desired result.")))))
 
@@ -137,26 +137,26 @@
                   {:clj `(fn ~'[[y1 [y2 [y3 [y4]]]]]
                            (vector (+ (* 3.1 ~'y1) 1.55)))
                    :js ["[y1, [y2, [y3, [y4]]]]" "  return [3.1 * y1 + 1.55];"]}]
-                 (is (= expected-source
-                      (c/compile-state-fn
-                       f params initial-state
-                       {:calling-convention :structure
-                        :generic-params? false
-                        :gensym-fn (a/monotonic-symbol-generator 1)
-                        :mode mode}))
-                     "nested argument vector, no params."))
+            (is (= expected-source
+                   (c/compile-state-fn
+                    f params initial-state
+                    {:calling-convention :structure
+                     :generic-params? false
+                     :gensym-fn (a/monotonic-symbol-generator 1)
+                     :mode mode}))
+                "nested argument vector, no params."))
 
           (doseq [[mode expected-source]
                   {:clj `(fn ~'[[y1 [y2 [y3 [y4]]]] [p5]]
                            (vector (+ (* ~'p5 ~'y1) (* 0.5 ~'p5))))
                    :js ["[y1, [y2, [y3, [y4]]]]" "[p5]" "  return [p5 * y1 + 0.5 * p5];"]}]
             (is (= expected-source
-                 (c/compile-state-fn
-                  f params initial-state
-                  {:calling-convention :structure
-                   :generic-params? true
-                   :gensym-fn (a/monotonic-symbol-generator 1)
-                   :mode mode}))
+                   (c/compile-state-fn
+                    f params initial-state
+                    {:calling-convention :structure
+                     :generic-params? true
+                     :gensym-fn (a/monotonic-symbol-generator 1)
+                     :mode mode}))
                 "nested argument vector, params."))))))
 
   (testing "non-state-fns"
@@ -177,8 +177,8 @@
             (let [[f-source clj-source] (with-redefs [gensym (fn
                                                                ([] (clojure.core/gensym))
                                                                ([x] x))]
-                             [(c/compile-fn f)
-                              (binding [c/*mode* :clj] (c/compile-fn f))])]
+                                          [(c/compile-fn f)
+                                           (binding [c/*mode* :clj] (c/compile-fn f))])]
               (is (= #?(:clj `(fn [~'y0001]
                                 (vector
                                  (+ (~'Math/pow ~'y0001 3.0)
@@ -250,7 +250,23 @@
 
       (is (== 3 (f 1 2 2)))
       (is (== (f 1 2 2) ((c/compile-fn f 3) 1 2 2))
-          "If you specify an arity, you avoid the error."))))
+          "If you specify an arity, you avoid the error.")))
+
+  (testing "simplify?"
+    (let [f (fn [x]
+              (g/+ (g/square (g/sin x))
+                   (g/square (g/cos x))))
+          one #?(:clj 1.0 :cljs 1)
+          two #?(:clj 2.0 :cljs 2)]
+      (is (= `(fn [~'y0001] ~one)
+             (c/compile-fn f 1 {:mode :clj :simplify? true}))
+          "simplify? true triggers body simplification.")
+
+      (is (= `(fn [~'y0001]
+                (+ (~'Math/pow (~'Math/sin ~'y0001) ~two)
+                   (~'Math/pow (~'Math/cos ~'y0001) ~two)))
+             (c/compile-fn f 1 {:mode :clj :simplify? false}))
+          "simplify? false leaves body untouched."))))
 
 (deftest compile-state-tests
   (let [f  (fn [[[a b] [c d]]]

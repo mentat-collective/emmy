@@ -28,8 +28,8 @@
 ;;    to return a "numerical expression", a syntax tree representing the
 ;;    function's body:
 #_(let [f (fn [x] (g/sqrt
-                   (g/+ (g/square (g/sin x))
-                        (g/square (g/cos x)))))]
+                  (g/+ (g/square (g/sin x))
+                       (g/square (g/cos x)))))]
     (= '(sqrt (+ (expt (sin x) 2) (expt (cos x) 2)))
        (x/expression-of (f 'x))))
 
@@ -37,8 +37,8 @@
 ;;    simplifications:
 
 #_(let [f (fn [x] (g/sqrt
-                   (g/+ (g/square (g/sin x))
-                        (g/square (g/cos x)))))]
+                  (g/+ (g/square (g/sin x))
+                       (g/square (g/cos x)))))]
     (v/= 1 (g/simplify (f 'x))))
 
 ;; 3. Apply "common subexpression elimination". Any subexpression inside the
@@ -102,7 +102,7 @@
    'modulo {:sym 'clojure.core/mod :f mod}
    'remainder {:sym 'clojure.core/rem :f rem}
    'quotient {:sym 'clojure.core/quot :f quot}
-   'integer-part #?(:clj {:sym 'long :f long}
+   'integer-part #?(:clj  {:sym 'long :f long}
                     :cljs {:sym 'Math/trunc
                            :f #(Math/trunc %)})
    ;; NOTE that the proper way to handle this substitution is to add a
@@ -288,11 +288,10 @@
                    argv))))
 
 (defn- append-bindings
-  "Returns a new let expression with the supplied `bindings`
-  wrapping `exp`. If `exp` is already a let expression, the
-  `bindings` will be appended (or prepended, if `prepend?`)
-  to the existing ones. Each binding
-  is a two-element list [var value]."
+  "Returns a new let expression with the supplied `bindings` wrapping `exp`. If
+  `exp` is already a let expression, the `bindings` will be appended (or
+  prepended, if `prepend?`) to the existing ones. Each binding is a two-element
+  list [var value]."
   [exp bindings & prepend?]
   (let [z (z/seq-zip exp)
         unpaired-bindings (for [kv bindings a kv] a)]
@@ -307,8 +306,8 @@
   "Invokes [[emmy.expression.cse/extract-common-subexpressions]] on `x`.
 
   Local bindings for the common sub-expressions found are appended to the
-  binding structure of the body, and the (possibly) simplified
-  code replaces that in the previous code body."
+  binding structure of the body, and the (possibly) simplified code replaces
+  that in the previous code body."
   [x gensym-fn deterministic?]
   (extract-common-subexpressions
    (:body x)
@@ -319,18 +318,17 @@
    {:gensym-fn gensym-fn :deterministic? deterministic?}))
 
 (defn- primitive-bindings
-  "In the primitive calling convention case, introduces a sequence of
-  local variables for each of the state variables, retrieving the values
-  from the primitive input array. Returns an updated code object."
+  "In the primitive calling convention case, introduces a sequence of local
+  variables for each of the state variables, retrieving the values from the
+  primitive input array. Returns an updated code object."
 
   [{:keys [argv calling-convention state-model params] :as code}]
   (letfn [(local-vars-from-array
-           ;; Arranges for the local variables given in `vars` to be bound,
-           ;; one by one, to the elements of the primitive array denoted by
-           ;; `array-symbol `.
-           [array-symbol vars]
-           (map-indexed (fn [i v] [v `(aget ~array-symbol ~i)]) vars))
-          ]
+            ;; Arranges for the local variables given in `vars` to be bound, one
+            ;; by one, to the elements of the primitive array denoted by
+            ;; `array-symbol `.
+            [array-symbol vars]
+            (map-indexed (fn [i v] [v `(aget ~array-symbol ~i)]) vars))]
     (case calling-convention
       :primitive (let [[ys _ ps] argv]
                    (update code :body append-bindings
@@ -341,27 +339,26 @@
 
 (defn- primitive-body
   "In the case of primitive calling convention, unrolls the source of the
-  vector-producing statement of the body into a sequence of `aset`
-  calls to populate the derivative output array. Returns an updated code
-  object."
+  vector-producing statement of the body into a sequence of `aset` calls to
+  populate the derivative output array. Returns an updated code object."
   [{:keys [calling-convention argv] :as code}]
   (letfn [(vector-sequence?
-           ;; Returns true if the expression `x` is a vector constructor,
-           ;; i.e., a sequence commencing with `up`, `down` or `vector`.
-           [x]
-           (and (sequential? x) (#{'up 'down 'vector} (first x))))
+            ;; Returns true if the expression `x` is a vector constructor,
+            ;; i.e., a sequence commencing with `up`, `down` or `vector`.
+            [x]
+            (and (sequential? x) (#{'up 'down 'vector} (first x))))
           (flatten-state-vector
-           ;; "Returns a flat sequence of expressions making up a state vector."
-           [v]
-           (filter (complement vector-sequence?)
-                   (tree-seq vector-sequence? rest v)))
+            ;; "Returns a flat sequence of expressions making up a state vector."
+            [v]
+            (filter (complement vector-sequence?)
+                    (tree-seq vector-sequence? rest v)))
           (expressions-to-array
-           ;; Returns a (possibly compound) statement which will arrange for the
-           ;; expressions in `exps `to be stored, one by one, into the elements
-           ;; of the primitive array denoted by `array-symbol `.
-           [array-symbol exps]
-           `(doto ~array-symbol
-              ~@(map-indexed (fn [i v] `(aset ~i ~v)) exps)))]
+            ;; Returns a (possibly compound) statement which will arrange for
+            ;; the expressions in `exps `to be stored, one by one, into the
+            ;; elements of the primitive array denoted by `array-symbol `.
+            [array-symbol exps]
+            `(doto ~array-symbol
+               ~@(map-indexed (fn [i v] `(aset ~i ~v)) exps)))]
     (case calling-convention
       :primitive
       (update code :body (fn [body]
@@ -374,10 +371,10 @@
                              )) )
       code)))
 
-;; The following functions compile state functions in either native or SCI
-;; mode. The primary difference is that native compilation requires us to
-;; explicitly replace all instances of symbols from `compiled-fn-whitelist`
-;; above with actual functions.
+;; The following functions compile state functions in either native or SCI mode.
+;; The primary difference is that native compilation requires us to explicitly
+;; replace all instances of symbols from `compiled-fn-whitelist` above with
+;; actual functions.
 ;;
 ;; SCI handles this behind its interface, and simply takes a reusable context
 ;; that wraps the fn replacement mapping.
@@ -399,13 +396,12 @@
 
    [a [b c [d e] f]] -> \"[a, [b, c, [d, e], f]]\"
 
-   However, [] (which occurs in parameter-free state functions)
-   will appear as \"_\" in the argument list. While it's not
-   wrong to destructure an empty list in JavaScript, nil is
-   not iterable, and so can't serve as an empty list argument
-   as it can in Clojure. Instead, we \"discard\" the argument
-   by letting it bind to a dummy name: in this way, either nil
-   or [] can serve as the empty argument"
+   However, [] (which occurs in parameter-free state functions) will appear as
+  \"_\" in the argument list. While it's not wrong to destructure an empty list
+  in JavaScript, nil is not iterable, and so can't serve as an empty list
+  argument as it can in Clojure. Instead, we \"discard\" the argument by letting
+  it bind to a dummy name: in this way, either nil or [] can serve as the empty
+  argument"
   [a]
   (let [c (w/postwalk
            (fn [f]
@@ -444,11 +440,12 @@
   [{:keys [argv body]}]
   (let [argv    (mapv commafy-arglist argv)
         buffer  (atom [])
-        ;; do-body accepts a zipper location. If the location is a `(doto)` form,
-        ;; it is assumed to be of the form `(doto array (aset index value)...)` and is
-        ;; then unrolled into the corresponding Javascript array mutation statements
-        ;; which are appended to `buffer`. If not, a return statement is generated for
-        ;; the expression at `z`. Nothing is returned.
+        ;; do-body accepts a zipper location. If the location is a `(doto)`
+        ;; form, it is assumed to be of the form `(doto array (aset index
+        ;; value)...)` and is then unrolled into the corresponding Javascript
+        ;; array mutation statements which are appended to `buffer`. If not, a
+        ;; return statement is generated for the expression at `z`. Nothing is
+        ;; returned.
         do-body (fn [z]
                   (if (and (z/branch? z) (= (z/node (z/next z)) `doto))
                     (let [z (z/next (z/next z))
@@ -465,12 +462,13 @@
                     (swap! buffer conj
                            (str "  return " (render/->JavaScript (z/node z)) ";"))))
         ;; do-let accepts a zipper location. If the location is a `(let)` form,
-        ;; the bindings are unrolled into the corresponding sequence of assignment
-        ;; statements which are then appended to `buffer`. If the RHS of a binding
-        ;; pair is of the form `(aget var index)` this will be converted to an
-        ;; array reference; otherwise the usual Javascript renderer is used for the
-        ;; RHS of the assignment. The zipper position immediately following the let
-        ;; form is returned, facilitating this function's use in a parsing chain.
+        ;; the bindings are unrolled into the corresponding sequence of
+        ;; assignment statements which are then appended to `buffer`. If the RHS
+        ;; of a binding pair is of the form `(aget var index)` this will be
+        ;; converted to an array reference; otherwise the usual Javascript
+        ;; renderer is used for the RHS of the assignment. The zipper position
+        ;; immediately following the let form is returned, facilitating this
+        ;; function's use in a parsing chain.
         do-let (fn [z]
                  (if (and (z/branch? z) (= (z/node (z/next z)) `let))
                    (let [z (z/next (z/next z))]
@@ -485,8 +483,8 @@
     (conj argv (s/join "\n" @buffer))))
 
 (defn- compile-native
-  "Dispatches the `code` object to the compiler corresponding to the
-  current runtime environment."
+  "Dispatches the `code` object to the compiler corresponding to the current
+  runtime environment."
   [code]
   #?(:clj (eval (compile->clj code))
      :cljs (let [g (apply js/Function (compile->js code))]
@@ -498,7 +496,7 @@
   "Returns a Clojure function evaluated using SCI. The returned fn implements
   `code`, given:
 
- - `code`: a code object, which we hand off to the Clojure compiler"
+  - `code`: a code object, which we hand off to the Clojure compiler"
   ([code]
    (sci-eval
     (compile->clj code))))
@@ -515,10 +513,10 @@
   and all non-structural elements to gensymmed symbols."
   [state gensym-fn]
   (letfn [(rec [s]
-               (if (struct/structure? s)
-                 (mapv rec s)
-                 (gensym-fn 'y)))]
-      (rec state)))
+            (if (struct/structure? s)
+              (mapv rec s)
+              (gensym-fn 'y)))]
+    (rec state)))
 
 (defn compile-state-fn
   "Returns a compiled, simplified function with signature `(f state params?)`,
@@ -526,10 +524,10 @@
 
   - a state function that can accept a symbolic arguments
 
-  - `params`; really any sequence of count equal to the number of arguments
+  - `params`: really any sequence of count equal to the number of arguments
     taken by `f`. The values are ignored. If the specific value `false` is
-    provided, then `f` is considered to be the function to compile itself,
-    and not the producer of such a function via application of parameters.
+    provided, then `f` is considered to be the function to compile itself, and not
+    the producer of such a function via application of parameters.
 
   - `initial-state`: Some structure of the same shape as the argument expected
     by the fn returned by the state function `f`. Only the shape matters; the
@@ -594,13 +592,17 @@
     - `:arity` records the arity selected for a compiled non-state function
       and is ordinarily provided automatically by [[compile-fn]].
 
+    - `:simplify?` If `true`, simplify the expanded function body before proceeding
+      to subexpression elimination and successive steps. If `false`, skip this step.
+      Defaults to `true`.
+
   The returned, compiled function expects all `Double` (or `js/Number`) for all
   state primitives. The function body is simplified and all common
   subexpressions identified during compilation are extracted and computed only
   once.
 
-  Function compilations are cached with a key that attempts to capture all
-  of the relevant information "
+  Function compilations are cached with a key that attempts to capture all of
+  the relevant information "
   ([f params initial-state]
    (compile-state-fn f params initial-state {}))
   ([f params initial-state {:keys [mode
@@ -609,13 +611,15 @@
                                    generic-params?
                                    gensym-fn
                                    deterministic?
-                                   cache?]
+                                   cache?
+                                   simplify?]
                             :or {mode *mode*
                                  calling-convention :structure
                                  generic-params? (boolean params)
                                  gensym-fn (a/monotonic-symbol-generator 4)
                                  deterministic? false
-                                 cache? true}}]
+                                 cache? true
+                                 simplify? true}}]
 
    (let [key {:calling-convention calling-convention
               :generic-params? generic-params?
@@ -639,8 +643,9 @@
              h             (case calling-convention
                              :native (apply g generic-state)
                              (g generic-state))
-             code          (-> h
-                               (g/simplify)
+             code          (-> (if simplify?
+                                 (g/simplify h)
+                                 h)
                                (v/freeze)
                                (wrap :calling-convention calling-convention
                                      :params (when generic-params? params)

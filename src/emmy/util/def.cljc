@@ -1,6 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
 (ns emmy.util.def
+  (:require [emmy.util :as u]
+            #?(:cljs [cljs.analyzer.api :as aa]))
   #?(:clj
      (:import (clojure.lang Keyword RT)))
   #?(:cljs
@@ -30,6 +32,20 @@
                   [a])]
     (map #(into [] (take %) lowercase-symbols)
          arities)))
+
+#?(:clj
+   (defn link-vars
+     "Makes sure that all changes to `src` are reflected in `dst`.
+
+  NOTE that [[link-vars]] comes
+  from [`potemkin.namespaces`](https://github.com/clj-commons/potemkin/blob/master/src/potemkin/namespaces.clj);
+  we import it here to avoid importing the full library."
+     [src dst]
+     (add-watch
+      src dst
+      (fn [_ src _old _new]
+        (alter-var-root dst (constantly @src))
+        (alter-meta! dst merge (dissoc (meta src) :name))))))
 
 (defmacro defgeneric
   "Defines a multifn using the provided symbol. Arranges for the multifn
@@ -73,46 +89,39 @@
        (defmethod ~f [~kwd-klass] [k#]
          (~attr k#)))))
 
-#?(:clj
-   (defn link-vars
-     "Makes sure that all changes to `src` are reflected in `dst`.
-
-  NOTE that [[link-vars]] comes
-  from [`potemkin.namespaces`](https://github.com/clj-commons/potemkin/blob/master/src/potemkin/namespaces.clj);
-  we import it here to avoid importing the full library."
-     [src dst]
-     (add-watch
-      src dst
-      (fn [_ src _old _new]
-        (alter-var-root dst (constantly @src))
-        (alter-meta! dst merge (dissoc (meta src) :name))))))
-
-#?(:clj
-   (defmacro import-macro
-     "Given a macro in another namespace, defines a macro with the same name in
+(defmacro import-macro
+  "Given a macro in another namespace, defines a macro with the same name in
    the current namespace. Argument lists, doc-strings, and original line-numbers
    are preserved.
 
   NOTE that [[import-macro]] comes
   from [`potemkin.namespaces`](https://github.com/clj-commons/potemkin/blob/master/src/potemkin/namespaces.clj);
   we import it here to avoid importing the full library."
-     ([sym]
-      `(import-macro ~sym nil))
-     ([sym name]
-      (let [vr (resolve sym)
-            m (meta vr)
-            n (or name (with-meta (:name m) {}))]
-        (when-not vr
-          (throw (IllegalArgumentException. (str "Don't recognize " sym))))
-        (when-not (:macro m)
-          (throw (IllegalArgumentException.
-                  (str "Calling import-macro on a non-macro: " sym))))
-        `(do
-           (def ~n ~(resolve sym))
-           (alter-meta! (var ~n) merge (dissoc (meta ~vr) :name))
-           (.setMacro (var ~n))
-           (link-vars ~vr (var ~n))
-           ~vr)))))
+  ([sym]
+   `(import-macro ~sym nil))
+  ([sym name]
+   (let [vr #?(:clj (resolve sym) :cljs (aa/resolve &env sym))
+         m (meta vr)
+         n (or name (with-meta (:name m) {}))]
+     (when-not vr
+       (u/illegal (str "Don't recognize " sym)))
+     (when-not (:macro m)
+       (u/illegal (str "Calling import-macro on a non-macro: " sym)))
+     (fork
+      :cljs
+      `(js/console.log
+        "NOTE from `emmy.util.def/import-macro`: I don't currently know
+      what to do to implement `import-macro` in self-hosted cljs mode! If you
+      run into this, come file a ticket at
+      https://github.com/mentat-collective/emmy and we'll get this sorted.")
+
+      :clj
+      `(do
+         (def ~n ~@vr)
+         (alter-meta! (var ~n) merge (dissoc (meta ~vr) :name))
+         (.setMacro (var ~n))
+         (link-vars ~vr (var ~n))
+         ~vr)))))
 
 (defmacro import-def
   "Given a regular def'd var from another namespace, defined a new var with the
@@ -131,21 +140,18 @@
   ([sym]
    `(import-def ~sym nil))
   ([sym var-name]
-   (fork
-    :cljs
-    (let [n (or var-name (symbol (name sym)))]
-      `(def ~n ~sym))
-
-    :clj
-    (let [vr (resolve sym)
-          m  (meta vr)
-          n  (or var-name (:name m))
-          n  (with-meta n (if (:dynamic m) {:dynamic true} {}))]
-      (when-not vr
-        (throw (IllegalArgumentException. (str "Don't recognize " sym))))
-      (when (:macro m)
-        (throw (IllegalArgumentException.
-                (str "Calling import-def on a macro: " sym))))
+   (let [vr #?(:clj (resolve sym) :cljs (aa/resolve &env sym))
+         m  (meta vr)
+         n  (or var-name (:name m))
+         n  (with-meta n (if (:dynamic m) {:dynamic true} {}))]
+     (when-not vr
+       (u/illegal (str "Don't recognize " sym)))
+     (when (:macro m)
+       (u/illegal
+        (str "Calling import-def on a macro: " sym)))
+     (fork
+      :cljs `(def ~n ~sym)
+      :clj
       `(do
          (def ~n @~vr)
          (alter-meta! (var ~n) merge (dissoc (meta ~vr) :name))
@@ -172,39 +178,30 @@
     ... etc
   ```"
   [& imports]
-  (fork
-   :cljs
-   `(do
-      ~@(for [[from-ns & defs] imports
-              d defs
-              :let [sym (symbol (str from-ns)
-                                (str d))]]
-          `(def ~d ~sym)))
-
-   :clj
-   (letfn [(unravel [x]
-             (if (sequential? x)
-               (->> x
-                    rest
-                    (mapcat unravel)
-                    (map
-                     #(symbol
-                       (str (first x)
-                            (when-let [n (namespace %)]
-                              (str "." n)))
-                       (name %))))
-               [x]))]
-     (let [imports (mapcat unravel imports)]
-       `(do
-          ~@(map
-             (fn [sym]
-               (let [vr (resolve sym)
-                     m  (meta vr)]
-                 (cond
-                   (nil? vr)     `(throw (ex-info (format "`%s` does not exist" '~sym) {}))
-                   (:macro m)    `(import-macro ~sym)
-                   :else         `(import-def ~sym))))
-             imports))))))
+  (letfn [(unravel [x]
+            (if (sequential? x)
+              (->> x
+                   rest
+                   (mapcat unravel)
+                   (map
+                    #(symbol
+                      (str (first x)
+                           (when-let [n (namespace %)]
+                             (str "." n)))
+                      (name %))))
+              [x]))]
+    (let [imports (mapcat unravel imports)]
+      `(do
+         ~@(map
+            (fn [sym]
+              (let [vr #?(:clj (resolve sym) :cljs (aa/resolve &env sym))
+                    m  (meta vr)]
+                (cond
+                  (nil? vr)  `(throw
+                               (ex-info (format "`%s` does not exist" '~sym) {}))
+                  (:macro m) `(import-macro ~sym)
+                  :else      `(import-def ~sym))))
+            imports)))))
 
 #_{:clj-kondo/ignore [:redundant-fn-wrapper]}
 (defn careful-def

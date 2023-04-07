@@ -7,7 +7,7 @@
 
   For other numeric extensions, see [[emmy.ratio]]
   and [[emmy.numbers]]."
-  (:require #?(:cljs ["complex.js" :as Complex])
+  (:require #?(:cljs ["complex.js$default" :as Complex])
             #?(:cljs [goog.object :as obj])
             [emmy.generic :as g]
             [emmy.util :as u]
