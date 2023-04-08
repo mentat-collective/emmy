@@ -96,7 +96,7 @@
                             :deterministic? true})))
 
 
-  (is (= ["[y01, y02, y03, y04, y05]"
+  (is (= ["[y01, [y02, y03], [y04, y05]]"
           "[p06, p07, p08, p09, p10]"
           (maybe-defloatify
            (str
@@ -115,7 +115,6 @@
           '[1 1 1 1 'g]
           (up 't (up 'theta 'phi) (up 'thetadot 'phidot))
           {:mode :js
-           :calling-convention :flat
            :gensym-fn (a/monotonic-symbol-generator 2)
            :deterministic? true})))
 
@@ -130,7 +129,7 @@
     #?(:clj
        ;; even with the deterministic flag, this is not quite reproducing in
        ;; ClojureScript.
-       (is (= ["[y01, y02, y03, y04, y05]"
+       (is (= ["[y01, [y02, y03], [y04, y05]]"
                "_"
                (str
                 "  const _09 = - y03;\n"
@@ -165,6 +164,5 @@
                []
                (e/->H-state 't (up 'theta 'psi) (down 'p_theta 'p_psi))
                {:mode :js
-                :calling-convention :flat
                 :gensym-fn (a/monotonic-symbol-generator 2)
                 :deterministic? true}))))))

@@ -253,14 +253,9 @@
   SICM. It maps a state tuple to its time derivative; structure in,
   structure out.
 
-  - `:flat => (fn [[t x0 x1 v0 v1] [p0 p1 ...]] ...)`
-
-  ODE solvers prefer to work with flat vectors, and so this calling
-  convention unrolls the state model into an ordered list of parameters.
-
   - `:primitive => (fn [ys yps ps])`
 
-  ODE solvers can gain yet more efficiency if they may allocate
+  ODE solvers can gain efficiency if they may allocate
   long-lived input and output vectors. Bindings for the individual
   state elements are inserted into the code's local variables.
   The input vector `ys` should have the same length as the flat
@@ -278,7 +273,6 @@
   (let [argv (case calling-convention
                :primitive (primitive-state-symbols #(gensym-fn "a"))
                :structure [(into [] state-model)]
-               :flat [(into [] (flatten state-model))]
                :native state-model
                (throw (ex-info "Invalid calling convention supplied"
                                {:calling-convention calling-convention})))]
@@ -546,13 +540,6 @@
 
         ```clojure
         (fn [[y1 [y2 y3] [y4 y5]]] [p1 ...] ...)
-        ```
-
-      - `:flat`: The compiled function will expect the state in flattened
-        form, which may be provided by any flat Clojure sequence:
-
-        ```clojure
-        (fn [[y1 y2 y3 y4 y5] [p1 ...]] ...)
         ```
 
       - `:primitive`: The compiled function will expect a primitive array

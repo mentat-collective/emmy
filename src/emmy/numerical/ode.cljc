@@ -83,8 +83,7 @@
           gbs
           (reify StepHandler
             (init [_ _ _ _])
-            (handleStep
-                [_ interpolator _]
+            (handleStep [_ interpolator _]
               ;; The `step-requests` channel sends `true` each time a new segment of
               ;; the solution is demanded; `false` is a signal that the consumer
               ;; has no further need of them. When sending segments back, receiving
@@ -150,18 +149,21 @@
                                 (when (u/throwable? v)
                                   (throw v))
                                 v))
-               current-segment (atom (next-segment))]
-           (fn
+               current-segment (atom (next-segment))
+               evaluate-at (fn [x]
+                                 (when (< x (:x0 @current-segment))
+                                   (u/illegal-state "Cannot use interpolation function in backwards direction"))
+                                 (while (> x (:x1 @current-segment))
+                                   (let [s (next-segment)]
+                                     (reset! current-segment s)))
+                                 ((:f @current-segment) x))]
+           (fn f
              ([]
               (a/>!! step-requests false))
              ([x]
-              (when (< x (:x0 @current-segment))
-                (u/illegal-state "Cannot use interpolation function in backwards direction"))
-              (while (> x (:x1 @current-segment))
-                (let [s (next-segment)]
-                  (reset! current-segment s)))
-              (into [] ((:f @current-segment) x))))))
-
+              (into [] (evaluate-at x)))
+             ([x ^doubles out]
+              (System/arraycopy (evaluate-at x) 0 out 0 dimension)))))
        :cljs
        (let [solver (o/Solver.
                      f'
