@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html><head><title>Root finding by successive bisection</title><meta charset="UTF-8"><meta content="width=device-width, initial-scale=1" name="viewport"><meta content="The [[bisect]] function below is really a combination of three methods of root-finding; bisection search, the Secant method and a mixed method found in scmutils." property="og:description"><meta content="Root finding by successive bisection" property="og:title"><meta content="article:clerk" property="og:type"><meta content="summary_large_image" name="twitter:card"><script src="https://cdn.tailwindcss.com?plugins=typography" type="text/javascript"></script><script>tailwind.config = {
+  darkMode: "class",
+  content: ["./tw/viewer.js", "./tw/**/*.edn"],
+  safelist: ['dark'],
+  theme: {
+    extend: {},
+    fontFamily: {
+      sans: ["Fira Sans", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+      serif: ["PT Serif", "serif"],
+      mono: ["Fira Mono", "monospace"]
+    }
+  },
+  variants: {
+    extend: {},
+  },
+  plugins: [],
+}
+</script><style type="text/tailwindcss">@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-size: 18px;
+  }
+  @media (max-width: 600px) {
+    html {
+      font-size: 16px;
+    }
+  }
+  .font-condensed { font-family: "Fira Sans Condensed", sans-serif; }
+  .font-inter     { font-family: "Inter", sans-serif; }
+  body {
+    @apply font-serif antialiased text-gray-900 sm:overscroll-y-none;
+  }
+  code, .code {
+    @apply font-mono text-sm text-gray-900 bg-slate-50 px-0.5 py-px rounded dark:bg-gray-800;
+  }
+  code::before, code::after { @apply content-none !important; }
+  h1, h3, h4, h5, h6 {
+    @apply font-condensed font-bold mt-8 first:mt-0;
+  }
+  h2 {
+    /*We cannot collapse margins due to nesting but we want to*/
+    /*keep the h2’s large margin visible*/
+    @apply font-condensed font-bold mt-8 first:mt-2;
+  }
+  h1 { @apply text-4xl; }
+  h2 { @apply text-3xl; }
+  h3 { @apply text-2xl; }
+
+  @media print {
+      h1 { @apply text-2xl !important; }
+      h2 { @apply text-xl !important; }
+      h3 { @apply text-lg !important; }
+  }
+
+  button { @apply focus:outline-none; }
+  strong { @apply font-bold; }
+  em     { @apply italic; }
+  pre    { @apply m-0 font-mono; }
+}
+
+/* Compatibility */
+/* --------------------------------------------------------------- */
+/* TODO: Verify which colors are in use and replace with Tailwind
+   colors accordingly. Move Nj-specific styles out of here. */
+
+:root {
+  --teal-color: #31afd0;
+  --dark-teal-color: #095960;
+  --near-black-color: #2e2e2c;
+  --red-color: #d64242;
+  --dark-blue-color: #1f2937;
+  --dark-blue-60-color: rgba(28, 42, 56, 0.6);
+  --gray-panel-color: rgba(239, 241, 245, 1.000);
+  --brand-color: var(--dark-blue-color);
+  --link-color: #5046e4;
+  --command-bar-selected-color: var(--teal-color);
+}
+
+.serif      { @apply font-serif; }
+.sans-serif { @apply font-sans; }
+.monospace  { @apply font-mono; }
+.inter      { @apply font-inter; }
+
+.border-color-teal { border-color: var(--dark-teal-color); }
+.teal { color: var(--teal-color); }
+.bg-dark-blue { background: var(--dark-blue-color); }
+.bg-dark-blue-60 { background: rgba(28, 42, 56, 0.6); }
+.bg-gray-panel { background: var(--gray-panel-color); }
+.text-dark-blue  { color: var(--dark-blue-color); }
+.text-dark-blue-60 { color: var(--dark-blue-60-color); }
+.border-dark-blue-30 { border-color: rgba(28, 42, 56, 0.6); }
+.text-brand { color: var(--dark-blue-color); }
+.bg-brand { background: var(--dark-blue-color); }
+.text-selected { color: white; }
+.red { color: var(--red-color); }
+
+/* Disclose Button */
+/* --------------------------------------------------------------- */
+
+.disclose {
+  @apply content-none border-solid cursor-pointer inline-block relative mr-[3px] top-[-2px] transition-all;
+  border-color: var(--near-black-color) transparent;
+  border-width: 6px 4px 0;
+}
+.disclose:hover {
+  border-color: var(--near-black-color) transparent;
+}
+.dark .disclose,
+.dark .disclose:hover {
+  border-color: white transparent;
+}
+.disclose.collapsed {
+  @apply rotate-[-90deg];
+}
+
+/* Layout */
+/* --------------------------------------------------------------- */
+
+.page {
+  @apply max-w-5xl mx-auto px-12 box-border flex-shrink-0;
+}
+.max-w-prose { @apply max-w-[46rem] !important; }
+.max-w-wide  { @apply max-w-3xl !important; }
+
+/* List Styles */
+/* --------------------------------------------------------------- */
+
+.task-list-item + .task-list-item,
+.markdown-viewer ul ul {
+  @apply mt-1 mb-0;
+}
+
+/* compact TOC */
+.markdown-viewer .toc ul {
+  list-style: none;
+  @apply my-1;
+}
+
+/* Code Viewer */
+/* --------------------------------------------------------------- */
+
+.code-viewer {
+  @apply font-mono bg-slate-100 rounded-sm text-sm overflow-x-auto dark:bg-gray-800;
+}
+.code-listing  {
+    @apply -ml-8 -mr-8 relative !important;
+}
+.code-viewer .cm-content {
+  @apply py-4 px-8;
+}
+@media (min-width: 960px){
+    .notebook-viewer .code-viewer .cm-content {
+        @apply py-4 pl-12;
+    }
+    .notebook-viewer .code-listing {
+        width: 48rem !important;
+        @apply -ml-12 mr-0 !important;
+    }
+}
+/* Don’t show focus outline when double-clicking cell in Safari */
+.cm-scroller { @apply focus:outline-none; }
+
+/* Syntax Highlighting */
+/* --------------------------------------------------------------- */
+
+.inspected-value { @apply text-xs font-mono leading-[1.25rem]; }
+.cmt-strong, .cmt-heading { @apply font-bold; }
+.cmt-italic, .cmt-emphasis { @apply italic; }
+.cmt-strikethrough { @apply line-through; }
+.cmt-link { @apply underline; }
+.untyped-value { @apply whitespace-nowrap; }
+
+.cm-editor, .cmt-default, .result-viewer {
+  @apply text-slate-800 dark:text-slate-300;
+}
+.cmt-keyword {
+  @apply text-purple-800 dark:text-pink-400;
+}
+.cmt-atom, .cmt-bool, .cmt-url, .cmt-contentSeparator, .cmt-labelName {
+  @apply text-blue-900 dark:text-blue-300;
+}
+.cmt-inserted, .cmt-literal {
+  @apply text-emerald-700 dark:text-emerald-200;
+}
+.cmt-string, .cmt-deleted {
+  @apply text-rose-700 dark:text-sky-300;
+}
+.cmt-italic.cmt-string {
+  @apply dark:text-sky-200;
+}
+.cmt-regexp, .cmt-escape {
+  @apply text-orange-500 dark:text-orange-300;
+}
+.cmt-variableName {
+  @apply text-blue-800 dark:text-sky-300;
+}
+.cmt-typeName, .cmt-namespace {
+  @apply text-emerald-600 dark:text-emerald-300;
+}
+.cmt-className {
+  @apply text-teal-600 dark:text-teal-200;
+}
+.cmt-macroName {
+  @apply text-teal-700 dark:text-teal-200;
+}
+.cmt-propertyName {
+  @apply text-blue-700 dark:text-blue-200;
+}
+.cmt-comment {
+  @apply text-slate-500 dark:text-slate-400;
+}
+.cmt-meta {
+  @apply text-slate-600 dark:text-slate-400;
+}
+.cmt-invalid {
+  @apply text-red-500 dark:text-red-300;
+}
+
+.result-data {
+  @apply font-mono text-sm overflow-x-auto whitespace-nowrap leading-normal;
+}
+.result-data::-webkit-scrollbar, .path-nav::-webkit-scrollbar {
+  @apply h-0;
+}
+.result-data-collapsed {
+  @apply whitespace-nowrap;
+}
+.result-data-field {
+  @apply ml-4 whitespace-nowrap;
+}
+.result-data-field-link{
+  @apply ml-4 whitespace-nowrap cursor-pointer;
+}
+.result-data-field-link:hover {
+  @apply text-black bg-black/5;
+}
+.result-text-empty {
+  color: rgba(0,0,0,.3);
+}
+.browsify-button:hover {
+  box-shadow: -2px 0 0 2px #edf2f7;
+}
+
+/* Prose */
+/* --------------------------------------------------------------- */
+
+.notebook-viewer,
+.markdown-viewer {
+  @apply prose
+    dark:prose-invert
+    prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline
+    dark:prose-a:text-blue-300
+    prose-p:mt-4 prose-p:leading-snug
+    prose-ol:mt-4 prose-ol:mb-6 prose-ol:leading-snug
+    prose-ul:mt-4 prose-ul:mb-6 prose-ul:leading-snug
+    prose-blockquote:mt-4 prose-blockquote:leading-snug
+    prose-hr:mt-6 prose-hr:border-t-2 prose-hr:border-solid prose-hr:border-slate-200
+    prose-figure:mt-4
+    prose-figcaption:mt-2 prose-figcaption:text-xs
+    prose-headings:mb-4
+    prose-table:mt-0
+    prose-th:mb-0
+    prose-img:my-0
+    prose-code:font-medium prose-code:bg-slate-100
+    max-w-none;
+}
+.markdown-viewer blockquote p:first-of-type:before,
+.markdown-viewer blockquote p:last-of-type:after {
+  @apply content-none;
+}
+.markdown-node-viewer.result-viewer.fragment-item {
+    @apply mb-0 !important;
+}
+
+/* Images */
+/* --------------------------------------------------------------- */
+
+
+/* Todo Lists */
+/* --------------------------------------------------------------- */
+
+.contains-task-list {
+  @apply pl-6 list-none;
+}
+.contains-task-list input[type="checkbox"] {
+  @apply appearance-none h-4 w-4 rounded border border-slate-200 relative mr-[0.3rem] ml-[-1.5rem] top-[0.15rem];
+}
+.contains-task-list input[type="checkbox"]:checked {
+  @apply border-indigo-600 bg-indigo-600 bg-no-repeat bg-contain;
+  background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
+}
+
+/* Markdown TOC */
+/* --------------------------------------------------------------- */
+
+.markdown-viewer .toc      { @apply mt-4; }
+.markdown-viewer h1 + .toc { @apply mt-8; }
+
+.markdown-viewer .toc h1,
+.markdown-viewer .toc h2,
+.markdown-viewer .toc h3,
+.markdown-viewer .toc h4,
+.markdown-viewer .toc h5,
+.markdown-viewer .toc h6 {
+  @apply text-base text-indigo-600 font-sans my-0;
+}
+.markdown-viewer .toc a {
+  @apply text-indigo-600 font-normal no-underline hover:underline;
+}
+.markdown-viewer .toc li    { @apply m-0; }
+.markdown-viewer .toc ul ul { @apply pl-4; }
+
+/* Notebook Spacing */
+/* --------------------------------------------------------------- */
+
+.notebook-viewer { @apply py-16; }
+#clerk-static-app .notebook-viewer { @apply pt-[0.8rem] pb-16; }
+.markdown-viewer *:first-child:not(.code-viewer):not(li):not(h2):not(.sidenote) { @apply mt-0; }
+/*.viewer + .viewer { @apply mt-6; }*/
+.viewer + .result-viewer { @apply mt-0; }
+.code-viewer + .result-viewer { @apply mt-3; }
+.markdown-viewer + .markdown-viewer { @apply mt-0; }
+
+/* Sidenotes */
+/* --------------------------------------------------------------- */
+
+.sidenote-ref {
+  @apply top-[-0.5em] w-auto h-auto inline border-0 bg-transparent m-0 pointer-events-none;
+}
+.sidenote {
+  @apply block font-sans text-xs mt-4 bg-slate-100 dark:bg-slate-800 p-4;
+  font-style: normal;
+  font-weight: normal;
+}
+.sidenote-container {
+  @apply mb-4;
+}
+@media (min-width: 860px) {
+  .sidenote sup { @apply inline; }
+  .sidenote-column {
+    @apply w-[165px] absolute right-0 top-0 -mr-[205px];
+  }
+  .sidenote {
+    @apply bg-transparent dark:bg-transparent p-0;
+  }
+  .sidenote:first-child {
+    @apply mt-1;
+  }
+  .sidenotes-layout .markdown-viewer {
+    @apply pr-[241px];
+  }
+  .sidenote-container {
+    @apply relative mb-0;
+  }
+  .sidenotes-layout h1 {
+    @apply w-[756px] !important;
+  }
+}
+.code-viewer + .viewer:not(.code-viewer):not(.code-viewer-folded),
+.code-viewer-folded + .viewer:not(.code-viewer):not(.code-viewer-folded),
+.result-viewer:not(.markdown-node-viewer) + .result-viewer {
+  @apply mt-2;
+}
+.code-viewer + .code-viewer-folded {
+  @apply mt-4;
+}
+.result-viewer {
+  @apply leading-tight mb-6;
+}
+.code-viewer.fragment-item.result-viewer {
+  @apply mb-0 !important;
+}
+.result-viewer figure {
+  @apply mt-0 !important;
+}
+@media (min-width: 768px) {
+  .devcard-desc > div {
+    @apply max-w-full m-0;
+  }
+}
+
+/* Command Palette */
+/* --------------------------------------------------------------- */
+
+.nj-commands-input {
+  @apply bg-transparent text-white;
+}
+.nj-context-menu-item:hover:not([disabled]) {
+  @apply cursor-pointer;
+  background-color: rgba(255,255,255,.14);
+}
+
+/* Devdocs */
+/* --------------------------------------------------------------- */
+
+.logo, .logo-white {
+  @apply block indent-[-999em];
+  background: url(/images/nextjournal-logo.svg) center center no-repeat;
+}
+.devdocs-body {
+  @apply font-inter;
+}
+
+/* Workarounds */
+/* --------------------------------------------------------------- */
+
+/* Fixes vega viewer resizing into infinity */
+.vega-embed .chart-wrapper { @apply h-auto !important; }
+/* fixes fraction separators being overridden by tw’s border-color */
+.katex * { @apply border-black; }
+
+@media print {
+    .dark-mode-toggle,
+    .toc-toggle { @apply hidden; }
+    .notebook-viewer { @apply pt-0; font-size: 12pt !important; margin-left: 0 !important; }
+    .code-viewer .cm-content,
+    .viewer-code .cm-content { @apply whitespace-pre-wrap !important; overflow: none; }
+    .code-viewer .cm-line { font-size: 12pt !important; }
+    html * { page-break-inside: avoid !important; }
+    .toc-panel { @apply hidden; }
+}
+</style><script src="https://storage.clerk.garden/nextjournal/clerk-assets@4NdW4yYfmUzzw9xCkmyrJ75nH75d/viewer.js?immutable=true" type="module"></script><link href="https://cdn.jsdelivr.net/npm/katex@0.13.13/dist/katex.min.css" rel="stylesheet" type="text/css"><link href="https://fonts.bunny.net" rel="preconnect"><link href="https://fonts.bunny.net/css?family=fira-mono:400,700%7Cfira-sans:400,400i,500,500i,700,700i%7Cfira-sans-condensed:700,700i%7Cpt-serif:400,400i,700,700i" rel="stylesheet" type="text/css"></head><body><div id="clerk-static-app"></div><script type="module">let state = "{:out-path \"public/build\", :path->doc {\"src/emmy/numerical/roots/bisect.cljc\" {:path [], :nextjournal/value {:toc {:type :toc, :children [{:children [{:type :toc, :content [{:type :text, :text \"Root finding by successive bisection\"}], :heading-level 2, :attrs {:id \"root-finding-by-successive-bisection\"}, :path [:content 0]} {:type :toc, :content [{:type :text, :text \"Success / Failure Utilities\"}], :heading-level 2, :attrs {:id \"success-/-failure-utilities\"}, :path [:content 3]}], :type :toc}]}, :sidenotes? false, :toc-visibility false, :atom-var-name->state #viewer-eval (nextjournal.clerk.render/intern-atoms! {}), :ns #viewer-eval (ns emmy.numerical.roots.bisect), :auto-expand-results? nil, :scope emmy.numerical.roots.bisect, :bundle? false, :open-graph {:type \"article:clerk\", :title \"Root finding by successive bisection\", :description \"The [[bisect]] function below is really a combination of three methods of root-finding; bisection search, the Secant method and a mixed method found in scmutils.\"}, :title \"Root finding by successive bisection\", :blocks [{:path [], :nextjournal/value \"(ns emmy.numerical.roots.bisect\\n  \\\"This namespace contains implementations of a number of methods for root-finding\\n  on real-valued functions of one argument.\\n\\n  NOTE: This namespace is not yet stable: Expect these functions to change as\\n  new root-finding methods are added. \\\"\\n  (:require [emmy.util :as u]\\n            [emmy.util.stream :as us]\\n            [emmy.value :as v]))\", :nextjournal/opts {:id \"emmy.numerical.roots.bisect/anon-expr-5dqvpaJnAu4wkruxNaRcwUBgfEBx9r-code\", :loc {:line 3, :end-line 11, :column 1, :end-column 33}}, :nextjournal/viewer {:name nextjournal.clerk.viewer/code-block-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-code-block, :hash \"5dru1FUcVRTRrVKJFbNw4FG2wXmiwB\"}} {:path [], :nextjournal/value [:div.viewer.markdown-viewer.w-full.max-w-prose.px-8 {:data-block-id \"emmy.numerical.roots.bisect/markdown-5drLKuH95Fww39NXAAb17B1Wd56yGV\"} [\"h2\" {:id \"root-finding-by-successive-bisection\"} [:<> \"Root finding by successive bisection\"]] [:p [:<> \"The [[bisect]] function below is really a combination of three methods of\"] [#viewer-eval nextjournal.clerk.render/inspect-presented {:nextjournal/value [:<> \" \"], :nextjournal/viewer {:name nextjournal.clerk.viewer/html-viewer, :render-fn #viewer-fn identity, :hash \"5du5eveS8XMqMDMYH5rpQ1bqryEJdg\"}}] [:<> \"root-finding; bisection search, the \"] [:a {:href \"https://en.wikipedia.org/wiki/Secant_method\"} [:<> \"Secant\"] [#viewer-eval nextjournal.clerk.render/inspect-presented {:nextjournal/value [:<> \" \"], :nextjournal/viewer {:name nextjournal.clerk.viewer/html-viewer, :render-fn #viewer-fn identity, :hash \"5du5eveS8XMqMDMYH5rpQ1bqryEJdg\"}}] [:<> \"method\"]] [:<> \" and a mixed method found\"] [#viewer-eval nextjournal.clerk.render/inspect-presented {:nextjournal/value [:<> \" \"], :nextjournal/viewer {:name nextjournal.clerk.viewer/html-viewer, :render-fn #viewer-fn identity, :hash \"5du5eveS8XMqMDMYH5rpQ1bqryEJdg\"}}] [:<> \"in scmutils.\"]] [:p [:<> \"NOTE: As we bring in methods like \"] [:code [:<> \"zbrent\"]] [:<> \" it could be that the shell below\"] [#viewer-eval nextjournal.clerk.render/inspect-presented {:nextjournal/value [:<> \" \"], :nextjournal/viewer {:name nextjournal.clerk.viewer/html-viewer, :render-fn #viewer-fn identity, :hash \"5du5eveS8XMqMDMYH5rpQ1bqryEJdg\"}}] [:<> \"should be shared for ALL root finding methods.\"]]], :nextjournal/opts {:id \"emmy.numerical.roots.bisect/markdown-5drLKuH95Fww39NXAAb17B1Wd56yGV\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/markdown-node-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-with-react-key, :hash \"5drtFhRgc8WMLrXw6DB4bZLsNZjHHp\"}} {:path [], :nextjournal/value \"(def ^:dynamic *bisect-break*\\n  \\\"Controls the default behavior of [[bisect]]'s search.\\n  See [[bisect]]'s docstring for more info.\\\"\\n  60)\", :nextjournal/opts {:id \"emmy.numerical.roots.bisect/*bisect-break*-code\", :loc {:line 23, :end-line 26, :column 1, :end-column 6}}, :nextjournal/viewer {:name nextjournal.clerk.viewer/code-block-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-code-block, :hash \"5dru1FUcVRTRrVKJFbNw4FG2wXmiwB\"}} {:path [], :nextjournal/value {:nextjournal/presented {:path [], :nextjournal/value 60, :nextjournal/opts {:id \"emmy.numerical.roots.bisect/*bisect-break*-result\"}, :nextjournal/viewer {:render-fn #viewer-fn nextjournal.clerk.render/render-number, :hash \"5dr5kWRtr7mCj9ikbmX2S4HCkE4Xxt\"}}, :nextjournal/blob-id \"5drnqcjjP9xD1CHDkpofU8aGz1PNTp\"}, :nextjournal/opts {:id \"emmy.numerical.roots.bisect/*bisect-break*-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/result-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-result, :hash \"5dtGVHesd2XCTLFYF3aY4kJvkrX1x1\"}} {:path [], :nextjournal/value \"(def all-methods\\n  \\\"Set of all methods allowed as `:method` options to [[bisect]].\\\"\\n  #{:bisection :secant :mixed})\", :nextjournal/opts {:id \"emmy.numerical.roots.bisect/all-methods-code\", :loc {:line 28, :end-line 30, :column 1, :end-column 32}}, :nextjournal/viewer {:name nextjournal.clerk.viewer/code-block-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-code-block, :hash \"5dru1FUcVRTRrVKJFbNw4FG2wXmiwB\"}} {:path [], :nextjournal/value {:nextjournal/presented {:path [], :nextjournal/value [{:path [0], :nextjournal/value :bisection, :nextjournal/viewer {:render-fn #viewer-fn (fn [x] [:span.cmt-atom.inspected-value (str x)]), :hash \"5dtMJq6BG3cxBNTzMX8N9ybiVihU3P\"}} {:path [1], :nextjournal/value :mixed, :nextjournal/viewer {:render-fn #viewer-fn (fn [x] [:span.cmt-atom.inspected-value (str x)]), :hash \"5dtMJq6BG3cxBNTzMX8N9ybiVihU3P\"}} {:path [2], :nextjournal/value :secant, :nextjournal/viewer {:render-fn #viewer-fn (fn [x] [:span.cmt-atom.inspected-value (str x)]), :hash \"5dtMJq6BG3cxBNTzMX8N9ybiVihU3P\"}}], :nextjournal/opts {:id \"emmy.numerical.roots.bisect/all-methods-result\"}, :nextjournal/viewer {:render-fn #viewer-fn nextjournal.clerk.render/render-coll, :opening-paren \"#{\", :closing-paren (\"}\"), :page-size 20, :hash \"5dsqjWFHxfJMj6muMSLAWx8pdnsF3M\"}}, :nextjournal/blob-id \"5dqysDE8f6oBiEdfeEuDy1GJwCDahB\"}, :nextjournal/opts {:id \"emmy.numerical.roots.bisect/all-methods-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/result-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-result, :hash \"5dtGVHesd2XCTLFYF3aY4kJvkrX1x1\"}} {:path [], :nextjournal/value [:div.viewer.markdown-viewer.w-full.max-w-prose.px-8 {:data-block-id \"emmy.numerical.roots.bisect/markdown-5drfN5obDicnkZKTKfoaMVxYhkVayf\"} [\"h2\" {:id \"success-/-failure-utilities\"} [:<> \"Success / Failure Utilities\"]]], :nextjournal/opts {:id \"emmy.numerical.roots.bisect/markdown-5drfN5obDicnkZKTKfoaMVxYhkVayf\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/markdown-node-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-with-react-key, :hash \"5drtFhRgc8WMLrXw6DB4bZLsNZjHHp\"}} {:path [], :nextjournal/value \"(defn- succeed\\n  \\\"Given some point `x` and its value `fx`, the number of `iterations` of the\\n  root-finding algorithm, and the total number of calls `fncalls` of the\\n  function `f`, returns a data structure representing successful completion.\\\"\\n  [x fx iterations fncalls]\\n  {:result     x\\n   :value      fx\\n   :iterations iterations\\n   :converged? true\\n   :fncalls    fncalls})\", :nextjournal/opts {:id \"emmy.numerical.roots.bisect/succeed-code\", :loc {:line 34, :end-line 43, :column 1, :end-column 25}}, :nextjournal/viewer {:name nextjournal.clerk.viewer/code-block-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-code-block, :hash \"5dru1FUcVRTRrVKJFbNw4FG2wXmiwB\"}} {:path [], :nextjournal/value {:nextjournal/presented {:path [], :nextjournal/value \"#object[emmy.numerical.roots.bisect$succeed 0x53f39d88 \\\"emmy.numerical.roots.bisect$succeed@53f39d88\\\"]\", :nextjournal/opts {:id \"emmy.numerical.roots.bisect/succeed-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/read+inspect-viewer, :render-fn #viewer-fn (fn [x] (try [nextjournal.clerk.render/inspect (read-string x)] (catch js/Error _e (nextjournal.clerk.render/render-unreadable-edn x)))), :hash \"5driNqLjrByEWrhxqnAqaiYK9eiYCv\"}}, :nextjournal/blob-id nil}, :nextjournal/opts {:id \"emmy.numerical.roots.bisect/succeed-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/result-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-result, :hash \"5dtGVHesd2XCTLFYF3aY4kJvkrX1x1\"}} {:path [], :nextjournal/value \"(defn- fail\\n  \\\"Generates a 'failure'-type message.\\\"\\n  [message a fa b fb iterations fncalls]\\n  {:error message\\n   :bounds\\n   {:lower a :f-lower fa\\n    :upper b :f-upper fb}\\n   :iterations iterations\\n   :converged? false\\n   :fncalls fncalls})\", :nextjournal/opts {:id \"emmy.numerical.roots.bisect/fail-code\", :loc {:line 45, :end-line 54, :column 1, :end-column 22}}, :nextjournal/viewer {:name nextjournal.clerk.viewer/code-block-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-code-block, :hash \"5dru1FUcVRTRrVKJFbNw4FG2wXmiwB\"}} {:path [], :nextjournal/value {:nextjournal/presented {:path [], :nextjournal/value \"#object[emmy.numerical.roots.bisect$fail 0x1a825b83 \\\"emmy.numerical.roots.bisect$fail@1a825b83\\\"]\", :nextjournal/opts {:id \"emmy.numerical.roots.bisect/fail-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/read+inspect-viewer, :render-fn #viewer-fn (fn [x] (try [nextjournal.clerk.render/inspect (read-string x)] (catch js/Error _e (nextjournal.clerk.render/render-unreadable-edn x)))), :hash \"5driNqLjrByEWrhxqnAqaiYK9eiYCv\"}}, :nextjournal/blob-id nil}, :nextjournal/opts {:id \"emmy.numerical.roots.bisect/fail-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/result-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-result, :hash \"5dtGVHesd2XCTLFYF3aY4kJvkrX1x1\"}} {:path [], :nextjournal/value \"(defn ^:no-doc midpoint\\n  \\\"Implements the midpoint lookup given endpoints `a` and `b` of a range. Used in\\n  the implementation of the [Bisection\\n  method](https://en.wikipedia.org/wiki/Bisection_method#Iteration_tasks)\\\"\\n  [a b]\\n  (* 0.5 (+ a b)))\", :nextjournal/opts {:id \"emmy.numerical.roots.bisect/midpoint-code\", :loc {:line 56, :end-line 61, :column 1, :end-column 19}}, :nextjournal/viewer {:name nextjournal.clerk.viewer/code-block-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-code-block, :hash \"5dru1FUcVRTRrVKJFbNw4FG2wXmiwB\"}} {:path [], :nextjournal/value {:nextjournal/presented {:path [], :nextjournal/value \"#object[emmy.numerical.roots.bisect$midpoint 0x3e7ff7aa \\\"emmy.numerical.roots.bisect$midpoint@3e7ff7aa\\\"]\", :nextjournal/opts {:id \"emmy.numerical.roots.bisect/midpoint-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/read+inspect-viewer, :render-fn #viewer-fn (fn [x] (try [nextjournal.clerk.render/inspect (read-string x)] (catch js/Error _e (nextjournal.clerk.render/render-unreadable-edn x)))), :hash \"5driNqLjrByEWrhxqnAqaiYK9eiYCv\"}}, :nextjournal/blob-id nil}, :nextjournal/opts {:id \"emmy.numerical.roots.bisect/midpoint-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/result-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-result, :hash \"5dtGVHesd2XCTLFYF3aY4kJvkrX1x1\"}} {:path [], :nextjournal/value \"(defn ^:no-doc secant-root\\n  \\\"Given two endpoints `[a fa]` and `[b fb]`, returns the root of a line drawn\\n  between the two endpoints. Used in the implementation of the\\n  [Secant\\n  method](https://en.wikipedia.org/wiki/Secant_method)\\n\\n  NOTE that the signs of `fa` and `fb` must be opposite for the result to make\\n  sense in the context of the secant method.\\\"\\n  [a fa b fb]\\n  (/ (- (* fb a) (* fa b))\\n     (- fb fa)))\", :nextjournal/opts {:id \"emmy.numerical.roots.bisect/secant-root-code\", :loc {:line 63, :end-line 73, :column 1, :end-column 17}}, :nextjournal/viewer {:name nextjournal.clerk.viewer/code-block-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-code-block, :hash \"5dru1FUcVRTRrVKJFbNw4FG2wXmiwB\"}} {:path [], :nextjournal/value {:nextjournal/presented {:path [], :nextjournal/value \"#object[emmy.numerical.roots.bisect$secant_root 0x3776c804 \\\"emmy.numerical.roots.bisect$secant_root@3776c804\\\"]\", :nextjournal/opts {:id \"emmy.numerical.roots.bisect/secant-root-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/read+inspect-viewer, :render-fn #viewer-fn (fn [x] (try [nextjournal.clerk.render/inspect (read-string x)] (catch js/Error _e (nextjournal.clerk.render/render-unreadable-edn x)))), :hash \"5driNqLjrByEWrhxqnAqaiYK9eiYCv\"}}, :nextjournal/blob-id nil}, :nextjournal/opts {:id \"emmy.numerical.roots.bisect/secant-root-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/result-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-result, :hash \"5dtGVHesd2XCTLFYF3aY4kJvkrX1x1\"}} {:path [], :nextjournal/value \"(defn- next-point-fn\\n  \\\"Given a [[bisect]] options map, returns a function of `a, fa, b, fb,\\n  iterations` that will generate the next candidate point for a root-finding\\n  method search.\\\"\\n  [{:keys [method n-break]}]\\n  (case (or method :mixed)\\n    :bisection (fn [a _fa b _fb _iter]\\n                 (midpoint a b))\\n    :secant (fn [a fa b fb _iter]\\n              (secant-root a fa b fb))\\n    :mixed (let [n-break (or n-break *bisect-break*)]\\n             (fn [a fa b fb iter]\\n               (if (< iter n-break)\\n                 (midpoint a b)\\n                 (secant-root a fa b fb))))\\n    (u/illegal\\n     (str \\\"Method not supported: \\\" method))))\", :nextjournal/opts {:id \"emmy.numerical.roots.bisect/next-point-fn-code\", :loc {:line 75, :end-line 91, :column 1, :end-column 46}}, :nextjournal/viewer {:name nextjournal.clerk.viewer/code-block-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-code-block, :hash \"5dru1FUcVRTRrVKJFbNw4FG2wXmiwB\"}} {:path [], :nextjournal/value {:nextjournal/presented {:path [], :nextjournal/value \"#object[emmy.numerical.roots.bisect$next_point_fn 0x78a60cbf \\\"emmy.numerical.roots.bisect$next_point_fn@78a60cbf\\\"]\", :nextjournal/opts {:id \"emmy.numerical.roots.bisect/next-point-fn-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/read+inspect-viewer, :render-fn #viewer-fn (fn [x] (try [nextjournal.clerk.render/inspect (read-string x)] (catch js/Error _e (nextjournal.clerk.render/render-unreadable-edn x)))), :hash \"5driNqLjrByEWrhxqnAqaiYK9eiYCv\"}}, :nextjournal/blob-id nil}, :nextjournal/opts {:id \"emmy.numerical.roots.bisect/next-point-fn-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/result-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-result, :hash \"5dtGVHesd2XCTLFYF3aY4kJvkrX1x1\"}} {:path [], :nextjournal/value \"(defn bisect\\n  \\\"Given some function `f` and (inclusive) lower and upper bounds `a` and `b` on\\n  the domain, attempts to find a root of `f` in that range, i.e., a value `x` for\\n  which `(f x)` is equal to 0.\\n\\n  Supports the following optional keyword arguments:\\n\\n  `:method`: can be `:bisection`, `:secant` or `:mixed`. See the Methods section\\n  below for a description of each. Defaults to `:mixed`\\n\\n  `:eps`: defaults to [[emmy.value/machine-epsilon]].\\n\\n  `:callback`: if supplied, the supplied `f` will be invoked at each\\n  intermediate point with the iteration count and the values of x and f(x) at\\n  each search step.\\n\\n  `:maxiter`: maximum number of iterations allowed for the minimizer. Defaults to\\n  1000.\\n\\n  `:maxfun` maximum number of times the function can be evaluated before\\n  exiting. Defaults to `(inc maxiter)`.\\n\\n  `:n-break` defaults to the dynamically bindable `*bisect-break*` (which\\n  defaults to 60). Bind `*bisect-break*` to modify the behavior of the `:mixed`\\n  method (see below) when it's used inside a nested routine. Ignored if method\\n  is not `:mixed`.\\n\\n  ## Methods\\n\\n  - `:bisection` causes [[bisect]] to use the [Bisection\\n    method](https://en.wikipedia.org/wiki/Bisection_method); at each iteration,\\n    the midpoint between the bounds is chosen as the next point.\\n\\n  - `:secant` uses the [Secant\\n    method](https://en.wikipedia.org/wiki/Secant_method); each candidate point is\\n    chosen by taking the root of a line drawn between the two endpoints `[a (f\\n    a)]` and `[b (f b)]`. This method is most useful when the bounds are close to\\n    the root.\\n\\n  - `:mixed` uses `:bisection` up until `:n-break` iterations and `:secant`\\n    beyond. This can be useful for narrowing down a very wide range close to the\\n    root, and then switching in to a faster search method.\\\"\\n  ([f a b] (bisect f a b {}))\\n  ([f a b {:keys [eps\\n                  maxiter\\n                  maxfun\\n                  callback]\\n           :or {eps     v/machine-epsilon\\n                maxiter 1000\\n                callback (constantly nil)}\\n           :as opts}]\\n   (let [close?        (us/close-enuf? eps)\\n         get-next-pt   (next-point-fn opts)\\n         maxfun        (or maxfun (inc maxiter))\\n         [a b]         [(min a b) (max a b)]\\n         [f-counter f] (u/counted f)]\\n     (loop [a a, fa (f a)\\n            b b, fb (f b)\\n            iteration 0]\\n       (cond (zero? fa) (succeed a fa iteration @f-counter)\\n             (zero? fb) (succeed b fb iteration @f-counter)\\n\\n             (pos? (* fa fb))\\n             (fail \\\"Root not bounded\\\" a fa b fb iteration @f-counter)\\n\\n             (or (> iteration maxiter)\\n                 (> @f-counter maxfun))\\n             (fail \\\"Iteration bounds exceeded\\\" a fa b fb iteration @f-counter)\\n\\n             :else\\n             (let [mid  (get-next-pt a fa b fb iteration)\\n                   fmid (f mid)]\\n               (callback mid fmid iteration)\\n               (if (close? a b)\\n                 (succeed a fa iteration @f-counter)\\n                 (if (pos? (* fb fmid))\\n                   (recur a fa mid fmid (inc iteration))\\n                   (recur mid fmid b fb (inc iteration))))))))))\", :nextjournal/opts {:id \"emmy.numerical.roots.bisect/bisect-code\", :loc {:line 93, :end-line 170, :column 1, :end-column 65}}, :nextjournal/viewer {:name nextjournal.clerk.viewer/code-block-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-code-block, :hash \"5dru1FUcVRTRrVKJFbNw4FG2wXmiwB\"}} {:path [], :nextjournal/value {:nextjournal/presented {:path [], :nextjournal/value \"#object[emmy.numerical.roots.bisect$bisect 0x70700e6b \\\"emmy.numerical.roots.bisect$bisect@70700e6b\\\"]\", :nextjournal/opts {:id \"emmy.numerical.roots.bisect/bisect-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/read+inspect-viewer, :render-fn #viewer-fn (fn [x] (try [nextjournal.clerk.render/inspect (read-string x)] (catch js/Error _e (nextjournal.clerk.render/render-unreadable-edn x)))), :hash \"5driNqLjrByEWrhxqnAqaiYK9eiYCv\"}}, :nextjournal/blob-id nil}, :nextjournal/opts {:id \"emmy.numerical.roots.bisect/bisect-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/result-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-result, :hash \"5dtGVHesd2XCTLFYF3aY4kJvkrX1x1\"}} {:path [], :nextjournal/value [:div.viewer.markdown-viewer.w-full.max-w-prose.px-8 {:data-block-id \"emmy.numerical.roots.bisect/markdown-5dr2eYmLYvT9j5sS2fjvqndT2ZUs1Y\"} [:p [:<> \"If we don't know anything, it is usually a good idea to break the interval\"] [#viewer-eval nextjournal.clerk.render/inspect-presented {:nextjournal/value [:<> \" \"], :nextjournal/viewer {:name nextjournal.clerk.viewer/html-viewer, :render-fn #viewer-fn identity, :hash \"5du5eveS8XMqMDMYH5rpQ1bqryEJdg\"}}] [:<> \"into dx-sized pieces and look for roots in each interval.\"]]], :nextjournal/opts {:id \"emmy.numerical.roots.bisect/markdown-5dr2eYmLYvT9j5sS2fjvqndT2ZUs1Y\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/markdown-node-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-with-react-key, :hash \"5drtFhRgc8WMLrXw6DB4bZLsNZjHHp\"}} {:path [], :nextjournal/value \"(defn search-for-roots\\n  \\\"Given a smooth function `f` and (inclusive) lower and upper bounds `a` and\\n  `b` on the domain, attempts to find all roots of `f`, i.e., a vector of values\\n  `x_n` such that each `(f x_n)` is equal to 0.\\n\\n  [[search-for-roots]] first attempts to cut the (inclusive) range `[a, b]`\\n  into pieces at most `dx` wide; then [[bisect]] is used to search each segment\\n  for a root.\\n\\n  All `opts` supplied are passed on to [[bisect]].\\\"\\n  ([f a b dx]\\n   (search-for-roots f a b dx {}))\\n  ([f a b dx opts]\\n   (letfn [(find-roots [a b]\\n             (let [f1 (f b) f0 (f a)]\\n               (if (< (Math/abs (- b a)) dx)\\n                 (if (neg? (* f0 f1))\\n                   (let [result (bisect f a b opts)]\\n                     (if (:converged? result)\\n                       [(:result result)]\\n                       []))\\n                   [])\\n                 (let [m (midpoint a b)]\\n                   (into (find-roots a m)\\n                         (find-roots m b))))))]\\n     (find-roots a b))))\", :nextjournal/opts {:id \"emmy.numerical.roots.bisect/search-for-roots-code\", :loc {:line 175, :end-line 200, :column 1, :end-column 25}}, :nextjournal/viewer {:name nextjournal.clerk.viewer/code-block-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-code-block, :hash \"5dru1FUcVRTRrVKJFbNw4FG2wXmiwB\"}} {:path [], :nextjournal/value {:nextjournal/presented {:path [], :nextjournal/value \"#object[emmy.numerical.roots.bisect$search_for_roots 0x31736568 \\\"emmy.numerical.roots.bisect$search_for_roots@31736568\\\"]\", :nextjournal/opts {:id \"emmy.numerical.roots.bisect/search-for-roots-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/read+inspect-viewer, :render-fn #viewer-fn (fn [x] (try [nextjournal.clerk.render/inspect (read-string x)] (catch js/Error _e (nextjournal.clerk.render/render-unreadable-edn x)))), :hash \"5driNqLjrByEWrhxqnAqaiYK9eiYCv\"}}, :nextjournal/blob-id nil}, :nextjournal/opts {:id \"emmy.numerical.roots.bisect/search-for-roots-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/result-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-result, :hash \"5dtGVHesd2XCTLFYF3aY4kJvkrX1x1\"}}], :css-class nil}, :nextjournal/viewer {:name nextjournal.clerk.viewer/notebook-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-notebook, :hash \"5duAFDxE4sCnRX71Wo6zeCpC9C3djE\"}}}, :browse? false, :git/url \"https://github.com/mentat-collective/emmy\", :paths [\"src/emmy/abstract/number.cljc\" \"src/emmy/special/elliptic.cljc\" \"src/emmy/polynomial/interpolate.cljc\" \"src/emmy/numerical/quadrature/midpoint.cljc\" \"src/emmy/numerical/quadrature/trapezoid.cljc\" \"src/emmy/calculus/map.cljc\" \"src/emmy/pattern/rule.cljc\" \"src/emmy/mechanics/time_evolution.cljc\" \"src/emmy/util/permute.cljc\" \"src/emmy/expression/cse.cljc\" \"src/emmy/expression/compile.cljc\" \"src/emmy/sr/frames.cljc\" \"src/emmy/polynomial/richardson.cljc\" \"src/emmy/numerical/unimin/brent.cljc\" \"src/emmy/calculus/vector_field.cljc\" \"src/emmy/numerical/minimize.cljc\" \"src/emmy/mechanics/noether.cljc\" \"src/emmy/calculus/hodge_star.cljc\" \"src/emmy/series/impl.cljc\" \"src/emmy/calculus/manifold.cljc\" \"src/emmy/util/logic.cljc\" \"src/emmy/util/stopwatch.cljc\" \"src/emmy/numerical/quadrature/adaptive.cljc\" \"src/emmy/mechanics/rotation.cljc\" \"src/emmy/numerical/ode.cljc\" \"src/emmy/numerical/quadrature/riemann.cljc\" \"src/emmy/calculus/connection.cljc\" \"src/emmy/algebra/fold.cljc\" \"src/emmy/numerical/multimin/nelder_mead.cljc\" \"src/emmy/polynomial/exponent.cljc\" \"src/emmy/polynomial/factor.cljc\" \"src/emmy/util/def.cljc\" \"src/emmy/abstract/function.cljc\" \"src/emmy/calculus/indexed.cljc\" \"src/emmy/numerical/quadrature.cljc\" \"src/emmy/numerical/quadrature/infinite.cljc\" \"src/emmy/mechanics/routhian.cljc\" \"src/emmy/numerical/quadrature/bulirsch_stoer.cljc\" \"src/emmy/calculus/curvature.cljc\" \"src/emmy/numerical/quadrature/milne.cljc\" \"src/emmy/calculus/form_field.cljc\" \"src/emmy/mechanics/hamilton.cljc\" \"src/emmy/expression/render.cljc\" \"src/emmy/util/stream.cljc\" \"src/emmy/calculus/derivative.cljc\" \"src/emmy/util/aggregate.cljc\" \"src/emmy/numerical/quadrature/romberg.cljc\" \"src/emmy/numerical/quadrature/boole.cljc\" \"src/emmy/pattern/match.cljc\" \"src/emmy/calculus/metric.cljc\" \"src/emmy/polynomial/gcd.cljc\" \"src/emmy/numerical/quadrature/substitute.cljc\" \"src/emmy/calculus/vector_calculus.cljc\" \"src/emmy/env/sci/macros.cljc\" \"src/emmy/numerical/quadrature/simpson.cljc\" \"src/emmy/calculus/basis.cljc\" \"src/emmy/util/vector_set.cljc\" \"src/emmy/pattern/syntax.cljc\" \"src/emmy/numerical/quadrature/common.cljc\" \"src/emmy/sr/boost.cljc\" \"src/emmy/calculus/coordinate.cljc\" \"src/emmy/calculus/covariant.cljc\" \"src/emmy/numerical/derivative.cljc\" \"src/emmy/simplify/rules.cljc\" \"src/emmy/mechanics/rigid.cljc\" \"src/emmy/rational_function/interpolate.cljc\" \"src/emmy/numerical/unimin/bracket.cljc\" \"src/emmy/numerical/roots/bisect.cljc\" \"src/emmy/numerical/quadrature/simpson38.cljc\" \"src/emmy/mechanics/lagrange.cljc\" \"src/emmy/expression/analyze.cljc\" \"src/emmy/calculus/frame.cljc\" \"src/emmy/env/sci.cljc\" \"src/emmy/pattern/consequence.cljc\" \"src/emmy/numerical/unimin/golden.cljc\" \"src/emmy/special/factorial.cljc\" \"src/emmy/polynomial/impl.cljc\"], :resource->url {\"/js/viewer.js\" \"https://storage.clerk.garden/nextjournal/clerk-assets@4NdW4yYfmUzzw9xCkmyrJ75nH75d/viewer.js?immutable=true\"}, :current-path \"src/emmy/numerical/roots/bisect.cljc\", :bundle? false, :git/sha \"695c2b6ad37dacc8302e87e971d2c18e3aff0309\", :path->url {\"src/emmy/abstract/number.cljc\" \"src/emmy/abstract/number.html\", \"src/emmy/special/elliptic.cljc\" \"src/emmy/special/elliptic.html\", \"src/emmy/polynomial/interpolate.cljc\" \"src/emmy/polynomial/interpolate.html\", \"src/emmy/numerical/quadrature/midpoint.cljc\" \"src/emmy/numerical/quadrature/midpoint.html\", \"src/emmy/numerical/quadrature/trapezoid.cljc\" \"src/emmy/numerical/quadrature/trapezoid.html\", \"src/emmy/calculus/map.cljc\" \"src/emmy/calculus/map.html\", \"src/emmy/pattern/rule.cljc\" \"src/emmy/pattern/rule.html\", \"src/emmy/mechanics/time_evolution.cljc\" \"src/emmy/mechanics/time_evolution.html\", \"src/emmy/util/permute.cljc\" \"src/emmy/util/permute.html\", \"src/emmy/expression/cse.cljc\" \"src/emmy/expression/cse.html\", \"src/emmy/expression/compile.cljc\" \"src/emmy/expression/compile.html\", \"src/emmy/sr/frames.cljc\" \"src/emmy/sr/frames.html\", \"src/emmy/polynomial/richardson.cljc\" \"src/emmy/polynomial/richardson.html\", \"src/emmy/numerical/unimin/brent.cljc\" \"src/emmy/numerical/unimin/brent.html\", \"src/emmy/calculus/vector_field.cljc\" \"src/emmy/calculus/vector_field.html\", \"src/emmy/numerical/minimize.cljc\" \"src/emmy/numerical/minimize.html\", \"src/emmy/mechanics/noether.cljc\" \"src/emmy/mechanics/noether.html\", \"src/emmy/calculus/hodge_star.cljc\" \"src/emmy/calculus/hodge_star.html\", \"src/emmy/series/impl.cljc\" \"src/emmy/series/impl.html\", \"src/emmy/calculus/manifold.cljc\" \"src/emmy/calculus/manifold.html\", \"src/emmy/util/logic.cljc\" \"src/emmy/util/logic.html\", \"src/emmy/util/stopwatch.cljc\" \"src/emmy/util/stopwatch.html\", \"src/emmy/numerical/quadrature/adaptive.cljc\" \"src/emmy/numerical/quadrature/adaptive.html\", \"src/emmy/mechanics/rotation.cljc\" \"src/emmy/mechanics/rotation.html\", \"src/emmy/numerical/ode.cljc\" \"src/emmy/numerical/ode.html\", \"src/emmy/numerical/quadrature/riemann.cljc\" \"src/emmy/numerical/quadrature/riemann.html\", \"src/emmy/calculus/connection.cljc\" \"src/emmy/calculus/connection.html\", \"src/emmy/algebra/fold.cljc\" \"src/emmy/algebra/fold.html\", \"src/emmy/numerical/multimin/nelder_mead.cljc\" \"src/emmy/numerical/multimin/nelder_mead.html\", \"src/emmy/polynomial/exponent.cljc\" \"src/emmy/polynomial/exponent.html\", \"src/emmy/polynomial/factor.cljc\" \"src/emmy/polynomial/factor.html\", \"src/emmy/util/def.cljc\" \"src/emmy/util/def.html\", \"src/emmy/abstract/function.cljc\" \"src/emmy/abstract/function.html\", \"src/emmy/calculus/indexed.cljc\" \"src/emmy/calculus/indexed.html\", \"src/emmy/numerical/quadrature.cljc\" \"src/emmy/numerical/quadrature.html\", \"src/emmy/numerical/quadrature/infinite.cljc\" \"src/emmy/numerical/quadrature/infinite.html\", \"src/emmy/mechanics/routhian.cljc\" \"src/emmy/mechanics/routhian.html\", \"src/emmy/numerical/quadrature/bulirsch_stoer.cljc\" \"src/emmy/numerical/quadrature/bulirsch_stoer.html\", \"src/emmy/calculus/curvature.cljc\" \"src/emmy/calculus/curvature.html\", \"src/emmy/numerical/quadrature/milne.cljc\" \"src/emmy/numerical/quadrature/milne.html\", \"src/emmy/calculus/form_field.cljc\" \"src/emmy/calculus/form_field.html\", \"src/emmy/mechanics/hamilton.cljc\" \"src/emmy/mechanics/hamilton.html\", \"src/emmy/expression/render.cljc\" \"src/emmy/expression/render.html\", \"src/emmy/util/stream.cljc\" \"src/emmy/util/stream.html\", \"src/emmy/calculus/derivative.cljc\" \"src/emmy/calculus/derivative.html\", \"src/emmy/util/aggregate.cljc\" \"src/emmy/util/aggregate.html\", \"src/emmy/numerical/quadrature/romberg.cljc\" \"src/emmy/numerical/quadrature/romberg.html\", \"src/emmy/numerical/quadrature/boole.cljc\" \"src/emmy/numerical/quadrature/boole.html\", \"src/emmy/pattern/match.cljc\" \"src/emmy/pattern/match.html\", \"src/emmy/calculus/metric.cljc\" \"src/emmy/calculus/metric.html\", \"src/emmy/polynomial/gcd.cljc\" \"src/emmy/polynomial/gcd.html\", \"src/emmy/numerical/quadrature/substitute.cljc\" \"src/emmy/numerical/quadrature/substitute.html\", \"src/emmy/calculus/vector_calculus.cljc\" \"src/emmy/calculus/vector_calculus.html\", \"src/emmy/env/sci/macros.cljc\" \"src/emmy/env/sci/macros.html\", \"src/emmy/numerical/quadrature/simpson.cljc\" \"src/emmy/numerical/quadrature/simpson.html\", \"src/emmy/calculus/basis.cljc\" \"src/emmy/calculus/basis.html\", \"src/emmy/util/vector_set.cljc\" \"src/emmy/util/vector_set.html\", \"src/emmy/pattern/syntax.cljc\" \"src/emmy/pattern/syntax.html\", \"src/emmy/numerical/quadrature/common.cljc\" \"src/emmy/numerical/quadrature/common.html\", \"src/emmy/sr/boost.cljc\" \"src/emmy/sr/boost.html\", \"src/emmy/calculus/coordinate.cljc\" \"src/emmy/calculus/coordinate.html\", \"src/emmy/calculus/covariant.cljc\" \"src/emmy/calculus/covariant.html\", \"src/emmy/numerical/derivative.cljc\" \"src/emmy/numerical/derivative.html\", \"src/emmy/simplify/rules.cljc\" \"src/emmy/simplify/rules.html\", \"src/emmy/mechanics/rigid.cljc\" \"src/emmy/mechanics/rigid.html\", \"src/emmy/rational_function/interpolate.cljc\" \"src/emmy/rational_function/interpolate.html\", \"src/emmy/numerical/unimin/bracket.cljc\" \"src/emmy/numerical/unimin/bracket.html\", \"src/emmy/numerical/roots/bisect.cljc\" \"src/emmy/numerical/roots/bisect.html\", \"src/emmy/numerical/quadrature/simpson38.cljc\" \"src/emmy/numerical/quadrature/simpson38.html\", \"src/emmy/mechanics/lagrange.cljc\" \"src/emmy/mechanics/lagrange.html\", \"src/emmy/expression/analyze.cljc\" \"src/emmy/expression/analyze.html\", \"src/emmy/calculus/frame.cljc\" \"src/emmy/calculus/frame.html\", \"src/emmy/env/sci.cljc\" \"src/emmy/env/sci.html\", \"src/emmy/pattern/consequence.cljc\" \"src/emmy/pattern/consequence.html\", \"src/emmy/numerical/unimin/golden.cljc\" \"src/emmy/numerical/unimin/golden.html\", \"src/emmy/special/factorial.cljc\" \"src/emmy/special/factorial.html\", \"src/emmy/polynomial/impl.cljc\" \"src/emmy/polynomial/impl.html\"}, :expanded-paths [\"src/emmy/series/impl.cljc\" \"src/emmy/abstract/number.cljc\" \"src/emmy/abstract/function.cljc\" \"src/emmy/util/def.cljc\" \"src/emmy/util/stopwatch.cljc\" \"src/emmy/util/aggregate.cljc\" \"src/emmy/util/logic.cljc\" \"src/emmy/util/permute.cljc\" \"src/emmy/util/stream.cljc\" \"src/emmy/util/vector_set.cljc\" \"src/emmy/numerical/roots/bisect.cljc\" \"src/emmy/numerical/derivative.cljc\" \"src/emmy/numerical/minimize.cljc\" \"src/emmy/numerical/ode.cljc\" \"src/emmy/numerical/quadrature.cljc\" \"src/emmy/numerical/quadrature/bulirsch_stoer.cljc\" \"src/emmy/numerical/quadrature/trapezoid.cljc\" \"src/emmy/numerical/quadrature/milne.cljc\" \"src/emmy/numerical/quadrature/simpson38.cljc\" \"src/emmy/numerical/quadrature/romberg.cljc\" \"src/emmy/numerical/quadrature/midpoint.cljc\" \"src/emmy/numerical/quadrature/infinite.cljc\" \"src/emmy/numerical/quadrature/common.cljc\" \"src/emmy/numerical/quadrature/riemann.cljc\" \"src/emmy/numerical/quadrature/adaptive.cljc\" \"src/emmy/numerical/quadrature/simpson.cljc\" \"src/emmy/numerical/quadrature/substitute.cljc\" \"src/emmy/numerical/quadrature/boole.cljc\" \"src/emmy/numerical/multimin/nelder_mead.cljc\" \"src/emmy/numerical/unimin/brent.cljc\" \"src/emmy/numerical/unimin/golden.cljc\" \"src/emmy/numerical/unimin/bracket.cljc\" \"src/emmy/mechanics/routhian.cljc\" \"src/emmy/mechanics/time_evolution.cljc\" \"src/emmy/mechanics/rigid.cljc\" \"src/emmy/mechanics/noether.cljc\" \"src/emmy/mechanics/rotation.cljc\" \"src/emmy/mechanics/hamilton.cljc\" \"src/emmy/mechanics/lagrange.cljc\" \"src/emmy/special/elliptic.cljc\" \"src/emmy/special/factorial.cljc\" \"src/emmy/env/sci/macros.cljc\" \"src/emmy/env/sci.cljc\" \"src/emmy/sr/frames.cljc\" \"src/emmy/sr/boost.cljc\" \"src/emmy/rational_function/interpolate.cljc\" \"src/emmy/expression/compile.cljc\" \"src/emmy/expression/analyze.cljc\" \"src/emmy/expression/cse.cljc\" \"src/emmy/expression/render.cljc\" \"src/emmy/pattern/syntax.cljc\" \"src/emmy/pattern/consequence.cljc\" \"src/emmy/pattern/match.cljc\" \"src/emmy/pattern/rule.cljc\" \"src/emmy/calculus/vector_calculus.cljc\" \"src/emmy/calculus/curvature.cljc\" \"src/emmy/calculus/hodge_star.cljc\" \"src/emmy/calculus/derivative.cljc\" \"src/emmy/calculus/map.cljc\" \"src/emmy/calculus/form_field.cljc\" \"src/emmy/calculus/frame.cljc\" \"src/emmy/calculus/metric.cljc\" \"src/emmy/calculus/basis.cljc\" \"src/emmy/calculus/connection.cljc\" \"src/emmy/calculus/coordinate.cljc\" \"src/emmy/calculus/manifold.cljc\" \"src/emmy/calculus/covariant.cljc\" \"src/emmy/calculus/vector_field.cljc\" \"src/emmy/calculus/indexed.cljc\" \"src/emmy/simplify/rules.cljc\" \"src/emmy/polynomial/factor.cljc\" \"src/emmy/polynomial/interpolate.cljc\" \"src/emmy/polynomial/gcd.cljc\" \"src/emmy/polynomial/richardson.cljc\" \"src/emmy/polynomial/impl.cljc\" \"src/emmy/polynomial/exponent.cljc\" \"src/emmy/algebra/fold.cljc\"], :cname \"emmy.mentat.org\", :watch-paths [\"src\" \"dev\"], :report-fn #object[nextjournal.clerk.builder$stdout_reporter 0x7e04671d \"nextjournal.clerk.builder$stdout_reporter@7e04671d\"]}".replaceAll('nextjournal.clerk.view/escape-closing-script-tag', 'script')
+let opts = nextjournal.clerk.sci_env.read_string(state)
+nextjournal.clerk.static_app.init(opts)
+</script></body></html>
