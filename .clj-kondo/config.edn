@@ -2,6 +2,7 @@
  {:linters {:unresolved-symbol {:level :off}
             :invalid-arity {:level :off}}}
 
+
  :config-paths ["../resources/clj-kondo.exports/org.mentat/emmy"
                 "com.gfredericks/test.chuck"]
 
@@ -10,7 +11,8 @@
  :linters
  {:unsorted-required-namespaces {:level :warning}
   :redundant-fn-wrapper {:level :warning}
-  :single-key-in {:level :warning}}
+  :single-key-in {:level :warning}
+  :aliased-namespace-var-usage {:level :off}}
 
  :lint-as
  {clojure.test.check.clojure-test/defspec clojure.test/deftest

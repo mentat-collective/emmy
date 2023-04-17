@@ -1,5 +1,13 @@
 (ns user
-  (:require [mentat.clerk-utils.build :as b]))
+  (:require [mentat.clerk-utils.build :as b]
+            [nextjournal.clerk.config :as cc]))
+
+(try (requiring-resolve 'cljs.analyzer.api/ns-resolve)
+     (catch Exception _ nil))
+(require '[emmy.env])
+
+(alter-var-root #'cc/*bounded-count-limit*
+                (constantly 10))
 
 (comment
   (alter-var-root #'*warn-on-reflection* (constantly true)))
@@ -9,21 +17,21 @@
   "dev/index.md")
 
 (def notebooks
-  ["src/emmy/calculus/derivative.cljc"
-   "src/emmy/differential.cljc"])
+  ["src/emmy/**/**.cljc"
+   "src/emmy/**/**.clj"])
 
 (def defaults
   {#_#_:index index
    :browse? true
    :watch-paths ["src" "dev"]
-   :cljs-namespaces
-   '[emmy.sci-extensions]})
+   ;; TODO do I even need to do this for now?
+   #_#_:cljs-namespaces '[emmy.sci-extensions]})
 
 (def static-defaults
   (assoc defaults
          :browse? false
          :paths notebooks
-         :cname "emmy.mentat.org"
+         #_#_:cname "emmy.mentat.org"
          :git/url "https://github.com/mentat-collective/emmy"))
 
 (defn serve!

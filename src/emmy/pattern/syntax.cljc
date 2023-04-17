@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.pattern.syntax
   "The syntax namespace defines the default syntax for patterns corresponding to
   the matcher combinators defined in [[emmy.pattern.match]]."

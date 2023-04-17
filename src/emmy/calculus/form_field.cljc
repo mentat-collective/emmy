@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.calculus.form-field
   "This namespace implements a form field operator and a number of functions for
   creating and working with form fields.

@@ -1,6 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
-^{:nextjournal.clerk/visibility #{:hide-ns}}
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.differential
   "This namespace contains an implementation of [[Differential]], a generalized
   dual number type that forms the basis for the forward-mode automatic
@@ -55,8 +57,8 @@
 ;; page](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/calculus/automatic-differentiation)
 ;; for "how do I use this?"-style questions.
 ;;
-;; NOTE: The other flavor of automatic differentiation (AD) is "reverse-mode
-;; AD". See [[emmy.tape]] for an implementation of this style, coming soon!
+;; > NOTE: The other flavor of automatic differentiation (AD) is "reverse-mode
+;; > AD". See [[emmy.tape]] for an implementation of this style, coming soon!
 ;;
 ;; ### Dual Numbers and AD
 ;;
@@ -73,10 +75,11 @@
 ;; where $a$ and $b$ are real numbers, and $\varepsilon$ is an abstract thing,
 ;; with the property that $\varepsilon^2 = 0$.
 
-;; NOTE: This might remind you of the definition of a complex number of the form
-;; $a + bi$, where $i$ is also a new thing with the property that $i^2 = -1$.
-;; You are very wise! The bigger idea lurking here is the ["generalized complex
-;; number"](https://people.rit.edu/harkin/research/articles/generalized_complex_numbers.pdf).
+;; > NOTE: This might remind you of the definition of a complex number of the
+;; > form $a + bi$, where $i$ is also a new thing with the property that $i^2 =
+;; > -1$. You are very wise! The bigger idea lurking here is the ["generalized
+;; > complex
+;; > number"](https://people.rit.edu/harkin/research/articles/generalized_complex_numbers.pdf).
 ;;
 ;; Why are dual numbers useful (in Emmy)? If you pass $a+b\varepsilon$ in
 ;; to a function $f$, the result is a dual number $f(a) + Df(a) b \varepsilon$;
@@ -90,10 +93,10 @@
 ;;
 ;; $$f(x) = f(a)+\frac{Df(a)}{1!}(x-a)+\frac{D^2f(a)}{2!}(x-a)^{2}+\frac{D^3f(a)}{3!}(x-a)^{3}+\cdots$$
 ;;
-;; NOTE: See this nice overview of [Taylor series
-;; expansion](https://medium.com/@andrew.chamberlain/an-easy-way-to-remember-the-taylor-series-expansion-a7c3f9101063)
-;; by Andrew Chamberlain if you want to understand this idea and why we can
-;; approximate (smooth) functions this way.
+;; > NOTE: See this nice overview of [Taylor series
+;; > expansion](https://medium.com/@andrew.chamberlain/an-easy-way-to-remember-the-taylor-series-expansion-a7c3f9101063)
+;; > by Andrew Chamberlain if you want to understand this idea and why we can
+;; > approximate (smooth) functions this way.
 ;;
 ;; If you evaluate the expansion of $f(x)$ around $a$ with a dual number
 ;; argument whose first component is $a$ -- take $x=a+b\varepsilon$, for example
@@ -105,7 +108,7 @@
 ;;
 ;; $$f(a+b\varepsilon) = f(a)+ (Df(a)b)\varepsilon$$
 ;;
-;; NOTE: See [[lift-1]] for an implementation of this idea.
+;; > NOTE: See [[lift-1]] for an implementation of this idea.
 ;;
 ;; This justifies our claim above: applying a function to some dual number
 ;; $a+\varepsilon$ returns a new dual number, where
@@ -135,10 +138,10 @@
 ;; - $x'$ as the "tangent" part
 ;; - $\varepsilon$ as the "tag"
 ;;
-;; NOTE: "primal" means $x$ is tracking the "primal", or "primary", part of the
-;; computation. "tangent" is a synonym for "derivative". "tag" is going to make
-;; more sense shortly, when we start talking about mixing together multiple
-;; $\varepsilon_1$, $\varepsilon_2$ from different computations.
+;; > NOTE: "primal" means $x$ is tracking the "primal", or "primary", part of
+;; > the computation. "tangent" is a synonym for "derivative". "tag" is going to
+;; > make more sense shortly, when we start talking about mixing together
+;; > multiple $\varepsilon_1$, $\varepsilon_2$ from different computations.
 ;;
 ;; ### Binary Functions
 ;;
@@ -151,7 +154,7 @@
 ;;
 ;; $$f(x+x'\varepsilon, y+y'\varepsilon) = f(x,y) + \left[\partial_1 f(x,y)x' + \partial_2 f(x,y)y'\right]\varepsilon$$
 ;;
-;; NOTE: See [[lift-2]] for an implementation of this idea.
+;; > NOTE: See [[lift-2]] for an implementation of this idea.
 ;;
 ;; This expansion generalizes for n-ary functions; every new argument $x_n +
 ;; x'_n\varepsilon$ contributes $\partial_n f(...)x'_n$ to the result.
@@ -316,11 +319,11 @@
 ;; for some known `g` and `x`, but with the ability to store `(derivative
 ;; offset-fn)` and call it later with many different `g`.
 ;;
-;; NOTE: We might accomplish this by composing `extract-tangent` with the
-;; returned function, so that the extraction happens later, when the function's
-;; called... but that will fail. The real implementation is more subtle! See
-;; the [[emmy.calculus.derivative]] namespace for the actual implementation
-;; of [[IPerturbed]] for functions and multimethods.
+;; > NOTE: We might accomplish this by composing `extract-tangent` with the
+;; > returned function, so that the extraction happens later, when the
+;; > function's called... but that will fail. The real implementation is more
+;; > subtle! See the [[emmy.calculus.derivative]] namespace for the actual
+;; > implementation of [[IPerturbed]] for functions and multimethods.
 ;;
 ;; All of this suggests that we need to make [[extract-tangent]] an open
 ;; function that other folks can extend for other container-like
@@ -459,8 +462,8 @@
 ;; tag list (the "order" of the differential term), and secondarily by the
 ;; values of the tags inside the tag list.
 ;;
-;; NOTE: Clojure vectors already implement this ordering properly, so we can
-;; use [[clojure.core/compare]] to determine an ordering on a tag list.
+;; > NOTE: Clojure vectors already implement this ordering properly, so we can
+;; > use [[clojure.core/compare]] to determine an ordering on a tag list.
 
 (def ^:private terms:+
   "Returns the sum of the two supplied sequences of differential terms; any terms

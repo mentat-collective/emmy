@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.expression.compile
   "This namespace contains tools for compiling functions implemented with the
   numeric operations defined in [[emmy.generic]] down to fast, native
@@ -27,6 +30,7 @@
 ;; 1. Pass symbols like `'x` in for all arguments. This will cause the function
 ;;    to return a "numerical expression", a syntax tree representing the
 ;;    function's body:
+
 #_(let [f (fn [x] (g/sqrt
                   (g/+ (g/square (g/sin x))
                        (g/square (g/cos x)))))]

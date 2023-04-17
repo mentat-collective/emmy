@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.numerical.derivative
   "This namespace contains implementations of various approaches to [numerical
   differentiation](https://en.wikipedia.org/wiki/Numerical_differentiation).
@@ -16,13 +19,15 @@
   instances that make it pleasant to use this method.)"
   (:require [emmy.abstract.function :as af]
             [emmy.calculus.derivative :as d]
-            [emmy.expression.render :refer [->infix]]
+            [emmy.expression.render :refer [->TeX]]
             [emmy.generic :as g]
             [emmy.polynomial.richardson :as r]
             [emmy.series :as series]
             [emmy.util :as u]
             [emmy.util.stream :as us]
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [mentat.clerk-utils :refer [->clerk ->clerk-only]]
+            [nextjournal.clerk :as-alias clerk]))
 
 ;; ## Numerical Computation of Derivatives
 ;;
@@ -31,9 +36,10 @@
 ;; convergence of successively tighter estimates of $f^{\prime}(x)$ using a few
 ;; different methods.
 ;;
-;; The inspiration for this style was Sussman's "Abstraction in Numerical
-;; Methods", starting on page 10:
-;; https://dspace.mit.edu/bitstream/handle/1721.1/6060/AIM-997.pdf?sequence=2
+;; The inspiration for this style was Halfant and Sussman's ["Abstraction in
+;; Numerical
+;; Methods"](https://dspace.mit.edu/bitstream/handle/1721.1/6060/AIM-997.pdf?sequence=2),
+;; starting on page 10.
 ;;
 ;; We'll proceed by deriving the methods symbolically, and then implement them
 ;; numerically.
@@ -41,13 +47,17 @@
 ;; First, a function that will print nicely rendered infix versions
 ;; of (simplified) symbolic expressions:
 
-(defn- show [e]
-  (->infix (g/simplify e)))
+(->clerk
+ (defn- show [e]
+   (clerk/tex
+    (->TeX
+     (g/simplify e)))))
 
 ;; And a function to play with:
 
-(def ^:private func
-  (af/literal-function 'f))
+(->clerk
+ (def func
+   (af/literal-function 'f)))
 
 ;; ## Approximating Derivatives with Taylor Series
 ;;
@@ -58,23 +68,21 @@
 
 ;; Here's the taylor series expansions of $f(x + h)$:
 
-(def ^:private fx+h
-  (-> ((d/taylor-series func 'x) 'h)
-      (series/sum 4)))
+(->clerk
+ (def fx+h
+   (-> ((d/taylor-series func 'x) 'h)
+       (series/sum 4))))
 
-;; Use `show` to print out its infix representation:
+;; Use `show` to print out its $\TeX$ representation:
 
-(comment
-  (show fx+h))
-;; => "1/24 h⁴ D⁴f(x) + 1/6 h³ D³f(x) + 1/2 h² D²f(x) + h Df(x) + f(x)"
+(->clerk-only
+ (show fx+h))
 
 ;; We can solve this for $Df(x)$ by subtracting $f(x)$ and dividing out $h$:
 
-(comment
-  (show (g// (g/- fx+h (func 'x)) 'h)))
+(->clerk-only
+ (show (g// (g/- fx+h (func 'x)) 'h)))
 
-;; => "1/24 h³ D⁴f(x) + 1/6 h² D³f(x) + 1/2 h D²f(x) + Df(x)"
-;;
 ;; Voila! The remaining terms include $D f(x)$ along with a series of
 ;; progressively-smaller "error terms" (since $h \to 0$). The first of these
 ;; terms is ${1 \over 2} h D^2 f(x)$. It will come to dominate the error as $h
@@ -101,20 +109,19 @@
 
 ;; We could also expand $f(x - h)$:
 
-(def ^:private fx-h
-  (-> ((d/taylor-series func 'x) (g/negate 'h))
-      (series/sum 4)))
+(->clerk
+ (def fx-h
+   (-> ((d/taylor-series func 'x) (g/negate 'h))
+       (series/sum 4))))
 
-(comment
-  (show fx-h))
-;; => "1/24 h⁴ D⁴f(x) -1/6 h³ D³f(x) + 1/2 h² D²f(x) - h Df(x) + f(x)"
+(->clerk-only
+ (show fx-h))
 
 ;; and solve for $Df(x)$:
 
-(comment
-  (show (g// (g/- (func 'x) fx-h) 'h)))
-;; => "-1/24 h³ D⁴f(x) + 1/6 h² D³f(x) -1/2 h D²f(x) + Df(x)"
-;;
+(->clerk-only
+ (show (g// (g/- (func 'x) fx-h) 'h)))
+
 ;; To get a similar method, called the "backward difference" formula. Here's the
 ;; implementation:
 
@@ -149,11 +156,10 @@
 ;;
 ;; Amazing! Now solve for $Df(x)$:
 
-(comment
-  (show (g// (g/- fx+h fx-h)
-             (g/* 2 'h))))
-;; => "1/6 h² D³f(x) + Df(x)"
-;;
+(->clerk-only
+ (show (g// (g/- fx+h fx-h)
+            (g/* 2 'h))))
+
 ;; We're left with $Df(x) + O(h^2)$, a quadratic error term in $h$. (Of course
 ;; if we'd expanded to more than initial terms in the taylor series we'd see a
 ;; long error series with only even powers.)
@@ -178,18 +184,16 @@
 ;; sign. If we add the two series, these odd terms should all cancel out. Let's
 ;; see:
 
-(comment
-  (show (g/+ fx-h fx+h)))
-;; => "1/12 h⁴ D⁴f(x) + h² D²f(x) + 2 f(x)"
+(->clerk-only
+ (show (g/+ fx-h fx+h)))
 
 ;; Interesting. The $Df(x)$ term is gone. Remember that we have $f(x)$
 ;; available; the first unknown term in the series is now $D^2 f(x)$. Solve for
 ;; that term:
 
-(comment
-  (show (g// (g/- (g/+ fx-h fx+h) (g/* 2 (func 'x)))
-             (g/square 'h))))
-;; => "1/12 h² D⁴f(x) + D²f(x)"
+(->clerk-only
+ (show (g// (g/- (g/+ fx-h fx+h) (g/* 2 (func 'x)))
+            (g/square 'h))))
 
 ;; This is the "central difference" approximation to the /second/ derivative of
 ;; $f$. Note that the error term here is quadratic in $h$. Here it is in code:
@@ -229,9 +233,8 @@
 
 ;; The error here is not great, even for a simple function:
 
-(comment
-  ((make-derivative-fn g/square) 3))
-;;=> 6.000000000039306
+(->clerk-only
+ ((make-derivative-fn g/square) 3))
 
 ;; Let's experiment instead with letting $h \to 0$. This next function takes a
 ;; function $f$, a value of $x$ and an initial $h$, and generates a stream of
@@ -244,26 +247,10 @@
 
 ;; Let's print 20 of the first 60 terms (taking every 3 so we see any pattern):
 
-(comment
-  (->> (central-diff-stream g/sqrt 1 0.1)
-       (take-nth 3)
-       (us/pprint 20)))
-
-;; 0.5006277505981893
-;; 0.5000097662926306
-;; 0.5000001525880649
-;; 0.5000000023844109
-;; ...
-;; 0.5000001192092896
-;; 0.4999971389770508
-;; 0.500030517578125
-;; 0.49957275390625
-;; 0.50048828125
-;; 0.48828125
-;; 0.625
-;; 0.0
-;; 0.0
-;; 0.0
+(->clerk-only
+ (->> (central-diff-stream g/sqrt 1 0.1)
+      (take-nth 3)
+      (take 20)))
 
 ;; At first, the series converges toward the proper value. But as $h$ gets
 ;; smaller, $f(x + h)$ and $f(x - h)$ get so close together that their
@@ -362,27 +349,22 @@
 ;; How many terms are we allowed to examine for an estimate of the derivative of
 ;; $f(x) = \sqrt(x)$, with an initial $h = 0.1$?
 
-(comment
-  (let [f         g/sqrt
-        x         1
-        h         0.1
-        tolerance 1e-13
-        ratio     (/ (f x)
-                     (- (f (+ x h))
-                        (f (- x h))))]
-    (terms-before-roundoff ratio tolerance)))
-;; => 6
+(->clerk-only
+ (let [f         g/sqrt
+       x         1
+       h         0.1
+       tolerance 1e-13
+       ratio     (/ (f x)
+                    (- (f (+ x h))
+                       (f (- x h))))]
+   (terms-before-roundoff ratio tolerance)))
 
-;; 6 terms, or 5 halvings, down to $h = {0.1} \over {2^5} = 0.003125$. How many
+;; 6 terms, or 5 halvings, down to $h = {{0.1} \over {2^5}} = 0.003125$. How many
 ;; terms does the sequence take to converge?
 
-(comment
-  (= (-> (central-diff-stream g/sqrt 1 0.1)
-         (us/seq-limit {:tolerance 1e-13}))
-
-     {:converged? true
-      :terms-checked 15
-      :result 0.5000000000109139}))
+(->clerk-only
+ (-> (central-diff-stream g/sqrt 1 0.1)
+     (us/seq-limit {:tolerance 1e-13})))
 
 ;; 15 is far beyond the level where roundoff error has rendered our results
 ;; untrustworthy.
@@ -405,17 +387,14 @@
 ;; into an accelerated sequence of estimates using Richardson extrapolation.
 ;; Does it converge in fewer terms?
 
-(= (let [h 0.1, p 2, q 2]
-     (-> (central-diff-stream g/sqrt 1 h)
-         (r/richardson-sequence h p q)
-         (us/seq-limit {:tolerance 1e-13})))
+(->clerk-only
+ (let [h 0.1, p 2, q 2]
+   (-> (central-diff-stream g/sqrt 1 h)
+       (r/richardson-sequence h p q)
+       (us/seq-limit {:tolerance 1e-13}))))
 
-   {:converged? true
-    :terms-checked 5
-    :result 0.5000000000000159})
-
-;; Happily, it does, in only 5 terms instead of 15! This brings convergence in
-;; under our limit of 6 total terms.
+;; Happily, it does, in only 6 terms instead of 15! This brings convergence in
+;; to our limit of 6 total terms.
 ;;
 ;; If you're interested in more details of Richardson extrapolation, please see
 ;; `richardson.cljc`! For now we'll proceed.
@@ -571,10 +550,7 @@
 
 ;; More resources about numerical differentiation:
 ;;
-;; - "Abstraction in Numerical Methods", Gerald Sussman, p10+:
-;;   https://dspace.mit.edu/bitstream/handle/1721.1/6060/AIM-997.pdf?sequence=2
-;; - "Numerical Differentiation and Richardson Extrapolation" lecture notes by
+;; - ["Abstraction in Numerical Methods", Matthew Halfant and Gerald Sussman, p10+](https://dspace.mit.edu/bitstream/handle/1721.1/6060/AIM-997.pdf?sequence=2)
+;; - ["Numerical Differentiation and Richardson Extrapolation" lecture notes](https://jmahaffy.sdsu.edu/courses/f16/math541/beamer/richard.pdf) by
 ;;   Joseph Mahaffy
-;;   https://jmahaffy.sdsu.edu/courses/f16/math541/beamer/richard.pdf
-;; - UBC's "Mathematical Python" course:
-;;   https://www.math.ubc.ca/~pwalls/math-python/differentiation/differentiation/
+;; - [UBC's "Mathematical Python" course](https://www.math.ubc.ca/~pwalls/math-python/differentiation/differentiation/)

@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.polynomial.richardson
   "Richardson interpolation is a special case of polynomial interpolation; knowing
   the ratios of successive `x` coordinates in the point sequence allows a more

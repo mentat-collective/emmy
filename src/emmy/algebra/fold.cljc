@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.algebra.fold
   "Namespace implementing various aggregation functions using the `fold`
   abstraction and combinators for generating new folds from fold primitives.
@@ -10,7 +13,9 @@
   (:refer-clojure :exclude [min max count])
   (:require [clojure.core :as core]
             [emmy.generic :as g]
-            [emmy.util.def :as ud])
+            [emmy.util.def :as ud]
+            [mentat.clerk-utils :refer [->clerk ->clerk-only]]
+            [nextjournal.clerk :as-alias clerk])
   #?(:cljs
      (:require-macros [emmy.algebra.fold])))
 
@@ -25,9 +30,9 @@
 ;;   accumulating state
 ;; - a "present" function that converts the accumulator into a final value.
 ;;
-;; NOTE: This also happens to be Clojure's required interface for the reducing
-;; function you pass to [[clojure.core/transduce]]. Any of the folds implemented
-;; in this namespace work well with `transduce` out of the box.
+;; > NOTE: This also happens to be Clojure's required interface for the reducing
+;; > function you pass to [[clojure.core/transduce]]. Any of the folds
+;; > implemented in this namespace work well with `transduce` out of the box.
 ;;
 ;; Here is a simple example of a fold:
 
@@ -50,9 +55,10 @@
 ;;
 ;; Here is how to use this function to add up the integers from 0 to 9:
 
-#_(let [xs (range 10)]
-  (= 45 (generic-sum-fold
-         (reduce generic-sum-fold (generic-sum-fold) xs))))
+(->clerk-only
+ (let [xs (range 10)]
+   (generic-sum-fold
+    (reduce generic-sum-fold (generic-sum-fold) xs))))
 
 ;; To see how this abstraction is useful, let's first capture this ability to
 ;; make "summation" functions out of folds. (Note the docstring's description of
@@ -97,25 +103,28 @@
         (transduce (map f) fold xs))))))
 
 ;; Our example again:
-#_(let [sum (fold->sum-fn generic-sum-fold)
-      xs  (range 10)]
-  (= 45 (sum xs)))
+(->clerk-only
+ (let [sum (fold->sum-fn generic-sum-fold)
+       xs  (range 10)]
+   (sum xs)))
 
 ;; ### Useful Folds
 ;;
 ;; This pattern is quite general. Here is example of a fold that (inefficiently)
 ;; computes the average of a sequence of numbers:
 
-#_(defn average
-  ([] [0.0 0])
-  ([[sum n]] (/ sum n))
-  ([[sum n] x]
-   [(+ sum x) (inc n)]))
+(->clerk
+ (defn average
+   ([] [0.0 0])
+   ([[sum n]] (/ sum n))
+   ([[sum n] x]
+    [(+ sum x) (inc n)])))
 
-;; The average of [0,9] is 4.5:
+;; The average of $\left[0,9\right]$ is 4.5:
 
-#_(let [sum (fold->sum-fn average)]
-  (= 4.5 (sum (range 10))))
+(->clerk
+ (let [sum (fold->sum-fn average)]
+   (sum (range 10))))
 
 ;; (I'm not committing this particular implementation because it can overflow
 ;; for large numbers. There is a better implementation in Algebird, used
@@ -166,9 +175,9 @@
      (core/max acc x)
      x)))
 
-;; NOTE also that any [[emmy.util.aggregate/monoid]] instance will work as
-;; a fold out of the box. [[emmy.util.aggregate]] has utilities for
-;; generating more explicit folds out of monoids.
+;; > NOTE also that any [[emmy.util.aggregate/monoid]] instance will work as a
+;; > fold out of the box. [[emmy.util.aggregate]] has utilities for generating
+;; > more explicit folds out of monoids.
 
 ;; ## Fold Combinators
 ;;
@@ -209,10 +218,10 @@
 ;; For example, the following snippet computes the minimum, maximum and sum
 ;; of `(range 10)`:
 
-#_(let [fold (join min max generic-sum-fold)
-      process (fold->sum-fn fold)]
-  (= [0 9 45]
-     (process (range 10))))
+(->clerk-only
+ (let [fold (join min max generic-sum-fold)
+       process (fold->sum-fn fold)]
+   (process (range 10))))
 
 ;; ### Scans
 ;;
@@ -274,13 +283,10 @@
 ;; vector in the returned (lazy) sequence is the minimum, maximum and running
 ;; total seen up to that point.
 
-#_(let [fold (join min max generic-sum-fold)
-      process (fold->scan-fn fold)]
-  (i [[0 0 0]
-      [0 1 1]
-      [0 2 3]
-      [0 3 6]]
-     (process (range 4))))
+(->clerk-only
+ (let [fold (join min max generic-sum-fold)
+       process (fold->scan-fn fold)]
+   (process (range 4))))
 
 ;; ## Summing Sequences of Numbers
 ;;
@@ -295,16 +301,15 @@
 ;;
 ;; Here is the naive way to add up a list of numbers:
 
-(comment
-  (defn naive-sum [xs]
-    (apply g/+ xs)))
+(->clerk
+ (defn naive-sum [xs]
+   (apply g/+ xs)))
 
 ;; Simple! But watch it "break":
 
-(comment
-  ;; This should be 1.0...
-  (= 0.9999999999999999
-     (naive-sum [1.0 1e-8 -1e-8])))
+(->clerk-only
+ ;; This should be 1.0...
+ (naive-sum [1.0 1e-8 -1e-8]))
 
 ;; Algorithms called ['compensated
 ;; summation'](https://en.wikipedia.org/wiki/Kahan_summation_algorithm)
@@ -345,7 +350,8 @@
 
 ;; Voila, using [[kahan]], our example from before now correctly sums to 1.0:
 
-#_(= 1.0 ((fold->sum-fn kahan) [1.0 1e-8 -1e-8]))
+(->clerk-only
+ ((fold->sum-fn kahan) [1.0 1e-8 -1e-8]))
 
 ;; From the [wiki
 ;; page](https://en.wikipedia.org/wiki/Kahan_summation_algorithm#Further_enhancements),
@@ -357,7 +363,8 @@
 ;; Here is an example of where Kahan fails. The following should be 2.0, but
 ;; Kahan returns 0.0:
 
-#_(= 0.0 ((fold->sum-fn kahan) [1.0 1e100 1.0 -1e100]))
+(->clerk-only
+ ((fold->sum-fn kahan) [1.0 1e100 1.0 -1e100]))
 
 ;; This improved fold is implemented here:
 
@@ -387,7 +394,8 @@
 
 ;; [[kbn]] returns the correct result for the example above:
 
-#_(= 2.0 ((fold->sum-fn kbn) [1.0 1e100 1.0 -1e100]))
+(->clerk-only
+ ((fold->sum-fn kbn) [1.0 1e100 1.0 -1e100]))
 
 ;; The [wiki
 ;; page](https://en.wikipedia.org/wiki/Kahan_summation_algorithm#Further_enhancements)

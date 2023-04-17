@@ -51,7 +51,8 @@
    :exec-args ["test"]}
 
   :nextjournal/clerk
-  {:extra-deps
+  {:extra-paths ["dev"]
+   :extra-deps
    {org.clojure/clojure       {:mvn/version "1.11.1"}
     org.clojure/clojurescript {:mvn/version "1.11.60"}
     io.github.nextjournal/clerk

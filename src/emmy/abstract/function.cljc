@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.abstract.function
   "Implementation of a [[literal-function]] constructor. Literal functions can be
   applied to structures and numeric inputs, and differentiated.
