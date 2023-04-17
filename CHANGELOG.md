@@ -2,6 +2,14 @@
 
 ## [unreleased]
 
+- new:
+
+  - remove lint profile from build
+
+  - upgrade sci to 0.7.39
+
+  - fix repl command
+
 - #118:
 
   - Fixes problems with the `resolve` calls in `emmy.util.def` triggered by
