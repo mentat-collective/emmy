@@ -42,8 +42,6 @@
                                                opts)))]
       (is (= `(fn [[~'y1 [~'y2 ~'y3] [~'y4 ~'y5]] [~'p6]] (* ~'p6 ~'y1))
              (compile {:mode :clj :calling-convention :structure})))
-      (is (= `(fn [[~'y1 ~'y2 ~'y3 ~'y4 ~'y5] [~'p6]] (* ~'p6 ~'y1))
-             (compile {:mode :clj :calling-convention :flat})))
       (is (= `(fn [~'a7 ~'a8 ~'a9]
                 (let [~'y1 (aget ~'a7 0)
                       ~'y2 (aget ~'a7 1)
@@ -55,8 +53,6 @@
              (compile {:mode :clj :calling-convention :primitive})))
       (is (= ["[y1, [y2, y3], [y4, y5]]" "[p6]" "  return p6 * y1;"]
              (compile {:mode :js :calling-convention :structure})))
-      (is (= ["[y1, y2, y3, y4, y5]" "[p6]" "  return p6 * y1;"]
-             (compile {:mode :js :calling-convention :flat})))
       (is (= ["a7"
               "a8"
               "a9"
@@ -279,13 +275,6 @@
       (is (= 10 (f t)))
       (is (= -4 ((sf 2) s)))
       (is (= 20 ((sf 2) t))))
-
-    (testing "compiled state function matches the original (flat)."
-      (let [cf (c/compile-state-fn sf [1] s {:calling-convention :flat})]
-        (is (v/= ((sf 1) s) (cf (flatten s) [1])))
-        (is (v/= ((sf 1) t) (cf (flatten t) [1])))
-        (is (v/= ((sf 2) s) (cf (flatten s) [2])))
-        (is (v/= ((sf 2) t) (cf (flatten t) [2])))))
 
     (testing "compiled state function matches the original (structure)."
       (let [cf (c/compile-state-fn sf [1] s {:calling-convention :structure})]

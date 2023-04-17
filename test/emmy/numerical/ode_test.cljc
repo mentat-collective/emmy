@@ -46,6 +46,14 @@
           (is (near? (Math/exp x) ex))))
       (f)))
 
+  (testing "y' = y, new interface, BYO array"
+    (let [f (o/stream-integrator (fn [_ ^doubles y ^doubles out] (aset out 0 (aget y 0))) 0 [1] {:epsilon 1e-8})
+          a (double-array 1)]
+      (doseq [x (range 0 1 0.01)]
+        (f x a)
+        (is (near? (Math/exp x) (aget a 0))))
+      (f)))
+
   (testing "y'' = - y, new interface"
     (let [f (o/stream-integrator (fn [_ ^doubles y ^doubles out]
                                    (aset out 0 (aget y 1))
@@ -55,6 +63,18 @@
         (let [[c ms] (f x)]
           (is (near? (Math/cos x) c))
           (is (near? (- (Math/sin x)) ms))))
+      (f)))
+
+  (testing "y'' = - y, new interface, BYO array"
+    (let [f (o/stream-integrator (fn [_ ^doubles y ^doubles out]
+                                   (aset out 0 (aget y 1))
+                                   (aset out 1 (- (aget y 0))))
+                                 0 [1 0] {:epsilon 1e-8})
+          a (double-array 2)]
+      (doseq [x (range 0 (* 2 Math/PI) 0.1)]
+        (f x a)
+        (is (near? (Math/cos x) (aget a 0)))
+        (is (near? (- (Math/sin x)) (aget a 1))))
       (f)))
 
   (testing "stream integrator throws if used backwards"
