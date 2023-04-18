@@ -13,8 +13,13 @@
    ;; Comment out the following line to tell Clerk to generate its own index
    ;; with a list of all built pages.
    :index index
-   :cljs-namespaces
-   '[{{top/ns}}.sci-extensions]})
+
+   ;; Uncomment the following two lines to use the custom ClojureScript code and
+   ;; Emmy namespaces loaded by `dev/{{top/file}}/sci_extensions.cljs`.
+
+   ;; :cljs-namespaces
+   ;; '[{{top/ns}}.sci-extensions]
+   })
 
 (def serve-defaults
   (assoc defaults
@@ -26,7 +31,6 @@
   (assoc defaults
          :browse? false
          :paths ["notebooks/**.clj"]
-         ;; Uncomment this if you have a custom cname.
          :cname "{{cname}}"
          :git/url "https://github.com/{{raw-name}}"))
 
