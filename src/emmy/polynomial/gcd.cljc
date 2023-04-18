@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.polynomial.gcd
   (:require #?(:cljs [goog.string :refer [format]])
             [clojure.set :as cs]

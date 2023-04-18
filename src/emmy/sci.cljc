@@ -1,11 +1,12 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
-(ns emmy.env.sci
+(ns emmy.sci
   (:refer-clojure :exclude [ns-map])
   (:require [emmy.env]
-            [emmy.env.sci.macros :as macros]
+            [emmy.sci.macros :as macros]
             [emmy.util :as u]
-            [sci.core :as sci]))
+            [sci.core :as sci]
+            [sci.ctx-store]))
 
 (def macro? (comp :macro meta))
 (def dynamic? (comp :dynamic meta))
@@ -131,7 +132,7 @@
   (let [ns-map (u/map-vals sci-ns ns->publics)]
     (merge-with merge ns-map macros/ns-bindings)))
 
-(def context-opts
+(def config
   "Default sci context options required (currently only `:namespace`
   bindings) required to evaluate Emmy forms from inside of an SCI
   context. Pass these to `sci/init` to generate an sci context."
@@ -144,6 +145,12 @@
                :cljs {'js goog/global :allow :all})})
 
 (def context
-  "sci context (currently only `:namespace` bindings) required to
-  evaluate Emmy forms via SCI"
-  (sci/init context-opts))
+  "sci context required to evaluate Emmy forms via SCI."
+  (sci/init config))
+
+(defn install!
+  "Installs [[config]] into the shared SCI context store."
+  []
+  (sci.ctx-store/swap-ctx!
+   sci/merge-opts
+   config))

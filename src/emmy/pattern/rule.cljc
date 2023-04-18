@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.pattern.rule
   "This namespace provides an API for building rules out of the matchers and
   matcher combinators declared in [[emmy.pattern.match]], along with a series of

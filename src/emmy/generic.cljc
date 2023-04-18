@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.generic
   "The home of most of the Emmy extensible generic operations. The bulk of
   the others live in [[emmy.value]].
@@ -859,12 +862,13 @@ defaults to `ln((1 + sqrt(1+x^2)) / x)`."
     (v/one-like x)
     (div (sin x) x)))
 
-;; NOTE that we don't define `cosc`. [This StackExchange
-;; post](https://math.stackexchange.com/a/2137104) has a nice explanation of why
-;; the analogous `cosc` doesn't belong: "The motivation for functions such as
-;; $\sinc x$, $\sinch x$, $\tanc x$, $\tanch x$ is to consider the behaviour of
-;; a ratio with limit 1 as $x \to 0$. There is no such motivation for
-;; $\frac{\cos x}{x}$, since $\cos 0 = 1 \neq 0$."
+;; > NOTE that we don't define `cosc`. [This StackExchange
+;; > post](https://math.stackexchange.com/a/2137104) has a nice explanation of
+;; > why the analogous `cosc` doesn't belong: "The motivation for functions such
+;; > as $\operatorname{sinc} x$, $\operatorname{sinch} x$, $\operatorname{tanc}x$,
+;; > $\operatorname{tanch} x$ is to consider the behaviour of a ratio with
+;; > limit 1 as $x \to 0$. There is no such motivation for $\frac{\cos x}{x}$,
+;; > since $\cos 0 = 1 \neq 0$."
 ;;
 ;; The Julia language does define a `cosc`, but strangely makes it equal to the
 ;; derivative of `sinc`, by analogy with `cos` being the derivative of `sin`.

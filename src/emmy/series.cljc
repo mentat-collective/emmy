@@ -695,7 +695,7 @@
 ;; arithmetic system.
 ;;
 ;; A key idea here is that all "coefficients" of a series must be some kind
-;; derived from `::coseries`. This is /not/ true in the Scheme scmutils library;
+;; derived from `::coseries`. This is _not_ true in the Scheme scmutils library;
 ;; in that library, anything that responds false to `series?` is game for
 ;; interaction with series objects.
 ;;
@@ -710,7 +710,7 @@
 ;; - operate directly on their backing sequences
 ;; - repackage the result using the appropriate constructor
 ;;
-;; This section does /not/ define methods that coerce `Series` => `PowerSeries`
+;; This section does _not_ define methods that coerce `Series` => `PowerSeries`
 ;; or vice versa. Users should do this explicitly.
 
 (doseq [[ctor kind] [[->Series ::series]

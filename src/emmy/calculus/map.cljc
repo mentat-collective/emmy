@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.calculus.map
   "Various definitions and utilities for working with maps between manifolds."
   (:require [emmy.abstract.function :as af]

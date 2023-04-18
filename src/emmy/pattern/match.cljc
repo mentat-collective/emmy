@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.pattern.match
   "Implementation of a emmy.pattern.matching system inspired by [Gerald Jay Sussman's
   lecture notes for MIT
@@ -14,7 +17,7 @@
   (:require [clojure.core :as core]
             [emmy.pattern.syntax :as s]))
 
-;; # Emmy.Pattern.Matching
+;; # Emmy Pattern Matching
 ;;
 ;; The library is built out of a few stacked ideas: matcher combinators,
 ;; matchers, consequences and rules.

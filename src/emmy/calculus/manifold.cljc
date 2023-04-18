@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.calculus.manifold
   "This namespace defines a functional API for:
 
@@ -1252,6 +1255,7 @@
                                         0))))))))
 
 (def S2 (make-manifold S2-type 2 3))
+
 (def S2-spherical (coordinate-system-at S2 :spherical :north-pole))
 
 (def S2-tilted

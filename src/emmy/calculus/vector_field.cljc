@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.calculus.vector-field
   "This namespace implements a vector field operator and a number of functions for
   creating and working with vector fields.

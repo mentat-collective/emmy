@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.quaternion
   "This namespace provides a number of functions and constructors for working
   with [[Quaternion]] instances in Clojure and ClojureScript, and
@@ -769,7 +772,7 @@
 ;; pdf](http://home.ewha.ac.kr/~bulee/quaternion.pdf)
 ;; and [Wikipedia](https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation#Differentiation_with_respect_to_the_rotation_quaternion)
 ;; seem to state that the derivative of, say, a quaternion-valued function with
-;; respect to a quaternion should /not/ be defined this way. If you run into
+;; respect to a quaternion should _not_ be defined this way. If you run into
 ;; trouble, study these sources and please correct this issue! Or if this
 ;; implementation is correct, please add some exposition and delete the comment.
 

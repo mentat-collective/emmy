@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.polynomial.richardson
   "Richardson interpolation is a special case of polynomial interpolation; knowing
   the ratios of successive `x` coordinates in the point sequence allows a more
@@ -8,7 +11,8 @@
             [emmy.generic :as g]
             [emmy.polynomial.interpolate :as pi]
             [emmy.util.stream :as us]
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [mentat.clerk-utils :refer [->clerk-only]]))
 
 ;; ## Richardson Interpolation
 ;;
@@ -64,22 +68,17 @@
 (def ^:no-doc archimedean-pi-sequence
   (map semi-perimeter side-numbers side-lengths))
 
-;; I don't have a nice way of embedding the sequence in a notebook, but the
-;; following code will print the first 20 terms:
+;; print the first 20 terms:
 
-(comment
-  (us/pprint 20 archimedean-pi-sequence))
+(->clerk-only
+ (take 20 archimedean-pi-sequence))
 
 ;; Unfortunately (for Archimedes, by hand!), as the paper notes, it takes 26
 ;; iterations to converge to machine precision:
 
-(comment
-  (= (-> archimedean-pi-sequence
-         (us/seq-limit {:tolerance v/machine-epsilon}))
-
-     {:converged? true
-      :terms-checked 26
-      :result 3.1415926535897944}))
+(->clerk-only
+ (-> archimedean-pi-sequence
+     (us/seq-limit {:tolerance v/machine-epsilon})))
 
 ;; Enter Sussman: "Imagine poor Archimedes doing the arithmetic by hand: square
 ;; roots without even the benefit of our place value system! He would be
@@ -94,9 +93,11 @@
 ;; Then the taylor series expansion for $P_n$ becomes:
 ;;
 ;; $$
-;;  P_n = {n \over 2} S_n \
-;;      = {n \over 2} 2 \sin {\pi \over n} \
-;;      = \pi + {A \over n^2} + {B \over n^2} ...
+;; \begin{aligned}
+;;  P_n &= {n \over 2} S_n \\
+;;      &= {n \over 2} 2 \sin {\pi \over n} \\
+;;      &= \pi + {A \over n^2} + {B \over n^2} \ldots
+;; \end{aligned}
 ;; $$
 ;;
 ;; A couple things to note:
@@ -107,7 +108,7 @@
 ;;
 ;; The big idea is to multiply $P_{2n}$ by 4 and subtract $P_n$ (then divide by
 ;; 3 to cancel out the extra factor). This will erase the $A \over n^2$ term and
-;; leave a /new/ sequence with $B \over n^4$ as the dominant error term.
+;; leave a _new_ sequence with $B \over n^4$ as the dominant error term.
 ;;
 ;; Now keep going and watch the error terms drain away.
 ;;
@@ -321,8 +322,8 @@
 ;;
 ;; Where:
 
-;; - $P(x)$ is a polynomial estimate from some sequence of points $(a, b, c,
-;;  ...)$ where a point $a$ has the form $(x_a, f(x_a))$
+;; - $P(x)$ is a polynomial estimate from some sequence of points $(a, b, c, \ldots)$
+;;   where a point $a$ has the form $(x_a, f(x_a))$
 ;; - $x_l$ is the coordinate of the LEFTmost point, $x_a$
 ;; - $x_r$ is the rightmost point, say, $x_c$ in this example
 ;; - $x$ is the coordinate where we want to evaluate $P(x)$
@@ -331,13 +332,13 @@
 ;;
 ;; Fill in $x = 0$ and rearrange:
 ;;
-;; $$P(0) = [(x_l P_r(0)) - (x_r P_l(x))] \over [x_l - x_r]$$
+;; $$P(0) = {[(x_l P_r(0)) - (x_r P_l(x))] \over [x_l - x_r]}$$
 ;;
 ;; In the Richardson extrapolation scheme, one of our parameters was `t`, the
-;; ratio between successive elements in the sequence. Now multiply through by $1
-;; = {1 \over x_r} \over {1 \over x_r}$ so that our formula contains ratios:
+;; ratio between successive elements in the sequence. Now multiply through by
+;; $1 = {{1 \over x_r} \over {1 \over x_r}}$ so that our formula contains ratios:
 ;;
-;; $$P(0) = [({x_l \over x_r} P_r(0)) - P_l(x)] \over [{x_l \over x_r} - 1]$$
+;; $$P(0) = {[({x_l \over x_r} P_r(0)) - P_l(x)] \over [{x_l \over x_r} - 1]}$$
 ;;
 ;; Because the sequence of $x_i$ elements looks like $x, x/t, x/t^2$, every
 ;; recursive step separates $x_l$ and $x_r$ by another factor of $t$. So
@@ -347,7 +348,7 @@
 ;; Where $n$ is the difference between the positions of $x_l$ and $x_r$. So the
 ;; formula simplifies further to:
 ;;
-;; $$P(0) = [({t^n} P_r(0)) - P_l(x)] \over [{t^n} - 1]$$
+;; $$P(0) = {[({t^n} P_r(0)) - P_l(x)] \over [{t^n} - 1]}$$
 ;;
 ;; Now it looks exactly like Richardson extrapolation. The only difference is
 ;; that Richardson extrapolation leaves `n` general (and calls it $p_1, p_2$
@@ -363,18 +364,18 @@
 ;; Let's confirm that polynomial extrapolation to 0 gives the same result, if we
 ;; generate squared $x$ values:
 
-(comment
-  (let [h**2 (fn [i]
-               ;; (1/t^{i + 1})^2
-               (-> (/ 1 (Math/pow 2 (inc i)))
-                   (Math/pow 2)))
-        xs (map-indexed (fn [i fx] [(h**2 i) fx])
-                        archimedean-pi-sequence)]
-    (= (us/seq-limit
-        (richardson-sequence archimedean-pi-sequence 4 1 1))
+(->clerk-only
+ (let [h**2 (fn [i]
+              ;; (1/t^{i + 1})^2
+              (-> (/ 1 (Math/pow 2 (inc i)))
+                  (Math/pow 2)))
+       xs (map-indexed (fn [i fx] [(h**2 i) fx])
+                       archimedean-pi-sequence)]
+   (= (us/seq-limit
+       (richardson-sequence archimedean-pi-sequence 4 1 1))
 
-       (us/seq-limit
-        (pi/modified-neville xs 0.0)))))
+      (us/seq-limit
+       (pi/modified-neville xs 0.0)))))
 
 ;; Success!
 ;;
@@ -389,11 +390,13 @@
 ;; a time instead of one column at a time. Because point 0 is seen first, this
 ;; has the effect of flipping the order of all input points:
 ;;
+;; ```
 ;; p4 p43 p432 p4321 p43210
 ;; p3 p32 p321 p3210 .
 ;; p2 p21 p210 .     .
 ;; p1 p10 .    .     .
 ;; p0 .   .    .     .
+;; ```
 ;;
 ;; Each new entry is generated by merging the entry to the left, and down the
 ;; left diagonal.

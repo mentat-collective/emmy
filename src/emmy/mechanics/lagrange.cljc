@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.mechanics.lagrange
   (:refer-clojure :exclude [+ - * / partial time])
   (:require [emmy.calculus.derivative :refer [D partial]]

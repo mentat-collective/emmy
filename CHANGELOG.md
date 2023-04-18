@@ -2,6 +2,25 @@
 
 ## [unreleased]
 
+## [0.30.0]
+
+- #124:
+
+  - Upgrades `babashka/sci` to 0.7.39.
+
+  - Adds a working `bb repl` command to the repository.
+
+  - Renames `emmy.env.sci` => `emmy.sci`, and adds an `emmy.sci/install!`
+    command to make it easier to install all namespaces into a shared SCI
+    context.
+
+  - Renames `context-opts` in the new `emmy.sci` to `emmy.sci/config`, to match
+    the `sci-configs` style.
+
+  The full library is now published to `https://emmy.mentat.org` as a series of
+  Clerk notebooks. This required a dependency on https://clerk-utils.mentat.org,
+  but no actual Clerk dependency in the library.
+
 - #119:
 
   - Removes support for `:flat` compilation mode (this was a step toward
@@ -818,7 +837,7 @@
     - The folds in this namespace now follow the fold contract laid out in
       `sicmutils.algebra.fold`, implementing all three arities correctly.
 
-    - I realized that the fold implementation here should /not/ return a full
+    - I realized that the fold implementation here should _not_ return a full
       row every time it processes a previous row; a far better `present`
       implementation would return the best estimate so far. Then you could build
       a `scan` from that fold to see the estimates evolve lazily as new points

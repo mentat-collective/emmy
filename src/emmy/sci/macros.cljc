@@ -1,6 +1,6 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
-(ns emmy.env.sci.macros
+(ns emmy.sci.macros
   "This namespace contains reimplementations of various macros from emmy,
   defined in the form required by SCI."
   (:require [emmy.abstract.function :as af]

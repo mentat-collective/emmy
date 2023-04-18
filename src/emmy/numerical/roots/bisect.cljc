@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.numerical.roots.bisect
   "This namespace contains implementations of a number of methods for root-finding
   on real-valued functions of one argument.

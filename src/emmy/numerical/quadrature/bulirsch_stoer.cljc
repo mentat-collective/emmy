@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.numerical.quadrature.bulirsch-stoer
   (:require [emmy.numerical.quadrature.common :as qc]
             [emmy.numerical.quadrature.midpoint :as mid]
@@ -31,7 +34,7 @@
 ;; The Bulirsch-Stoer algorithm is exactly this, but:
 ;;
 ;; - using rational function approximation instead of polynomial
-;; - the step sizes increase like $2, 3, 4, 6, 8... 2n_{i-2}$ by default
+;; - the step sizes increase like $2, 3, 4, 6, 8... {2n}_{i-2}$ by default
 ;;
 ;; Here are the default step sizes:
 
@@ -217,5 +220,5 @@
 
 ;; ## References:
 ;;
-;; - Press, Numerical Recipes, section 16.4: http://phys.uri.edu/nigh/NumRec/bookfpdf/f16-4.pdf
+;; - Press, [Numerical Recipes, section 16.4](http://phys.uri.edu/nigh/NumRec/bookfpdf/f16-4.pdf)
 ;; - Wikipedia: https://en.wikipedia.org/wiki/Bulirsch%E2%80%93Stoer_algorithm

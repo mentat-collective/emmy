@@ -32,7 +32,7 @@
 ;; ## Intervals
 ;;
 ;; Implementations of the various intervals used by the adaptive integral
-;; interface. By default, integration endpoints are considered /open/.
+;; interface. By default, integration endpoints are considered _open_.
 
 (def open        [::open ::open])
 (def closed      [::closed ::closed])
@@ -123,7 +123,7 @@
 
   `(f a b opts)`
 
-  All `opts` are passed on to `seq-fn`, /and/ to `us/seq-limit` internally,
+  All `opts` are passed on to `seq-fn`, _and_ to `us/seq-limit` internally,
   where the options configure the checks on sequence convergence."
   [area-fn seq-fn]
   (fn call

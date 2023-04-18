@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.calculus.covariant
   (:require [emmy.calculus.basis :as b]
             [emmy.calculus.derivative :refer [D]]

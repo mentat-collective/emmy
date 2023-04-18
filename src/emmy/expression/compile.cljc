@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.expression.compile
   "This namespace contains tools for compiling functions implemented with the
   numeric operations defined in [[emmy.generic]] down to fast, native
@@ -7,6 +10,7 @@
   (:require [clojure.string :as s]
             [clojure.walk :as w]
             [clojure.zip :as z]
+            [emmy.expression :as x]
             [emmy.expression.analyze :as a]
             [emmy.expression.cse :refer [extract-common-subexpressions]]
             [emmy.expression.render :as render]
@@ -16,6 +20,7 @@
             [emmy.util :as u]
             [emmy.util.stopwatch :as us]
             [emmy.value :as v]
+            [mentat.clerk-utils :refer [->clerk-only]]
             [sci.core :as sci]
             [taoensso.timbre :as log]))
 
@@ -27,19 +32,21 @@
 ;; 1. Pass symbols like `'x` in for all arguments. This will cause the function
 ;;    to return a "numerical expression", a syntax tree representing the
 ;;    function's body:
-#_(let [f (fn [x] (g/sqrt
-                  (g/+ (g/square (g/sin x))
-                       (g/square (g/cos x)))))]
-    (= '(sqrt (+ (expt (sin x) 2) (expt (cos x) 2)))
-       (x/expression-of (f 'x))))
+
+(->clerk-only
+ (let [f (fn [x] (g/sqrt
+                 (g/+ (g/square (g/sin x))
+                      (g/square (g/cos x)))))]
+   (x/expression-of (f 'x))))
 
 ;; 2. `g/simplify` the new function body. Sometimes this results in large
 ;;    simplifications:
 
-#_(let [f (fn [x] (g/sqrt
-                  (g/+ (g/square (g/sin x))
-                       (g/square (g/cos x)))))]
-    (v/= 1 (g/simplify (f 'x))))
+(->clerk-only
+ (let [f (fn [x] (g/sqrt
+                 (g/+ (g/square (g/sin x))
+                      (g/square (g/cos x)))))]
+   (g/simplify (f 'x))))
 
 ;; 3. Apply "common subexpression elimination". Any subexpression inside the
 ;;    new, simplified body that appears more than once gets extracted out into a
@@ -222,12 +229,14 @@
 ;;
 ;; The compiled version of a state function like
 
-#_(fn [mass g]
-    (fn [q]))
+(->clerk-only
+ '(fn [mass g]
+    (fn [q])))
 
 ;; Has a signature like
 
-#_(fn [q [mass g]])
+(->clerk-only
+ '(fn [q [mass g]]))
 
 ;; I.E., first the structure, then a vector of the original function's arguments.
 

@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.calculus.derivative
   "This namespace implements a number of differential operators like [[D]], and
   the machinery to apply [[D]] to various structures."
@@ -49,6 +52,7 @@
 ;; non-higher-order version would respond to `(partial 0)`. In other words,
 ;; these two forms should evaluate to equivalent results:
 
+^{:nextjournal.clerk/visibility {:result :hide}}
 (comment
   (let [f (fn [x]
             (fn [y]
@@ -56,12 +60,10 @@
                 (g/* x y z))))]
     ((((D f) 'x) 'y) 'z))
   ;;=> (* y z)
-)
 
-(comment
   (((partial 0) g/*) 'x 'y 'z)
   ;;=> (* y z)
-)
+  )
 
 ;; To `extract-tangent` from a function, we need to compose the
 ;; `extract-tangent` operation with the returned function.

@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.expression.cse
   "This namespace implements subexpression extraction and \"elimination\", the
   process we use to avoid redundant computation inside of a simplified function
@@ -8,7 +11,10 @@
             [clojure.walk :as w]
             [emmy.expression :as x]
             [emmy.expression.analyze :as a]
-            [emmy.util :as u]))
+            [emmy.util :as u]
+            [mentat.clerk-utils :refer [->clerk-only]]))
+
+;; ## Common Sub-Expression Elimination
 
 ;;  The goal of this process is to split some symbolic expression into:
 ;;
@@ -112,9 +118,10 @@
 ;; This is important, as it forces us to consider smaller subexpressions first.
 ;; Consider some expression like:
 
-#_(+ (* (sin x) (cos x))
+(->clerk-only
+ '(+ (* (sin x) (cos x))
      (* (sin x) (cos x))
-     (* (sin x) (cos x)))
+     (* (sin x) (cos x))))
 
 ;; At first pass, we have three repeated subexpressions:
 ;;
@@ -126,7 +133,8 @@
 ;; before the larger term that contains them both. And in fact the returned pair
 ;; looks like:
 
-#_[(+ g3 g3 g3) ([g1 (sin x)] [g2 (cos x)] [g3 (* g1 g2)])]
+(->clerk-only
+ '[(+ g3 g3 g3) ([g1 (sin x)] [g2 (cos x)] [g3 (* g1 g2)])])
 
 ;; NOTE also that:
 ;;

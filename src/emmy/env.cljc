@@ -93,7 +93,7 @@
 
   TODO add `:rename`, `:exclude` support."
   []
-  `(require '~['emmy.env
+  `(require '~['emmy.envxmy
                :refer
                (into [] (keys (ns-publics 'emmy.env)))]))
 

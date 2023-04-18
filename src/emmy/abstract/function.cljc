@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.abstract.function
   "Implementation of a [[literal-function]] constructor. Literal functions can be
   applied to structures and numeric inputs, and differentiated.
@@ -145,6 +148,8 @@
 #?(:clj
    (defmethod print-method Function [^Function f ^java.io.Writer w]
      (.write w (.toString f))))
+
+(derive Function ::function)
 
 (defn literal-function?
   "Returns true if the supplied object is an instance of [[Function]], false
