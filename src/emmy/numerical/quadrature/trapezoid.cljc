@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.numerical.quadrature.trapezoid
   "Trapezoid method."
   (:require [emmy.abstract.function :as f]
@@ -8,7 +11,8 @@
             [emmy.numerical.quadrature.riemann :as qr]
             [emmy.polynomial.richardson :as pr]
             [emmy.util :as u]
-            [emmy.util.aggregate :as ua]))
+            [emmy.util.aggregate :as ua]
+            [mentat.clerk-utils :refer [->clerk ->clerk-only]]))
 
 ;; ## The Trapezoid Method
 ;;
@@ -61,31 +65,29 @@
 ;; We can use the symbolic algebra facilities in the library to show that this
 ;; simplification is valid:
 
-(comment
-  (let [f (f/literal-function 'f)
-        square    (g/* (f 'x_l)
-                       (g/- 'x_r 'x_l))
-        triangle  (g/* (g// 1 2)
-                       (g/- 'x_r 'x_l)
-                       (g/- (f 'x_r) (f 'x_l)))]
-    (zero?
-     (g/simplify
-      (g/- (single-trapezoid f 'x_l 'x_r)
-           (g/+ square triangle))))))
-;; => true
+(->clerk-only
+ (let [f (f/literal-function 'f)
+       square    (g/* (f 'x_l)
+                      (g/- 'x_r 'x_l))
+       triangle  (g/* (g// 1 2)
+                      (g/- 'x_r 'x_l)
+                      (g/- (f 'x_r) (f 'x_l)))]
+   (g/simplify
+    (g/- (single-trapezoid f 'x_l 'x_r)
+         (g/+ square triangle)))))
 
 ;; We can use `qr/windowed-sum` to turn this function into an (inefficient)
 ;; integrator:
 
-(defn- trapezoid-sum* [f a b]
-  (qr/windowed-sum (partial single-trapezoid f)
-                   a b))
+(->clerk
+ (defn- trapezoid-sum* [f a b]
+   (qr/windowed-sum (partial single-trapezoid f)
+                    a b)))
 
 ;; Fitting triangles is easy:
 
-(comment
-  (= (* 0.5 10 10)
-     ((trapezoid-sum* identity 0.0 10.0) 10)))
+(->clerk-only
+ ((trapezoid-sum* identity 0.0 10.0) 10))
 
 ;; In fact, we can even use our estimator to estimate $\pi$:
 
@@ -95,40 +97,38 @@
 
 ;; The accuracy is not bad, for 10 slices:
 
-(comment
-  (= 3.1399259889071587
-     (pi-estimator* 10)))
+(->clerk-only
+ (pi-estimator* 10))
 
-(comment
-  (- Math/PI (pi-estimator* 10)))
-;; => 0.0016666646826344333
+(->clerk-only
+ (- Math/PI (pi-estimator* 10)))
 
 ;; 10000 slices gets us closer:
 
-(comment
-  (< (- Math/PI (pi-estimator* 10000))
-     1e-8))
+(->clerk-only
+ (- Math/PI (pi-estimator* 10000)))
 
 ;; Fun fact: the trapezoid method is equal to the /average/ of the left and
 ;; right Riemann sums. You can see that in the equation, but lets verify:
 
-(defn- basically-identical? [l-seq r-seq]
-  (every? #(< % 1e-15)
-          (map - l-seq r-seq)))
+(->clerk
+ (defn- basically-identical? [l-seq r-seq]
+   (every? #(< % 1e-15)
+           (map - l-seq r-seq))))
 
-(comment
-  (let [points  (take 5 (iterate inc 1))
-        average (fn [l r]
-                  (/ (+ l r) 2))
-        f       (fn [x] (/ 4 (+ 1 (* x x))))
-        [a b]   [0 1]
-        left-estimates  (qr/left-sequence f a b {:n points})
-        right-estimates (qr/right-sequence f a b {:n points})]
-    (basically-identical?
-     (map (trapezoid-sum* f a b) points)
-     (map average
-          left-estimates
-          right-estimates))))
+(->clerk-only
+ (let [points  (take 5 (iterate inc 1))
+       average (fn [l r]
+                 (/ (+ l r) 2))
+       f       (fn [x] (/ 4 (+ 1 (* x x))))
+       [a b]   [0 1]
+       left-estimates  (qr/left-sequence f a b {:n points})
+       right-estimates (qr/right-sequence f a b {:n points})]
+   (basically-identical?
+    (map (trapezoid-sum* f a b) points)
+    (map average
+         left-estimates
+         right-estimates))))
 
 ;; ## Efficient Trapezoid Method
 ;;
@@ -160,15 +160,15 @@
 ;; We can define a new `pi-estimator` and check it against our less efficient
 ;; version:
 
-(def ^:private pi-estimator
-  (let [f (fn [x] (/ 4 (+ 1 (* x x))))]
-    (trapezoid-sum* f 0.0 1.0)))
+(->clerk
+ (def ^:private pi-estimator
+   (let [f (fn [x] (/ 4 (+ 1 (* x x))))]
+     (trapezoid-sum* f 0.0 1.0))))
 
-(comment
-  (basically-identical?
-   (map pi-estimator (range 1 100))
-   (map pi-estimator* (range 1 100))))
-;; => true
+(->clerk-only
+ (basically-identical?
+  (map pi-estimator (range 1 100))
+  (map pi-estimator* (range 1 100))))
 
 ;; ## Incremental Trapezoid Rule
 ;;
@@ -183,10 +183,12 @@
 ;; Consider the evaluation points of the trapezoid method with 2 slices, next to
 ;; the points of a 4 slice pass:
 ;;
+;; ```
 ;; x-------x-------x
 ;; x---x---x---x---x
+;; ```
 ;;
-;; The new points are simply the /midpoints/ of the existing slices, just like
+;; The new points are simply the _midpoints_ of the existing slices, just like
 ;; we had for the left (and right) Riemann sums. This means that we can reuse
 ;; `qr/Sn->S2n` in our definition of the incrementally-enabled
 ;; `trapezoid-sequence`:
@@ -229,29 +231,27 @@
 ;; When $n=11$, the incremental implementation uses 2049 evaluations, while the
 ;; non-incremental takes 4017.
 
-(comment
-  (let [n-elements 11
-        f (fn [x] (/ 4 (+ 1 (* x x))))
-        [counter1 f1] (u/counted f)
-        [counter2 f2] (u/counted f)
-        [counter3 f3] (u/counted f)
-        n-seq (take (inc n-elements)
-                    (iterate (fn [x] (* 2 x)) 1))]
-    ;; Incremental version evaluating every `n` in the sequence $1, 2, 4, ...$:
-    (dorun (trapezoid-sequence f1 0 1 {:n n-seq}))
+(->clerk-only
+ (let [n-elements 11
+       f (fn [x] (/ 4 (+ 1 (* x x))))
+       [counter1 f1] (u/counted f)
+       [counter2 f2] (u/counted f)
+       [counter3 f3] (u/counted f)
+       n-seq (take (inc n-elements)
+                   (iterate (fn [x] (* 2 x)) 1))]
+   ;; Incremental version evaluating every `n` in the sequence $1, 2, 4, ...$:
+   (dorun (trapezoid-sequence f1 0 1 {:n n-seq}))
 
-    ;; Non-incremental version evaluating every `n` in the sequence $1, 2, 4, ...$:
-    (run! (trapezoid-sum f2 0 1) n-seq)
+   ;; Non-incremental version evaluating every `n` in the sequence $1, 2, 4, ...$:
+   (run! (trapezoid-sum f2 0 1) n-seq)
 
-    ;; A single evaluation of the final `n`
-    ((trapezoid-sum f3 0 1) (last n-seq))
+   ;; A single evaluation of the final `n`
+   ((trapezoid-sum f3 0 1) (last n-seq))
 
-    (let [two**n+1 (inc (g/expt 2 n-elements))
-          n+2**n (+ n-elements (g/expt 2 (inc n-elements)))]
-      (= [2049 4107 2049]
-         [two**n+1 n+2**n two**n+1]
-         [@counter1 @counter2 @counter3]))))
-;; => true
+   (let [two**n+1 (inc (g/expt 2 n-elements))
+         n+2**n (+ n-elements (g/expt 2 (inc n-elements)))]
+     [[two**n+1 n+2**n two**n+1]
+      [@counter1 @counter2 @counter3]])))
 
 ;; Another short example that hints of work to come. The incremental
 ;; implementation is useful in cases where the sequence includes doublings
@@ -265,19 +265,18 @@
 ;; This is a good bit more efficient than the Midpoint method's incremental
 ;; savings, since factors of 2 come up more often than factors of 3.
 
-(comment
-  (let [f (fn [x] (/ 4 (+ 1 (* x x))))
-        [counter1 f1] (u/counted f)
-        [counter2 f2] (u/counted f)
-        n-seq (take 12 (interleave
-                        (iterate (fn [x] (* 2 x)) 2)
-                        (iterate (fn [x] (* 2 x)) 3)))]
-    (dorun (trapezoid-sequence f1 0 1 {:n n-seq}))
-    (run! (trapezoid-sum f2 0 1) n-seq)
-    (= [162 327]
-       [@counter1 @counter2])))
+(->clerk-only
+ (let [f (fn [x] (/ 4 (+ 1 (* x x))))
+       [counter1 f1] (u/counted f)
+       [counter2 f2] (u/counted f)
+       n-seq (take 12 (interleave
+                       (iterate (fn [x] (* 2 x)) 2)
+                       (iterate (fn [x] (* 2 x)) 3)))]
+   (dorun (trapezoid-sequence f1 0 1 {:n n-seq}))
+   (run! (trapezoid-sum f2 0 1) n-seq)
+   [@counter1 @counter2]))
 
-;; Final Trapezoid API:
+;; ## Final Trapezoid API:
 ;;
 ;; The final version is analogous the `qr/left-integral` and friends, including
 ;; an option to `:accelerate?` the final sequence with Richardson
@@ -286,8 +285,8 @@
 ;;
 ;; ### Note on Richardson Extrapolation
 ;;
-;; The terms of the error series for the Trapezoid method increase as $h^2, h^4,
-;; h^6$... (see https://en.wikipedia.org/wiki/Trapezoidal_rule#Error_analysis).
+;; The terms of the error series for the Trapezoid method increase as $h^2, h^4, h^6$...
+;; (see https://en.wikipedia.org/wiki/Trapezoidal_rule#Error_analysis).
 ;; Because of this, we pass $p = q = 2$ into `pr/richardson-sequence` below.
 ;; Additionally, `integral` hardcodes the factor of `2` and doesn't currently
 ;; allow for a custom sequence of $n$. This is configured by passing $t = 2$

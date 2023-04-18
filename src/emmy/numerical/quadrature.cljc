@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.numerical.quadrature
   (:require [emmy.expression.compile :as c]
             [emmy.generic :as g]
@@ -25,13 +28,16 @@
 ;;
 ;; The interface takes `f`, an integrand, along with bounds `a` and `b`:
 ;;
+;; ```clj
 ;; (definite-integral f a b)
+;; ```
 ;;
 ;; Optionally, you can provide a dictionary of customizing options. These are
 ;; passed down to whatever method you supply via the `:method` key.
 ;;
+;; ```clj
 ;; (definite-integral f a b opts)
-;;
+;; ```
 ;;
 ;; ## Implementation
 ;;

@@ -9,7 +9,8 @@
             [emmy.numerical.quadrature.riemann :as qr]
             [emmy.polynomial.richardson :as pr]
             [emmy.util :as u]
-            [emmy.util.aggregate :as ua]))
+            [emmy.util.aggregate :as ua]
+            [mentat.clerk-utils :refer [->clerk-only]]))
 
 ;; ## Midpoint Method
 ;;
@@ -84,16 +85,20 @@
 ;; function evaluations when the number of slices doubles. This is because each
 ;; evaluation point, on a doubling, becomes the new border between slices:
 ;;
+;; ```
 ;; n = 1 |-------x-------|
 ;; n = 2 |---x---|---x---|
+;; ```
 ;;
 ;; If you /triple/ the number of slices from $n$ to $3n$, you can in fact reuse
 ;; the previous $n$ evaluations:
 ;;
+;; ```
 ;; n = 1 |--------x--------|
 ;; n = 3 |--x--|--x--|--x--|
+;; ```
 ;;
-;; By scaling Sn down by a factor of 3, and adding it to a new sum that only
+;; By scaling $S_n$ down by a factor of 3, and adding it to a new sum that only
 ;; includes the new points (using the new slice width).
 ;;
 ;; BTW: The only place I found this idea mentioned is in Section 4.4 of
@@ -106,10 +111,10 @@
 ;; function of $f, a, b$ will return a function that performs the incremental
 ;; update.
 ;;
-;; The returned function generates $S3n$ across $(a, b)$ with $n$ intervals, and
-;; picking out two new points at $h \over 6$ and $5h \over 6$ of the way across
-;; the old interval. These are the midpoints of the two new slices with width $h
-;; \over 3$.
+;; The returned function generates $S_{3n}$ across $(a, b)$ with $n$ intervals,
+;; and picking out two new points at $h \over 6$ and $5h \over 6$ of the way
+;; across the old interval. These are the midpoints of the two new slices with
+;; width $h \over 3$.
 ;;
 ;; Sum them all up and add them to $S_n \over 3$ to generate $S_{3n}$:
 
@@ -161,17 +166,16 @@
 ;; only performs 253 function evaluations, vs the 315 of the non-incremental
 ;; `(midpoint-sum f2 0 1)` mapped across the points.
 
-(comment
-  (let [f (fn [x] (/ 4 (+ 1 (* x x))))
-        [counter1 f1] (u/counted f)
-        [counter2 f2] (u/counted f)
-        n-seq (interleave
-               (iterate (fn [x] (* 2 x)) 2)
-               (iterate (fn [x] (* 2 x)) 3))]
-    (dorun (take 12 (midpoint-sequence f1 0 1 {:n n-seq})))
-    (dorun (take 12 (map (qr/midpoint-sum f2 0 1) n-seq)))
-    (= [253 315]
-       [@counter1 @counter2])))
+(->clerk-only
+ (let [f (fn [x] (/ 4 (+ 1 (* x x))))
+       [counter1 f1] (u/counted f)
+       [counter2 f2] (u/counted f)
+       n-seq (interleave
+              (iterate (fn [x] (* 2 x)) 2)
+              (iterate (fn [x] (* 2 x)) 3))]
+   (dorun (take 12 (midpoint-sequence f1 0 1 {:n n-seq})))
+   (dorun (take 12 (map (qr/midpoint-sum f2 0 1) n-seq)))
+   [@counter1 @counter2]))
 
 ;; ## Final Midpoint API
 ;;
