@@ -1,0 +1,53 @@
+{:deps {org.babashka/http-server {:mvn/version "0.1.11"}
+        org.babashka/cli {:mvn/version "0.2.23"}}
+ :pods {clj-kondo/clj-kondo {:version "2023.01.20"}}
+ :tasks
+ {:requires ([babashka.cli :as cli]
+             [pod.borkdude.clj-kondo :as clj-kondo])
+  :init
+  (do (def cli-opts
+        (cli/parse-opts *command-line-args* {:coerce {:port :int}}))
+
+      (defn X [cmd]
+        (let [args *command-line-args*]
+          (if (even? (count args))
+            (apply shell cmd args)
+            (do (println "Please supply an even number of arguments!")
+                (System/exit 1))))))
+
+  clerk-watch
+  {:doc "Runs `user/serve!` with a watcher process generating custom JS."
+   :task (X "clojure -X:nextjournal/clerk user/serve!")}
+
+  build-static
+  {:doc "Generate a fresh static build."
+   :task
+   (apply shell
+          "clojure -X:nextjournal/clerk"
+          *command-line-args*)}
+
+  serve
+  {:doc "Serve static assets"
+   :requires ([babashka.http-server :as server])
+   :task (server/exec
+          (merge {:port {{http-server-port}}
+                  :dir "public/build"}
+                 cli-opts))}
+
+  release-gh-pages
+  {:doc "Generate a fresh static build and release it to Github Pages."
+   :task
+   (do (shell "rm -rf public/build")
+       (run 'build-static)
+       (shell "npm run gh-pages"))}
+
+  publish-local
+  {:doc "Generate a fresh static build and start a local webserver."
+   :task
+   (do (run 'build-static)
+       (run 'serve))}
+
+  lint
+  {:doc "Lint all code directories with clj-kondo."
+   :task (clj-kondo/print!
+          (clj-kondo/run! {:lint ["src" "dev" "notebooks"]}))}}}

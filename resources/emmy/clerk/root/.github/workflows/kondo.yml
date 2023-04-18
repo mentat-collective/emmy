@@ -1,0 +1,28 @@
+name: CLJ-Kondo
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install babashka
+        uses: just-sultanov/setup-babashka@v2
+        with:
+          version: '0.8.156'
+
+      - name: Cache kondo directory
+        uses: actions/cache@v2
+        with:
+          path: ~/.clj-kondo/.cache
+          key: ${{ runner.os }}-kondo
+          restore-keys: ${{ runner.os }}-kondo
+
+      - name: Run clj-kondo
+        run: bb lint --config '{:output {:pattern "::{{level}} file={{filename}},line={{row}},col={{col}}::{{message}}"}}'

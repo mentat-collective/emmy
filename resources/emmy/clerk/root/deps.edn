@@ -1,0 +1,14 @@
+{:paths ["src" "dev" "notebooks"]
+ :deps {org.clojure/clojure {:mvn/version "{{clj-version}}"}
+        io.github.nextjournal/clerk {:git/sha "{{clerk-sha}}"}
+        org.mentat/emmy {:mvn/version "{{emmy-version}}"}
+        io.github.mentat-collective/clerk-utils {:git/sha "{{clerk-utils-sha}}"}}
+ :aliases
+ {:nextjournal/clerk
+  {:extra-deps
+   {io.github.nextjournal/clerk.render
+    {:git/url "https://github.com/nextjournal/clerk"
+     ;; make sure this sha matches the one in `:deps` above.
+     :git/sha "{{clerk-sha}}"
+     :deps/root "render"}}
+   :exec-fn user/build!}}}
