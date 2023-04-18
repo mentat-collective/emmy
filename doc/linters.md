@@ -136,28 +136,6 @@ symbol.
 
 *Example message:*: `Binding variable "x" must be a non-namespaced symbol.`
 
-### Ignored Segment Restriction
-
-*Keyword:* `:emmy.pattern/ignored-restriction`
-
-*Description:* warn when a segment binding form like `(?? x)` or `($$ x)`
-contain restrictions like `(?? x all-odd?)`. These don't error but aren't
-currently used.
-
-*Default level:* `:warning`
-
-*Example trigger:*
-
-`.clj-kondo/config.edn`:
-
-``` clojure
-(require '[emmy.rule :as r])
-
-(r/rule (+ (?? x odd?) ?y) => "match!")
-```
-
-*Example message*: `Restrictions are (currently) ignored on ?? binding forms: odd?`
-
 ### Invalid Restriction in Consequence
 
 *Keyword:* `:emmy.pattern/consequence-restriction`

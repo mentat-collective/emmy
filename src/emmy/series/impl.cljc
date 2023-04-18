@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns ^:no-doc emmy.series.impl
   "Backing implementation for the types defined in [[emmy.series]], written
   against pure Clojure sequences."
@@ -7,7 +10,8 @@
             [emmy.numbers]
             [emmy.special.factorial :as sf]
             [emmy.util :as u]
-            [emmy.value :as v]))
+            [emmy.value :as v]
+            [mentat.clerk-utils :refer [->clerk-only]]))
 
 ;; # Power Series
 ;;
@@ -18,7 +22,7 @@
 ;;   variable; in other words, a series where the nth entry is interpreted as
 ;;   the coefficient of $x^n$:
 ;;
-;; $$[a b c d ...] == $a + bx + cx^2 + dx^3 + ...$$
+;; `[a b c d ...]` $= a + bx + cx^2 + dx^3 + ...$
 ;;
 ;; We'll proceed by building up implementations of the arithmetic operations +,
 ;; -, *, / and a few others on bare Clojure lazy sequences, and then introduce
@@ -50,8 +54,8 @@
 
 ;; This works as expected:
 
-#_(= [1 2 3 4 0 0 0 0 0 0]
-   (take 10 (->series [1 2 3 4])))
+(->clerk-only
+ (->series [1 2 3 4]))
 
 ;; The core observation we'll use in the following definitions (courtesy of
 ;; McIlroy) is that a power series $F$ in a variable $x$:
@@ -72,9 +76,9 @@
 (defn negate [xs]
   (map g/negate xs))
 
-#_(let [xs [1 2 3 4]]
-  (= [-1 -2 -3 -4 0 0 0]
-     (take 7 (negate (->series xs)))))
+(->clerk-only
+ (let [xs [1 2 3 4]]
+   (negate (->series xs))))
 
 ;; ### Addition
 ;;
@@ -88,8 +92,8 @@
 (defn seq:+ [f g]
   (map g/+ f g))
 
-#_(= [0 2 4 6 8]
-   (take 5 (seq:+ (range) (range))))
+(->clerk-only
+ (take 5 (seq:+ (range) (range))))
 
 ;; A constant is a series with its first element populated, all zeros otherwise.
 ;; To add a constant to another series we only need add it to the first element.
@@ -103,10 +107,10 @@
   (lazy-seq
    (cons (g/+ (first f) c) (rest f))))
 
-#_(let [series (->series [1 2 3 4])]
-  (= [11 2 3 4 0 0]
-     (take 6 (seq+c series 10))
-     (take 6 (c+seq 10 series))))
+(->clerk-only
+ (let [series (->series [1 2 3 4])]
+   [(take 6 (seq+c series 10))
+    (take 6 (c+seq 10 series))]))
 
 ;; ### Subtraction
 ;;
@@ -115,8 +119,8 @@
 (defn seq:- [f g]
   (map g/- f g))
 
-#_(= [0 0 0 0 0]
-   (take 5 (seq:- (range) (range))))
+(->clerk-only
+ (take 5 (seq:- (range) (range))))
 
 ;; We /should/ get equivalent results from mapping `g/-` over both sequences,
 ;; and in almost all cases we do... but until we understand and fix this bug
@@ -129,8 +133,8 @@
   (lazy-seq
    (cons (g/- (first f) c) (rest f))))
 
-#_(= [-10 1 2 3 4]
-   (take 5 (seq-c (range) 10)))
+(->clerk-only
+ (take 5 (seq-c (range) 10)))
 
 ;; To subtract a sequence from a constant, subtract the first element as before,
 ;; but negate the tail of the sequence:
@@ -139,8 +143,8 @@
   (lazy-seq
    (cons (g/- c (first f)) (negate (rest f)))))
 
-#_(= [10 -1 -2 -3 -4]
-   (take 5 (c-seq 10 (range))))
+(->clerk-only
+ (take 5 (c-seq 10 (range))))
 
 ;; ### Multiplication
 ;;
@@ -180,13 +184,13 @@
 
 ;; This works just fine on two infinite sequences:
 
-#_(= [0 4 11 20 30 40 50 60 70 80]
-   (take 10 (seq:* (range) (->series [4 3 2 1]))))
+(->clerk-only
+ (take 10 (seq:* (range) (->series [4 3 2 1]))))
 
-;; NOTE This is also called the "Cauchy Product" of the two sequences:
-;; https://en.wikipedia.org/wiki/Cauchy_product The description on the Wikipedia
-;; page has complicated index tracking that simply doesn't come in to play with
-;; the stream-based approach. Amazing!
+;; > NOTE This is also called the "Cauchy Product" of the two sequences:
+;; > https://en.wikipedia.org/wiki/Cauchy_product The description on the
+;; > Wikipedia page has complicated index tracking that simply doesn't come in
+;; > to play with the stream-based approach. Amazing!
 
 ;; ### Division
 ;;
@@ -236,9 +240,9 @@
 
 ;; A simple example shows success:
 
-#_(let [series (->series [0 0 0 4 3 2 1])]
-  (= [1 0 0 0 0]
-     (take 5 (div series series))))
+(->clerk-only
+ (let [series (->series [0 0 0 4 3 2 1])]
+   (take 5 (div series series))))
 
 ;; ### Reciprocal
 ;;
@@ -267,16 +271,17 @@
 ;; This definition of `invert` matches the more straightforward division
 ;; implementation:
 
-#_(let [series (iterate inc 3)]
-  (= (take 5 (invert series))
-     (take 5 (div (->series [1]) series))))
+(->clerk-only
+ (let [series (iterate inc 3)]
+   (= (take 5 (invert series))
+      (take 5 (div (->series [1]) series)))))
 
 ;; An example:
 
-#_(let [series (iterate inc 3)]
-  (= [1 0 0 0 0]
-     (take 5 (seq:* series (invert series)))
-     (take 5 (div series series))))
+(->clerk-only
+ (let [series (iterate inc 3)]
+   [(take 5 (seq:* series (invert series)))
+    (take 5 (div series series))]))
 
 ;; Division of a constant by a series comes easily from our previous
 ;; multiplication definitions and `invert`:
@@ -286,18 +291,19 @@
 
 ;; It's not obvious that this works:
 
-#_(let [nats (iterate inc 1)]
-  (= [4 -8 4 0 0 0]
-     (take 6 (c-div-seq 4 nats))))
+(->clerk-only
+ (let [nats (iterate inc 1)]
+   (take 6 (c-div-seq 4 nats))))
 
 ;; But we can recover the initial series:
 
-#_(let [nats       (iterate inc 1)
-      divided    (c-div-seq 4 nats)
-      seq-over-4 (invert divided)
-      original   (seq*c seq-over-4 4)]
-  (= (take 5 nats)
-     (take 5 original)))
+(->clerk-only
+ (let [nats       (iterate inc 1)
+       divided    (c-div-seq 4 nats)
+       seq-over-4 (invert divided)
+       original   (seq*c seq-over-4 4)]
+   [(take 5 nats)
+    (take 5 original)]))
 
 ;; To divide a series by a constant, divide each element of the series:
 
@@ -306,9 +312,9 @@
 
 ;; Division by a constant undoes multiplication by a constant:
 
-#_(let [nats (iterate inc 1)]
-  (= [1 2 3 4 5]
-     (take 5 (seq-div-c (seq*c nats 2) 2))))
+(->clerk-only
+ (let [nats (iterate inc 1)]
+   (take 5 (seq-div-c (seq*c nats 2) 2))))
 
 ;; ### Functional Composition
 ;;
@@ -341,9 +347,9 @@
 
 ;; Composing $x^2 = (0, 0, 1, 0, 0, ...)$ should square all $x$s, and give us a
 ;; sequence of only even powers:
-#_(= [1 0 1 0 1 0 1 0 1 0]
-   (take 10 (compose (repeat 1)
-                     (->series [0 0 1]))))
+(->clerk-only
+ (take 10 (compose (repeat 1)
+                   (->series [0 0 1]))))
 
 ;; ### Reversion
 ;;
@@ -379,24 +385,25 @@
 
 ;; An example, inverting a series starting with 0:
 
-#_(let [f (cons 0 (iterate inc 1))]
-  (= [0 1 0 0 0]
-     (take 5 (compose f (revert f)))))
+(->clerk-only
+ (let [f (cons 0 (iterate inc 1))]
+   (take 5 (compose f (revert f)))))
 
 ;; ### Series Calculus
 ;;
 ;; Derivatives of power series are simple and mechanical:
 ;;
-;; $$D(a x^n)$ = aD(x^n) = a n x^{n-1}$$
+;; $$D(a x^n) = aD(x^n) = a n x^{n-1}$$
 ;;
 ;; Implies that all entries shift left by 1, and each new entry gets multiplied
-;; by its former index (ie, its new index plus 1).
+;; by its former index (i.e., its new index plus 1).
 
 (defn deriv [f]
   (map g/* (rest f) (iterate inc 1)))
 
-#_(= [1 2 3 4 5 6] ;; 1 + 2x + 3x^2 + ...
-   (take 6 (deriv (repeat 1))))
+(->clerk-only
+ ;; 1 + 2x + 3x^2 + ...
+ (take 6 (deriv (repeat 1))))
 
 ;; The definite integral $\int_0^{x}F(t)dt$ is similar. To take the
 ;; anti-derivative of each term, move it to the right by appending a constant
@@ -410,13 +417,13 @@
 
 ;; With a custom constant term:
 
-#_(= [5 1 1 1 1 1]
-   (take 6 (integral (iterate inc 1) 5)))
+(->clerk-only
+ (take 6 (integral (iterate inc 1) 5)))
 
 ;; By default, the constant term is 0:
 
-#_(= [0 1 1 1 1 1]
-   (take 6 (integral (iterate inc 1))))
+(->clerk-only
+ (take 6 (integral (iterate inc 1))))
 
 ;; ### Exponentiation
 ;;
@@ -442,8 +449,8 @@
 
 ;; We can use `expt` to verify that $(1+x)^3$ expands to $1 + 3x + 3x^2 + x^3$:
 
-#_(= [1 3 3 1 0]
-   (take 5 (expt (->series [1 1]) 3)))
+(->clerk-only
+ (take 5 (expt (->series [1 1]) 3)))
 
 ;; ### Square Root of a Series
 ;;
@@ -454,17 +461,17 @@
 ;;
 ;; or
 ;;
-;; D(Q) = {D(F) \over {2Q}}
+;; $$D(Q) = {D(F) \over {2Q}}$$
 ;;
-;; When the head term of $F$ is nonzero, ie, $f != 0$, the head of $Q =
-;; \sqrt(F)$ must be $\sqrt(f)$ for the multiplication to work out.
+;; When the head term of $F$ is nonzero, i.e., $f != 0$, the head of $Q = \sqrt(F)$
+;; must be $\sqrt(f)$ for the multiplication to work out.
 ;;
 ;; Integrate both sides:
 ;;
-;; Q = \sqrt(f) + \int_0^x {D(F) \over {2Q}}
+;; $$Q = \sqrt(f) + \int_0^x {D(F) \over {2Q}}$$
 ;;
-;; One optimization appears if the first two terms of $F$ vanish, ie,
-;; $F=x^2F_2$. In this case $Q = 0 + x \sqrt(F_2)$.
+;; One optimization appears if the first two terms of $F$ vanish, i.e.,
+;; $F=x^2F_2$. In this case $Q = 0 + x \sqrt{F_2}$.
 ;;
 ;; Here it is in Clojure:
 
@@ -482,47 +489,47 @@
 
 ;; And a test that we can recover the naturals:
 
-#_(let [xs (iterate inc 1)]
-  (= [1 2 3 4 5 6]
-     (take 6 (seq:* (sqrt xs)
-                    (sqrt xs)))))
+(->clerk-only
+ (let [xs (iterate inc 1)]
+   (take 6 (seq:* (sqrt xs)
+                  (sqrt xs)))))
 
 ;; We can maintain precision of the first element is the square of a rational
 ;; number:
 
-#_(let [xs (iterate inc 9)]
-  (= [9 10 11 12 13 14]
-     (take 6 (seq:* (sqrt xs)
-                    (sqrt xs)))))
+(->clerk-only
+ (let [xs (iterate inc 9)]
+   (take 6 (seq:* (sqrt xs)
+                  (sqrt xs)))))
 
 ;; We get a correct result if the sequence starts with 0, 0:
 
-#_(let [xs (concat [0 0] (iterate inc 9))]
-  (= [0 0 9 10 11 12]
-     (take 6 (seq:* (sqrt xs)
-                    (sqrt xs)))))
+(let [xs (concat [0 0] (iterate inc 9))]
+  (->clerk-only
+   (take 6 (seq:* (sqrt xs)
+                  (sqrt xs)))))
 
 ;; ## Examples
 
 ;; Power series computations can encode polynomial computations. Encoding
 ;; $(1-2x^2)^3$ as a power series returns the correct result:
 
-#_(= [1 0 -6 0 12 0 -8 0 0 0]
-   (take 10 (expt (->series [1 0 -2]) 3)))
+(->clerk-only
+ (take 10 (expt (->series [1 0 -2]) 3)))
 
 ;; Encoding $1 \over (1-x)$ returns the power series $1 + x + x^2 + ...$ which
 ;; sums to that value in its region of convergence:
 
-#_(= (take 10 (repeat 1))
-   (take 10 (div (->series [1])
-                 (->series [1 -1]))))
+(->clerk-only
+ (take 10 (div (->series [1])
+               (->series [1 -1]))))
 
 ;; $1 \over (1-x)^2$ is the derivative of the above series:
 
-#_(= (take 10 (iterate inc 1))
-   (take 10 (div (->series [1])
-                 (-> (->series [1 -1])
-                     (expt 2)))))
+(->clerk-only
+ (take 10 (div (->series [1])
+               (-> (->series [1 -1])
+                   (expt 2)))))
 
 ;; ## Various Power Series
 ;;
@@ -537,17 +544,8 @@
 
 ;; This bare definition is enough to generate the power series for $e^x$:
 
-#_(= '(1
-     1
-     (/ 1 2)
-     (/ 1 6)
-     (/ 1 24)
-     (/ 1 120)
-     (/ 1 720)
-     (/ 1 5040)
-     (/ 1 40320)
-     (/ 1 362880))
-   (v/freeze (take 10 expx)))
+(->clerk-only
+ (take 10 expx))
 
 ;; $sin$ and $cos$ afford recursive definitions. $D(sin) = cos$ and $D(cos) =
 ;; -sin$, so (with appropriate constant terms added) on:
@@ -555,30 +553,6 @@
 (declare cosx)
 (def sinx (lazy-seq (integral cosx)))
 (def cosx (lazy-seq (c-seq 1 (integral sinx))))
-
-#_(= '(0
-     1
-     0
-     (/ -1 6)
-     0
-     (/ 1 120)
-     0
-     (/ -1 5040)
-     0
-     (/ 1 362880))
-   (v/freeze (take 10 sinx)))
-
-#_(= '(1
-     0
-     (/ -1 2)
-     0
-     (/ 1 24)
-     0
-     (/ -1 720)
-     0
-     (/ 1 40320)
-     0)
-   (v/freeze (take 10 cosx)))
 
 ;; tangent and secant come easily from these:
 
@@ -622,18 +596,12 @@
 (def catalan
   (lazy-cat [1] (seq:* catalan catalan)))
 
-#_(= [1 1 2 5 14 42 132 429 1430 4862]
-   (take 10 catalan))
-
 ;; ordered trees...
 
 (declare tree' forest' list')
 (def tree' (lazy-cat [0] forest'))
 (def list' (lazy-cat [1] list'))
 (def forest' (compose list' tree'))
-
-#_(= [0 1 1 2 5 14 42 132 429 1430]
-   (take 10 tree'))
 
 ;; The catalan numbers again!
 
@@ -657,14 +625,13 @@
   [n]
   (->series (binomial* n)))
 
-;;
-
-(def ^{:doc "The sequence of [Harmonic
-  numbers](https://en.wikipedia.org/wiki/Harmonic_number), starting from n=1."}
-  harmonic
+(def harmonic
+  "The sequence of [Harmonic
+  numbers](https://en.wikipedia.org/wiki/Harmonic_number), starting from n=1."
   (reductions
    g/+ (map g// (iterate inc 1))))
 
-(def ^{:doc "The sequence of [Bell
-  numbers](https://en.wikipedia.org/wiki/Bell_number), starting from n=1."} bell
+(def bell
+  "The sequence of [Bell numbers](https://en.wikipedia.org/wiki/Bell_number),
+  starting from n=1."
   (map sf/bell (iterate inc 1)))

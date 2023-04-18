@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.calculus.hodge-star
   (:refer-clojure :exclude [+ - * /])
   (:require [emmy.calculus.basis :as b]

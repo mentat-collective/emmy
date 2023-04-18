@@ -16,9 +16,9 @@
   #?(:clj
      (:import (clojure.lang IObj))))
 
-(def ^{:doc "These keywords reference 'abstract' types that stand in for some
-  concrete data type in the system."}
-  abstract-types
+(def abstract-types
+  "These keywords reference 'abstract' types that stand in for some
+  concrete data type in the system."
   #{::numeric
     ::vector
     ::abstract-down
@@ -204,7 +204,7 @@
                   (sequential? node)
                   (let [[f-sym & args] node]
                     (if-let [f (sym->f f-sym)]
-                      ;; NOTE: without `mapv` (ie, with `map` and a lazy
+                      ;; NOTE: without `mapv` (i.e., with `map` and a lazy
                       ;; sequence), we were getting heisenbugs in the rational
                       ;; function simplifier, and `mismatched-arity` notes.
                       (apply f (mapv walk args))

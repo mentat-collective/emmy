@@ -6,6 +6,7 @@
             [emmy.generic :as g :refer [- * /]]
             [emmy.numerical.ode :as o]
             [emmy.structure :refer [up]]
+            [emmy.util :as u]
             [emmy.value :as v]
             [same.core :refer [ish? with-comparator]]))
 
@@ -20,10 +21,10 @@
     (let [f (constantly identity)]
       (doseq [compile? [true false true true]]
         (let [states (atom [])
-              result ((o/evolve f)         ;; solve: y' = y
-                      (up 1.)                               ;;        y(0) = 1
-                      0.1                                   ;; ... with step size 0.1
-                      1                                     ;; solve until t = 1
+              result ((o/evolve f)        ;; solve: y' = y
+                      (up 1.)             ;;        y(0) = 1
+                      0.1                 ;; with step size 0.1
+                      1                   ;; solve until t = 1
                       {:compile compile?
 
                        ;; accuracy desired
@@ -34,6 +35,86 @@
           (is (= 11 (count @states)))
           (is (near? (Math/exp 1) (first result)))))))
 
+  (testing "y' = y, new interface"
+    (let [f (o/stream-integrator (fn [_ ^doubles y ^doubles out]
+                                   (aset out 0 (aget y 0)))
+                                 0
+                                 [1]
+                                 {:epsilon 1e-8})]
+      (doseq [x (range 0 1 0.01)]
+        (let [[ex] (f x)]
+          (is (near? (Math/exp x) ex))))
+      (f)))
+
+  (testing "y' = y, new interface, BYO array"
+    (let [f (o/stream-integrator (fn [_ ^doubles y ^doubles out] (aset out 0 (aget y 0))) 0 [1] {:epsilon 1e-8})
+          a (double-array 1)]
+      (doseq [x (range 0 1 0.01)]
+        (f x a)
+        (is (near? (Math/exp x) (aget a 0))))
+      (f)))
+
+  (testing "y'' = - y, new interface"
+    (let [f (o/stream-integrator (fn [_ ^doubles y ^doubles out]
+                                   (aset out 0 (aget y 1))
+                                   (aset out 1 (- (aget y 0))))
+                                 0 [1 0] {:epsilon 1e-8})]
+      (doseq [x (range 0 (* 2 Math/PI) 0.1)]
+        (let [[c ms] (f x)]
+          (is (near? (Math/cos x) c))
+          (is (near? (- (Math/sin x)) ms))))
+      (f)))
+
+  (testing "y'' = - y, new interface, BYO array"
+    (let [f (o/stream-integrator (fn [_ ^doubles y ^doubles out]
+                                   (aset out 0 (aget y 1))
+                                   (aset out 1 (- (aget y 0))))
+                                 0 [1 0] {:epsilon 1e-8})
+          a (double-array 2)]
+      (doseq [x (range 0 (* 2 Math/PI) 0.1)]
+        (f x a)
+        (is (near? (Math/cos x) (aget a 0)))
+        (is (near? (- (Math/sin x)) (aget a 1))))
+      (f)))
+
+  (testing "stream integrator throws if used backwards"
+    (let [f (o/stream-integrator (fn [_ ^doubles y ^doubles out]
+                                   (aset out 0 (aget y 0)))
+                                 0 [1] {:epsilon 1e-8})]
+      (is (f 10))
+      (is (thrown? #?(:clj IllegalStateException :cljs js/Error) (f 1)))
+      (f)))
+
+  #?(:cljs
+     (testing "stream integrator js option returns js array"
+       (let [js-true (o/stream-integrator
+                      (fn [_ ^doubles y ^doubles out]
+                        (aset out 0 (aget y 0)))
+                      0 [1] {:js? true})]
+         (is (array? (js-true 10))
+             "When js? is true, the return value is a JS array.")
+         (js-true))
+
+       (let [js-false (o/stream-integrator
+                       (fn [_ ^doubles y ^doubles out]
+                         (aset out 0 (aget y 0)))
+                       0 [1] {:js? false})]
+         (is (vector? (js-false 10))
+             "When js? is true, the return value is a vector.")
+         (js-false))))
+
+  (testing "throwing from derivative can be caught"
+    (let [f' (fn [x [y0 y1] ^doubles out]
+               (when (> x (* 1.5 Math/PI))
+                 (throw (u/exception "bad derivative")))
+               (aset out 0 y1)
+               (aset out 1 (- y0)))
+          f (o/stream-integrator f' 0 [1 0] {})]
+      (let [[y0 y1] (f Math/PI)]
+        (is (near? -1 y0))
+        (is (near? 0 y1)))
+      (is (thrown? #?(:clj Exception :cljs js/Error) (f (* 2 Math/PI))))))
+
   (testing "y'' = -y"
     (let [f (fn [] (fn [[y u]] (up u (- y))))]
       (doseq [compile? [true false true]]
@@ -41,16 +122,16 @@
               ;; let u = y', then we have the first-order system {y' = u, u' = -y}
               ;; with initial conditions y(0) = 0, y'(0) = 1; we expect y = sin(x).
               result ((o/evolve f)
-                      (up 0. 1.)                            ;; y(0) = 0, y'(0) = 1
-                      0.1                                   ;; ... with step size 0.1
-                      (* 2 Math/PI)                       ;; over [0, 2π]
+                      (up 0. 1.)            ;; y(0) = 0, y'(0) = 1
+                      0.1                   ;; with step size 0.1
+                      (* 2 Math/PI)         ;; over [0, 2π]
                       {:compile? compile?
                        :epsilon 1.e-10
                        :observe #(swap! states conj [%1 %2])})]
-          (is (= 64 (count @states)))     ;; 0.0 .. 6.2 by .1, plus 2π
+          (is (= 64 (count @states)))       ;; 0.0 .. 6.2 by .1, plus 2π
           (is (near? 0 (first result)))
           (is (near? 1 (second result)))
-          (let [[t [s c]] (nth @states 15)]                  ;; state #15 is t = 1.5
+          (let [[t [s c]] (nth @states 15)] ;; state #15 is t = 1.5
             (is (near? t 1.5))
             (is (near? s (Math/sin 1.5)))
             (is (near? c (Math/cos 1.5))))

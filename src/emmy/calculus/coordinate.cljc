@@ -79,7 +79,7 @@
     system with its `coordinate-prototype` replaced by the one you supplied.
     That's `(up x y)` in this example.
 
-  - the entries `x` and `y` to coordinate functions, ie, functions from manifold
+  - the entries `x` and `y` to coordinate functions, i.e., functions from manifold
     point to this particular coordinate
 
   - `d:dx` and `d:dy` vector field procedures (I'm fuzzy here!)
@@ -148,7 +148,7 @@
   - `R2-rect` binds to a new version of the coordinate system with its
     `coordinate-prototype` replaced by the supplied prototype
 
-  - `x` and `y` bind to coordinate functions, ie, functions from manifold point
+  - `x` and `y` bind to coordinate functions, i.e., functions from manifold point
   to that particular coordinate
 
   - `d:dx` and `d:dy` bind to the corresponding vector field procedures

@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.numerical.quadrature.adaptive
   (:require [emmy.numerical.quadrature.common :as qc]
             [emmy.util.aggregate :as ua]))
@@ -60,7 +63,7 @@
 
 (defn- split-point
   "Returns a point within`fuzz-factor` of the midpoint of the interval $[a, b]$.
-  `fuzz-factor` defaults to 0 (ie, `split-point` returns the midpoint)."
+  `fuzz-factor` defaults to 0 (i.e., `split-point` returns the midpoint)."
   ([a b] (split-point a b 0))
   ([a b fuzz-factor]
    {:pre [(>= fuzz-factor 0)
@@ -88,7 +91,7 @@
          opts))
 
 (defn adaptive
-  "Accepts one or two 'integrators', ie, functions of:
+  "Accepts one or two 'integrators', i.e., functions of:
 
   - `f`: some integrand
   - `a` and `b`: the lower and upper endpoints of integration
@@ -169,5 +172,5 @@
 
 ;; ## References
 ;;
-;; - SCMUtils Refman: https://groups.csail.mit.edu/mac/users/gjs/6946/refman.txt
-;; - Wikipedia, "Adaptive Simpson's Method": https://en.wikipedia.org/wiki/Adaptive_Simpson%27s_method
+;; - [SCMUtils Refman](https://groups.csail.mit.edu/mac/users/gjs/6946/refman.txt)
+;; - Wikipedia, ["Adaptive Simpson's Method"](https://en.wikipedia.org/wiki/Adaptive_Simpson%27s_method)

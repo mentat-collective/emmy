@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.numerical.unimin.golden
   (:require [emmy.generic :as g]
             [emmy.numbers]
@@ -31,17 +34,17 @@
 ;; ratio could degenerate into you selecting the larger of the two pieces every
 ;; time, slowing your search.
 
-(def ^{:doc "$\\phi$, the golden ratio."}
-  phi
+(def phi
+  "$\\phi$, the golden ratio."
   (/ (+ (g/sqrt 5) 1) 2))
 
-(def ^{:doc "$1 \\over \\phi$. Multiply by this to scale some distance down to the
-larger-sized golden ratio piece."}
-  inv-phi
+(def inv-phi
+  "$1 \\over \\phi$. Multiply by this to scale some distance down to the
+  larger-sized golden ratio piece."
   (/ (- (g/sqrt 5) 1) 2))
 
-(def ^{:doc "$1 \\over \\phi^2$. Scales down twice, compared to [[inv-phi]]."}
-  inv-phi2
+(def inv-phi2
+  "$1 \\over \\phi^2$. Scales down twice, compared to [[inv-phi]]."
   (- 1 inv-phi))
 
 (defn golden-cut

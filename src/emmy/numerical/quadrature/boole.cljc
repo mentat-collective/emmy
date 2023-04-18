@@ -7,7 +7,7 @@
 
 ;; ## Boole's Rule
 ;;
-;; NOTE - Boole's Rule is commonly mis-spelled as "Bode's Rule"!
+;; > NOTE - Boole's Rule is commonly mis-spelled as "Bode's Rule"!
 ;;
 ;; This numerical integration method is a [closed Newton-Cotes
 ;; formula](https://en.wikipedia.org/wiki/Newton%E2%80%93Cotes_formulas#Closed_Newton%E2%80%93Cotes_formulas);

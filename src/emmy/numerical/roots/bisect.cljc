@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.numerical.roots.bisect
   "This namespace contains implementations of a number of methods for root-finding
   on real-valued functions of one argument.
@@ -20,13 +23,13 @@
 ;; NOTE: As we bring in methods like `zbrent` it could be that the shell below
 ;; should be shared for ALL root finding methods.
 
-(def ^{:dynamic true
-       :doc "Controls the default behavior of [[bisect]]'s search.
-  See [[bisect]]'s docstring for more info."}
-  *bisect-break* 60)
+(def ^:dynamic *bisect-break*
+  "Controls the default behavior of [[bisect]]'s search.
+  See [[bisect]]'s docstring for more info."
+  60)
 
-(def ^{:doc "Set of all methods allowed as `:method` options to [[bisect]]."}
-  all-methods
+(def all-methods
+  "Set of all methods allowed as `:method` options to [[bisect]]."
   #{:bisection :secant :mixed})
 
 ;; ## Success / Failure Utilities
@@ -92,7 +95,7 @@
 
 (defn bisect
   "Given some function `f` and (inclusive) lower and upper bounds `a` and `b` on
-  the domain, attempts to find a root of `f` in that range, ie, a value `x` for
+  the domain, attempts to find a root of `f` in that range, i.e., a value `x` for
   which `(f x)` is equal to 0.
 
   Supports the following optional keyword arguments:
@@ -174,7 +177,7 @@
 
 (defn search-for-roots
   "Given a smooth function `f` and (inclusive) lower and upper bounds `a` and
-  `b` on the domain, attempts to find all roots of `f`, ie, a vector of values
+  `b` on the domain, attempts to find all roots of `f`, i.e., a vector of values
   `x_n` such that each `(f x_n)` is equal to 0.
 
   [[search-for-roots]] first attempts to cut the (inclusive) range `[a, b]`

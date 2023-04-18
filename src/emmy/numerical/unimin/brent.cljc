@@ -50,7 +50,7 @@
   - The interval width between the new `a` and `b` after the algorithm completes
     this golden step
   - The delta that needs to be applied to `x` to take it into the larger of the
-    two gaps between `a` and `b,` ie, to `new_x`:
+    two gaps between `a` and `b,` i.e., to `new_x`:
 
   `xa---------new_x<---xx------xb`
 
@@ -73,7 +73,7 @@
 (defn- parabola-valid?
   "The parabolic step `p/q` is valid if the step:
 
-  - keeps the candidate point `x` inbounds, ie, `a < x + p/q < b`
+  - keeps the candidate point `x` inbounds, i.e., `a < x + p/q < b`
   - is at least 1/2 of `target`.
 
   `target` is a slightly tricky quantity, and depends on the type of step taken
@@ -136,7 +136,7 @@
   - `x`, the previous candidate
   - `new-pt` the current new point
 
-  and returns the third- and second-best points, ie, the new `[x2, x1]`.
+  and returns the third- and second-best points, i.e., the new `[x2, x1]`.
 
   NOTE on the implementation: the assumption is that `x2` and `x1` will be
   initialized to `x`, and that they'll be replaced by potentially WORSE values
@@ -238,7 +238,7 @@
                    ;;
                    ;; `p` and `q` are the numerator and denominator of the step
                    ;; required to move to the minimum of the interpolated
-                   ;; parabola from the current candidate `x`; ie, `x + p/q`
+                   ;; parabola from the current candidate `x`; i.e., `x + p/q`
                    ;; lies at the parabola's minimum.
                    (let [[p q] (ub/parabolic-pieces x1 x x2)]
                      ;; Only proceed with the parabolic step if the new point

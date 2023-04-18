@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.calculus.map
   "Various definitions and utilities for working with maps between manifolds."
   (:require [emmy.abstract.function :as af]
@@ -50,8 +53,8 @@
                  ~(v/freeze v-on-N))]
       (vf/procedure->vector-field v-on-M name))))
 
-(def ^{:doc "Alias for [[differential-of-map]]."}
-  differential
+(def differential
+  "Alias for [[differential-of-map]]."
   differential-of-map)
 
 ;; For a long time we were confused between the concepts of differential and

@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.calculus.derivative
   "This namespace implements a number of differential operators like [[D]], and
   the machinery to apply [[D]] to various structures."
@@ -49,6 +52,7 @@
 ;; non-higher-order version would respond to `(partial 0)`. In other words,
 ;; these two forms should evaluate to equivalent results:
 
+^{:nextjournal.clerk/visibility {:result :hide}}
 (comment
   (let [f (fn [x]
             (fn [y]
@@ -56,12 +60,10 @@
                 (g/* x y z))))]
     ((((D f) 'x) 'y) 'z))
   ;;=> (* y z)
-)
 
-(comment
   (((partial 0) g/*) 'x 'y 'z)
   ;;=> (* y z)
-)
+  )
 
 ;; To `extract-tangent` from a function, we need to compose the
 ;; `extract-tangent` operation with the returned function.
@@ -426,7 +428,8 @@
 ;; This section exposes various differential operators as [[o/Operator]]
 ;; instances.
 
-(def ^{:doc "Derivative operator. Takes some function `f` and returns a function
+(def D
+  "Derivative operator. Takes some function `f` and returns a function
   whose value at some point can multiply an increment in the arguments, to
   produce the best linear estimate of the increment in the function value.
 
@@ -437,7 +440,7 @@
 
   The related [[Grad]] returns a function that produces a structure of the
   opposite orientation as [[D]]. Both of these functions use forward-mode
-  automatic differentiation."} D
+  automatic differentiation."
   (o/make-operator #(g/partial-derivative % [])
                    g/derivative-symbol))
 
@@ -469,7 +472,7 @@
 
   Calling [[taylor-series]] with no arguments will return the [Maclaurin
   series](https://en.wikipedia.org/wiki/Taylor_series#List_of_Maclaurin_series_of_some_common_functions)
-  of `f`, ie, the Taylor series expansion at `(= x 0)`.
+  of `f`, i.e., the Taylor series expansion at `(= x 0)`.
 
   Calling the returned power series with incremental argument `dx` will produce
   a [[emmy.series/Series]] representing the terms of the Taylor series of

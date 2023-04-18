@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.pattern.syntax
   "The syntax namespace defines the default syntax for patterns corresponding to
   the matcher combinators defined in [[emmy.pattern.match]]."
@@ -16,7 +19,7 @@
 ;;   introduce a new binding from that symbol to the matched value.
 ;;
 ;; - `(? <binding> <predicates...>)` triggers a binding iff all of the predicate
-;;   functions appearing after the binding pass for the candidate
+;;   functions appearing after the binding pass for the candidate.
 ;;
 ;; - `(?? <binding>)` or `??x` inside of a sequence matches a _segment_ of the
 ;;   list whose length isn't fixed. Segments will attempt to succed with
@@ -25,6 +28,10 @@
 ;; - `($$ <binding>)` or `$$x` will only match _after_ the same binding has
 ;;   already succeeded with a segment. If it has, - this will match a segment
 ;;   equal to the _reverse_ of the already-bound segment.
+;;
+;; - `(?? <binding> <predicates...>)` and `($$ <binding> <predicates...>)` are
+;;   similar, but only pass iff all of the predicate functions appearing after
+;;   the binding pass for the candidate sequence.
 ;;
 ;; - Any sequential entry, like a list or a vector, triggers a `sequence` match.
 ;;   This will attempt to match a sequence, and only pass if its matcher
@@ -65,7 +72,7 @@
   A segment binding variable is either:
 
   - A symbol starting with `??`
-  - A sequence of the form `(?? <binding>)`."
+  - A sequence of the form `(?? <binding> ...)`."
   [pattern]
   (or (and (simple-symbol? pattern)
            (u/re-matches? #"^\?\?[^\?].*" (name pattern)))
@@ -80,7 +87,7 @@
   A reverse-segment binding variable is either:
 
   - A symbol starting with `$$`
-  - A sequence of the form `(:$$ <binding>)`."
+  - A sequence of the form `(:$$ <binding> ...)`."
   [pattern]
   (or (and (simple-symbol? pattern)
            (u/re-matches? #"^\$\$[^\$].*" (name pattern)))

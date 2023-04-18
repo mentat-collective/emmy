@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.generic
   "The home of most of the Emmy extensible generic operations. The bulk of
   the others live in [[emmy.value]].
@@ -232,8 +235,8 @@
   ([x y & more]
    (/ x (apply * y more))))
 
-(def ^{:doc "Alias for [[/]]."}
-  divide
+(def divide
+  "Alias for [[/]]."
   /)
 
 (defgeneric exact-divide 2
@@ -267,13 +270,13 @@
   {:dfdx invert})
 
 (defgeneric log2 1
-  "Returns the base-2 logarithm of `x`, ie, $log_2(x)$.")
+  "Returns the base-2 logarithm of `x`, i.e., $log_2(x)$.")
 
 (let [l2 (Math/log 2)]
   (defmethod log2 :default [x] (div (log x) l2)))
 
 (defgeneric log10 1
-  "Returns the base-10 logarithm of `x`, ie, $log_10(x)$.")
+  "Returns the base-10 logarithm of `x`, i.e., $log_10(x)$.")
 
 (let [l10 (Math/log 10)]
   (defmethod log10 :default [x] (div (log x) l10)))
@@ -361,7 +364,7 @@
   (< a (v/zero-like a)))
 
 (defgeneric infinite? 1
-  "Returns true if `a` is either numerically infinite (ie, equal to `##Inf`) or
+  "Returns true if `a` is either numerically infinite (i.e., equal to `##Inf`) or
   a compound number (complex or quaterion, for example) with some infinite
   component.")
 
@@ -859,12 +862,13 @@ defaults to `ln((1 + sqrt(1+x^2)) / x)`."
     (v/one-like x)
     (div (sin x) x)))
 
-;; NOTE that we don't define `cosc`. [This StackExchange
-;; post](https://math.stackexchange.com/a/2137104) has a nice explanation of why
-;; the analogous `cosc` doesn't belong: "The motivation for functions such as
-;; $\sinc x$, $\sinch x$, $\tanc x$, $\tanch x$ is to consider the behaviour of
-;; a ratio with limit 1 as $x \to 0$. There is no such motivation for
-;; $\frac{\cos x}{x}$, since $\cos 0 = 1 \neq 0$."
+;; > NOTE that we don't define `cosc`. [This StackExchange
+;; > post](https://math.stackexchange.com/a/2137104) has a nice explanation of
+;; > why the analogous `cosc` doesn't belong: "The motivation for functions such
+;; > as $\operatorname{sinc} x$, $\operatorname{sinch} x$, $\operatorname{tanc}x$,
+;; > $\operatorname{tanch} x$ is to consider the behaviour of a ratio with
+;; > limit 1 as $x \to 0$. There is no such motivation for $\frac{\cos x}{x}$,
+;; > since $\cos 0 = 1 \neq 0$."
 ;;
 ;; The Julia language does define a `cosc`, but strangely makes it equal to the
 ;; derivative of `sinc`, by analogy with `cos` being the derivative of `sin`.

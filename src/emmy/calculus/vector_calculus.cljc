@@ -24,13 +24,13 @@
 ;; Traditional vector calculus operators, defined in two different styles. See
 ;; the namespace comment for a basic sketch.
 
-(def ^{:doc "Operator that takes a function `f` and returns a new function that
+(def Grad
+  "Operator that takes a function `f` and returns a new function that
   calculates the [Gradient](https://en.wikipedia.org/wiki/Gradient) of `f`.
 
   The related [[D]] operator returns a function that produces a structure of the
   opposite orientation as [[Grad]]. Both of these functions use forward-mode
-  automatic differentiation."}
-  Grad
+  automatic differentiation."
   (-> (fn [f]
         (f/compose s/opposite
                    (g/partial-derivative f [])))
@@ -42,12 +42,12 @@
   [metric basis]
   (f/compose (m/raise metric basis) ff/d))
 
-(def ^{:doc "Operator that takes a function `f` and returns a function that
+(def Div
+  "Operator that takes a function `f` and returns a function that
   calculates the [Divergence](https://en.wikipedia.org/wiki/Divergence) of
   `f` at its input point.
 
- The divergence is a one-level contraction of the gradient."}
-  Div
+  The divergence is a one-level contraction of the gradient."
   (-> (f/compose g/trace Grad)
       (o/make-operator 'Div)))
 
@@ -67,12 +67,12 @@
          flat (m/lower metric)]
      (f/compose star ff/d star flat))))
 
-(def ^{:doc "Operator that takes a function `f` and returns a function that
+(def Curl
+  "Operator that takes a function `f` and returns a function that
   calculates the [Curl](https://en.wikipedia.org/wiki/Curl_(mathematics)) of `f`
   at its input point.
 
-  `f` must be a function from $\\mathbb{R}^3 \\to \\mathbb{R}^3$."}
-  Curl
+  `f` must be a function from $\\mathbb{R}^3 \\to \\mathbb{R}^3$."
   (-> (fn [f-triple]
         (let [[Dx Dy Dz] (map d/partial [0 1 2])
               fx (f/get f-triple 0)
@@ -92,11 +92,11 @@
         flat  (m/lower metric)]
     (f/compose sharp star ff/d flat)))
 
-(def ^{:doc "Operator that takes a function `f` and returns a function that
-  calculates the [Vector
+(def Lap
+  "Operator that takes a function `f` and returns a function that calculates
+  the [Vector
   Laplacian](https://en.wikipedia.org/wiki/Laplace_operator#Vector_Laplacian) of
-  `f` at its input point."}
-  Lap
+  `f` at its input point."
   (-> (f/compose g/trace (* Grad Grad))
       (o/make-operator 'Lap)))
 

@@ -206,12 +206,12 @@
       (b + c) * a == (b * a) + (c * a)
 
   if `:with-one? true` is passed, `ring` will check that `a`'s `g/mul`
-  implementation has an identity, ie, that `a` is a multiplicative monoid, not
+  implementation has an identity, i.e., that `a` is a multiplicative monoid, not
   just a multiplicative semigroup. A type with this structure is called a \"ring
   with unity\".
 
   If `:commutative? true` is passed, `ring` will check that `a` has a
-  commutative `g/mul` implementation; ie, that `a` is a \"commutative ring\". "
+  commutative `g/mul` implementation; i.e., that `a` is a \"commutative ring\". "
   [opts generator type-name & {:keys [with-one? commutative?]}]
   (let [mul-check (if with-one?
                     multiplicative-monoid

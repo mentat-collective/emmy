@@ -19,9 +19,10 @@
             [emmy.structure :as s]
             [emmy.value :as v]))
 
-(def ^{:doc "Generating RFs quickly gets out of hand with larger ones. Stick to
-            a small number of tests to make sure it all completes."}
-  test-limit 10)
+(def test-limit
+  "Generating RFs quickly gets out of hand with larger ones. Stick to a small
+  number of tests to make sure it all completes."
+  10)
 
 (deftest protocol-tests
   (checking "IArity" test-limit [r (sg/rational-function)]

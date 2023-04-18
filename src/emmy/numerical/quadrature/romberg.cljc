@@ -33,9 +33,9 @@
 ;;   where the width of each integration slice is 0.
 ;;
 ;; For a wonderful reference that builds up to the ideas of Richardson
-;; extrapolation and Romberg integration, see Sussman's ["Abstraction in
-;; Numerical
-;; Methods"](https://dspace.mit.edu/bitstream/handle/1721.1/6060/AIM-997.pdf?sequence=2)
+;; extrapolation and Romberg integration, see Halfant and
+;; Sussman's ["Abstraction in Numerical
+;; Methods"](https://dspace.mit.edu/bitstream/handle/1721.1/6060/AIM-997.pdf?sequence=2).
 ;;
 ;; References:
 ;;
@@ -57,7 +57,7 @@
 
   Romberg integration converges quite fast by cancelling one error term in the
   taylor series expansion of $f$ with each examined term. If your function is
-  /not/ smooth this may cause you trouble, and you may want to investigate a
+  _not_ smooth this may cause you trouble, and you may want to investigate a
   lower-order method.
 
   ### Optional arguments:
@@ -79,7 +79,7 @@
 
   Romberg integration converges quite fast by cancelling one error term in the
   taylor series expansion of $f$ with each examined term. If your function is
-  /not/ smooth this may cause you trouble, and you may want to investigate a
+  _not_ smooth this may cause you trouble, and you may want to investigate a
   lower-order method.
 
   ### Optional arguments:

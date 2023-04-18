@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.calculus.vector-field
   "This namespace implements a vector field operator and a number of functions for
   creating and working with vector fields.
@@ -42,7 +45,7 @@
 
 (defn ^:no-doc procedure->vector-field
   "Accepts a function `f` and an optional symbolic `name`, and returns a vector
-  field, ie, a subtype of [[emmy.operator/Operator]].
+  field, i.e., a subtype of [[emmy.operator/Operator]].
 
   `f` should be a function from a smooth real-valued function `g` of a manifold
   to a new function on the manifold which computes the directional derivative of

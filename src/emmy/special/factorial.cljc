@@ -22,7 +22,7 @@
        x)))
 
 (defn factorial
-  "Returns the factorial of `n`, ie, the product of 1 to `n` (inclusive).
+  "Returns the factorial of `n`, i.e., the product of 1 to `n` (inclusive).
 
   [[factorial]] will return a platform-specific [[emmy.util/bigint]] given
   some `n` that causes integer overflow."
@@ -56,8 +56,8 @@
   with a symbolic first argument and positive integral second argument are the
   Stirling numbers of the first kind (see [[stirling-first-kind]]).")
 
-(def ^{:doc "Alias for [[falling-factorial]]."}
-  factorial-power
+(def factorial-power
+  "Alias for [[falling-factorial]]."
   falling-factorial)
 
 ;; The default implementation uses generic operations throughout, and requires
@@ -71,7 +71,7 @@
 ;;
 ;; (A unital ring is an abelian group - a type with a `+`, `-` and a sensible
 ;; zero - as well as a `*` operation that distributes over addition.
-;; The "unital" part means there is a sensible one, ie, a multiplicative
+;; The "unital" part means there is a sensible one, i.e., a multiplicative
 ;; identity.)
 
 (defmethod falling-factorial :default [x n]
@@ -122,8 +122,8 @@
   to `(invert ([[falling-factorial]] (dec a) (- b)))`, or `##Inf` if the
   denominator evaluates to 0.")
 
-(def ^{:doc "Alias for [[falling-factorial]]."}
-  pochhammer
+(def pochhammer
+  "Alias for [[falling-factorial]]."
   rising-factorial)
 
 (defmethod rising-factorial :default [x n]
@@ -234,7 +234,7 @@
       div #?(:clj / :cljs g//)]
   (defn binomial-coefficient
     "Returns the [binomial
-  coefficient](https://en.wikipedia.org/wiki/Binomial_coefficient), ie, the
+  coefficient](https://en.wikipedia.org/wiki/Binomial_coefficient), i.e., the
   coefficient of the $x^k$ term in the polynomial expansion of the binomial
   power $(1 + x)^n$.
 
@@ -350,7 +350,7 @@
             :else (@rec n k))))
 
   (defn bell
-    "Returns the `n`th [Bell number](https://en.wikipedia.org/wiki/Bell_number), ie,
+    "Returns the `n`th [Bell number](https://en.wikipedia.org/wiki/Bell_number), i.e.,
   the number of ways a set of `n` elements can be partitioned into nonempty
   subsets.
 

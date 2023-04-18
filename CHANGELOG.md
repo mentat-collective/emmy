@@ -2,8 +2,134 @@
 
 ## [unreleased]
 
+## [0.30.0]
+
 - #98 upgrades `same/ish` to 0.1.6, renames all `same` requires to `same.core`
   and removes final `:include-macros true` from the codebase.
+
+- #124:
+
+  - Upgrades `babashka/sci` to 0.7.39.
+
+  - Adds a working `bb repl` command to the repository.
+
+  - Renames `emmy.env.sci` => `emmy.sci`, and adds an `emmy.sci/install!`
+    command to make it easier to install all namespaces into a shared SCI
+    context.
+
+  - Renames `context-opts` in the new `emmy.sci` to `emmy.sci/config`, to match
+    the `sci-configs` style.
+
+  The full library is now published to `https://emmy.mentat.org` as a series of
+  Clerk notebooks. This required a dependency on https://clerk-utils.mentat.org,
+  but no actual Clerk dependency in the library.
+
+- #119:
+
+  - Removes support for `:flat` compilation mode (this was a step toward
+    what is now called :primitive). Flat has no further use case.
+
+  - You can now "bring your own array" to the function provided by
+    `stream-integrator`, avoiding an allocation in performance-sensitive
+    contexts.
+
+- #118:
+
+  - Fixes problems with the `resolve` calls in `emmy.util.def` triggered by
+    vanilla (non-shadow) cljs compilation.
+
+  - Updates `Complex.js` and `Fraction.js` dependencies to their latest NPM
+    versions.
+
+  - Updates `odex` to the latest release candidate on NPM.
+
+  - The `cljs` side of `emmy.numerical.ode/stream-integrator` gains a `:js?`
+    option that defaults to `true`. If `false`, the returned function will
+    return native JS arrays vs converting the return value to Clojure.
+
+  - In `emmy.expression.compile`, `compile-fn` and `compile-state-fn` gain a
+    `:simplify?` argument that defaults to `true`. If `false`, compilation will
+    not attempt to simplify the function body before proceeding.
+
+- #115:
+
+  This PR introduces significant upgrades to the functions in
+  `emmy.expression.compile`. `compile-state-fn` and `compile-fn` now share the
+  same code. Expect some more shifts here as we work on animations.
+
+  Specifically, this update:
+
+  - Removes timers from the code in `emmy.numerical.ode`. If you want timing
+    data you can generate an derivative yourself that performs timing. Including
+    this by default introduced a significant performance cost.
+
+  - Renames `emmy.numerical.ode/integration-opts` to `make-integrator*`; it now
+    returns only a call to `stream-integrator` instead of the old map of this
+    result and timers.
+
+  - In `emmy.expression.compile`:
+
+    - `compile-state-fn*` and `compile-fn*` are now removed, in favor of the
+      non-starred versions with option `:cache? false` supplied.
+
+    - `compile-fn` now calls `compile-state-fn` with `params` set to `false` and
+      an `:arity` option supplied, vs using its own mostly-duplicated
+      implementation.
+
+    - `:flatten?` option removed in favor of the more granular
+      `:calling-convention`. This option supports values of `:structure`,
+      `:flat` and `:primitive`. See the docstring for details.
+
+    - `:mode` supports `:js`, `:source`, `:clj`, `:native` or `:sci`.
+
+- #110:
+
+  - Moves all docstrings that existed as metadata on defs (i.e., `(def ^{:doc
+    "..."} sym ...)`) down below the symbol. I hadn't realized that this was a
+    valid way to attach a docstring!
+
+  - Upgrades GitHub Actions `clj-kondo` invocation to version 2013.01.20 and
+    saves some work in the actions setup. Fix all linting errors that resulted.
+
+- #109:
+
+  - `->JavaScript` now produces expressions, and not function bodies.
+  This change makes `->JavaScript` do the same job as `->infix` and
+  `->TeX`. Initially, the JS rendering emitted a function in order to
+  facilitate experiments with embedding equations of motion in dynamic
+  web pages. This can still be done: `compile-state-fn` has been extended
+  to allow the compilation of a state function into either Clojure or
+  Javascript notation. The test directory contains many worked examples.
+
+  - numerous local `gensym` replacements found useful as part of test
+  fixtures have been gathered together into `monotonic-symbol-generator`.
+
+  - generation of sums and differences in all of the infix generators
+  has been improved to more closely approach standard mathematical
+  notation (e.g., instead of `-2 * x + -2 * y` you will see
+  `- 2 * x - 2 * y`).
+
+- #107:
+
+  - move CSE to its own namespace to avoid the circular dependency
+    `compile`->`render`->`compile`
+
+  - refactor JS rendering to allow compiler to use it
+
+  - adjust meaning of :native and :source compilation modes: now you get
+    what's compatible with your execution environment. You can also
+    ask for a specific language, allowing tests to be bilingual.
+
+- #100:
+
+  - Implements predicate support for `segment`, `entire-segment` and
+    `reverse-segment` in `emmy.pattern.match`. This support bubbles up to forms
+    in rules like `(?? x pred1 pred2)`.
+
+  - Removes the `:emmy.pattern/ignored-restriction` linter keyword, and all
+    clj-kondo code warning that restrictions aren't supported on segment binding
+    forms.
+>>>>>>> sritchie/add_clerk
 
 - #96 renames `#sicm/{bigint, quaternion, complex, ratio}` to `#emmy/{bigint,
   quaternion, complex, ratio}`.
@@ -485,7 +611,7 @@
 
   - `sicmutils.structure` gains `down-of-ups?`, `up-of-downs?`, `two-up?`,
     `two-down?`, `two-tensor?` and `two-tensor-info` for working with "2
-    tensors", ie, structures that contain structural entries of matching
+    tensors", i.e., structures that contain structural entries of matching
     orientation and size.
 
   - New `g/acot` generic method installed for Operator instances.
@@ -715,7 +841,7 @@
     - The folds in this namespace now follow the fold contract laid out in
       `sicmutils.algebra.fold`, implementing all three arities correctly.
 
-    - I realized that the fold implementation here should /not/ return a full
+    - I realized that the fold implementation here should _not_ return a full
       row every time it processes a previous row; a far better `present`
       implementation would return the best estimate so far. Then you could build
       a `scan` from that fold to see the estimates evolve lazily as new points
@@ -2981,7 +3107,7 @@ I can now make some comments that clear up my former misunderstandings:
   it will pass it through the symbolic expressions defined in
   `sicmutils.numsymb`. A few notes on these expressions:
 
-  - They will try to preserve exactness, but if they can't - ie, if you do
+  - They will try to preserve exactness, but if they can't - i.e., if you do
     something like `(cos (an/literal-number 2.2))` - the system will return
     `-.588`. If you call `(cos (an/literal-number 2))`, you'll get the
     expression `(cos 2)`, preserving exactness.
@@ -3065,9 +3191,9 @@ https://github.com/mentat-collective/sicmutils/pull/154):
 - `tanh`: hyperbolic tangent, ie sinh/cosh
 - `sech`: hyperbolic secant, ie 1/cosh
 - `csch`: hyperbolic secant, ie 1/sinh
-- `acosh`: inverse hyperbolic cosine, ie, `(= x (cosh (acosh x)))`
-- `asinh`: inverse hyperbolic sine, ie, `(= x (sinh (asinh x)))`
-- `atanh`: inverse hyperbolic tangent, ie, `(= x (tanh (atanh x)))`
+- `acosh`: inverse hyperbolic cosine, i.e., `(= x (cosh (acosh x)))`
+- `asinh`: inverse hyperbolic sine, i.e., `(= x (sinh (asinh x)))`
+- `atanh`: inverse hyperbolic tangent, i.e., `(= x (tanh (atanh x)))`
 
 These three methods existed in `sicmutils.env`, but not as extensible generics.
 Now they're fully extensible:

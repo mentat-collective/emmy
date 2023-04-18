@@ -14,11 +14,10 @@
   #?(:clj
      (:import (clojure.lang IFn ILookup IObj))))
 
-(def ^{:private true
-       :doc "Simplifier that acts on associative products and sums, and collects
-  products into exponents. Operator multiplication is NOT associative, so only
-  adjacent products are collected."}
-  simplify-operator-name
+(def ^:private simplify-operator-name
+  "Simplifier that acts on associative products and sums, and collects products
+  into exponents. Operator multiplication is NOT associative, so only adjacent
+  products are collected."
   (rule-simplifier
    (rules/associative '+ '*)
    rules/exponent-contract
@@ -233,8 +232,8 @@
    `(~'compose (~'component ~k)
      ~(name o))))
 
-(def ^{:doc "Identity operator. Returns its argument unchanged."}
-  identity
+(def identity
+  "Identity operator. Returns its argument unchanged."
   (make-operator core/identity 'identity))
 
 (defn- joint-context

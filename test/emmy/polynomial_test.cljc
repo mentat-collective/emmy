@@ -1146,7 +1146,7 @@
 
   (let [new-analyzer (fn [] (a/make-analyzer
                             p/analyzer
-                            (a/monotonic-symbol-generator "k%08d")))
+                            (a/monotonic-symbol-generator 8 "k")))
         A #((a/default-simplifier
              (new-analyzer)) %)]
     (is (= '(+ x 1) (A '(+ 1 x))))

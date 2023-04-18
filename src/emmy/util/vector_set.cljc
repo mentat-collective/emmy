@@ -10,7 +10,7 @@
 (def empty-set [])
 
 (defn make
-  "Returns a new `vector-set`, ie, a vector with the distinct elements of the
+  "Returns a new `vector-set`, i.e., a vector with the distinct elements of the
   supplied sequence `xs` stored in sorted order."
   [xs]
   (into [] (dedupe) (sort xs)))
@@ -35,7 +35,7 @@
   "Returns a vector-set that contains all elements present in BOTH vector-sets `x`
   and `y`.
 
-  `x` and `y` must be vector sets, ie, sorted and containing only distinct
+  `x` and `y` must be vector sets, i.e., sorted and containing only distinct
   entries."
   [x y]
   (loop [i (long 0)
@@ -52,7 +52,7 @@
   "Returns a vector-set that contains all elements present in vector-set `x` and
   NOT in vector-set `y`.
 
-  `x` and `y` must be vector sets, ie, sorted and containing only distinct
+  `x` and `y` must be vector sets, i.e., sorted and containing only distinct
   entries."
   [x y]
   (loop [i (long 0)
@@ -70,7 +70,7 @@
   "Returns a vector-set that contains all elements present in vector-set `x` and
   vector-set `y`, but not in both.
 
-  `x` and `y` must be vector sets, ie, sorted and containing only distinct
+  `x` and `y` must be vector sets, i.e., sorted and containing only distinct
   entries."
   [x y]
   (loop [i (long 0)

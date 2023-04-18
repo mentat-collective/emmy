@@ -1,15 +1,23 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.numerical.quadrature.riemann
   (:require [emmy.numerical.quadrature.common :as qc]
             [emmy.polynomial.richardson :as pr]
             [emmy.util.aggregate :as ua]
-            [emmy.util.stream :as us]))
+            [emmy.util.stream :as us]
+            [mentat.clerk-utils :refer [->clerk ->clerk-only]]))
 
-;; Riemann Quadrature
+^{:nextjournal.clerk/visibility {:code :hide :result :hide}}
+(->clerk
+ (require 'nextjournal.clerk))
+
+;; ## Riemann Quadrature
 ;;
 ;; This namespace includes functions for calculating the Riemann integral of a
-;; single-variable function. These are probably /not/ methods that you'll want
+;; single-variable function. These are probably _not_ methods that you'll want
 ;; to use; see the documentation and defaults in
 ;; `emmy.numerical.quadrature` for good recommendations. But they're clear
 ;; and understandable. The goal of this namespace is to lay the groundwork for
@@ -27,8 +35,8 @@
 ;; - add up all of the slices to form an estimate of the integral
 ;; - increase the number of slices, and stop when the estimate stops changing.
 ;;
-;; The Riemann integral of a function $f$ is the limit of this process as $n \to
-;; \infty$.
+;; The Riemann integral of a function $f$ is the limit of this process as
+;; $n \to \infty$.
 ;;
 ;; How do you estimate the area of a slice? All of these methods estimate the
 ;; area by forming a rectangle. For the base, use $x_r - x_l$. For the height,
@@ -82,12 +90,12 @@
 ;; back an estimate (from the function returned by `windowed-sum`) of 2x the
 ;; number of slices:
 
-(comment
-  (let [area-fn   (fn [_ _] 2)
-        estimator (windowed-sum area-fn 0 10)]
-    (and (= 20.0 (estimator 10))
-         (= 40.0 (estimator 20)))))
-;; => true
+(->clerk-only
+ (let [area-fn   (fn [_ _] 2)
+       estimator (windowed-sum area-fn 0 10)]
+   (nextjournal.clerk/example
+    (estimator 10)
+    (estimator 20))))
 
 ;; Now, let's implement the four classic ["Riemann
 ;; Integral"](https://en.wikipedia.org/wiki/Riemann_integral) methods.
@@ -163,7 +171,7 @@
                   (max (f l) (f r))))
       (windowed-sum a b)))
 
-;; Similarly, the lower Riemann sum uses the /minimum/ of $f(x_l)$ and $f(x_r)$:
+;; Similarly, the lower Riemann sum uses the _minimum_ of $f(x_l)$ and $f(x_r)$:
 
 (defn- lower-sum
   "Returns an estimate for the definite integral of $f$ over the range $[a, b]$
@@ -186,38 +194,32 @@
 ;; The functions above return functions of `n`, the number of slices. We can
 ;; use `(us/powers 2)` to return a sequence of `(1, 2, 4, 8, ...)` and map the
 ;; function of `n` across this sequence to obtain successively better estimates
-;; for $\int_0^{10} x^2$. The true value is $10^3 \over 3 = 333.333...$:
+;; for $\int_0^{10} x^2$. The true value is ${10^3 \over 3} = 333.333...$:
 
-(comment
-  (let [f              (fn [x] (* x x))
-        left-estimates  (map (left-sum f 0 10)
-                             (us/powers 2))
-        right-estimates (map (right-sum f 0 10)
-                             (us/powers 2))]
-    (and (= [0.0 125.0 218.75 273.4375 302.734375]
-            (take 5 left-estimates))
-
-         (= [1000.0 625.0 468.75 398.4375 365.234375]
-            (take 5 right-estimates)))))
+(->clerk-only
+ (let [f              (fn [x] (* x x))
+       left-estimates  (map (left-sum f 0 10)
+                            (us/powers 2))
+       right-estimates (map (right-sum f 0 10)
+                            (us/powers 2))]
+   (nextjournal.clerk/example
+    (take 5 left-estimates)
+    (take 5 right-estimates))))
 
 ;; Both estimates are bad at 32 slices and don't seem to be getting better. Even
-;; up to $2^16 = 65,536$ slices we haven't converged, and are still far from the
+;; up to $2^{16} = 65,536$ slices we haven't converged, and are still far from the
 ;; true estimate:
 
-(comment
-  (= {:converged? false
-      :terms-checked 16
-      :result 333.31807469949126}
-     (let [f (fn [x] (* x x))]
-       (-> (map (left-sum f 0 10)
-                (us/powers 2))
-           (us/seq-limit {:maxterms 16})))))
+(->clerk-only
+ (let [f (fn [x] (* x x))]
+   (-> (map (left-sum f 0 10)
+            (us/powers 2))
+       (us/seq-limit {:maxterms 16}))))
 
 ;; This bad convergence behavior is why common wisdom states that you should
 ;; never use left and right Riemann sums for real work.
 ;;
 ;; But maybe we can do better.
-;;
 ;;
 ;; ## Sequence Acceleration
 ;;
@@ -238,16 +240,12 @@
 ;;
 ;; Does Richardson extrapolation help?
 
-(comment
-  (= {:converged? true
-      :terms-checked 4
-      :result 333.3333333333333}
-
-     (let [f (fn [x] (* x x))]
-       (-> (map (left-sum f 0 10)
-                (us/powers 2))
-           (pr/richardson-sequence 2)
-           (us/seq-limit)))))
+(->clerk-only
+ (let [f (fn [x] (* x x))]
+   (-> (map (left-sum f 0 10)
+            (us/powers 2))
+       (pr/richardson-sequence 2)
+       (us/seq-limit))))
 
 ;; We now converge to the actual, true value of the integral in 4 terms!
 ;;
@@ -280,16 +278,12 @@
 
 ;; Check that this works:
 
-(comment
-  (= {:converged? true
-      :terms-checked 4
-      :result 333.3333333333333}
-
-     (let [f (fn [x] (* x x))]
-       (-> (map (left-sum f 0 10)
-                (us/powers 2))
-           (accelerate {:accelerate? true})
-           (us/seq-limit)))))
+(->clerk-only
+ (let [f (fn [x] (* x x))]
+   (-> (map (left-sum f 0 10)
+            (us/powers 2))
+       (accelerate {:accelerate? true})
+       (us/seq-limit))))
 
 ;; Excellent!
 ;;
@@ -301,14 +295,18 @@
 ;; Consider the evaluation points of a left Riemann sum with 4 slices, next to a
 ;; left sum with 8 slices:
 ;;
+;; ```
 ;; x---x---x---x----
 ;; x-x-x-x-x-x-x-x--
+;; ```
 ;;
 ;; Every time we double our number of number of evaluations, half of the windows
 ;; share a left endpoint. The same is true for a right sum:
 ;;
+;; ```
 ;; ----x---x---x---x
 ;; --x-x-x-x-x-x-x-x
+;; ```
 ;;
 ;; In both cases, the new points are simply the /midpoints/ of the existing
 ;; slices.
@@ -370,11 +368,11 @@
 ;; Verify that this function returns an equivalent sequence of estimates to the
 ;; non-incremental `left-sum`, when mapped across powers of 2:
 
-(comment
-  (let [f (fn [x] (* x x))]
-    (= (take 10 (left-sequence* f 0 10 1))
-       (take 10 (map (left-sum f 0 10)
-                     (us/powers 2 1))))))
+(->clerk-only
+ (let [f (fn [x] (* x x))]
+   (= (take 10 (left-sequence* f 0 10 1))
+      (take 10 (map (left-sum f 0 10)
+                    (us/powers 2 1))))))
 
 ;; ## Generalizing the Incremental Approach
 ;;
@@ -426,7 +424,7 @@
 ;; ## Incremental Updates with Any Sequence
 ;;
 ;; What if we want to combine the ability to reuse old results with the ability
-;; to take successively refined estimates that /don't/ look like geometric
+;; to take successively refined estimates that _don't_ look like geometric
 ;; series? The series 1, 2, 3... of natural numbers is an obvious choice of
 ;; windows... but only the even powers are able to reuse estimates.
 ;;
@@ -440,7 +438,7 @@
 ;; the methods above.
 ;;
 ;; Alternatively, we could implement a version of `geometric-estimate-seq` that
-;; takes /any/ sequence of estimate,s and maintains a sort of internal
+;; takes _any_ sequence of estimate,s and maintains a sort of internal
 ;; memoization cache.
 ;;
 ;; For every `n`, check the cache for `prev == n/factor`. If it exists in the
@@ -631,7 +629,7 @@
 ;; some point. For now, here are some notes:
 ;;
 ;; - Richardson extrapolation requires a geometric series of estimates. If you
-;;   want to use some /other/ geometry series with `left-sequence` or
+;;   want to use some _other_ geometry series with `left-sequence` or
 ;;   `right-sequence`, you can still accelerate with Richardson. Just pass your
 ;;   new factor as `t`.
 ;;

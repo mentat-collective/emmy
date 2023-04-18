@@ -1,6 +1,23 @@
-{:pods {clj-kondo/clj-kondo {:version "2022.12.10"}}
+{:deps {org.babashka/http-server {:mvn/version "0.1.11"}
+        org.babashka/cli {:mvn/version "0.2.23"}
+        io.github.clj-kondo/clj-kondo-bb
+        {:git/tag "v2023.01.20" :git/sha "adfc7df"}}
  :tasks
- {:requires ([pod.borkdude.clj-kondo :as clj-kondo])
+ {:requires ([babashka.cli :as cli])
+  :init
+  (do (def cli-opts
+        (cli/parse-opts *command-line-args* {:coerce {:port :int}}))
+
+      (defn X [cmd]
+        (let [args *command-line-args*]
+          (if (even? (count args))
+            (apply shell cmd args)
+            (do (println "Please supply an even number of arguments!")
+                (System/exit 1))))))
+
+  repl
+  {:doc "Start a REPL with `emmy.env` loaded."
+   :task (shell "clj -M:test:dev:repl")}
 
   test:clj
   {:doc "Run CLJ tests."
@@ -10,11 +27,43 @@
   {:doc "Run CLJS tests."
    :task (shell "npm run test")}
 
+  clerk-watch
+  {:doc "Runs `user/serve!` with a watcher process generating custom JS."
+   :task (X "clojure -X:nextjournal/clerk user/serve!")}
+
+  build-static
+  {:doc "Generate a fresh static build."
+   :task
+   (apply shell
+          "clojure -X:nextjournal/clerk"
+          *command-line-args*)}
+
+  serve
+  {:doc "Serve static assets"
+   :requires ([babashka.http-server :as server])
+   :task (server/exec
+          (merge {:port 8080
+                  :dir "public/build"}
+                 cli-opts))}
+
+  release-gh-pages
+  {:doc "Generate a fresh static build and release it to Github Pages."
+   :task
+   (do (shell "rm -rf public/build")
+       (run 'build-static)
+       (shell "npm run gh-pages"))}
+
+  publish-local
+  {:doc "Generate a fresh static build and start a local webserver."
+   :task
+   (do (run 'build-static)
+       (run 'serve))}
+
   release
   {:doc "Release the library to Clojars."
    :task (shell "clojure -T:build publish")}
 
   lint
   {:doc "Lint with clj-kondo."
-   :task (clj-kondo/print!
-          (clj-kondo/run! {:lint ["src" "test"]}))}}}
+   :task (exec 'clj-kondo.core/exec)
+   :exec-args {:lint ["src" "test" "dev"]}}}}

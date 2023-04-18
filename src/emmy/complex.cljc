@@ -7,7 +7,7 @@
 
   For other numeric extensions, see [[emmy.ratio]]
   and [[emmy.numbers]]."
-  (:require #?(:cljs ["complex.js" :as Complex])
+  (:require #?(:cljs ["complex.js$default" :as Complex])
             #?(:cljs [goog.object :as obj])
             [emmy.generic :as g]
             [emmy.util :as u]
@@ -15,17 +15,18 @@
   #?(:clj
      (:import (org.apache.commons.math3.complex Complex ComplexFormat))))
 
-(def ^{:doc "A [[Complex]] value equal to 0 (south pole on the Riemann Sphere)."}
-  ZERO
+(def ZERO
+  "A [[Complex]] value equal to 0 (south pole on the Riemann Sphere)."
   #?(:clj Complex/ZERO
      :cljs (obj/get Complex "ZERO")))
 
-(def ^{:doc "A [[Complex]] value equal to 1."}
-  ONE #?(:clj Complex/ONE
-         :cljs (obj/get Complex "ONE")))
+(def ONE
+  "A [[Complex]] value equal to 1."
+  #?(:clj Complex/ONE
+     :cljs (obj/get Complex "ONE")))
 
-(def ^{:doc "A [[Complex]] value equal to `i`."}
-  I
+(def I
+  "A [[Complex]] value equal to `i`."
   #?(:clj Complex/I
      :cljs (obj/get Complex "I")))
 
@@ -33,8 +34,8 @@
 ;; component too. So `(complex 0 -1)` does not equal `-I`... but `(complex -0.0
 ;; -1.0)` does. Once we get a native complex implementation in this issue will
 ;; disappear.
-(def ^{:doc "A [[Complex]] value equal to `-i`."}
-  -I
+(def -I
+  "A [[Complex]] value equal to `-i`."
   #?(:clj (.negate Complex/I)
      :cljs (.neg ^js (obj/get Complex "I"))))
 
@@ -174,7 +175,7 @@
 
 (defn gaussian-integer?
   "Returns true if `z` is a [Gaussian
-  integer](https://en.wikipedia.org/wiki/Gaussian_integer), ie, a complex entry
+  integer](https://en.wikipedia.org/wiki/Gaussian_integer), i.e., a complex entry
   with integral real and imaginary components.
 
   [[gaussian-integer?]] will return true if the real and imaginary components
@@ -190,7 +191,7 @@
 ;; ## Complex GCD
 
 (defn ^:no-doc abs-real
-  "Returns a complex or real number with a positive real component. (ie, either z
+  "Returns a complex or real number with a positive real component. (i.e., either z
   or (* -1 z)), whichever number has a positive real component."
   [z]
   (cond (complex? z)

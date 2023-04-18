@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.pattern.rule
   "This namespace provides an API for building rules out of the matchers and
   matcher combinators declared in [[emmy.pattern.match]], along with a series of
@@ -39,11 +42,13 @@
 ;; Rules are composed from matchers and consequences; these functions are
 ;; politely aliased into this namespace to make it more self contained.
 
-(def ^{:doc "Convenient predicate that always passes."}
-  => (constantly true))
+(def =>
+  "Convenient predicate that always passes."
+  (constantly true))
 
-(def ^{:doc "Predicate that fails for all inputs."}
-  !=> (constantly false))
+(def !=>
+  "Predicate that fails for all inputs."
+  (constantly false))
 
 (import-def c/succeed)
 (import-def m/failure)
@@ -303,7 +308,7 @@
   (pipe* (repeat n r)))
 
 (defn attempt?
-  "Returns `true` if `r` was marked as an 'attempt' rule, ie, a rule that will
+  "Returns `true` if `r` was marked as an 'attempt' rule, i.e., a rule that will
   never fail, but return its input on a failed match."
   [r]
   (::attempt? (meta r) false))

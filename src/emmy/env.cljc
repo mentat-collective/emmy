@@ -93,7 +93,7 @@
 
   TODO add `:rename`, `:exclude` support."
   []
-  `(require '~['emmy.env
+  `(require '~['emmy.envxmy
                :refer
                (into [] (keys (ns-publics 'emmy.env)))]))
 
@@ -158,28 +158,30 @@
 
 ;; Constants
 
-(def ^{:doc "The mathematical constant [Pi](https://en.wikipedia.org/wiki/Pi)."}
-  pi Math/PI)
-(def ^{:doc "The negation of the mathematical
-constant [Pi](https://en.wikipedia.org/wiki/Pi)."}
-  -pi (g/- Math/PI))
+(def pi
+  "The mathematical constant [Pi](https://en.wikipedia.org/wiki/Pi)."
+  Math/PI)
 
-(def ^{:doc "The mathematical
+(def -pi
+  "The negation of the mathematical
+  constant [Pi](https://en.wikipedia.org/wiki/Pi)."
+  (g/- Math/PI))
+
+(def euler
+  "The mathematical
   constant [e](https://en.wikipedia.org/wiki/E_(mathematical_constant)),
-  sometimes known as Euler's Number."}
-  euler
+  sometimes known as Euler's Number."
   Math/E)
 
-(def ^{:doc "The mathematical constant known as the [Euler–Mascheroni
+(def euler-gamma
+  "The mathematical constant known as the [Euler–Mascheroni
   constant](https://en.wikipedia.org/wiki/Euler%E2%80%93Mascheroni_constant) and
-  sometimes as Euler's constant."}
-  euler-gamma
+  sometimes as Euler's constant."
   0.57721566490153286)
 
-(def ^{:doc "The mathematical
-  constant [𝜑](https://en.wikipedia.org/wiki/Golden_ratio), also known as the
-  Golden Ratio."}
-  phi
+(def phi
+  "The mathematical constant [𝜑](https://en.wikipedia.org/wiki/Golden_ratio), also
+  known as the Golden Ratio."
   (g/divide
    (inc (Math/sqrt 5.0)) 2.0))
 

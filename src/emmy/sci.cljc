@@ -1,11 +1,12 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
-(ns emmy.env.sci
+(ns emmy.sci
   (:refer-clojure :exclude [ns-map])
   (:require [emmy.env]
-            [emmy.env.sci.macros :as macros]
+            [emmy.sci.macros :as macros]
             [emmy.util :as u]
-            [sci.core :as sci]))
+            [sci.core :as sci]
+            [sci.ctx-store]))
 
 (def macro? (comp :macro meta))
 (def dynamic? (comp :dynamic meta))
@@ -41,11 +42,11 @@
               :else [[sym @var]]))]
     (into {} (mapcat process) sym->var)))
 
-(def ^{:doc "Map whose values are the symbols of of all namespaces explicitly
- checked and whitelisted for SCI compilation and interesting enough in their own
- right to expose to a user by default. Each value is the sym->var map for the
- corresponding namespace."}
-  ns->publics
+(def ns->publics
+  "Map whose values are the symbols of of all namespaces explicitly
+  checked and whitelisted for SCI compilation and interesting enough in their own
+  right to expose to a user by default. Each value is the sym->var map for the
+  corresponding namespace."
   {'emmy.algebra.fold                   (ns-publics 'emmy.algebra.fold)
    'emmy.complex                        (ns-publics 'emmy.complex)
    'emmy.differential                   (ns-publics 'emmy.differential)
@@ -95,6 +96,7 @@
    'emmy.calculus.vector-field          (ns-publics 'emmy.calculus.vector-field)
    'emmy.expression.analyze             (ns-publics 'emmy.expression.analyze)
    'emmy.expression.compile             (ns-publics 'emmy.expression.compile)
+   'emmy.expression.cse                 (ns-publics 'emmy.expression.cse)
    'emmy.expression.render              (ns-publics 'emmy.expression.render)
    'emmy.mechanics.lagrange             (ns-publics 'emmy.mechanics.lagrange)
    'emmy.mechanics.hamilton             (ns-publics 'emmy.mechanics.hamilton)
@@ -121,18 +123,19 @@
    'emmy.util.permute                   (ns-publics 'emmy.util.permute)
    'emmy.util.stream                    (ns-publics 'emmy.util.stream)})
 
-(def ^{:doc "SCI namespace map generated from `ns->publics`. Consumers wishing
- to use a more minmal SCI environment, should can select interested namespaces
- from this map. Since in normal (not self-hosted) ClojureScript `ns-publics`
- does not include macros, they are added explicitly."}
-  namespaces
+(def namespaces
+  "SCI namespace map generated from `ns->publics`. Consumers wishing to use a more
+  minimal SCI environment should select their desired namespaces from this map.
+
+  Since in normal (not self-hosted) ClojureScript `ns-publics` does not include
+  macros, they are added explicitly."
   (let [ns-map (u/map-vals sci-ns ns->publics)]
     (merge-with merge ns-map macros/ns-bindings)))
 
-(def ^{:doc "Default sci context options required (currently only `:namespace`
+(def config
+  "Default sci context options required (currently only `:namespace`
   bindings) required to evaluate Emmy forms from inside of an SCI
-  context. Pass these to `sci/init` to generate an sci context."}
-  context-opts
+  context. Pass these to `sci/init` to generate an sci context."
   {:namespaces namespaces
 
    ;; NOTE that these entries are required if you'd like to call the
@@ -141,7 +144,13 @@
    :classes #?(:clj  {'java.lang.Math java.lang.Math}
                :cljs {'js goog/global :allow :all})})
 
-(def ^{:doc "sci context (currently only `:namespace` bindings) required to
-  evaluate Emmy forms via SCI"}
-  context
-  (sci/init context-opts))
+(def context
+  "sci context required to evaluate Emmy forms via SCI."
+  (sci/init config))
+
+(defn install!
+  "Installs [[config]] into the shared SCI context store."
+  []
+  (sci.ctx-store/swap-ctx!
+   sci/merge-opts
+   config))

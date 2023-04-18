@@ -629,10 +629,10 @@
            0 (num-rows m)))
         (range (num-cols m)))))
 
-(def ^{:dynamic true
-       :doc "Set this dynamic variable to `false` to allow [[s->m]] to operate
-  on structures for which `(* ls ms rs)` does NOT yield a numerical value."}
-  *careful-conversion* true)
+(def ^:dynamic *careful-conversion*
+  "Set this dynamic variable to `false` to allow [[s->m]] to operate
+  on structures for which `(* ls ms rs)` does NOT yield a numerical value."
+  true)
 
 (defn s->m
   "Convert the structure `ms`, which would be a scalar if the (compatible)
@@ -874,7 +874,7 @@
     (g/negate s)))
 
 (defn dimension
-  "Returns the 'dimension', ie, the number of rows & columns, of the supplied
+  "Returns the 'dimension', i.e., the number of rows & columns, of the supplied
   square matrix. Errors if some other type is supplied."
   [m]
   {:pre [(square? m)]}
@@ -931,11 +931,11 @@
           (reset! c-det (memoize c-det*))
           (@c-det 0 (range (dimension m))))))))
 
-(def ^{:doc "Returns the determinant of the supplied square matrix `m`.
+(def ^{:arglists '([m])}
+  determinant
+  "Returns the determinant of the supplied square matrix `m`.
 
   Generic operations are used, so this works on symbolic square matrices."
-       :arglists '([m])}
-  determinant
   (general-determinant g/+ g/- g/* v/numeric-zero?))
 
 (defn cofactors
@@ -977,9 +977,9 @@
                         (let [denom (if (even? (+ i j)) d -d)]
                           (div (det (without A j i)) denom))))))))))
 
-(def ^{:doc "Returns the inverse of the supplied square matrix `m`."
-       :arglists '([A])}
+(def ^{:arglists '([A])}
   invert
+  "Returns the inverse of the supplied square matrix `m`."
   (classical-adjoint-formula g/+ g/- g/* g// v/numeric-zero?))
 
 (defn- m-div-m [m1 m2]
@@ -1073,7 +1073,7 @@
    (generate n n #(if (= %1 %2) x 0))))
 
 (defn diagonal?
-  "Returns true if `m` is a diagonal matrix (ie, a square matrix where every
+  "Returns true if `m` is a diagonal matrix (i.e., a square matrix where every
   non-diagonal element is zero), false otherwise."
   [m]
   (and (square? m)
@@ -1086,7 +1086,7 @@
                    (v/zero? entry))))))
 
 (defn symmetric?
-  "Returns true if the supplied matrix `M` is equal to its own transpose (ie,
+  "Returns true if the supplied matrix `M` is equal to its own transpose (i.e.,
   symmetric), false otherwise."
   [M]
   (v/zero?
@@ -1095,7 +1095,7 @@
 
 (defn antisymmetric?
   "Returns true if the supplied matrix `M` is equal to the negation of its own
-  transpose (ie, antisymmetric), false otherwise."
+  transpose (i.e., antisymmetric), false otherwise."
   [M]
   (v/zero?
    (g/simplify
@@ -1154,15 +1154,15 @@
                       d))
                (range bn)))))))
 
-(def ^{:doc "Given a matrix `A` and a column matrix `b`, computes the solution
+(def ^{:arglists '([A b])}
+  solve
+  "Given a matrix `A` and a column matrix `b`, computes the solution
   to an inhomogeneous system of linear equations, `A*x=b`, where the matrix `A`
   and the column matrix `b` are given.
 
- Returns the column matrix `x`.
+  Returns the column matrix `x`.
 
- Unlike LU decomposition, Cramer's rule generalizes to symbolic solutions."
-       :arglists '([A b])}
-  solve
+  Unlike LU decomposition, Cramer's rule generalizes to symbolic solutions."
   (cramers-rule g/+ g/- g/* g// v/numeric-zero?))
 
 (defn rsolve

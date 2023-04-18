@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.calculus.manifold
   "This namespace defines a functional API for:
 
@@ -461,9 +464,9 @@
      :coordinate-system coordinate-system
      :type ::manifold-function)))
 
-(def ^{:doc "Alias for [[literal-manifold-function]], present for scmutils
-codebase compatibility."}
-  literal-scalar-field
+(def literal-scalar-field
+  "Alias for [[literal-manifold-function]], present for scmutils
+  codebase compatibility."
   literal-manifold-function)
 
 (defn zero-manifold-function
@@ -788,7 +791,7 @@ codebase compatibility."}
   "Returns an [[ICoordinateSystem]] instance that converts between `manifold`
   points and spherical on the
   unit [n-sphere](https://en.wikipedia.org/wiki/N-sphere#Spherical_coordinates),
-  ie, S(n). The sphere is embedded in a space of dimension n+1.
+  i.e., S(n). The sphere is embedded in a space of dimension n+1.
 
   Also accepts an `orientation-function` from dimension `(+ n 1)` to a unitary
   `orientation` matrix (2-tensor, technically, a down of ups, dimension `n+1`
@@ -1252,11 +1255,12 @@ codebase compatibility."}
                                         0))))))))
 
 (def S2 (make-manifold S2-type 2 3))
+
 (def S2-spherical (coordinate-system-at S2 :spherical :north-pole))
 
-(def ^{:doc "Similar to the [[S2-spherical]] coordinate system, with the north
-  pole rotated 90 degrees and lying along the positive y axis."}
-  S2-tilted
+(def S2-tilted
+  "Similar to the [[S2-spherical]] coordinate system, with the north pole rotated
+  90 degrees and lying along the positive y axis."
   (coordinate-system-at S2 :spherical :tilted))
 
 (def S2-stereographic (coordinate-system-at S2 :stereographic :north-pole))

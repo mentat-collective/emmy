@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns ^:no-doc emmy.polynomial.exponent
   "This namespace provides an implementation of a sparse representation of the
   exponent portion of a term of a polynomial, sometimes called a 'monomial'."
@@ -22,15 +25,15 @@
 ;;
 ;; ## Constructors
 
-(def ^{:doc "Accepts alternating pairs of integers representing <indeterminate
- index>, <exponent value> and returns a `sorted-map` representing the exponent
- portion of a polynomial term."
-       :arglists '([& i-expt-pairs])}
+(def ^{:arglists '([& i-expt-pairs])}
   make
+  "Accepts alternating pairs of integers representing <indeterminate index>,
+  <exponent value> and returns a `sorted-map` representing the exponent portion
+  of a polynomial term."
   #'sorted-map)
 
-(def ^{:doc "Singleton instance of an empty exponent map."}
-  empty
+(def empty
+  "Singleton instance of an empty exponent map."
   (make))
 
 (defn dense->exponents
@@ -165,9 +168,9 @@
 
 (defn monomial-degree
   "Returns the [monomial degree](https://en.wikipedia.org/wiki/Monomial#Degree) of
-  the exponent vector `m`, ie, the sum of the powers of all variables in `m`.
+  the exponent vector `m`, i.e., the sum of the powers of all variables in `m`.
 
-  If the optional `i` is supplied, returns the degree of the `i`th variable, ie,
+  If the optional `i` is supplied, returns the degree of the `i`th variable, i.e.,
   the entry for `i` in `m`, defaulting to `0`."
   ([m]
    (apply + (vals m)))

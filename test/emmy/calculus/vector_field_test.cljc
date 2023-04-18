@@ -91,7 +91,7 @@
                ((down (vf/vector-field->components fx R2-rect)
                       (vf/vector-field->components fy R2-rect))
                 (up 'x0 'y0)))
-            "Passing no indices generates the full Jacobian, ie, a down built
+            "Passing no indices generates the full Jacobian, i.e., a down built
             out of the partials."))))
 
   (testing "vf->components, 1D"
