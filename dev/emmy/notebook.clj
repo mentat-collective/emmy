@@ -25,7 +25,7 @@
  [:center
   [:img
    {:width "200" :alt "Emmy logo"
-    :src "https://raw.githubusercontent.com/mentat-collective/emmy/sritchie/template/doc/img/logo.png"}]])
+    :src "https://raw.githubusercontent.com/mentat-collective/emmy/main/doc/img/logo.png"}]])
 
 ;; [![Build Status](https://github.com/mentat-collective/emmy/actions/workflows/kondo.yml/badge.svg?branch=main)](https://github.com/mentat-collective/emmy/actions/workflows/kondo.yml)
 ;; [![License](https://img.shields.io/badge/license-MIT-brightgreen.svg)](https://github.com/mentat-collective/emmy/blob/main/LICENSE)

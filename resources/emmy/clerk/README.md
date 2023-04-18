@@ -14,7 +14,7 @@ clojure -Ttools install io.github.seancorfield/deps-new '{:git/tag "v0.5.0"}' :a
 Then create a project using the `emmy/clerk` template:
 
 ```
-clojure -Sdeps '{:deps {io.github.mentat-collective/emmy {:git/tag "v0.30.0" :git/sha "TODO"}}}' \
+clojure -Sdeps '{:deps {io.github.mentat-collective/emmy {:git/sha "a6a79daebb82f95a7239e5ad0e8477ac8a27e539"}}}' \
 -Tnew create \
 :template emmy/clerk \
 :name myusername/my-emmy-project
