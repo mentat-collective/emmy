@@ -290,6 +290,7 @@ Distributed under the [GPL v3](LICENSE) license. See [LICENSE](LICENSE).
 [fdg-book-url]: http://mitpress.mit.edu/books/functional-differential-geometry
 [gscm-url]: http://www.cs.rochester.edu/~gildea/guile-scmutils/
 [license]: https://img.shields.io/badge/license-GPLv3-brightgreen.svg
+[license-url]: LICENSE
 [mentat-slack-url]: https://clojurians.slack.com/archives/C041G9B1AAK
 [physics-in-clj-talk-url]: https://www.youtube.com/watch?v=7PoajCqNKpg
 [scmutils-refman-url]: https://groups.csail.mit.edu/mac/users/gjs/6946/refman.txt

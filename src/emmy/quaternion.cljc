@@ -30,7 +30,7 @@
 ;; # Quaternions
 ;;
 ;; The [quaternion number system](https://en.wikipedia.org/wiki/Quaternion) is
-;; an extension of the complex number system. By introducing /three/ "imaginary"
+;; an extension of the complex number system. By introducing _three_ "imaginary"
 ;; numbers $i$, $j$ and $k$, William Hamilton was able to devise a number system
 ;; capable of representing rotations in 3-dimensional space, analogous to the
 ;; ability of complex numbers to represent rotation and scaling in the 2d plane.
