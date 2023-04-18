@@ -1,8 +1,6 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
-^#:nextjournal.clerk
-{:toc true
- :visibility :hide-ns}
+
 (ns emmy.rational-function
   (:refer-clojure :exclude [abs])
   (:require [clojure.set :as set]
@@ -45,7 +43,7 @@
   (numerator [_] u)
   (denominator [_] v)
 
-v/Value
+  v/Value
   (zero? [_] (v/zero? u))
   (one? [_] (and (v/one? u) (v/one? v)))
   (identity? [_] (and (v/identity? u) (v/one? v)))
