@@ -4,9 +4,11 @@
 
 ## [0.30.0]
 
-- new:
+- #124:
 
-  - Upgrade sci to 0.7.39
+  - Upgrades ``sci to 0.7.39
+
+  - Renames `emmy.env.sci` to `emmy.sci`
 
   - Adds a working `bb repl` command to the repository
 

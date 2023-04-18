@@ -1,6 +1,6 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
-(ns emmy.env.sci-test
+(ns emmy.sci-test
   (:refer-clojure :exclude [eval])
   (:require [clojure.test :refer [is deftest testing use-fixtures]]
             [emmy.env :as e]

@@ -2,7 +2,6 @@
  {:linters {:unresolved-symbol {:level :off}
             :invalid-arity {:level :off}}}
 
-
  :config-paths ["../resources/clj-kondo.exports/org.mentat/emmy"
                 "com.gfredericks/test.chuck"]
 

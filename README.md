@@ -54,8 +54,8 @@ Geometry][fdg-book-url] by G.J. Sussman and J. Wisdom.
 > with rich support for [TeX](https://en.wikipedia.org/wiki/TeX) rendering and
 > plotting.
 
-Install `Leva.cljs` into your ClojureScript project using the instructions at
-its Clojars page:
+Install `Emmy` into your Clojure(Script) project using the instructions at its
+Clojars page:
 
 [![Clojars Project][clojars]][clojars-url]
 
