@@ -16,16 +16,18 @@
 
 (def index
   "TODO: Create a meaningful index here."
-  "dev/index.md")
+  "dev/emmy/notebook.clj")
 
 (def notebooks
   ["src/emmy/**/**.cljc"
    "src/emmy/**/**.clj"])
 
 (def defaults
-  {#_#_:index index
+  {:index index
    :browse? true
-   :watch-paths ["src" "dev"]})
+   :watch-paths ["src" "dev"]
+   #_#_
+   :cljs-namespaces '[emmy.sci-extensions]})
 
 (def static-defaults
   (assoc defaults

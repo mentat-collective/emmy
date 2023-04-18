@@ -189,6 +189,33 @@ remains to be written. Some suggested next steps, for now:
   been worked using Emmy; they live at [this Nextjournal
   page](https://nextjournal.com/sicm).
 
+## Clerk Support
+
+If you want to use `Emmy` with [Clerk][clerk-url], check out the [`emmy/clerk`
+template][emmy-clerk-template-url]. This [`deps-new`][deps-new-url] template
+will generate a Clerk project for you, fully configured to use `Emmy` in your
+Clerk notebooks.
+
+## Interactive Documentation via Clerk
+
+The project's [interactive documentation](https://emmy.mentat.org) was generated
+using Nextjournal's [Clerk][clerk-url]. If you'd like to edit or play with the
+documentation, you'll need to install
+
+- [node.js](https://nodejs.org/en/)
+- The [Clojure command line tool](https://clojure.org/guides/install_clojure)
+- [Babashka](https://github.com/babashka/babashka#installation)
+
+Once this is done, run this command:
+
+```sh
+bb clerk-watch
+```
+
+This will open a browser window to `http://localhost:7777` with the contents of
+the documentation notebook. Any edits you make to `dev/emmy/notebook.clj`
+will be picked up and displayed in the browser on save.
+
 ## Background
 
 [SICM][sicm-book-url] and [FDG][fdg-book-url] can be thought of as spiritual
@@ -233,7 +260,7 @@ license = {GPL-3.0},
 month = {4},
 title = {{Emmy: Functional Computer Algebra in Clojure}},
 url = {https://github.com/mentat-collective/emmy},
-version = {0.23.0},
+version = {0.30.0},
 year = {2016}
 ```
 
@@ -243,21 +270,25 @@ the project's open-source release.
 
 ## License
 
-[GPL v3][license-url].
+Copyright © 2016-2023 Colin Smith, Sam Ritchie
+
+Distributed under the [GPL v3](LICENSE) license. See [LICENSE](LICENSE).
 
 [build-status-url]: https://github.com/mentat-collective/emmy/actions?query=workflow%3A%22Clojure+CI%22
 [build-status]: https://github.com/mentat-collective/emmy/workflows/Clojure%20CI/badge.svg?branch=main
+[clerk-url]: https://clerk.vision
 [cljdoc-url]: https://cljdoc.org/d/org.mentat/emmy/CURRENT
 [cljdoc]: https://cljdoc.org/badge/org.mentat/emmy
 [clojars-url]: https://clojars.org/org.mentat/emmy
 [clojars]: https://img.shields.io/clojars/v/org.mentat/emmy.svg
 [codecov]: https://img.shields.io/codecov/c/github/mentat-collective/emmy/main.svg?maxAge=3600
 [codecov-url]: https://codecov.io/github/mentat-collective/emmy
+[deps-new-url]: https://github.com/seancorfield/deps-new
 [discord-url]: https://discord.gg/hsRBqGEeQ4
 [discord]: https://img.shields.io/discord/731131562002743336?style=flat&colorA=000000&colorB=000000&label=&logo=discord
+[emmy-clerk-template-url]: https://github.com/mentat-collective/emmy/tree/main/resources/emmy/clerk
 [fdg-book-url]: http://mitpress.mit.edu/books/functional-differential-geometry
 [gscm-url]: http://www.cs.rochester.edu/~gildea/guile-scmutils/
-[license-url]: LICENSE
 [license]: https://img.shields.io/badge/license-GPLv3-brightgreen.svg
 [mentat-slack-url]: https://clojurians.slack.com/archives/C041G9B1AAK
 [physics-in-clj-talk-url]: https://www.youtube.com/watch?v=7PoajCqNKpg
@@ -265,5 +296,3 @@ the project's open-source release.
 [refman-url]: https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/reference-manual
 [sicm-book-url]: https://mitpress.mit.edu/books/structure-and-interpretation-classical-mechanics-second-edition
 [sicp-book-url]: http://mitpress.mit.edu/sicp/
-
-Copyright © 2016-2023 Colin Smith, Sam Ritchie

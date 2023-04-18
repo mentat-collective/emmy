@@ -1,0 +1,43 @@
+name: GitHub Pages
+
+on:
+  push:
+    branches:
+      - main  # Set a branch name to trigger deployment
+jobs:
+  publish:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Cache Maven packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            .cpcache
+            .shadow-cljs
+            ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/deps.edn') }}
+          restore-keys: ${{ runner.os }}-m2
+
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install clojure tools
+        uses: DeLaGuardo/setup-clojure@4.0
+        with:
+          cli: latest
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install babashka
+        uses: just-sultanov/setup-babashka@v2
+        with:
+          version: '0.8.156'
+
+      - name: Build static site
+        run: bb build-static
+
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        if: ${{ github.ref == 'refs/heads/main' }}
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public/build
