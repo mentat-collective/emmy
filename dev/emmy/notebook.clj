@@ -104,6 +104,21 @@
 ;; These guides are currently woefully incomplete... we need more! Please hold
 ;; tight while we work on these...
 
+;; ### Arithmetic / Numeric Tower
+
+
+
+;; Math works as
+;; expected (se [Generics](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/basics/generics)
+;; for the full menu of operations), but notice that the numeric tower
+;; includes [complex
+;; numbers](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/data-types/complex),
+;; and proper ratios in ClojureScript:
+
+(- (* 7 (/ 1 2)) 2)
+
+(->infix (asin -10))
+
 ;; ### Symbolic Arithmetic
 
 ;; Symbols are interpreted as abstract complex numbers, and arithmetic on them
@@ -111,7 +126,8 @@
 
 (square (sin (+ 'a 3)))
 
-;; Render to an infix string with [`->infix`](https://cljdoc.org/d/sicmutils/sicmutils/CURRENT/api/sicmutils.expression.render#-%3Einfix):
+;; Render to an infix string
+;; with [`->infix`](https://cljdoc.org/d/sicmutils/sicmutils/CURRENT/api/sicmutils.expression.render#-%3Einfix):
 
 (->infix
  (square (sin (+ 'a 3))))

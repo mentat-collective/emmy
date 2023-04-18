@@ -1,7 +1,11 @@
 {:paths ["src" "dev" "notebooks"]
  :deps {org.clojure/clojure {:mvn/version "{{clj-version}}"}
         io.github.nextjournal/clerk {:git/sha "{{clerk-sha}}"}
-        org.mentat/emmy {:mvn/version "{{emmy-version}}"}
+        org.mentat/emmy {:mvn/version "{{emmy-version}}"
+                         ;; This is required because Clerk specifies SCI using a
+                         ;; git dependency and `clojure` can't resolve the
+                         ;; conflict.
+                         :exclusions [org.babashka/sci]}
         io.github.mentat-collective/clerk-utils {:git/sha "{{clerk-utils-sha}}"}}
  :aliases
  {:nextjournal/clerk

@@ -11,7 +11,9 @@
  :cname ""
  :transform
  [["src" "src"
-   {"custom.cljs" "{{top/file}}/custom.cljs"
-    "sci_extensions.cljs" "{{top/file}}/sci_extensions.cljs"}]
+   {"custom.tmpl" "{{top/file}}/custom.cljs"
+    "sci_extensions.tmpl" "{{top/file}}/sci_extensions.cljs"}]
   ["notebooks" "notebooks"
-   {"main.clj" "{{top/file}}/{{main/file}}.clj"}]]}
+   {"main.tmpl" "{{top/file}}/{{main/file}}.clj"}]
+  ["dev" "dev"
+   {"user.tmpl" "user.clj"}]]}

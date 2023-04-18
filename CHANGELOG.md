@@ -4,6 +4,14 @@
 
 ## [0.30.0]
 
+- #126:
+
+  - Adds a `deps-new` template that sets up a basic Clerk project with `Emmy`
+    installed as a dependency. [The template lives
+    here](https://github.com/mentat-collective/emmy/tree/main/resources/emmy/clerk).
+
+  - Adds `dev/emmy/notebook.clj` as the new homepage for https://emmy.mentat.org.
+
 - #98 upgrades `same/ish` to 0.1.6, renames all `same` requires to `same.core`
   and removes final `:include-macros true` from the codebase.
 
