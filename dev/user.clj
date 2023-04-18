@@ -31,7 +31,7 @@
   (assoc defaults
          :browse? false
          :paths notebooks
-         #_#_:cname "emmy.mentat.org"
+         :cname "emmy.mentat.org"
          :git/url "https://github.com/mentat-collective/emmy"))
 
 (defn serve!

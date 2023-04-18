@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns ^:no-doc emmy.polynomial.impl
   (:require [emmy.generic :as g]
             [emmy.polynomial.exponent :as xpt]

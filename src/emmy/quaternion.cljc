@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.quaternion
   "This namespace provides a number of functions and constructors for working
   with [[Quaternion]] instances in Clojure and ClojureScript, and

@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.structure
   (:require [clojure.string :refer [join]]
             [emmy.collection]
@@ -18,6 +21,8 @@
                             IObj
                             Indexed Reversible Sequential))))
 
+;; ## Structures
+;;
 ;; Structures are primitive tensor-like objects. They are represented as
 ;; recursive combinations of down vectors and up vectors, useful for dealing
 ;; with derivatives of things with structured inputs and outputs.

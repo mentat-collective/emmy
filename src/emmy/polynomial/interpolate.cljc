@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.polynomial.interpolate
   "This namespace contains a discussion of polynomial interpolation, and different
   methods for fitting a polynomial of degree `N-1` to `N` points and evaluating
@@ -448,13 +451,17 @@
 ;; Equation 3.1.5 in Numerical recipes gives us the equations we need:
 ;;
 ;; $$
-;;   C_{abc} = [(x_a - x)(C_{bc} - D_{ab})] / [x_a - x_c] &\
-;;           = [(x_l - x)(C_r - D_l)] / [x_l - x_r]
+;; \begin{aligned}
+;;   C_{abc} &= [(x_a - x)(C_{bc} - D_{ab})] / [x_a - x_c] \\
+;;           &= [(x_l - x)(C_r - D_l)] / [x_l - x_r]
+;; \end{aligned}
 ;; $$
 ;;
 ;; $$
-;;   D_{abc} = [(x_c - x)(C_{bc} - D_{ab})] / [x_a - x_c] &\
-;;           = [(x_r - x)(C_r - D_l)] / [x_l - x_r]
+;; \begin{aligned}
+;;   D_{abc} &= [(x_c - x)(C_{bc} - D_{ab})] / [x_a - x_c] \\
+;;           &= [(x_r - x)(C_r - D_l)] / [x_l - x_r]
+;; \end{aligned}
 ;; $$
 ;;
 ;; These equations describe a `merge` function for a tableau processing scheme,

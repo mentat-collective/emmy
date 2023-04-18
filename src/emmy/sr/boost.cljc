@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.sr.boost
   (:refer-clojure :exclude [+ - * /])
   (:require [emmy.generic :as g :refer [+ - * /]]
@@ -40,10 +43,10 @@
           (* factor beta beta-dot-xi-p))))))
 
 ;; It is inconvenient that the general boost as just defined does not work if
-;; $\bfbeta$ is zero. An alternate way to specify a boost is through the
+;; $\bf{beta}$ is zero. An alternate way to specify a boost is through the
 ;; magnitude of $v/c$ and a direction:
 ;;
-;; this one works for zero v:c ... direction is a unit 3-vector, v:c is the
+;; this one works for zero `v:c`... direction is a unit 3-vector, `v:c` is the
 ;; speed, a number.
 
 (defn general-boost2
@@ -63,7 +66,7 @@
                      (* alpha direction bx))]
       (make-four-tuple delta-ct delta-x))))
 
-;; ## extended rotations
+;; ## Extended Rotations
 
 ;; Boosts are linear functions of incremental vectors. To be parallel we take
 ;; rotations to functions as well, rather than as multipliers.

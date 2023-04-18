@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.expression.analyze
   "This namespace defines an API for working with 'expression analyzers' and
   the [[ICanonicalize]] protocol.

@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns ^:no-doc emmy.polynomial.exponent
   "This namespace provides an implementation of a sparse representation of the
   exponent portion of a term of a polynomial, sometimes called a 'monomial'."

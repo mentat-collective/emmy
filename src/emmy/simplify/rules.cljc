@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.simplify.rules
   "This namespace contains many sets of algebraic simplification rules you can use
   to build simplifiers for algebraic structures.

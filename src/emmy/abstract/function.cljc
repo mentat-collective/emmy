@@ -149,6 +149,8 @@
    (defmethod print-method Function [^Function f ^java.io.Writer w]
      (.write w (.toString f))))
 
+(derive Function ::function)
+
 (defn literal-function?
   "Returns true if the supplied object is an instance of [[Function]], false
   otherwise."
