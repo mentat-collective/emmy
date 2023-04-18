@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html><head><title>Vector Implementations</title><meta charset="UTF-8"><meta content="width=device-width, initial-scale=1" name="viewport"><meta content="Vectors are implicitly treated as [[emmy.structure/Structure]] instances with an up orientation, and implement [[v/freeze]] identically. They can act as zero?, but they can&apos;t act as one? or identity?; those are reserved for instances that have no effect on multiplication." property="og:description"><meta content="Vector Implementations" property="og:title"><meta content="article:clerk" property="og:type"><meta content="summary_large_image" name="twitter:card"><script src="https://cdn.tailwindcss.com?plugins=typography" type="text/javascript"></script><script>tailwind.config = {
+  darkMode: "class",
+  content: ["./tw/viewer.js", "./tw/**/*.edn"],
+  safelist: ['dark'],
+  theme: {
+    extend: {},
+    fontFamily: {
+      sans: ["Fira Sans", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+      serif: ["PT Serif", "serif"],
+      mono: ["Fira Mono", "monospace"]
+    }
+  },
+  variants: {
+    extend: {},
+  },
+  plugins: [],
+}
+</script><style type="text/tailwindcss">@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-size: 18px;
+  }
+  @media (max-width: 600px) {
+    html {
+      font-size: 16px;
+    }
+  }
+  .font-condensed { font-family: "Fira Sans Condensed", sans-serif; }
+  .font-inter     { font-family: "Inter", sans-serif; }
+  body {
+    @apply font-serif antialiased text-gray-900 sm:overscroll-y-none;
+  }
+  code, .code {
+    @apply font-mono text-sm text-gray-900 bg-slate-50 px-0.5 py-px rounded dark:bg-gray-800;
+  }
+  code::before, code::after { @apply content-none !important; }
+  h1, h3, h4, h5, h6 {
+    @apply font-condensed font-bold mt-8 first:mt-0;
+  }
+  h2 {
+    /*We cannot collapse margins due to nesting but we want to*/
+    /*keep the h2’s large margin visible*/
+    @apply font-condensed font-bold mt-8 first:mt-2;
+  }
+  h1 { @apply text-4xl; }
+  h2 { @apply text-3xl; }
+  h3 { @apply text-2xl; }
+
+  @media print {
+      h1 { @apply text-2xl !important; }
+      h2 { @apply text-xl !important; }
+      h3 { @apply text-lg !important; }
+  }
+
+  button { @apply focus:outline-none; }
+  strong { @apply font-bold; }
+  em     { @apply italic; }
+  pre    { @apply m-0 font-mono; }
+}
+
+/* Compatibility */
+/* --------------------------------------------------------------- */
+/* TODO: Verify which colors are in use and replace with Tailwind
+   colors accordingly. Move Nj-specific styles out of here. */
+
+:root {
+  --teal-color: #31afd0;
+  --dark-teal-color: #095960;
+  --near-black-color: #2e2e2c;
+  --red-color: #d64242;
+  --dark-blue-color: #1f2937;
+  --dark-blue-60-color: rgba(28, 42, 56, 0.6);
+  --gray-panel-color: rgba(239, 241, 245, 1.000);
+  --brand-color: var(--dark-blue-color);
+  --link-color: #5046e4;
+  --command-bar-selected-color: var(--teal-color);
+}
+
+.serif      { @apply font-serif; }
+.sans-serif { @apply font-sans; }
+.monospace  { @apply font-mono; }
+.inter      { @apply font-inter; }
+
+.border-color-teal { border-color: var(--dark-teal-color); }
+.teal { color: var(--teal-color); }
+.bg-dark-blue { background: var(--dark-blue-color); }
+.bg-dark-blue-60 { background: rgba(28, 42, 56, 0.6); }
+.bg-gray-panel { background: var(--gray-panel-color); }
+.text-dark-blue  { color: var(--dark-blue-color); }
+.text-dark-blue-60 { color: var(--dark-blue-60-color); }
+.border-dark-blue-30 { border-color: rgba(28, 42, 56, 0.6); }
+.text-brand { color: var(--dark-blue-color); }
+.bg-brand { background: var(--dark-blue-color); }
+.text-selected { color: white; }
+.red { color: var(--red-color); }
+
+/* Disclose Button */
+/* --------------------------------------------------------------- */
+
+.disclose {
+  @apply content-none border-solid cursor-pointer inline-block relative mr-[3px] top-[-2px] transition-all;
+  border-color: var(--near-black-color) transparent;
+  border-width: 6px 4px 0;
+}
+.disclose:hover {
+  border-color: var(--near-black-color) transparent;
+}
+.dark .disclose,
+.dark .disclose:hover {
+  border-color: white transparent;
+}
+.disclose.collapsed {
+  @apply rotate-[-90deg];
+}
+
+/* Layout */
+/* --------------------------------------------------------------- */
+
+.page {
+  @apply max-w-5xl mx-auto px-12 box-border flex-shrink-0;
+}
+.max-w-prose { @apply max-w-[46rem] !important; }
+.max-w-wide  { @apply max-w-3xl !important; }
+
+/* List Styles */
+/* --------------------------------------------------------------- */
+
+.task-list-item + .task-list-item,
+.markdown-viewer ul ul {
+  @apply mt-1 mb-0;
+}
+
+/* compact TOC */
+.markdown-viewer .toc ul {
+  list-style: none;
+  @apply my-1;
+}
+
+/* Code Viewer */
+/* --------------------------------------------------------------- */
+
+.code-viewer {
+  @apply font-mono bg-slate-100 rounded-sm text-sm overflow-x-auto dark:bg-gray-800;
+}
+.code-listing  {
+    @apply -ml-8 -mr-8 relative !important;
+}
+.code-viewer .cm-content {
+  @apply py-4 px-8;
+}
+@media (min-width: 960px){
+    .notebook-viewer .code-viewer .cm-content {
+        @apply py-4 pl-12;
+    }
+    .notebook-viewer .code-listing {
+        width: 48rem !important;
+        @apply -ml-12 mr-0 !important;
+    }
+}
+/* Don’t show focus outline when double-clicking cell in Safari */
+.cm-scroller { @apply focus:outline-none; }
+
+/* Syntax Highlighting */
+/* --------------------------------------------------------------- */
+
+.inspected-value { @apply text-xs font-mono leading-[1.25rem]; }
+.cmt-strong, .cmt-heading { @apply font-bold; }
+.cmt-italic, .cmt-emphasis { @apply italic; }
+.cmt-strikethrough { @apply line-through; }
+.cmt-link { @apply underline; }
+.untyped-value { @apply whitespace-nowrap; }
+
+.cm-editor, .cmt-default, .result-viewer {
+  @apply text-slate-800 dark:text-slate-300;
+}
+.cmt-keyword {
+  @apply text-purple-800 dark:text-pink-400;
+}
+.cmt-atom, .cmt-bool, .cmt-url, .cmt-contentSeparator, .cmt-labelName {
+  @apply text-blue-900 dark:text-blue-300;
+}
+.cmt-inserted, .cmt-literal {
+  @apply text-emerald-700 dark:text-emerald-200;
+}
+.cmt-string, .cmt-deleted {
+  @apply text-rose-700 dark:text-sky-300;
+}
+.cmt-italic.cmt-string {
+  @apply dark:text-sky-200;
+}
+.cmt-regexp, .cmt-escape {
+  @apply text-orange-500 dark:text-orange-300;
+}
+.cmt-variableName {
+  @apply text-blue-800 dark:text-sky-300;
+}
+.cmt-typeName, .cmt-namespace {
+  @apply text-emerald-600 dark:text-emerald-300;
+}
+.cmt-className {
+  @apply text-teal-600 dark:text-teal-200;
+}
+.cmt-macroName {
+  @apply text-teal-700 dark:text-teal-200;
+}
+.cmt-propertyName {
+  @apply text-blue-700 dark:text-blue-200;
+}
+.cmt-comment {
+  @apply text-slate-500 dark:text-slate-400;
+}
+.cmt-meta {
+  @apply text-slate-600 dark:text-slate-400;
+}
+.cmt-invalid {
+  @apply text-red-500 dark:text-red-300;
+}
+
+.result-data {
+  @apply font-mono text-sm overflow-x-auto whitespace-nowrap leading-normal;
+}
+.result-data::-webkit-scrollbar, .path-nav::-webkit-scrollbar {
+  @apply h-0;
+}
+.result-data-collapsed {
+  @apply whitespace-nowrap;
+}
+.result-data-field {
+  @apply ml-4 whitespace-nowrap;
+}
+.result-data-field-link{
+  @apply ml-4 whitespace-nowrap cursor-pointer;
+}
+.result-data-field-link:hover {
+  @apply text-black bg-black/5;
+}
+.result-text-empty {
+  color: rgba(0,0,0,.3);
+}
+.browsify-button:hover {
+  box-shadow: -2px 0 0 2px #edf2f7;
+}
+
+/* Prose */
+/* --------------------------------------------------------------- */
+
+.notebook-viewer,
+.markdown-viewer {
+  @apply prose
+    dark:prose-invert
+    prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline
+    dark:prose-a:text-blue-300
+    prose-p:mt-4 prose-p:leading-snug
+    prose-ol:mt-4 prose-ol:mb-6 prose-ol:leading-snug
+    prose-ul:mt-4 prose-ul:mb-6 prose-ul:leading-snug
+    prose-blockquote:mt-4 prose-blockquote:leading-snug
+    prose-hr:mt-6 prose-hr:border-t-2 prose-hr:border-solid prose-hr:border-slate-200
+    prose-figure:mt-4
+    prose-figcaption:mt-2 prose-figcaption:text-xs
+    prose-headings:mb-4
+    prose-table:mt-0
+    prose-th:mb-0
+    prose-img:my-0
+    prose-code:font-medium prose-code:bg-slate-100
+    max-w-none;
+}
+.markdown-viewer blockquote p:first-of-type:before,
+.markdown-viewer blockquote p:last-of-type:after {
+  @apply content-none;
+}
+.markdown-node-viewer.result-viewer.fragment-item {
+    @apply mb-0 !important;
+}
+
+/* Images */
+/* --------------------------------------------------------------- */
+
+
+/* Todo Lists */
+/* --------------------------------------------------------------- */
+
+.contains-task-list {
+  @apply pl-6 list-none;
+}
+.contains-task-list input[type="checkbox"] {
+  @apply appearance-none h-4 w-4 rounded border border-slate-200 relative mr-[0.3rem] ml-[-1.5rem] top-[0.15rem];
+}
+.contains-task-list input[type="checkbox"]:checked {
+  @apply border-indigo-600 bg-indigo-600 bg-no-repeat bg-contain;
+  background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
+}
+
+/* Markdown TOC */
+/* --------------------------------------------------------------- */
+
+.markdown-viewer .toc      { @apply mt-4; }
+.markdown-viewer h1 + .toc { @apply mt-8; }
+
+.markdown-viewer .toc h1,
+.markdown-viewer .toc h2,
+.markdown-viewer .toc h3,
+.markdown-viewer .toc h4,
+.markdown-viewer .toc h5,
+.markdown-viewer .toc h6 {
+  @apply text-base text-indigo-600 font-sans my-0;
+}
+.markdown-viewer .toc a {
+  @apply text-indigo-600 font-normal no-underline hover:underline;
+}
+.markdown-viewer .toc li    { @apply m-0; }
+.markdown-viewer .toc ul ul { @apply pl-4; }
+
+/* Notebook Spacing */
+/* --------------------------------------------------------------- */
+
+.notebook-viewer { @apply py-16; }
+#clerk-static-app .notebook-viewer { @apply pt-[0.8rem] pb-16; }
+.markdown-viewer *:first-child:not(.code-viewer):not(li):not(h2):not(.sidenote) { @apply mt-0; }
+/*.viewer + .viewer { @apply mt-6; }*/
+.viewer + .result-viewer { @apply mt-0; }
+.code-viewer + .result-viewer { @apply mt-3; }
+.markdown-viewer + .markdown-viewer { @apply mt-0; }
+
+/* Sidenotes */
+/* --------------------------------------------------------------- */
+
+.sidenote-ref {
+  @apply top-[-0.5em] w-auto h-auto inline border-0 bg-transparent m-0 pointer-events-none;
+}
+.sidenote {
+  @apply block font-sans text-xs mt-4 bg-slate-100 dark:bg-slate-800 p-4;
+  font-style: normal;
+  font-weight: normal;
+}
+.sidenote-container {
+  @apply mb-4;
+}
+@media (min-width: 860px) {
+  .sidenote sup { @apply inline; }
+  .sidenote-column {
+    @apply w-[165px] absolute right-0 top-0 -mr-[205px];
+  }
+  .sidenote {
+    @apply bg-transparent dark:bg-transparent p-0;
+  }
+  .sidenote:first-child {
+    @apply mt-1;
+  }
+  .sidenotes-layout .markdown-viewer {
+    @apply pr-[241px];
+  }
+  .sidenote-container {
+    @apply relative mb-0;
+  }
+  .sidenotes-layout h1 {
+    @apply w-[756px] !important;
+  }
+}
+.code-viewer + .viewer:not(.code-viewer):not(.code-viewer-folded),
+.code-viewer-folded + .viewer:not(.code-viewer):not(.code-viewer-folded),
+.result-viewer:not(.markdown-node-viewer) + .result-viewer {
+  @apply mt-2;
+}
+.code-viewer + .code-viewer-folded {
+  @apply mt-4;
+}
+.result-viewer {
+  @apply leading-tight mb-6;
+}
+.code-viewer.fragment-item.result-viewer {
+  @apply mb-0 !important;
+}
+.result-viewer figure {
+  @apply mt-0 !important;
+}
+@media (min-width: 768px) {
+  .devcard-desc > div {
+    @apply max-w-full m-0;
+  }
+}
+
+/* Command Palette */
+/* --------------------------------------------------------------- */
+
+.nj-commands-input {
+  @apply bg-transparent text-white;
+}
+.nj-context-menu-item:hover:not([disabled]) {
+  @apply cursor-pointer;
+  background-color: rgba(255,255,255,.14);
+}
+
+/* Devdocs */
+/* --------------------------------------------------------------- */
+
+.logo, .logo-white {
+  @apply block indent-[-999em];
+  background: url(/images/nextjournal-logo.svg) center center no-repeat;
+}
+.devdocs-body {
+  @apply font-inter;
+}
+
+/* Workarounds */
+/* --------------------------------------------------------------- */
+
+/* Fixes vega viewer resizing into infinity */
+.vega-embed .chart-wrapper { @apply h-auto !important; }
+/* fixes fraction separators being overridden by tw’s border-color */
+.katex * { @apply border-black; }
+
+@media print {
+    .dark-mode-toggle,
+    .toc-toggle { @apply hidden; }
+    .notebook-viewer { @apply pt-0; font-size: 12pt !important; margin-left: 0 !important; }
+    .code-viewer .cm-content,
+    .viewer-code .cm-content { @apply whitespace-pre-wrap !important; overflow: none; }
+    .code-viewer .cm-line { font-size: 12pt !important; }
+    html * { page-break-inside: avoid !important; }
+    .toc-panel { @apply hidden; }
+}
+</style><script src="https://storage.clerk.garden/nextjournal/clerk-assets@4NdW4yYfmUzzw9xCkmyrJ75nH75d/viewer.js?immutable=true" type="module"></script><link href="https://cdn.jsdelivr.net/npm/katex@0.13.13/dist/katex.min.css" rel="stylesheet" type="text/css"><link href="https://fonts.bunny.net" rel="preconnect"><link href="https://fonts.bunny.net/css?family=fira-mono:400,700%7Cfira-sans:400,400i,500,500i,700,700i%7Cfira-sans-condensed:700,700i%7Cpt-serif:400,400i,700,700i" rel="stylesheet" type="text/css"></head><body><div id="clerk-static-app"></div><script type="module">let state = "{:out-path \"public/build\", :path->doc {\"src/emmy/collection.cljc\" {:path [], :nextjournal/value {:toc {:type :toc, :children [{:children [{:type :toc, :content [{:type :text, :text \"Vector Implementations\"}], :heading-level 2, :attrs {:id \"vector-implementations\"}, :path [:content 0]} {:type :toc, :content [{:type :text, :text \"Sequences\"}], :heading-level 2, :attrs {:id \"sequences\"}, :path [:content 2]} {:type :toc, :content [{:type :text, :text \"Maps\"}], :heading-level 2, :attrs {:id \"maps\"}, :path [:content 4]} {:type :toc, :content [{:type :text, :text \"Sets\"}], :heading-level 2, :attrs {:id \"sets\"}, :path [:content 7]}], :type :toc}]}, :sidenotes? false, :toc-visibility true, :atom-var-name->state #viewer-eval (nextjournal.clerk.render/intern-atoms! {}), :ns #viewer-eval (ns emmy.collection), :auto-expand-results? nil, :scope emmy.collection, :bundle? false, :open-graph {:type \"article:clerk\", :title \"Vector Implementations\", :description \"Vectors are implicitly treated as [[emmy.structure/Structure]] instances with an up orientation, and implement [[v/freeze]] identically. They can act as zero?, but they can't act as one? or identity?; those are reserved for instances that have no effect on multiplication.\"}, :title \"Vector Implementations\", :blocks [{:path [], :nextjournal/value [:div.viewer.markdown-viewer.w-full.max-w-prose.px-8 {:data-block-id \"emmy.collection/markdown-5dr6USn4nPSZtHdn9nGDsHPqk4sfsd\"} [\"h2\" {:id \"vector-implementations\"} [:<> \"Vector Implementations\"]] [:p [:<> \"Vectors are implicitly treated as [[emmy.structure/Structure]] instances\"] [#viewer-eval nextjournal.clerk.render/inspect-presented {:nextjournal/value [:<> \" \"], :nextjournal/viewer {:name nextjournal.clerk.viewer/html-viewer, :render-fn #viewer-fn identity, :hash \"5du5eveS8XMqMDMYH5rpQ1bqryEJdg\"}}] [:<> \"with an \"] [:code [:<> \"up\"]] [:<> \" orientation, and implement [[v/freeze]] identically. They can\"] [#viewer-eval nextjournal.clerk.render/inspect-presented {:nextjournal/value [:<> \" \"], :nextjournal/viewer {:name nextjournal.clerk.viewer/html-viewer, :render-fn #viewer-fn identity, :hash \"5du5eveS8XMqMDMYH5rpQ1bqryEJdg\"}}] [:<> \"act as \"] [:code [:<> \"zero?\"]] [:<> \", but they can't act as \"] [:code [:<> \"one?\"]] [:<> \" or \"] [:code [:<> \"identity?\"]] [:<> \"; those are\"] [#viewer-eval nextjournal.clerk.render/inspect-presented {:nextjournal/value [:<> \" \"], :nextjournal/viewer {:name nextjournal.clerk.viewer/html-viewer, :render-fn #viewer-fn identity, :hash \"5du5eveS8XMqMDMYH5rpQ1bqryEJdg\"}}] [:<> \"reserved for instances that have no effect on multiplication.\"]]], :nextjournal/opts {:id \"emmy.collection/markdown-5dr6USn4nPSZtHdn9nGDsHPqk4sfsd\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/markdown-node-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-with-react-key, :hash \"5drtFhRgc8WMLrXw6DB4bZLsNZjHHp\"}} {:path [], :nextjournal/value \"(defmethod g/simplify [PersistentVector] [v]\\n  (mapv g/simplify v))\", :nextjournal/opts {:id \"emmy.collection/anon-expr-5dsSUZstkRYuxyXh3TwPyRQGDDJ7wc-code\", :loc {:line 29, :end-line 30, :column 1, :end-column 23}}, :nextjournal/viewer {:name nextjournal.clerk.viewer/code-block-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-code-block, :hash \"5dru1FUcVRTRrVKJFbNw4FG2wXmiwB\"}} {:path [], :nextjournal/value {:nextjournal/presented {:path [], :nextjournal/value \"#object[clojure.lang.MultiFn 0x4abfe2d2 \\\"clojure.lang.MultiFn@4abfe2d2\\\"]\", :nextjournal/opts {:id \"emmy.collection/anon-expr-5dsSUZstkRYuxyXh3TwPyRQGDDJ7wc-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/read+inspect-viewer, :render-fn #viewer-fn (fn [x] (try [nextjournal.clerk.render/inspect (read-string x)] (catch js/Error _e (nextjournal.clerk.render/render-unreadable-edn x)))), :hash \"5driNqLjrByEWrhxqnAqaiYK9eiYCv\"}}, :nextjournal/blob-id \"5du2uggcSetjvZB4acXta5Y5sCA2ca\"}, :nextjournal/opts {:id \"emmy.collection/anon-expr-5dsSUZstkRYuxyXh3TwPyRQGDDJ7wc-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/result-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-result, :hash \"5dtGVHesd2XCTLFYF3aY4kJvkrX1x1\"}} {:path [], :nextjournal/value \"(extend-type #?(:clj IPersistentVector :cljs PersistentVector)\\n  v/Value\\n  (zero? [v] (every? v/zero? v))\\n  (one? [_] false)\\n  (identity? [_] false)\\n  (zero-like [v] (mapv v/zero-like v))\\n  (one-like [_] 1)\\n  (identity-like [_] 1)\\n  (exact? [v] (every? v/exact? v))\\n  (freeze [v] `(~'up ~@(map v/freeze v)))\\n  (kind [v] (type v))\\n\\n  ;; Another difference from [[emmy.structure/Structure]] is that a\\n  ;; structure of functions acts as a function itself that applies its entries\\n  ;; to its arguments. Vectors already implement IFn (they take an index and\\n  ;; look it up), so they can't respond the same way as a structure via\\n  ;; arity. (the `2` arity takes an additional default value.)\\n  f/IArity\\n  (arity [_] [:between 1 2])\\n\\n  ;; Vectors are functors, so they can be perturbed if any of their elements are\\n  ;; perturbed. [[d/replace-tag]] and [[d/extract-tangent]] pass the buck down\\n  ;; the vector's elements.\\n  d/IPerturbed\\n  (perturbed? [v] (boolean (some d/perturbed? v)))\\n  (replace-tag [v old new] (mapv #(d/replace-tag % old new) v))\\n  (extract-tangent [v tag] (mapv #(d/extract-tangent % tag) v)))\", :nextjournal/opts {:id \"emmy.collection/anon-expr-5dt1osRsYU8QWBBbbFWhwvbq2DvASH-code\", :loc {:line 32, :end-line 58, :column 1, :end-column 65}}, :nextjournal/viewer {:name nextjournal.clerk.viewer/code-block-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-code-block, :hash \"5dru1FUcVRTRrVKJFbNw4FG2wXmiwB\"}} {:path [], :nextjournal/value {:nextjournal/presented {:path [], :nextjournal/value nil, :nextjournal/opts {:id \"emmy.collection/anon-expr-5dt1osRsYU8QWBBbbFWhwvbq2DvASH-result\"}, :nextjournal/viewer {:render-fn #viewer-fn (fn [_] [:span.cmt-default.inspected-value \"nil\"]), :hash \"5dtUvzjkkSGDKH896hrVHyYFWTpQG6\"}}, :nextjournal/blob-id \"5duL4gaVgKjhtn3xfJNMV1LJ8s79fM\"}, :nextjournal/opts {:id \"emmy.collection/anon-expr-5dt1osRsYU8QWBBbbFWhwvbq2DvASH-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/result-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-result, :hash \"5dtGVHesd2XCTLFYF3aY4kJvkrX1x1\"}} {:path [], :nextjournal/value [:div.viewer.markdown-viewer.w-full.max-w-prose.px-8 {:data-block-id \"emmy.collection/markdown-5drJHWhwawyCxUqmv2Tbk3ieiwZB15\"} [\"h2\" {:id \"sequences\"} [:<> \"Sequences\"]] [:p [:<> \"Sequences can't act as functions or respond to any of\"] [#viewer-eval nextjournal.clerk.render/inspect-presented {:nextjournal/value [:<> \" \"], :nextjournal/viewer {:name nextjournal.clerk.viewer/html-viewer, :render-fn #viewer-fn identity, :hash \"5du5eveS8XMqMDMYH5rpQ1bqryEJdg\"}}] [:<> \"the [[v/zero?]]-and-friends predicates. They pass along the operations that\"] [#viewer-eval nextjournal.clerk.render/inspect-presented {:nextjournal/value [:<> \" \"], :nextjournal/viewer {:name nextjournal.clerk.viewer/html-viewer, :render-fn #viewer-fn identity, :hash \"5du5eveS8XMqMDMYH5rpQ1bqryEJdg\"}}] [:<> \"they can implement to their elements via [[map]].\"]]], :nextjournal/opts {:id \"emmy.collection/markdown-5drJHWhwawyCxUqmv2Tbk3ieiwZB15\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/markdown-node-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-with-react-key, :hash \"5drtFhRgc8WMLrXw6DB4bZLsNZjHHp\"}} {:path [], :nextjournal/value \"(defmethod g/simplify [v/seqtype] [a]\\n  (map g/simplify a))\", :nextjournal/opts {:id \"emmy.collection/anon-expr-5dsGukA77CTo3aWfRVr9iXZoR4CVVT-code\", :loc {:line 66, :end-line 67, :column 1, :end-column 22}}, :nextjournal/viewer {:name nextjournal.clerk.viewer/code-block-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-code-block, :hash \"5dru1FUcVRTRrVKJFbNw4FG2wXmiwB\"}} {:path [], :nextjournal/value {:nextjournal/presented {:path [], :nextjournal/value \"#object[clojure.lang.MultiFn 0x4abfe2d2 \\\"clojure.lang.MultiFn@4abfe2d2\\\"]\", :nextjournal/opts {:id \"emmy.collection/anon-expr-5dsGukA77CTo3aWfRVr9iXZoR4CVVT-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/read+inspect-viewer, :render-fn #viewer-fn (fn [x] (try [nextjournal.clerk.render/inspect (read-string x)] (catch js/Error _e (nextjournal.clerk.render/render-unreadable-edn x)))), :hash \"5driNqLjrByEWrhxqnAqaiYK9eiYCv\"}}, :nextjournal/blob-id \"5drhqpRGoCh2ECK1nVy6126LsbtM4G\"}, :nextjournal/opts {:id \"emmy.collection/anon-expr-5dsGukA77CTo3aWfRVr9iXZoR4CVVT-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/result-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-result, :hash \"5dtGVHesd2XCTLFYF3aY4kJvkrX1x1\"}} {:path [], :nextjournal/value \"(#?@(:clj [do]\\n     :cljs [doseq [klass [Cons IndexedSeq LazySeq List Range IntegerRange]]])\\n (extend-type #?(:clj ISeq :cljs klass)\\n   v/Value\\n   (zero? [_] false)\\n   (one? [_] false)\\n   (identity? [_] false)\\n   (zero-like [xs] (map v/zero-like xs))\\n   (one-like [xs] (u/unsupported (str \\\"one-like: \\\" xs)))\\n   (identity-like [xs] (u/unsupported (str \\\"identity-like: \\\" xs)))\\n   (exact? [_] false)\\n   (freeze [xs] (map v/freeze xs))\\n   (kind [xs] (type xs))\\n\\n   d/IPerturbed\\n   (perturbed? [_] false)\\n   (replace-tag [xs old new] (map #(d/replace-tag % old new) xs))\\n   (extract-tangent [xs tag] (map #(d/extract-tangent % tag) xs))))\", :nextjournal/opts {:id \"emmy.collection/anon-expr-5dtM7vE9QLNeXpjsBvuNJKKDvfaukQ-code\", :loc {:line 70, :end-line 87, :column 1, :end-column 68}}, :nextjournal/viewer {:name nextjournal.clerk.viewer/code-block-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-code-block, :hash \"5dru1FUcVRTRrVKJFbNw4FG2wXmiwB\"}} {:path [], :nextjournal/value {:nextjournal/presented {:path [], :nextjournal/value nil, :nextjournal/opts {:id \"emmy.collection/anon-expr-5dtM7vE9QLNeXpjsBvuNJKKDvfaukQ-result\"}, :nextjournal/viewer {:render-fn #viewer-fn (fn [_] [:span.cmt-default.inspected-value \"nil\"]), :hash \"5dtUvzjkkSGDKH896hrVHyYFWTpQG6\"}}, :nextjournal/blob-id \"5dsFzJo7TJwPs248R2pENftwLh2Eef\"}, :nextjournal/opts {:id \"emmy.collection/anon-expr-5dtM7vE9QLNeXpjsBvuNJKKDvfaukQ-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/result-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-result, :hash \"5dtGVHesd2XCTLFYF3aY4kJvkrX1x1\"}} {:path [], :nextjournal/value [:div.viewer.markdown-viewer.w-full.max-w-prose.px-8 {:data-block-id \"emmy.collection/markdown-5dtmJJr6Lo988pXjDHCDrBRqrdWPgu\"} [\"h2\" {:id \"maps\"} [:<> \"Maps\"]] [:p [:<> \"Maps acts as functors that can be perturbed and zeroed out (and pass along\"] [#viewer-eval nextjournal.clerk.render/inspect-presented {:nextjournal/value [:<> \" \"], :nextjournal/viewer {:name nextjournal.clerk.viewer/html-viewer, :render-fn #viewer-fn identity, :hash \"5du5eveS8XMqMDMYH5rpQ1bqryEJdg\"}}] [:<> \"calls to [[g/partial-derivative]] to their elements!), but not much else.\"]] [:p [:<> \"NOTE: There is probably a case for making something\"] [#viewer-eval nextjournal.clerk.render/inspect-presented {:nextjournal/value [:<> \" \"], :nextjournal/viewer {:name nextjournal.clerk.viewer/html-viewer, :render-fn #viewer-fn identity, :hash \"5du5eveS8XMqMDMYH5rpQ1bqryEJdg\"}}] [:<> \"like [[emmy.structure/Structure]] backed by a map, for a sort of sparse\"] [#viewer-eval nextjournal.clerk.render/inspect-presented {:nextjournal/value [:<> \" \"], :nextjournal/viewer {:name nextjournal.clerk.viewer/html-viewer, :render-fn #viewer-fn identity, :hash \"5du5eveS8XMqMDMYH5rpQ1bqryEJdg\"}}] [:<> \"structure, or a dataframe-like structure with named fields instead of\"] [#viewer-eval nextjournal.clerk.render/inspect-presented {:nextjournal/value [:<> \" \"], :nextjournal/viewer {:name nextjournal.clerk.viewer/html-viewer, :render-fn #viewer-fn identity, :hash \"5du5eveS8XMqMDMYH5rpQ1bqryEJdg\"}}] [:<> \"positional fields. Nothing like this exists yet!\"]]], :nextjournal/opts {:id \"emmy.collection/markdown-5dtmJJr6Lo988pXjDHCDrBRqrdWPgu\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/markdown-node-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-with-react-key, :hash \"5drtFhRgc8WMLrXw6DB4bZLsNZjHHp\"}} {:path [], :nextjournal/value \"#?(:clj\\n   (derive IPersistentMap ::map)\\n\\n   :cljs\\n   (do\\n     (derive PersistentHashMap ::map)\\n     (derive PersistentArrayMap ::map)\\n     (derive PersistentTreeMap ::map)))\", :nextjournal/opts {:id \"emmy.collection/anon-expr-5dtBRJWJxxQuWDf75FcqwLEBgmnfMw-code\", :loc {:line 99, :end-line 106, :column 1, :end-column 40}}, :nextjournal/viewer {:name nextjournal.clerk.viewer/code-block-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-code-block, :hash \"5dru1FUcVRTRrVKJFbNw4FG2wXmiwB\"}} {:path [], :nextjournal/value {:nextjournal/presented {:path [], :nextjournal/value nil, :nextjournal/opts {:id \"emmy.collection/anon-expr-5dtBRJWJxxQuWDf75FcqwLEBgmnfMw-result\"}, :nextjournal/viewer {:render-fn #viewer-fn (fn [_] [:span.cmt-default.inspected-value \"nil\"]), :hash \"5dtUvzjkkSGDKH896hrVHyYFWTpQG6\"}}, :nextjournal/blob-id \"5duE43veB7vBCrkJpBnuAJbmsubWdj\"}, :nextjournal/opts {:id \"emmy.collection/anon-expr-5dtBRJWJxxQuWDf75FcqwLEBgmnfMw-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/result-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-result, :hash \"5dtGVHesd2XCTLFYF3aY4kJvkrX1x1\"}} {:path [], :nextjournal/value \"(defmethod g/negate [::map] [m]\\n  (u/map-vals g/negate m))\", :nextjournal/opts {:id \"emmy.collection/anon-expr-5dtZmzkDXaQAKPxcHc9VhBechmVobo-code\", :loc {:line 108, :end-line 109, :column 1, :end-column 27}}, :nextjournal/viewer {:name nextjournal.clerk.viewer/code-block-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-code-block, :hash \"5dru1FUcVRTRrVKJFbNw4FG2wXmiwB\"}} {:path [], :nextjournal/value {:nextjournal/presented {:path [], :nextjournal/value \"#object[clojure.lang.MultiFn 0x30d2f7cb \\\"clojure.lang.MultiFn@30d2f7cb\\\"]\", :nextjournal/opts {:id \"emmy.collection/anon-expr-5dtZmzkDXaQAKPxcHc9VhBechmVobo-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/read+inspect-viewer, :render-fn #viewer-fn (fn [x] (try [nextjournal.clerk.render/inspect (read-string x)] (catch js/Error _e (nextjournal.clerk.render/render-unreadable-edn x)))), :hash \"5driNqLjrByEWrhxqnAqaiYK9eiYCv\"}}, :nextjournal/blob-id \"5dqtXV6Hd6awDGvtPTC1bzNQZLxvff\"}, :nextjournal/opts {:id \"emmy.collection/anon-expr-5dtZmzkDXaQAKPxcHc9VhBechmVobo-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/result-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-result, :hash \"5dtGVHesd2XCTLFYF3aY4kJvkrX1x1\"}} {:path [], :nextjournal/value \"(defmethod g/add [::map ::map] [a b]\\n  (merge-with g/add a b))\", :nextjournal/opts {:id \"emmy.collection/anon-expr-5dtAQKV88zQeXwi8SsGPgffC5Vy4dv-code\", :loc {:line 111, :end-line 112, :column 1, :end-column 26}}, :nextjournal/viewer {:name nextjournal.clerk.viewer/code-block-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-code-block, :hash \"5dru1FUcVRTRrVKJFbNw4FG2wXmiwB\"}} {:path [], :nextjournal/value {:nextjournal/presented {:path [], :nextjournal/value \"#object[clojure.lang.MultiFn 0x362c44b4 \\\"clojure.lang.MultiFn@362c44b4\\\"]\", :nextjournal/opts {:id \"emmy.collection/anon-expr-5dtAQKV88zQeXwi8SsGPgffC5Vy4dv-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/read+inspect-viewer, :render-fn #viewer-fn (fn [x] (try [nextjournal.clerk.render/inspect (read-string x)] (catch js/Error _e (nextjournal.clerk.render/render-unreadable-edn x)))), :hash \"5driNqLjrByEWrhxqnAqaiYK9eiYCv\"}}, :nextjournal/blob-id \"5dtBrp8cef88MCd9bRCvHw8iUMA4H3\"}, :nextjournal/opts {:id \"emmy.collection/anon-expr-5dtAQKV88zQeXwi8SsGPgffC5Vy4dv-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/result-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-result, :hash \"5dtGVHesd2XCTLFYF3aY4kJvkrX1x1\"}} {:path [], :nextjournal/value \"(defmethod g/sub [::map ::map] [a b]\\n  (merge-with g/add a (u/map-vals g/negate b)))\", :nextjournal/opts {:id \"emmy.collection/anon-expr-5driRwjAD3SYpsv9pQmgciB5ojaLSh-code\", :loc {:line 114, :end-line 115, :column 1, :end-column 48}}, :nextjournal/viewer {:name nextjournal.clerk.viewer/code-block-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-code-block, :hash \"5dru1FUcVRTRrVKJFbNw4FG2wXmiwB\"}} {:path [], :nextjournal/value {:nextjournal/presented {:path [], :nextjournal/value \"#object[clojure.lang.MultiFn 0x32fa0508 \\\"clojure.lang.MultiFn@32fa0508\\\"]\", :nextjournal/opts {:id \"emmy.collection/anon-expr-5driRwjAD3SYpsv9pQmgciB5ojaLSh-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/read+inspect-viewer, :render-fn #viewer-fn (fn [x] (try [nextjournal.clerk.render/inspect (read-string x)] (catch js/Error _e (nextjournal.clerk.render/render-unreadable-edn x)))), :hash \"5driNqLjrByEWrhxqnAqaiYK9eiYCv\"}}, :nextjournal/blob-id \"5dsVFs8FBc4EtirutmPi8DCAYQvuuU\"}, :nextjournal/opts {:id \"emmy.collection/anon-expr-5driRwjAD3SYpsv9pQmgciB5ojaLSh-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/result-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-result, :hash \"5dtGVHesd2XCTLFYF3aY4kJvkrX1x1\"}} {:path [], :nextjournal/value \"(defmethod g/mul [::map ::v/scalar] [m x]\\n  (u/map-vals #(g/mul % x) m))\", :nextjournal/opts {:id \"emmy.collection/anon-expr-5drCu6u9dHRsePAftKrGNNAmEVGuAY-code\", :loc {:line 117, :end-line 118, :column 1, :end-column 31}}, :nextjournal/viewer {:name nextjournal.clerk.viewer/code-block-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-code-block, :hash \"5dru1FUcVRTRrVKJFbNw4FG2wXmiwB\"}} {:path [], :nextjournal/value {:nextjournal/presented {:path [], :nextjournal/value \"#object[clojure.lang.MultiFn 0x13a211ed \\\"clojure.lang.MultiFn@13a211ed\\\"]\", :nextjournal/opts {:id \"emmy.collection/anon-expr-5drCu6u9dHRsePAftKrGNNAmEVGuAY-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/read+inspect-viewer, :render-fn #viewer-fn (fn [x] (try [nextjournal.clerk.render/inspect (read-string x)] (catch js/Error _e (nextjournal.clerk.render/render-unreadable-edn x)))), :hash \"5driNqLjrByEWrhxqnAqaiYK9eiYCv\"}}, :nextjournal/blob-id \"5drkn968Hnsp8kvjEjUvv9FuF5oou5\"}, :nextjournal/opts {:id \"emmy.collection/anon-expr-5drCu6u9dHRsePAftKrGNNAmEVGuAY-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/result-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-result, :hash \"5dtGVHesd2XCTLFYF3aY4kJvkrX1x1\"}} {:path [], :nextjournal/value \"(defmethod g/mul [::v/scalar ::map] [x m]\\n  (u/map-vals #(g/mul x %) m))\", :nextjournal/opts {:id \"emmy.collection/anon-expr-5duH9uK76jwwL7yCZnoeLLMWzpQC2a-code\", :loc {:line 120, :end-line 121, :column 1, :end-column 31}}, :nextjournal/viewer {:name nextjournal.clerk.viewer/code-block-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-code-block, :hash \"5dru1FUcVRTRrVKJFbNw4FG2wXmiwB\"}} {:path [], :nextjournal/value {:nextjournal/presented {:path [], :nextjournal/value \"#object[clojure.lang.MultiFn 0x13a211ed \\\"clojure.lang.MultiFn@13a211ed\\\"]\", :nextjournal/opts {:id \"emmy.collection/anon-expr-5duH9uK76jwwL7yCZnoeLLMWzpQC2a-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/read+inspect-viewer, :render-fn #viewer-fn (fn [x] (try [nextjournal.clerk.render/inspect (read-string x)] (catch js/Error _e (nextjournal.clerk.render/render-unreadable-edn x)))), :hash \"5driNqLjrByEWrhxqnAqaiYK9eiYCv\"}}, :nextjournal/blob-id \"5dsCdnWJ4GVZD8fdNKkKwHaK4jijo4\"}, :nextjournal/opts {:id \"emmy.collection/anon-expr-5duH9uK76jwwL7yCZnoeLLMWzpQC2a-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/result-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-result, :hash \"5dtGVHesd2XCTLFYF3aY4kJvkrX1x1\"}} {:path [], :nextjournal/value \"(defmethod g/div [::map ::v/scalar] [m x]\\n  (u/map-vals #(g/div % x) m))\", :nextjournal/opts {:id \"emmy.collection/anon-expr-5duJ6JTAMr8ty3KGh83QwotStWCWi1-code\", :loc {:line 123, :end-line 124, :column 1, :end-column 31}}, :nextjournal/viewer {:name nextjournal.clerk.viewer/code-block-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-code-block, :hash \"5dru1FUcVRTRrVKJFbNw4FG2wXmiwB\"}} {:path [], :nextjournal/value {:nextjournal/presented {:path [], :nextjournal/value \"#object[clojure.lang.MultiFn 0x3f3793cc \\\"clojure.lang.MultiFn@3f3793cc\\\"]\", :nextjournal/opts {:id \"emmy.collection/anon-expr-5duJ6JTAMr8ty3KGh83QwotStWCWi1-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/read+inspect-viewer, :render-fn #viewer-fn (fn [x] (try [nextjournal.clerk.render/inspect (read-string x)] (catch js/Error _e (nextjournal.clerk.render/render-unreadable-edn x)))), :hash \"5driNqLjrByEWrhxqnAqaiYK9eiYCv\"}}, :nextjournal/blob-id \"5dsE53gfgw4dHx1RaU7DCPM3fc4zet\"}, :nextjournal/opts {:id \"emmy.collection/anon-expr-5duJ6JTAMr8ty3KGh83QwotStWCWi1-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/result-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-result, :hash \"5dtGVHesd2XCTLFYF3aY4kJvkrX1x1\"}} {:path [], :nextjournal/value \"(defn- combine [f m1 m2 l-default]\\n  (letfn [(merge-entry [m e]\\n\\t\\t\\t      (let [k (key e)\\n                  v (val e)]\\n\\t\\t\\t        (assoc m k (f (get m k l-default) v))))]\\n    (reduce merge-entry m1 (seq m2))))\", :nextjournal/opts {:id \"emmy.collection/combine-code\", :loc {:line 126, :end-line 131, :column 1, :end-column 39}}, :nextjournal/viewer {:name nextjournal.clerk.viewer/code-block-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-code-block, :hash \"5dru1FUcVRTRrVKJFbNw4FG2wXmiwB\"}} {:path [], :nextjournal/value {:nextjournal/presented {:path [], :nextjournal/value \"#object[emmy.collection$combine 0x1ea87f5d \\\"emmy.collection$combine@1ea87f5d\\\"]\", :nextjournal/opts {:id \"emmy.collection/combine-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/read+inspect-viewer, :render-fn #viewer-fn (fn [x] (try [nextjournal.clerk.render/inspect (read-string x)] (catch js/Error _e (nextjournal.clerk.render/render-unreadable-edn x)))), :hash \"5driNqLjrByEWrhxqnAqaiYK9eiYCv\"}}, :nextjournal/blob-id nil}, :nextjournal/opts {:id \"emmy.collection/combine-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/result-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-result, :hash \"5dtGVHesd2XCTLFYF3aY4kJvkrX1x1\"}} {:path [], :nextjournal/value \"(defmethod g/make-rectangular [::map ::map] [m1 m2]\\n  (combine g/make-rectangular m1 m2 0))\", :nextjournal/opts {:id \"emmy.collection/anon-expr-5duEFNSN4a9aQUyVLFSuU1shgRodzb-code\", :loc {:line 133, :end-line 134, :column 1, :end-column 40}}, :nextjournal/viewer {:name nextjournal.clerk.viewer/code-block-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-code-block, :hash \"5dru1FUcVRTRrVKJFbNw4FG2wXmiwB\"}} {:path [], :nextjournal/value {:nextjournal/presented {:path [], :nextjournal/value \"#object[clojure.lang.MultiFn 0x4af591d8 \\\"clojure.lang.MultiFn@4af591d8\\\"]\", :nextjournal/opts {:id \"emmy.collection/anon-expr-5duEFNSN4a9aQUyVLFSuU1shgRodzb-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/read+inspect-viewer, :render-fn #viewer-fn (fn [x] (try [nextjournal.clerk.render/inspect (read-string x)] (catch js/Error _e (nextjournal.clerk.render/render-unreadable-edn x)))), :hash \"5driNqLjrByEWrhxqnAqaiYK9eiYCv\"}}, :nextjournal/blob-id \"5dt246EvTYA18PJdJ8qeDiitmtvie3\"}, :nextjournal/opts {:id \"emmy.collection/anon-expr-5duEFNSN4a9aQUyVLFSuU1shgRodzb-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/result-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-result, :hash \"5dtGVHesd2XCTLFYF3aY4kJvkrX1x1\"}} {:path [], :nextjournal/value \"(defmethod g/make-polar [::map ::map] [m1 m2]\\n  (combine g/make-polar m1 m2 0))\", :nextjournal/opts {:id \"emmy.collection/anon-expr-5duFhBhqUBwNZcyCvgxvpXRUecH93N-code\", :loc {:line 136, :end-line 137, :column 1, :end-column 34}}, :nextjournal/viewer {:name nextjournal.clerk.viewer/code-block-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-code-block, :hash \"5dru1FUcVRTRrVKJFbNw4FG2wXmiwB\"}} {:path [], :nextjournal/value {:nextjournal/presented {:path [], :nextjournal/value \"#object[clojure.lang.MultiFn 0x28c50fcb \\\"clojure.lang.MultiFn@28c50fcb\\\"]\", :nextjournal/opts {:id \"emmy.collection/anon-expr-5duFhBhqUBwNZcyCvgxvpXRUecH93N-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/read+inspect-viewer, :render-fn #viewer-fn (fn [x] (try [nextjournal.clerk.render/inspect (read-string x)] (catch js/Error _e (nextjournal.clerk.render/render-unreadable-edn x)))), :hash \"5driNqLjrByEWrhxqnAqaiYK9eiYCv\"}}, :nextjournal/blob-id \"5dsp5mLTxhG7jBD6xkbRoMjuoTkKbj\"}, :nextjournal/opts {:id \"emmy.collection/anon-expr-5duFhBhqUBwNZcyCvgxvpXRUecH93N-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/result-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-result, :hash \"5dtGVHesd2XCTLFYF3aY4kJvkrX1x1\"}} {:path [], :nextjournal/value \"(defmethod g/real-part [::map] [m]\\n  (u/map-vals g/real-part m))\", :nextjournal/opts {:id \"emmy.collection/anon-expr-5dtKzKVNTmmSdghQ2eh9goT3HbBrCs-code\", :loc {:line 139, :end-line 140, :column 1, :end-column 30}}, :nextjournal/viewer {:name nextjournal.clerk.viewer/code-block-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-code-block, :hash \"5dru1FUcVRTRrVKJFbNw4FG2wXmiwB\"}} {:path [], :nextjournal/value {:nextjournal/presented {:path [], :nextjournal/value \"#object[clojure.lang.MultiFn 0x3eddce6f \\\"clojure.lang.MultiFn@3eddce6f\\\"]\", :nextjournal/opts {:id \"emmy.collection/anon-expr-5dtKzKVNTmmSdghQ2eh9goT3HbBrCs-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/read+inspect-viewer, :render-fn #viewer-fn (fn [x] (try [nextjournal.clerk.render/inspect (read-string x)] (catch js/Error _e (nextjournal.clerk.render/render-unreadable-edn x)))), :hash \"5driNqLjrByEWrhxqnAqaiYK9eiYCv\"}}, :nextjournal/blob-id \"5dtWJCo1sGinbUbNaabpUoq9YmZWuU\"}, :nextjournal/opts {:id \"emmy.collection/anon-expr-5dtKzKVNTmmSdghQ2eh9goT3HbBrCs-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/result-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-result, :hash \"5dtGVHesd2XCTLFYF3aY4kJvkrX1x1\"}} {:path [], :nextjournal/value \"(defmethod g/imag-part [::map] [m]\\n  (u/map-vals g/imag-part m))\", :nextjournal/opts {:id \"emmy.collection/anon-expr-5dqtvgtRH2gXU9UVU1BYZVTcxWHNNw-code\", :loc {:line 142, :end-line 143, :column 1, :end-column 30}}, :nextjournal/viewer {:name nextjournal.clerk.viewer/code-block-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-code-block, :hash \"5dru1FUcVRTRrVKJFbNw4FG2wXmiwB\"}} {:path [], :nextjournal/value {:nextjournal/presented {:path [], :nextjournal/value \"#object[clojure.lang.MultiFn 0x93d4b27 \\\"clojure.lang.MultiFn@93d4b27\\\"]\", :nextjournal/opts {:id \"emmy.collection/anon-expr-5dqtvgtRH2gXU9UVU1BYZVTcxWHNNw-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/read+inspect-viewer, :render-fn #viewer-fn (fn [x] (try [nextjournal.clerk.render/inspect (read-string x)] (catch js/Error _e (nextjournal.clerk.render/render-unreadable-edn x)))), :hash \"5driNqLjrByEWrhxqnAqaiYK9eiYCv\"}}, :nextjournal/blob-id \"5dtm59o4d5gr6giAfoQGFgwGvVer1P\"}, :nextjournal/opts {:id \"emmy.collection/anon-expr-5dqtvgtRH2gXU9UVU1BYZVTcxWHNNw-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/result-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-result, :hash \"5dtGVHesd2XCTLFYF3aY4kJvkrX1x1\"}} {:path [], :nextjournal/value \"(defmethod g/simplify [::map] [m]\\n  (u/map-vals g/simplify m))\", :nextjournal/opts {:id \"emmy.collection/anon-expr-5dsoipfbsRXu6WDx6FE3E9azHCZkST-code\", :loc {:line 145, :end-line 146, :column 1, :end-column 29}}, :nextjournal/viewer {:name nextjournal.clerk.viewer/code-block-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-code-block, :hash \"5dru1FUcVRTRrVKJFbNw4FG2wXmiwB\"}} {:path [], :nextjournal/value {:nextjournal/presented {:path [], :nextjournal/value \"#object[clojure.lang.MultiFn 0x4abfe2d2 \\\"clojure.lang.MultiFn@4abfe2d2\\\"]\", :nextjournal/opts {:id \"emmy.collection/anon-expr-5dsoipfbsRXu6WDx6FE3E9azHCZkST-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/read+inspect-viewer, :render-fn #viewer-fn (fn [x] (try [nextjournal.clerk.render/inspect (read-string x)] (catch js/Error _e (nextjournal.clerk.render/render-unreadable-edn x)))), :hash \"5driNqLjrByEWrhxqnAqaiYK9eiYCv\"}}, :nextjournal/blob-id \"5dtCfyXDzejDZFSzMAQbVmC6GBWEcB\"}, :nextjournal/opts {:id \"emmy.collection/anon-expr-5dsoipfbsRXu6WDx6FE3E9azHCZkST-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/result-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-result, :hash \"5dtGVHesd2XCTLFYF3aY4kJvkrX1x1\"}} {:path [], :nextjournal/value \"(let [sentinel #?(:cljs (NeverEquiv.)\\n                  :clj (Object.))]\\n  (defmethod v/= [::map ::map] [x y]\\n    (boolean\\n     (when (== (count x) (count y))\\n       (reduce-kv\\n        (fn [_ k v]\\n          (if (v/= (get y k sentinel) v)\\n            true\\n            (reduced false)))\\n        true\\n        x)))))\", :nextjournal/opts {:id \"emmy.collection/anon-expr-5dqtzeNAyMv13J3bj4LeLuZjAfnFYS-code\", :loc {:line 148, :end-line 159, :column 1, :end-column 15}}, :nextjournal/viewer {:name nextjournal.clerk.viewer/code-block-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-code-block, :hash \"5dru1FUcVRTRrVKJFbNw4FG2wXmiwB\"}} {:path [], :nextjournal/value {:nextjournal/presented {:path [], :nextjournal/value \"#object[clojure.lang.MultiFn 0x76677395 \\\"clojure.lang.MultiFn@76677395\\\"]\", :nextjournal/opts {:id \"emmy.collection/anon-expr-5dqtzeNAyMv13J3bj4LeLuZjAfnFYS-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/read+inspect-viewer, :render-fn #viewer-fn (fn [x] (try [nextjournal.clerk.render/inspect (read-string x)] (catch js/Error _e (nextjournal.clerk.render/render-unreadable-edn x)))), :hash \"5driNqLjrByEWrhxqnAqaiYK9eiYCv\"}}, :nextjournal/blob-id \"5dt5idWYHMYiCgThkCjoTZQU4aq9ik\"}, :nextjournal/opts {:id \"emmy.collection/anon-expr-5dqtzeNAyMv13J3bj4LeLuZjAfnFYS-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/result-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-result, :hash \"5dtGVHesd2XCTLFYF3aY4kJvkrX1x1\"}} {:path [], :nextjournal/value \"(defmethod g/partial-derivative [::map v/seqtype] [m selectors]\\n  (u/map-vals #(g/partial-derivative % selectors)\\n              m))\", :nextjournal/opts {:id \"emmy.collection/anon-expr-5dteFnZMeQsa7NDBxgua7DtVBdq94k-code\", :loc {:line 161, :end-line 163, :column 1, :end-column 18}}, :nextjournal/viewer {:name nextjournal.clerk.viewer/code-block-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-code-block, :hash \"5dru1FUcVRTRrVKJFbNw4FG2wXmiwB\"}} {:path [], :nextjournal/value {:nextjournal/presented {:path [], :nextjournal/value \"#object[clojure.lang.MultiFn 0x2bef40ec \\\"clojure.lang.MultiFn@2bef40ec\\\"]\", :nextjournal/opts {:id \"emmy.collection/anon-expr-5dteFnZMeQsa7NDBxgua7DtVBdq94k-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/read+inspect-viewer, :render-fn #viewer-fn (fn [x] (try [nextjournal.clerk.render/inspect (read-string x)] (catch js/Error _e (nextjournal.clerk.render/render-unreadable-edn x)))), :hash \"5driNqLjrByEWrhxqnAqaiYK9eiYCv\"}}, :nextjournal/blob-id \"5dth15DDFQnA93BhT1yqc14diXCdqm\"}, :nextjournal/opts {:id \"emmy.collection/anon-expr-5dteFnZMeQsa7NDBxgua7DtVBdq94k-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/result-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-result, :hash \"5dtGVHesd2XCTLFYF3aY4kJvkrX1x1\"}} {:path [], :nextjournal/value \"(#?@(:clj [do] :cljs [doseq [klass [PersistentHashMap PersistentArrayMap PersistentTreeMap]]])\\n (extend-type #?(:clj IPersistentMap :cljs klass)\\n   v/Value\\n   (zero? [m] (every? v/zero? (vals m)))\\n   (one? [_] false)\\n   (identity? [_] false)\\n   (zero-like [m] (u/map-vals v/zero-like m))\\n   (one-like [m] (u/unsupported (str \\\"one-like: \\\" m)))\\n   (identity-like [m] (u/unsupported (str \\\"identity-like: \\\" m)))\\n   (exact? [m] (every? v/exact? (vals m)))\\n   (freeze [m] (u/map-vals v/freeze m))\\n   (kind [m] (if (sorted? m)\\n               (type m)\\n               (:type m (type m))))\\n\\n   f/IArity\\n   (arity [_] [:between 1 2])\\n\\n   d/IPerturbed\\n   (perturbed? [m] (boolean (some d/perturbed? (vals m))))\\n   (replace-tag [m old new] (u/map-vals #(d/replace-tag % old new) m))\\n   (extract-tangent [m tag]\\n     (if-let [t (:type m)]\\n       ;; Do NOT attempt to recurse into the values if this map is being used as a\\n       ;; simple representation for some other type, like a manifold point.\\n       (u/unsupported (str \\\"`extract-tangent` not supported for type \\\" t \\\".\\\"))\\n       (u/map-vals #(d/extract-tangent % tag) m)))))\", :nextjournal/opts {:id \"emmy.collection/anon-expr-5druLYaxzp4avXcjQS8EjPYhcN4pBn-code\", :loc {:line 166, :end-line 192, :column 1, :end-column 53}}, :nextjournal/viewer {:name nextjournal.clerk.viewer/code-block-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-code-block, :hash \"5dru1FUcVRTRrVKJFbNw4FG2wXmiwB\"}} {:path [], :nextjournal/value {:nextjournal/presented {:path [], :nextjournal/value nil, :nextjournal/opts {:id \"emmy.collection/anon-expr-5druLYaxzp4avXcjQS8EjPYhcN4pBn-result\"}, :nextjournal/viewer {:render-fn #viewer-fn (fn [_] [:span.cmt-default.inspected-value \"nil\"]), :hash \"5dtUvzjkkSGDKH896hrVHyYFWTpQG6\"}}, :nextjournal/blob-id \"5dtn3c4YLteKtzX5GoEx6ZMLCiKcMS\"}, :nextjournal/opts {:id \"emmy.collection/anon-expr-5druLYaxzp4avXcjQS8EjPYhcN4pBn-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/result-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-result, :hash \"5dtGVHesd2XCTLFYF3aY4kJvkrX1x1\"}} {:path [], :nextjournal/value [:div.viewer.markdown-viewer.w-full.max-w-prose.px-8 {:data-block-id \"emmy.collection/markdown-5du8QYw94XNYX5K5TYEQsaJsnpctFf\"} [\"h2\" {:id \"sets\"} [:<> \"Sets\"]] [:p [:<> \"Emmy treats Clojure's set data structure as a monoid, with set union as\"] [#viewer-eval nextjournal.clerk.render/inspect-presented {:nextjournal/value [:<> \" \"], :nextjournal/viewer {:name nextjournal.clerk.viewer/html-viewer, :render-fn #viewer-fn identity, :hash \"5du5eveS8XMqMDMYH5rpQ1bqryEJdg\"}}] [:<> \"the addition operation and the empty set as the zero element.\"]]], :nextjournal/opts {:id \"emmy.collection/markdown-5du8QYw94XNYX5K5TYEQsaJsnpctFf\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/markdown-node-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-with-react-key, :hash \"5drtFhRgc8WMLrXw6DB4bZLsNZjHHp\"}} {:path [], :nextjournal/value \"#?(:clj\\n   (derive IPersistentSet ::set)\\n\\n   :cljs\\n   (do\\n     (derive PersistentHashSet ::set)\\n     (derive PersistentTreeSet ::set)))\", :nextjournal/opts {:id \"emmy.collection/anon-expr-5dqvYtv6bsCEqXqJSKoNEB8MjZZJNK-code\", :loc {:line 199, :end-line 205, :column 1, :end-column 40}}, :nextjournal/viewer {:name nextjournal.clerk.viewer/code-block-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-code-block, :hash \"5dru1FUcVRTRrVKJFbNw4FG2wXmiwB\"}} {:path [], :nextjournal/value {:nextjournal/presented {:path [], :nextjournal/value nil, :nextjournal/opts {:id \"emmy.collection/anon-expr-5dqvYtv6bsCEqXqJSKoNEB8MjZZJNK-result\"}, :nextjournal/viewer {:render-fn #viewer-fn (fn [_] [:span.cmt-default.inspected-value \"nil\"]), :hash \"5dtUvzjkkSGDKH896hrVHyYFWTpQG6\"}}, :nextjournal/blob-id \"5drFz29H8GaVcAycWy5bdZ3rKFjqfC\"}, :nextjournal/opts {:id \"emmy.collection/anon-expr-5dqvYtv6bsCEqXqJSKoNEB8MjZZJNK-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/result-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-result, :hash \"5dtGVHesd2XCTLFYF3aY4kJvkrX1x1\"}} {:path [], :nextjournal/value \"(defmethod g/add [::set ::set] [a b]\\n  (cs/union a b))\", :nextjournal/opts {:id \"emmy.collection/anon-expr-5dtC9Rp7wokkEb8dh8KkU9RPVGvZji-code\", :loc {:line 207, :end-line 208, :column 1, :end-column 18}}, :nextjournal/viewer {:name nextjournal.clerk.viewer/code-block-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-code-block, :hash \"5dru1FUcVRTRrVKJFbNw4FG2wXmiwB\"}} {:path [], :nextjournal/value {:nextjournal/presented {:path [], :nextjournal/value \"#object[clojure.lang.MultiFn 0x362c44b4 \\\"clojure.lang.MultiFn@362c44b4\\\"]\", :nextjournal/opts {:id \"emmy.collection/anon-expr-5dtC9Rp7wokkEb8dh8KkU9RPVGvZji-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/read+inspect-viewer, :render-fn #viewer-fn (fn [x] (try [nextjournal.clerk.render/inspect (read-string x)] (catch js/Error _e (nextjournal.clerk.render/render-unreadable-edn x)))), :hash \"5driNqLjrByEWrhxqnAqaiYK9eiYCv\"}}, :nextjournal/blob-id \"5duFVfQn2XqFqBJ1zVJTUzu8tfbHm1\"}, :nextjournal/opts {:id \"emmy.collection/anon-expr-5dtC9Rp7wokkEb8dh8KkU9RPVGvZji-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/result-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-result, :hash \"5dtGVHesd2XCTLFYF3aY4kJvkrX1x1\"}} {:path [], :nextjournal/value \"(#?@(:clj [do] :cljs [doseq [klass [PersistentHashSet PersistentTreeSet]]])\\n (extend-type #?(:clj IPersistentSet :cljs klass)\\n   v/Value\\n   (zero? [s] (empty? s))\\n   (one? [_] false)\\n   (identity? [_] false)\\n   (zero-like [_] #{})\\n   (one-like [s] (u/unsupported (str \\\"one-like: \\\" s)))\\n   (identity-like [s] (u/unsupported (str \\\"identity-like: \\\" s)))\\n   (exact? [_] false)\\n   (freeze [s] (u/unsupported (str \\\"freeze: \\\" s)))\\n   (kind [s] (type s))\\n\\n   f/IArity\\n   (arity [_] [:between 1 2])))\", :nextjournal/opts {:id \"emmy.collection/anon-expr-5dtjCkkfgWFsDEFm717Bxbun1oVAW6-code\", :loc {:line 211, :end-line 225, :column 1, :end-column 32}}, :nextjournal/viewer {:name nextjournal.clerk.viewer/code-block-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-code-block, :hash \"5dru1FUcVRTRrVKJFbNw4FG2wXmiwB\"}} {:path [], :nextjournal/value {:nextjournal/presented {:path [], :nextjournal/value nil, :nextjournal/opts {:id \"emmy.collection/anon-expr-5dtjCkkfgWFsDEFm717Bxbun1oVAW6-result\"}, :nextjournal/viewer {:render-fn #viewer-fn (fn [_] [:span.cmt-default.inspected-value \"nil\"]), :hash \"5dtUvzjkkSGDKH896hrVHyYFWTpQG6\"}}, :nextjournal/blob-id \"5dtWKusFGabfbGAcXPuCTzzecDmzHg\"}, :nextjournal/opts {:id \"emmy.collection/anon-expr-5dtjCkkfgWFsDEFm717Bxbun1oVAW6-result\"}, :nextjournal/viewer {:name nextjournal.clerk.viewer/result-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-result, :hash \"5dtGVHesd2XCTLFYF3aY4kJvkrX1x1\"}}], :css-class nil}, :nextjournal/viewer {:name nextjournal.clerk.viewer/notebook-viewer, :render-fn #viewer-fn nextjournal.clerk.render/render-notebook, :hash \"5duAFDxE4sCnRX71Wo6zeCpC9C3djE\"}}}, :index \"dev/emmy/notebook.clj\", :browse? false, :git/url \"https://github.com/mentat-collective/emmy\", :paths [\"src/emmy/abstract/number.cljc\" \"src/emmy/special/elliptic.cljc\" \"src/emmy/polynomial/interpolate.cljc\" \"src/emmy/numerical/quadrature/midpoint.cljc\" \"src/emmy/numerical/quadrature/trapezoid.cljc\" \"src/emmy/sci.cljc\" \"src/emmy/calculus/map.cljc\" \"src/emmy/pattern/rule.cljc\" \"src/emmy/mechanics/time_evolution.cljc\" \"src/emmy/util/permute.cljc\" \"src/emmy/expression/cse.cljc\" \"src/emmy/complex.cljc\" \"src/emmy/generic.cljc\" \"src/emmy/expression/compile.cljc\" \"src/emmy/sr/frames.cljc\" \"src/emmy/function.cljc\" \"src/emmy/polynomial/richardson.cljc\" \"src/emmy/numerical/unimin/brent.cljc\" \"src/emmy/numsymb.cljc\" \"src/emmy/calculus/vector_field.cljc\" \"src/emmy/numerical/minimize.cljc\" \"src/emmy/rational_function.cljc\" \"src/emmy/mechanics/noether.cljc\" \"src/emmy/calculus/hodge_star.cljc\" \"src/emmy/series.cljc\" \"src/emmy/series/impl.cljc\" \"src/emmy/calculus/manifold.cljc\" \"src/emmy/util/logic.cljc\" \"src/emmy/util/stopwatch.cljc\" \"src/emmy/numerical/quadrature/adaptive.cljc\" \"src/emmy/mechanics/rotation.cljc\" \"src/emmy/numerical/ode.cljc\" \"src/emmy/numerical/quadrature/riemann.cljc\" \"src/emmy/calculus/connection.cljc\" \"src/emmy/numbers.cljc\" \"src/emmy/algebra/fold.cljc\" \"src/emmy/numerical/multimin/nelder_mead.cljc\" \"src/emmy/polynomial/exponent.cljc\" \"src/emmy/polynomial/factor.cljc\" \"src/emmy/util/def.cljc\" \"src/emmy/abstract/function.cljc\" \"src/emmy/calculus/indexed.cljc\" \"src/emmy/numerical/quadrature.cljc\" \"src/emmy/numerical/quadrature/infinite.cljc\" \"src/emmy/mechanics/routhian.cljc\" \"src/emmy/numerical/quadrature/bulirsch_stoer.cljc\" \"src/emmy/ratio.cljc\" \"src/emmy/calculus/curvature.cljc\" \"src/emmy/numerical/quadrature/milne.cljc\" \"src/emmy/calculus/form_field.cljc\" \"src/emmy/mechanics/hamilton.cljc\" \"src/emmy/expression/render.cljc\" \"src/emmy/util/stream.cljc\" \"src/emmy/calculus/derivative.cljc\" \"dev/emmy/notebook.clj\" \"src/emmy/util/aggregate.cljc\" \"src/emmy/numerical/quadrature/romberg.cljc\" \"src/emmy/numerical/quadrature/boole.cljc\" \"src/emmy/pattern/match.cljc\" \"src/emmy/calculus/metric.cljc\" \"src/emmy/polynomial/gcd.cljc\" \"src/emmy/numerical/quadrature/substitute.cljc\" \"src/emmy/euclid.cljc\" \"src/emmy/calculus/vector_calculus.cljc\" \"src/emmy/collection.cljc\" \"src/emmy/numerical/quadrature/simpson.cljc\" \"src/emmy/calculus/basis.cljc\" \"src/emmy/util/vector_set.cljc\" \"src/emmy/pattern/syntax.cljc\" \"src/emmy/numerical/quadrature/common.cljc\" \"src/emmy/sr/boost.cljc\" \"src/emmy/calculus/coordinate.cljc\" \"src/emmy/calculus/covariant.cljc\" \"src/emmy/numerical/derivative.cljc\" \"src/emmy/simplify/rules.cljc\" \"src/emmy/mechanics/rigid.cljc\" \"src/emmy/quaternion.cljc\" \"src/emmy/rational_function/interpolate.cljc\" \"src/emmy/numerical/unimin/bracket.cljc\" \"src/emmy/numerical/roots/bisect.cljc\" \"src/emmy/numerical/quadrature/simpson38.cljc\" \"src/emmy/mechanics/lagrange.cljc\" \"src/emmy/expression/analyze.cljc\" \"src/emmy/calculus/frame.cljc\" \"src/emmy/pattern/consequence.cljc\" \"src/emmy/env.cljc\" \"src/emmy/util.cljc\" \"src/emmy/matrix.cljc\" \"src/emmy/sci/macros.cljc\" \"src/emmy/numerical/unimin/golden.cljc\" \"src/emmy/special/factorial.cljc\" \"src/emmy/polynomial/impl.cljc\" \"src/emmy/modint.cljc\"], :resource->url {\"/js/viewer.js\" \"https://storage.clerk.garden/nextjournal/clerk-assets@4NdW4yYfmUzzw9xCkmyrJ75nH75d/viewer.js?immutable=true\"}, :current-path \"src/emmy/collection.cljc\", :bundle? false, :git/sha \"ae3126132d7146f49b4dd6e9d884fb75f85b477c\", :path->url {\"src/emmy/abstract/number.cljc\" \"src/emmy/abstract/number.html\", \"src/emmy/special/elliptic.cljc\" \"src/emmy/special/elliptic.html\", \"src/emmy/polynomial/interpolate.cljc\" \"src/emmy/polynomial/interpolate.html\", \"src/emmy/numerical/quadrature/midpoint.cljc\" \"src/emmy/numerical/quadrature/midpoint.html\", \"src/emmy/numerical/quadrature/trapezoid.cljc\" \"src/emmy/numerical/quadrature/trapezoid.html\", \"src/emmy/sci.cljc\" \"src/emmy/sci.html\", \"src/emmy/calculus/map.cljc\" \"src/emmy/calculus/map.html\", \"src/emmy/pattern/rule.cljc\" \"src/emmy/pattern/rule.html\", \"src/emmy/mechanics/time_evolution.cljc\" \"src/emmy/mechanics/time_evolution.html\", \"src/emmy/util/permute.cljc\" \"src/emmy/util/permute.html\", \"src/emmy/expression/cse.cljc\" \"src/emmy/expression/cse.html\", \"src/emmy/complex.cljc\" \"src/emmy/complex.html\", \"src/emmy/generic.cljc\" \"src/emmy/generic.html\", \"src/emmy/expression/compile.cljc\" \"src/emmy/expression/compile.html\", \"src/emmy/sr/frames.cljc\" \"src/emmy/sr/frames.html\", \"src/emmy/function.cljc\" \"src/emmy/function.html\", \"src/emmy/polynomial/richardson.cljc\" \"src/emmy/polynomial/richardson.html\", \"src/emmy/numerical/unimin/brent.cljc\" \"src/emmy/numerical/unimin/brent.html\", \"src/emmy/numsymb.cljc\" \"src/emmy/numsymb.html\", \"src/emmy/calculus/vector_field.cljc\" \"src/emmy/calculus/vector_field.html\", \"src/emmy/numerical/minimize.cljc\" \"src/emmy/numerical/minimize.html\", \"src/emmy/rational_function.cljc\" \"src/emmy/rational_function.html\", \"src/emmy/mechanics/noether.cljc\" \"src/emmy/mechanics/noether.html\", \"src/emmy/calculus/hodge_star.cljc\" \"src/emmy/calculus/hodge_star.html\", \"src/emmy/series.cljc\" \"src/emmy/series.html\", \"src/emmy/series/impl.cljc\" \"src/emmy/series/impl.html\", \"src/emmy/calculus/manifold.cljc\" \"src/emmy/calculus/manifold.html\", \"src/emmy/util/logic.cljc\" \"src/emmy/util/logic.html\", \"src/emmy/util/stopwatch.cljc\" \"src/emmy/util/stopwatch.html\", \"src/emmy/numerical/quadrature/adaptive.cljc\" \"src/emmy/numerical/quadrature/adaptive.html\", \"src/emmy/mechanics/rotation.cljc\" \"src/emmy/mechanics/rotation.html\", \"src/emmy/numerical/ode.cljc\" \"src/emmy/numerical/ode.html\", \"src/emmy/numerical/quadrature/riemann.cljc\" \"src/emmy/numerical/quadrature/riemann.html\", \"src/emmy/calculus/connection.cljc\" \"src/emmy/calculus/connection.html\", \"src/emmy/numbers.cljc\" \"src/emmy/numbers.html\", \"src/emmy/algebra/fold.cljc\" \"src/emmy/algebra/fold.html\", \"src/emmy/numerical/multimin/nelder_mead.cljc\" \"src/emmy/numerical/multimin/nelder_mead.html\", \"src/emmy/polynomial/exponent.cljc\" \"src/emmy/polynomial/exponent.html\", \"src/emmy/polynomial/factor.cljc\" \"src/emmy/polynomial/factor.html\", \"src/emmy/util/def.cljc\" \"src/emmy/util/def.html\", \"src/emmy/abstract/function.cljc\" \"src/emmy/abstract/function.html\", \"src/emmy/calculus/indexed.cljc\" \"src/emmy/calculus/indexed.html\", \"src/emmy/numerical/quadrature.cljc\" \"src/emmy/numerical/quadrature.html\", \"src/emmy/numerical/quadrature/infinite.cljc\" \"src/emmy/numerical/quadrature/infinite.html\", \"src/emmy/mechanics/routhian.cljc\" \"src/emmy/mechanics/routhian.html\", \"src/emmy/numerical/quadrature/bulirsch_stoer.cljc\" \"src/emmy/numerical/quadrature/bulirsch_stoer.html\", \"src/emmy/ratio.cljc\" \"src/emmy/ratio.html\", \"src/emmy/calculus/curvature.cljc\" \"src/emmy/calculus/curvature.html\", \"src/emmy/numerical/quadrature/milne.cljc\" \"src/emmy/numerical/quadrature/milne.html\", \"src/emmy/calculus/form_field.cljc\" \"src/emmy/calculus/form_field.html\", \"src/emmy/mechanics/hamilton.cljc\" \"src/emmy/mechanics/hamilton.html\", \"src/emmy/expression/render.cljc\" \"src/emmy/expression/render.html\", \"src/emmy/util/stream.cljc\" \"src/emmy/util/stream.html\", \"src/emmy/calculus/derivative.cljc\" \"src/emmy/calculus/derivative.html\", \"dev/emmy/notebook.clj\" \"\", \"src/emmy/util/aggregate.cljc\" \"src/emmy/util/aggregate.html\", \"src/emmy/numerical/quadrature/romberg.cljc\" \"src/emmy/numerical/quadrature/romberg.html\", \"src/emmy/numerical/quadrature/boole.cljc\" \"src/emmy/numerical/quadrature/boole.html\", \"src/emmy/pattern/match.cljc\" \"src/emmy/pattern/match.html\", \"src/emmy/calculus/metric.cljc\" \"src/emmy/calculus/metric.html\", \"src/emmy/polynomial/gcd.cljc\" \"src/emmy/polynomial/gcd.html\", \"src/emmy/numerical/quadrature/substitute.cljc\" \"src/emmy/numerical/quadrature/substitute.html\", \"src/emmy/euclid.cljc\" \"src/emmy/euclid.html\", \"src/emmy/calculus/vector_calculus.cljc\" \"src/emmy/calculus/vector_calculus.html\", \"src/emmy/collection.cljc\" \"src/emmy/collection.html\", \"src/emmy/numerical/quadrature/simpson.cljc\" \"src/emmy/numerical/quadrature/simpson.html\", \"src/emmy/calculus/basis.cljc\" \"src/emmy/calculus/basis.html\", \"src/emmy/util/vector_set.cljc\" \"src/emmy/util/vector_set.html\", \"src/emmy/pattern/syntax.cljc\" \"src/emmy/pattern/syntax.html\", \"src/emmy/numerical/quadrature/common.cljc\" \"src/emmy/numerical/quadrature/common.html\", \"src/emmy/sr/boost.cljc\" \"src/emmy/sr/boost.html\", \"src/emmy/calculus/coordinate.cljc\" \"src/emmy/calculus/coordinate.html\", \"src/emmy/calculus/covariant.cljc\" \"src/emmy/calculus/covariant.html\", \"src/emmy/numerical/derivative.cljc\" \"src/emmy/numerical/derivative.html\", \"src/emmy/simplify/rules.cljc\" \"src/emmy/simplify/rules.html\", \"src/emmy/mechanics/rigid.cljc\" \"src/emmy/mechanics/rigid.html\", \"src/emmy/quaternion.cljc\" \"src/emmy/quaternion.html\", \"src/emmy/rational_function/interpolate.cljc\" \"src/emmy/rational_function/interpolate.html\", \"src/emmy/numerical/unimin/bracket.cljc\" \"src/emmy/numerical/unimin/bracket.html\", \"src/emmy/numerical/roots/bisect.cljc\" \"src/emmy/numerical/roots/bisect.html\", \"src/emmy/numerical/quadrature/simpson38.cljc\" \"src/emmy/numerical/quadrature/simpson38.html\", \"src/emmy/mechanics/lagrange.cljc\" \"src/emmy/mechanics/lagrange.html\", \"src/emmy/expression/analyze.cljc\" \"src/emmy/expression/analyze.html\", \"src/emmy/calculus/frame.cljc\" \"src/emmy/calculus/frame.html\", \"src/emmy/pattern/consequence.cljc\" \"src/emmy/pattern/consequence.html\", \"src/emmy/env.cljc\" \"src/emmy/env.html\", \"src/emmy/util.cljc\" \"src/emmy/util.html\", \"src/emmy/matrix.cljc\" \"src/emmy/matrix.html\", \"src/emmy/sci/macros.cljc\" \"src/emmy/sci/macros.html\", \"src/emmy/numerical/unimin/golden.cljc\" \"src/emmy/numerical/unimin/golden.html\", \"src/emmy/special/factorial.cljc\" \"src/emmy/special/factorial.html\", \"src/emmy/polynomial/impl.cljc\" \"src/emmy/polynomial/impl.html\", \"src/emmy/modint.cljc\" \"src/emmy/modint.html\"}, :expanded-paths [\"src/emmy/series/impl.cljc\" \"src/emmy/abstract/number.cljc\" \"src/emmy/abstract/function.cljc\" \"src/emmy/util/def.cljc\" \"src/emmy/util/stopwatch.cljc\" \"src/emmy/util/aggregate.cljc\" \"src/emmy/util/logic.cljc\" \"src/emmy/util/permute.cljc\" \"src/emmy/util/stream.cljc\" \"src/emmy/util/vector_set.cljc\" \"src/emmy/numerical/roots/bisect.cljc\" \"src/emmy/numerical/derivative.cljc\" \"src/emmy/numerical/minimize.cljc\" \"src/emmy/numerical/ode.cljc\" \"src/emmy/numerical/quadrature.cljc\" \"src/emmy/numerical/quadrature/bulirsch_stoer.cljc\" \"src/emmy/numerical/quadrature/trapezoid.cljc\" \"src/emmy/numerical/quadrature/milne.cljc\" \"src/emmy/numerical/quadrature/simpson38.cljc\" \"src/emmy/numerical/quadrature/romberg.cljc\" \"src/emmy/numerical/quadrature/midpoint.cljc\" \"src/emmy/numerical/quadrature/infinite.cljc\" \"src/emmy/numerical/quadrature/common.cljc\" \"src/emmy/numerical/quadrature/riemann.cljc\" \"src/emmy/numerical/quadrature/adaptive.cljc\" \"src/emmy/numerical/quadrature/simpson.cljc\" \"src/emmy/numerical/quadrature/substitute.cljc\" \"src/emmy/numerical/quadrature/boole.cljc\" \"src/emmy/numerical/multimin/nelder_mead.cljc\" \"src/emmy/numerical/unimin/brent.cljc\" \"src/emmy/numerical/unimin/golden.cljc\" \"src/emmy/numerical/unimin/bracket.cljc\" \"src/emmy/sci/macros.cljc\" \"src/emmy/mechanics/routhian.cljc\" \"src/emmy/mechanics/time_evolution.cljc\" \"src/emmy/mechanics/rigid.cljc\" \"src/emmy/mechanics/noether.cljc\" \"src/emmy/mechanics/rotation.cljc\" \"src/emmy/mechanics/hamilton.cljc\" \"src/emmy/mechanics/lagrange.cljc\" \"src/emmy/special/elliptic.cljc\" \"src/emmy/special/factorial.cljc\" \"src/emmy/sr/frames.cljc\" \"src/emmy/sr/boost.cljc\" \"src/emmy/rational_function/interpolate.cljc\" \"src/emmy/expression/compile.cljc\" \"src/emmy/expression/analyze.cljc\" \"src/emmy/expression/cse.cljc\" \"src/emmy/expression/render.cljc\" \"src/emmy/pattern/syntax.cljc\" \"src/emmy/pattern/consequence.cljc\" \"src/emmy/pattern/match.cljc\" \"src/emmy/pattern/rule.cljc\" \"src/emmy/calculus/vector_calculus.cljc\" \"src/emmy/calculus/curvature.cljc\" \"src/emmy/calculus/hodge_star.cljc\" \"src/emmy/calculus/derivative.cljc\" \"src/emmy/calculus/map.cljc\" \"src/emmy/calculus/form_field.cljc\" \"src/emmy/calculus/frame.cljc\" \"src/emmy/calculus/metric.cljc\" \"src/emmy/calculus/basis.cljc\" \"src/emmy/calculus/connection.cljc\" \"src/emmy/calculus/coordinate.cljc\" \"src/emmy/calculus/manifold.cljc\" \"src/emmy/calculus/covariant.cljc\" \"src/emmy/calculus/vector_field.cljc\" \"src/emmy/calculus/indexed.cljc\" \"src/emmy/simplify/rules.cljc\" \"src/emmy/polynomial/factor.cljc\" \"src/emmy/polynomial/interpolate.cljc\" \"src/emmy/polynomial/gcd.cljc\" \"src/emmy/polynomial/richardson.cljc\" \"src/emmy/polynomial/impl.cljc\" \"src/emmy/polynomial/exponent.cljc\" \"src/emmy/algebra/fold.cljc\" \"src/emmy/collection.cljc\" \"src/emmy/complex.cljc\" \"src/emmy/euclid.cljc\" \"src/emmy/env.cljc\" \"src/emmy/function.cljc\" \"src/emmy/generic.cljc\" \"src/emmy/matrix.cljc\" \"src/emmy/modint.cljc\" \"src/emmy/numbers.cljc\" \"src/emmy/numsymb.cljc\" \"src/emmy/quaternion.cljc\" \"src/emmy/ratio.cljc\" \"src/emmy/rational_function.cljc\" \"src/emmy/sci.cljc\" \"src/emmy/series.cljc\" \"src/emmy/util.cljc\" \"dev/emmy/notebook.clj\"], :cname \"emmy.mentat.org\", :watch-paths [\"src\" \"dev\"], :report-fn #object[nextjournal.clerk.builder$stdout_reporter 0x6da6a3eb \"nextjournal.clerk.builder$stdout_reporter@6da6a3eb\"]}".replaceAll('nextjournal.clerk.view/escape-closing-script-tag', 'script')
+let opts = nextjournal.clerk.sci_env.read_string(state)
+nextjournal.clerk.static_app.init(opts)
+</script></body></html>
