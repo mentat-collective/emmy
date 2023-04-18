@@ -4,8 +4,8 @@
   (:refer-clojure :exclude [eval])
   (:require [clojure.test :refer [is deftest testing use-fixtures]]
             [emmy.env :as e]
-            [emmy.env.sci :as es]
             [emmy.operator :as o]
+            [emmy.sci :as es]
             [emmy.simplify :refer [hermetic-simplify-fixture]]
             [emmy.value :as v]
             [sci.core :as sci]))

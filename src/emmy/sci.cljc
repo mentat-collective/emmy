@@ -3,7 +3,7 @@
 (ns emmy.sci
   (:refer-clojure :exclude [ns-map])
   (:require [emmy.env]
-            [emmy.env.sci.macros :as macros]
+            [emmy.sci.macros :as macros]
             [emmy.util :as u]
             [sci.core :as sci]
             [sci.ctx-store]))

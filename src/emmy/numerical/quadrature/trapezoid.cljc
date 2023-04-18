@@ -79,10 +79,9 @@
 ;; We can use `qr/windowed-sum` to turn this function into an (inefficient)
 ;; integrator:
 
-(->clerk
- (defn- trapezoid-sum* [f a b]
-   (qr/windowed-sum (partial single-trapezoid f)
-                    a b)))
+(defn- trapezoid-sum* [f a b]
+  (qr/windowed-sum (partial single-trapezoid f)
+                   a b))
 
 ;; Fitting triangles is easy:
 
@@ -160,10 +159,9 @@
 ;; We can define a new `pi-estimator` and check it against our less efficient
 ;; version:
 
-(->clerk
- (def ^:private pi-estimator
-   (let [f (fn [x] (/ 4 (+ 1 (* x x))))]
-     (trapezoid-sum* f 0.0 1.0))))
+(def ^:private pi-estimator
+  (let [f (fn [x] (/ 4 (+ 1 (* x x))))]
+    (trapezoid-sum* f 0.0 1.0)))
 
 (->clerk-only
  (basically-identical?

@@ -6,14 +6,20 @@
 
 - #124:
 
-  - Upgrades ``sci to 0.7.39
+  - Upgrades `babashka/sci` to 0.7.39.
 
-  - Renames `emmy.env.sci` to `emmy.sci`
+  - Adds a working `bb repl` command to the repository.
 
-  - Adds a working `bb repl` command to the repository
+  - Renames `emmy.env.sci` => `emmy.sci`, and adds an `emmy.sci/install!`
+    command to make it easier to install all namespaces into a shared SCI
+    context.
 
-  - The full library is now published to `https://emmy.mentat.org` as a series
-    of Clerk notebooks.
+  - Renames `context-opts` in the new `emmy.sci` to `emmy.sci/config`, to match
+    the `sci-configs` style.
+
+  The full library is now published to `https://emmy.mentat.org` as a series of
+  Clerk notebooks. This required a dependency on https://clerk-utils.mentat.org,
+  but no actual Clerk dependency in the library.
 
 - #119:
 

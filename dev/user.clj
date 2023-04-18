@@ -6,6 +6,8 @@
      (catch Exception _ nil))
 (require '[emmy.env])
 
+;; This is required to prevent Clerk from realizing long
+;; computationally-intensive sequences on render / static build.
 (alter-var-root #'cc/*bounded-count-limit*
                 (constantly 10))
 
@@ -13,7 +15,7 @@
   (alter-var-root #'*warn-on-reflection* (constantly true)))
 
 (def index
-  "Hmm, let's create this... TODO"
+  "TODO: Create a meaningful index here."
   "dev/index.md")
 
 (def notebooks

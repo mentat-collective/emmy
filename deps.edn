@@ -40,6 +40,7 @@
     io.github.cognitect-labs/test-runner
     {:git/tag "v0.5.0" :git/sha "b3fd0d2"}
     org.clojure/test.check {:mvn/version "1.1.1"}
+    io.github.nextjournal/clerk {:git/sha "4329fa31b75bf26c04bdcc803a52fe642baec56e"}
     same/ish {:mvn/version "0.1.4"}}}
 
   ;; See https://github.com/cognitect-labs/test-runner for invocation

@@ -2,7 +2,8 @@
 
 (ns emmy.examples.central-potential
   (:refer-clojure :exclude [+ - * / abs])
-  (:require [emmy.env :as e :refer [abs square up + - * /]]))
+  (:require [emmy.env :as e :refer [abs square up + - * /]]
+            [mentat.clerk-utils :refer [->clerk]]))
 
 (defn- pairs
   "Return a sequence of pairs of different elements from the given sequence."
@@ -91,10 +92,12 @@
 ;; I(0)=2,
 ;; m1=m2=m3=1
 ;; ```
-(nextjournal.clerk/with-viewer
-  {:transform-fn nextjournal.clerk/mark-presented
-   :render-fn 'nextjournal.clerk.viewer/html}
-  (for [dy (range -10 -1 1/10)]
-    (to-svg
-     (evolver
-      {:t 100 :dt 1/3 :M 500 :m 500 :x_0 50 :y_0 50 :xdot_0 0 :ydot_0 dy}))))
+
+(->clerk
+ (nextjournal.clerk/with-viewer
+   {:transform-fn nextjournal.clerk/mark-presented
+    :render-fn 'nextjournal.clerk.viewer/html}
+   (for [dy (range -10 -1 1/10)]
+     (to-svg
+      (evolver
+       {:t 100 :dt 1/3 :M 500 :m 500 :x_0 50 :y_0 50 :xdot_0 0 :ydot_0 dy})))))
