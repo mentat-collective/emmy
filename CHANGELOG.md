@@ -129,7 +129,6 @@
   - Removes the `:emmy.pattern/ignored-restriction` linter keyword, and all
     clj-kondo code warning that restrictions aren't supported on segment binding
     forms.
->>>>>>> sritchie/add_clerk
 
 - #96 renames `#sicm/{bigint, quaternion, complex, ratio}` to `#emmy/{bigint,
   quaternion, complex, ratio}`.
