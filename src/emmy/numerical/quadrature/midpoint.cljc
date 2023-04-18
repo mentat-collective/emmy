@@ -25,7 +25,7 @@
 ;; acceleration can cancel out one of these terms at a time; but still, the
 ;; performance is not great.
 ;;
-;; It turns out that by taking the /midpoint/ if each interval, instead of
+;; It turns out that by taking the _midpoint_ of each interval, instead of
 ;; either side, you can reduce the order of the error series to $O(h^2)$. This
 ;; is too good to pass up.
 ;;
@@ -90,7 +90,7 @@
 ;; n = 2 |---x---|---x---|
 ;; ```
 ;;
-;; If you /triple/ the number of slices from $n$ to $3n$, you can in fact reuse
+;; If you _triple_ the number of slices from $n$ to $3n$, you can in fact reuse
 ;; the previous $n$ evaluations:
 ;;
 ;; ```

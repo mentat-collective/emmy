@@ -57,7 +57,7 @@
 
   Romberg integration converges quite fast by cancelling one error term in the
   taylor series expansion of $f$ with each examined term. If your function is
-  /not/ smooth this may cause you trouble, and you may want to investigate a
+  _not_ smooth this may cause you trouble, and you may want to investigate a
   lower-order method.
 
   ### Optional arguments:
@@ -79,7 +79,7 @@
 
   Romberg integration converges quite fast by cancelling one error term in the
   taylor series expansion of $f$ with each examined term. If your function is
-  /not/ smooth this may cause you trouble, and you may want to investigate a
+  _not_ smooth this may cause you trouble, and you may want to investigate a
   lower-order method.
 
   ### Optional arguments:

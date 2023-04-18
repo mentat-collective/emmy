@@ -829,7 +829,7 @@
     - The folds in this namespace now follow the fold contract laid out in
       `sicmutils.algebra.fold`, implementing all three arities correctly.
 
-    - I realized that the fold implementation here should /not/ return a full
+    - I realized that the fold implementation here should _not_ return a full
       row every time it processes a previous row; a far better `present`
       implementation would return the best estimate so far. Then you could build
       a `scan` from that fold to see the estimates evolve lazily as new points

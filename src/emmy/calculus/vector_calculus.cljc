@@ -1,6 +1,5 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
-
 (ns emmy.calculus.vector-calculus
   "This namespace contains vector calculus operators, in versions built on top
   of [[derivative/D]] _and_ in Functional Differential Geometry style.

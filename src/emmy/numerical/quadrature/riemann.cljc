@@ -17,7 +17,7 @@
 ;; ## Riemann Quadrature
 ;;
 ;; This namespace includes functions for calculating the Riemann integral of a
-;; single-variable function. These are probably /not/ methods that you'll want
+;; single-variable function. These are probably _not_ methods that you'll want
 ;; to use; see the documentation and defaults in
 ;; `emmy.numerical.quadrature` for good recommendations. But they're clear
 ;; and understandable. The goal of this namespace is to lay the groundwork for
@@ -171,7 +171,7 @@
                   (max (f l) (f r))))
       (windowed-sum a b)))
 
-;; Similarly, the lower Riemann sum uses the /minimum/ of $f(x_l)$ and $f(x_r)$:
+;; Similarly, the lower Riemann sum uses the _minimum_ of $f(x_l)$ and $f(x_r)$:
 
 (defn- lower-sum
   "Returns an estimate for the definite integral of $f$ over the range $[a, b]$
@@ -424,7 +424,7 @@
 ;; ## Incremental Updates with Any Sequence
 ;;
 ;; What if we want to combine the ability to reuse old results with the ability
-;; to take successively refined estimates that /don't/ look like geometric
+;; to take successively refined estimates that _don't_ look like geometric
 ;; series? The series 1, 2, 3... of natural numbers is an obvious choice of
 ;; windows... but only the even powers are able to reuse estimates.
 ;;
@@ -438,7 +438,7 @@
 ;; the methods above.
 ;;
 ;; Alternatively, we could implement a version of `geometric-estimate-seq` that
-;; takes /any/ sequence of estimate,s and maintains a sort of internal
+;; takes _any_ sequence of estimate,s and maintains a sort of internal
 ;; memoization cache.
 ;;
 ;; For every `n`, check the cache for `prev == n/factor`. If it exists in the
@@ -629,7 +629,7 @@
 ;; some point. For now, here are some notes:
 ;;
 ;; - Richardson extrapolation requires a geometric series of estimates. If you
-;;   want to use some /other/ geometry series with `left-sequence` or
+;;   want to use some _other_ geometry series with `left-sequence` or
 ;;   `right-sequence`, you can still accelerate with Richardson. Just pass your
 ;;   new factor as `t`.
 ;;

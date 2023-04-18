@@ -40,7 +40,7 @@
 ;; `:infinite-breakpoint -> ##Inf`, where `:infinite-breakpoint` is an argument
 ;; the user can specify in the returned integrator's options map.
 ;;
-;; Any segment of $a, b$ /not/ in those regions is evaluated normally.
+;; Any segment of $a, b$ _not_ in those regions is evaluated normally.
 ;;
 ;; > NOTE: The ideas in this namespace could be implemented for other variable
 ;; > substitutions (see `substitute.cljc`) that only need to apply to certain

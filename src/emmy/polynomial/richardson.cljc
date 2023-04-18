@@ -108,7 +108,7 @@
 ;;
 ;; The big idea is to multiply $P_{2n}$ by 4 and subtract $P_n$ (then divide by
 ;; 3 to cancel out the extra factor). This will erase the $A \over n^2$ term and
-;; leave a /new/ sequence with $B \over n^4$ as the dominant error term.
+;; leave a _new_ sequence with $B \over n^4$ as the dominant error term.
 ;;
 ;; Now keep going and watch the error terms drain away.
 ;;

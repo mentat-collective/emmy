@@ -357,7 +357,7 @@
 ;; And now, [[neville]], identical to [[neville-incremental]] except using the
 ;; generic tableau generator.
 ;;
-;; The form of the tableau also makes it easy to select a particular /column/
+;; The form of the tableau also makes it easy to select a particular _column_
 ;; instead of just the first row. Columns are powerful because they allow you to
 ;; successively interpolate between pairs, triplets etc of points, instead of
 ;; moving onto very high order polynomials.
@@ -390,7 +390,7 @@
   ### Column
 
   If you supply an integer for the third `column` argument, `neville` will
-  return that /column/ of the interpolation tableau instead of the first row.
+  return that _column_ of the interpolation tableau instead of the first row.
   This will give you a sequence of nth-order polynomial approximations taken
   between point `i` and the next `n` points.
 
@@ -435,7 +435,7 @@
 ;; Allan Macleod, in "A comparison of algorithms for polynomial interpolation",
 ;; discusses this variation under the name "Modified Neville".
 
-;; By generating the /delta/ from each previous estimate in the tableau,
+;; By generating the _delta_ from each previous estimate in the tableau,
 ;; Modified Neville is able to swap one of the multiplications above for an
 ;; addition.
 ;;
@@ -534,7 +534,7 @@
 ;; NOTE: These folds and scans seem to be higher performance than the functions
 ;; above. Prefer `*-sum` functions when you want to consume a full sequence of
 ;; points and get the full input, and `*-scan` functions when you want to
-;; observe all intermediate estimates. If you want a /column/ of the tableau,
+;; observe all intermediate estimates. If you want a _column_ of the tableau,
 ;; stick with the versions above.
 ;;
 ;; The advantage of the method described above, where we generate an entire
@@ -564,18 +564,22 @@
 ;;
 ;; If you stare at this for a while, you might notice that it should be possible
 ;; to use the `merge` and `present` functions we already have to build the
-;; tableau one /row/ at a time, given ONLY the previous row:
+;; tableau one _row_ at a time, given ONLY the previous row:
 ;;
+;; ```
 ;; (f [p1 p12 p123 p1234] [x0 fx0]) => [p0 p01 p012 p0123 p01234]
+;; ```
 ;;
 ;; This method reverses the order of the points, since rows are built from the
 ;; bottom up:
 ;;
+;; ```
 ;; p4 p43 p432 p4321 p43210
 ;; p3 p32 p321 p3210 .
 ;; p2 p21 p210 .     .
 ;; p1 p10 .    .     .
 ;; p0 .   .    .     .
+;; ```
 ;;
 ;; The order of the points is reversed, but this is fine; polynomial
 ;; interpolation doesn't care about the order of points. (NOTE that this WILL be

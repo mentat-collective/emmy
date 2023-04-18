@@ -108,7 +108,7 @@
 (->clerk-only
  (- Math/PI (pi-estimator* 10000)))
 
-;; Fun fact: the trapezoid method is equal to the /average/ of the left and
+;; Fun fact: the trapezoid method is equal to the _average_ of the left and
 ;; right Riemann sums. You can see that in the equation, but lets verify:
 
 (->clerk
@@ -224,7 +224,7 @@
 ;; $2^n + 1$? each interior point is shared, so each trapezoid contributes one
 ;; evaluation, plus a final evaluation for the right side.)
 ;;
-;; The example also shows that evaluating /every/ $n$ in the sequence costs
+;; The example also shows that evaluating _every_ $n$ in the sequence costs
 ;; $\sum_{i=0}^n{2^i + 1} = 2^{n+1} + n$ evaluations. As $n$ gets large, this is
 ;; roughly twice what the incremental implementation costs.
 ;;
@@ -316,7 +316,7 @@
 ;;
 ;; If you start with the trapezoid method, one single step of Richardson
 ;; extrapolation (taking the second column of the Richardson tableau) is
-;; equivalent to "Simpson's rule". One step using `t=3`, i.e., when you /triple/
+;; equivalent to "Simpson's rule". One step using `t=3`, i.e., when you _triple_
 ;; the number of integration slices per step, gets you "Simpson's 3/8 Rule". Two
 ;; steps of Richardson extrapolation gives you "Boole's rule".
 ;;

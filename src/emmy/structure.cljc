@@ -427,7 +427,7 @@
    :outer-size <int>
    :inner-size <int>}
 
-  If `s` is /not/ a valid tensor, returns nil.
+  If `s` is _not_ a valid tensor, returns nil.
   ```"
   [s]
   (let [outer-size         (count s)
