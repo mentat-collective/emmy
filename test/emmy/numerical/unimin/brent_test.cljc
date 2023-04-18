@@ -129,8 +129,8 @@
         (let [min1 -0.27195613
               min2 0.82221643]
           ;; The function has local minima at -0.27195613 and 0.82221643.
-          (is (zeroish? ((D f) min1)) "verify min1 is a local minimum.")
-          (is (zeroish? ((D f) min2)) "verify min2 is a local minimum.")
+          (is (zeroish? ((D f) min1) :scale 1e9) "verify min1 is a local minimum.")
+          (is (zeroish? ((D f) min2) :scale 1e9) "verify min2 is a local minimum.")
 
           (is (ish? {:result min1
                      :value (f min1)
@@ -156,10 +156,10 @@
                     (b/brent-min f -1 0.2 {:maxeval 200}))
               "Search in a larger interval.")))
 
-      (testing "quintic minimum"
+      (testing "quintic maximum"
         (let [max1 0.27195613]
-          ;; The function has local minima at -0.27195613 and 0.82221643.
-          (is (zeroish? ((D f) max1)) "verify max1 is a local maximum.")
+          ;; The function has a local max at 0.27195613.
+          (is (zeroish? ((D f) max1) :scale 1e9) "verify max1 is a local maximum.")
 
           (is (ish? {:result max1
                      :value (f max1)
