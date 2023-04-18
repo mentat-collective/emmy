@@ -1,14 +1,21 @@
-# Emmy
+<h1 align="center">
+<img src="https://raw.githubusercontent.com/mentat-collective/emmy/main/doc/img/logo.png" width="250" alt="Emmy logo" title="Emmy" />
+</h1>
 
-> **Note**
-> Emmy is currently undergoing transition from its old identity as
-> [sicmutils](https://github.com/sicmutils/sicmutils). For any broken README or
-> docs links, please visit the corresponding page at
-> https://github.com/sicmutils/sicmutils.
+<div align="center">
 
-A Clojure(Script) implementation of the [scmutils][scmutils-refman-url] system
-for math and physics investigations in the Clojure and ClojureScript languages.
-Emmy provides facilities for
+[![Build Status][build-status]][build-status-url]
+[![License][license]][license-url]
+[![Codecov branch][codecov]][codecov-url]
+[![cljdoc badge][cljdoc]][cljdoc-url]
+[![Clojars Project][clojars]][clojars-url]
+[![Discord Shield][discord]][discord-url]
+
+</div>
+
+Emmy is a Clojure(Script) implementation of the [scmutils][scmutils-refman-url]
+system for math and physics investigations in the Clojure and ClojureScript
+languages. Emmy provides facilities for
 
 - [symbolic
   computation](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/data-types/symbolic-expressions),
@@ -36,14 +43,7 @@ of Classical Mechanics][sicm-book-url] and [Functional Differential
 Geometry][fdg-book-url] by G.J. Sussman and J. Wisdom.
 
 > :wave: Need help getting started? Say hi on [Clojurians
-> Slack](http://clojurians.net/) in [#mentat-collective][mentat-slack-url].
-
-[![Build Status][build-status]][build-status-url]
-[![License][license]][license-url]
-[![Codecov branch][codecov]][codecov-url]
-[![cljdoc badge][cljdoc]][cljdoc-url]
-[![Clojars Project][clojars]][clojars-url]
-[![Discord Shield][discord]][discord-url]
+> Slack](http://clojurians.net/) in [#emmy][emmy-slack-url].
 
 ## Quickstart
 
@@ -287,11 +287,11 @@ Distributed under the [GPL v3](LICENSE) license. See [LICENSE](LICENSE).
 [discord-url]: https://discord.gg/hsRBqGEeQ4
 [discord]: https://img.shields.io/discord/731131562002743336?style=flat&colorA=000000&colorB=000000&label=&logo=discord
 [emmy-clerk-template-url]: https://github.com/mentat-collective/emmy/tree/main/resources/emmy/clerk
+[emmy-slack-url]: https://clojurians.slack.com/archives/C01ECA9AA74
 [fdg-book-url]: http://mitpress.mit.edu/books/functional-differential-geometry
 [gscm-url]: http://www.cs.rochester.edu/~gildea/guile-scmutils/
 [license]: https://img.shields.io/badge/license-GPLv3-brightgreen.svg
 [license-url]: LICENSE
-[mentat-slack-url]: https://clojurians.slack.com/archives/C041G9B1AAK
 [physics-in-clj-talk-url]: https://www.youtube.com/watch?v=7PoajCqNKpg
 [scmutils-refman-url]: https://groups.csail.mit.edu/mac/users/gjs/6946/refman.txt
 [refman-url]: https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/reference-manual
