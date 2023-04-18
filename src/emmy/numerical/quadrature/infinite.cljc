@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.numerical.quadrature.infinite
   (:require [clojure.core.match :refer [match]]
             [emmy.numerical.quadrature.common :as qc]
@@ -39,13 +42,14 @@
 ;;
 ;; Any segment of $a, b$ /not/ in those regions is evaluated normally.
 ;;
-;; NOTE: The ideas in this namespace could be implemented for other variable
-;; substitutions (see `substitute.cljc`) that only need to apply to certain
-;; integration intervals. The code below automatically cuts the range $(a, b)$
-;; to accomodate this for the particular variable change we've baked in, but
-;; there is a more general abstraction lurking.
-;;
-;; If you find it, please submit an issue!
+;; > NOTE: The ideas in this namespace could be implemented for other variable
+;; > substitutions (see `substitute.cljc`) that only need to apply to certain
+;; > integration intervals. The code below automatically cuts the range $(a, b)$
+;; > to accomodate this for the particular variable change we've baked in, but
+;; > there is a more general abstraction lurking.
+;; >
+;; > If you find it, please [submit an
+;; > issue!](https://github.com/mentat-collective/emmy/issues/new)
 ;;
 ;; ## Implementation
 

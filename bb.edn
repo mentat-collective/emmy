@@ -15,6 +15,10 @@
             (do (println "Please supply an even number of arguments!")
                 (System/exit 1))))))
 
+  repl
+  {:doc "Start a REPL with `emmy.env` loaded."
+   :task (shell "clj -M:test:dev:repl")}
+
   test:clj
   {:doc "Run CLJ tests."
    :task (shell "clojure -X:test:runner")}

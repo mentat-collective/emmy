@@ -14,8 +14,7 @@
   (:require [clojure.core :as core]
             [emmy.generic :as g]
             [emmy.util.def :as ud]
-            [mentat.clerk-utils :refer [->clerk ->clerk-only]]
-            [nextjournal.clerk :as-alias clerk])
+            [mentat.clerk-utils :refer [->clerk ->clerk-only]])
   #?(:cljs
      (:require-macros [emmy.algebra.fold])))
 

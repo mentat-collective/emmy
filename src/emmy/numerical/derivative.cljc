@@ -26,8 +26,11 @@
             [emmy.util :as u]
             [emmy.util.stream :as us]
             [emmy.value :as v]
-            [mentat.clerk-utils :refer [->clerk ->clerk-only]]
-            [nextjournal.clerk :as-alias clerk]))
+            [mentat.clerk-utils :refer [->clerk ->clerk-only]]))
+
+^{:nextjournal.clerk/visibility {:code :hide :result :hide}}
+(->clerk
+ (require 'nextjournal.clerk))
 
 ;; ## Numerical Computation of Derivatives
 ;;
@@ -49,7 +52,7 @@
 
 (->clerk
  (defn- show [e]
-   (clerk/tex
+   (nextjournal.clerk/tex
     (->TeX
      (g/simplify e)))))
 
@@ -150,10 +153,9 @@
 ;; with $h$, an odd-powered term... so subtracting $f(x-h)$ should double that
 ;; term, not erase it. Let's see:
 
-(comment
-  (show (g/- fx+h fx-h)))
-;; => "1/3 h³ D³f(x) + 2 h Df(x)"
-;;
+(->clerk-only
+ (show (g/- fx+h fx-h)))
+
 ;; Amazing! Now solve for $Df(x)$:
 
 (->clerk-only

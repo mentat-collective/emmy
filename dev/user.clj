@@ -23,9 +23,7 @@
 (def defaults
   {#_#_:index index
    :browse? true
-   :watch-paths ["src" "dev"]
-   ;; TODO do I even need to do this for now?
-   #_#_:cljs-namespaces '[emmy.sci-extensions]})
+   :watch-paths ["src" "dev"]})
 
 (def static-defaults
   (assoc defaults

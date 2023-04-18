@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.numerical.quadrature.midpoint
   (:require [emmy.generic :as g]
             [emmy.numerical.quadrature.common :as qc]

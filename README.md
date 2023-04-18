@@ -6,7 +6,7 @@
 > docs links, please visit the corresponding page at
 > https://github.com/sicmutils/sicmutils.
 
-A Clojure(script) implementation of the [scmutils][scmutils-refman-url] system
+A Clojure(Script) implementation of the [scmutils][scmutils-refman-url] system
 for math and physics investigations in the Clojure and ClojureScript languages.
 Emmy provides facilities for
 
@@ -54,23 +54,40 @@ Geometry][fdg-book-url] by G.J. Sussman and J. Wisdom.
 > with rich support for [TeX](https://en.wikipedia.org/wiki/TeX) rendering and
 > plotting.
 
-Install Emmy into your Clojure(Script) project using the instructions at its
-Clojars page:
+Install `Leva.cljs` into your ClojureScript project using the instructions at
+its Clojars page:
 
-[![Clojars Project](https://img.shields.io/clojars/v/org.mentat/emmy.svg)](https://clojars.org/org.mentat/emmy)
+[![Clojars Project][clojars]][clojars-url]
 
-Initialize the `emmy.env` "Batteries Included" environment at the REPL:
+Or grab the most recent code using a Git dependency:
 
-```clojure
-(require '[emmy.env :as env])
-(env/bootstrap-repl!)
+```clj
+;; deps
+{io.github.mentat-collective/emmy
+  {:git/sha "$GIT_SHA"}}
 ```
 
-Visit the [Emmy Tutorial on
-Nextjournal](https://nextjournal.com/try/samritchie/sicmutils) to try all of the
-examples below in your browser with no setup required:
+Require `emmy.env` in your Clojure(Script) namespace:
 
-<img width="1152" alt="nje" src="https://user-images.githubusercontent.com/462255/109587851-9e1be280-7abc-11eb-9369-6d56519fb3cd.png">
+```clj
+(ns my-app
+  (:require [emmy.env :as e :refer :all]))
+```
+
+Or clone this repository:
+
+```sh
+git clone git@github.com:mentat-collective/emmy.git
+cd emmy
+```
+
+then install [the Clojure command line
+tool](https://clojure.org/guides/install_clojure) and run the following command
+to launch a REPL with `emmy.env` already loaded:
+
+```sh
+clj -M:test:dev:repl
+```
 
 Math works as expected (see
 [Generics](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/basics/generics) for

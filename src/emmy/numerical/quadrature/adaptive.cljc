@@ -1,5 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
+^#:nextjournal.clerk
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.numerical.quadrature.adaptive
   (:require [emmy.numerical.quadrature.common :as qc]
             [emmy.util.aggregate :as ua]))
@@ -169,5 +172,5 @@
 
 ;; ## References
 ;;
-;; - SCMUtils Refman: https://groups.csail.mit.edu/mac/users/gjs/6946/refman.txt
-;; - Wikipedia, "Adaptive Simpson's Method": https://en.wikipedia.org/wiki/Adaptive_Simpson%27s_method
+;; - [SCMUtils Refman](https://groups.csail.mit.edu/mac/users/gjs/6946/refman.txt)
+;; - Wikipedia, ["Adaptive Simpson's Method"](https://en.wikipedia.org/wiki/Adaptive_Simpson%27s_method)

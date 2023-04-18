@@ -2,13 +2,16 @@
 
 ## [unreleased]
 
+## [0.30.0]
+
 - new:
 
-  - remove lint profile from build
+  - Upgrade sci to 0.7.39
 
-  - upgrade sci to 0.7.39
+  - Adds a working `bb repl` command to the repository
 
-  - fix repl command
+  - The full library is now published to `https://emmy.mentat.org` as a series
+    of Clerk notebooks.
 
 - #119:
 
