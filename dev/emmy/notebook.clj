@@ -265,7 +265,7 @@
 ;;
 ;; `Emmy` includes a [`deps-new`](https://github.com/seancorfield/deps-new)
 ;; template called
-;; [`emmy/clerk`](https://github.com/mentat-collective/clerk-utils/tree/main/resources/clerk_utils/custom)
+;; [`emmy/clerk`](https://github.com/mentat-collective/emmy/tree/main/resources/emmy/clerk)
 ;; that makes it easy to configure a new Clerk project with everything described
 ;; in ["Emmy via SCI"](#emmy-via-sci) already configured.
 

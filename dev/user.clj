@@ -12,15 +12,41 @@
                 (constantly 10))
 
 (comment
+  ;; Evaluate this form when working on performance-intensive code.
   (alter-var-root #'*warn-on-reflection* (constantly true)))
 
 (def index
-  "TODO: Create a meaningful index here."
   "dev/emmy/notebook.clj")
 
 (def notebooks
   ["src/emmy/**/**.cljc"
-   "src/emmy/**/**.clj"])
+   "src/emmy/collection.cljc"
+   ;; "src/emmy/complex.cljc"
+   ;; "src/emmy/env.cljc"
+   ;; "src/emmy/euclid.cljc"
+   ;; "src/emmy/function.cljc"
+   ;; "src/emmy/generic.cljc"
+   ;; "src/emmy/numbers.cljc"
+   ;; "src/emmy/numsymb.cljc"
+   ;; "src/emmy/ratio.cljc"
+   ;; "src/emmy/sci.cljc"
+   ;; "src/emmy/simplify.cljc"
+   ;; "src/emmy/util.cljc"
+   ;; "src/emmy/value.cljc"
+
+   ;; NOTE: including any namespace with a deftype causes the static build to
+   ;; fail. We'll need to fix this with the Clerk team...
+   ;; "src/emmy/expression.cljc"
+   ;; "src/emmy/differential.cljc"
+   ;; "src/emmy/matrix.cljc"
+   ;; "src/emmy/modint.cljc"
+   ;; "src/emmy/operator.cljc"
+   ;; "src/emmy/polynomial.cljc"
+   ;; "src/emmy/quaternion.cljc"
+   ;; "src/emmy/rational_function.cljc"
+   ;; "src/emmy/series.cljc"
+   ;; "src/emmy/structure.cljc"
+   ])
 
 (def defaults
   {:index index
