@@ -10,7 +10,7 @@
             [emmy.numerical.unimin.bracket :as b]
             [emmy.polynomial.interpolate :as pi]
             [emmy.value :as v]
-            [same :refer [ish? with-comparator] :include-macros true]))
+            [same.core :refer [ish? with-comparator]]))
 
 (def point
   ;; Generator of [x, (f x)] points.

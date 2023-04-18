@@ -17,7 +17,7 @@
             [emmy.util :as u]
             [emmy.util.aggregate :as ua]
             [emmy.value :as v]
-            [same :refer [ish? with-comparator] :include-macros true]))
+            [same.core :refer [ish? with-comparator]]))
 
 (deftest interface-tests
   (checking "Clojure interface definitions" 100

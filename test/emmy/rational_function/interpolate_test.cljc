@@ -3,7 +3,7 @@
 (ns emmy.rational-function.interpolate-test
   (:require [clojure.test :refer [is deftest testing]]
             [emmy.rational-function.interpolate :as ri]
-            [same :refer [ish?]]))
+            [same.core :refer [ish?]]))
 
 (deftest rational-interpolation-tests
   (let [points [[0 1] [2 1.4] [5 2] [8 10]]

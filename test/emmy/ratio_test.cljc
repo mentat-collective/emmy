@@ -12,7 +12,7 @@
             [emmy.ratio :as r]
             [emmy.util :as u]
             [emmy.value :as v]
-            [same :refer [ish?]]))
+            [same.core :refer [ish?]]))
 
 (deftest ratio-value-implementation
   (testing "v/freeze"

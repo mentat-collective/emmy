@@ -11,7 +11,7 @@
             [emmy.laws :as l]
             [emmy.numbers]
             [emmy.value :as v]
-            [same :refer [ish? with-comparator] :include-macros true]))
+            [same.core :refer [ish? with-comparator]]))
 
 (defn ^:private near [w z]
   (< (g/abs (g/- w z)) 1e-10))

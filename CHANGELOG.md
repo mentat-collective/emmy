@@ -4,6 +4,9 @@
 
 ## [0.30.0]
 
+- #98 upgrades `same/ish` to 0.1.6, renames all `same` requires to `same.core`
+  and removes final `:include-macros true` from the codebase.
+
 - #124:
 
   - Upgrades `babashka/sci` to 0.7.39.

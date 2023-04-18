@@ -10,8 +10,7 @@
                                     with-literal-functions
                                     spacetime-rect spacetime-sphere
                                     compose square point up
-                                    let-coordinates]
-             :include-macros true]
+                                    let-coordinates]]
             [emmy.simplify :refer [hermetic-simplify-fixture]]
             [emmy.value :as v]))
 

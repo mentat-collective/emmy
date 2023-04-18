@@ -14,7 +14,7 @@
             [emmy.simplify :as s :refer [hermetic-simplify-fixture]]
             [emmy.structure :refer [up down]]
             [emmy.value :as v]
-            [same :refer [ish?] :include-macros true]))
+            [same.core :refer [ish?]]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 

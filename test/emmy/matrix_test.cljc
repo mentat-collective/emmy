@@ -15,7 +15,7 @@
             [emmy.structure-test :refer [<l|:inner:|r>]]
             [emmy.util.aggregate :as ua]
             [emmy.value :as v]
-            [same :refer [ish?]]))
+            [same.core :refer [ish?]]))
 
 (deftest value-protocol-tests
   (testing "zero?"

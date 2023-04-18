@@ -13,7 +13,7 @@
             [emmy.simplify :refer [hermetic-simplify-fixture]]
             [emmy.structure :refer [up down]]
             [emmy.value :as v]
-            [same :refer [ish?]]))
+            [same.core :refer [ish?]]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 

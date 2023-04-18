@@ -10,7 +10,7 @@
             [emmy.util :as u]
             [emmy.util.stream :as us]
             [emmy.value :as v]
-            [same :refer [ish?]]))
+            [same.core :refer [ish?]]))
 
 ;; The tests on Pi estimation come from Sussman's ["Abstraction in Numerical
 ;; Methods"](https://dspace.mit.edu/bitstream/handle/1721.1/6060/AIM-997.pdf?sequence=2).

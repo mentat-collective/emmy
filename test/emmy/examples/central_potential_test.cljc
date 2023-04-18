@@ -168,8 +168,6 @@
              (e/freeze
               (e/simplify
                ((central/state-derivative 'm 'M) state)))))
-
-      (let [o (atom [])
-            observe (fn [t q] (swap! o conj [t q]))]
-        (central/evolver {:t (/ 3 60) :dt (/ 1 60) :observe observe})
-        (is (= 4 (count @o)))))))
+      (is (= 4 (count
+                (central/evolver
+                 {:t (/ 3 60) :dt (/ 1 60)})))))))

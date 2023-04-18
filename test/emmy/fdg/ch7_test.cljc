@@ -14,7 +14,7 @@
             [emmy.operator :as o]
             [emmy.simplify :refer [hermetic-simplify-fixture]]
             [emmy.value :as v]
-            [same :refer [ish? with-comparator] :include-macros true]))
+            [same.core :refer [ish? with-comparator]]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 

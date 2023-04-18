@@ -6,7 +6,7 @@
             [emmy.numbers]
             [emmy.numerical.roots.bisect :as bi]
             [emmy.value :as v]
-            [same :refer [ish?] :include-macros true]))
+            [same.core :refer [ish?]]))
 
 (deftest bisect-tests
   (doseq [method bi/all-methods]

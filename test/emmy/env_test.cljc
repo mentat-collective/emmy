@@ -16,7 +16,7 @@
             [emmy.matrix :as matrix]
             [emmy.operator :as o]
             [emmy.value :as v]
-            [same :refer [ish?] :include-macros true]))
+            [same.core :refer [ish?]]))
 
 (deftest constant-tests
   (is (ish? e/euler (e/exp 1))

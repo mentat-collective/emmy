@@ -10,7 +10,7 @@
             [emmy.generic :as g]
             [emmy.numbers]
             [emmy.util.stream :as us]
-            [same :refer [ish?] :include-macros true]))
+            [same.core :refer [ish?]]))
 
 (deftest zeno-powers-tests
   (testing "zeno streams"

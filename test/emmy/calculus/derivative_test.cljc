@@ -11,8 +11,8 @@
             [emmy.expression :as x]
             [emmy.function :as f]
             [emmy.generic :as g :refer [acos asin atan cos sin tan
-                                             cot sec csc
-                                             log exp expt + - * /]]
+                                        cot sec csc
+                                        log exp expt + - * /]]
             [emmy.matrix :as matrix]
             [emmy.mechanics.hamilton :as h]
             [emmy.operator :as o]
@@ -21,7 +21,7 @@
             [emmy.structure :as s]
             [emmy.util :as u]
             [emmy.value :as v]
-            [same :refer [ish? with-comparator] :include-macros true]))
+            [same.core :refer [ish? with-comparator]]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 

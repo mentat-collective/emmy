@@ -8,7 +8,7 @@
             [emmy.generic :as g]
             [emmy.structure :refer [up down]]
             [emmy.value :as v]
-            [same :refer [ish?]])
+            [same.core :refer [ish?]])
   #?(:clj
      (:import (clojure.lang ExceptionInfo))))
 
