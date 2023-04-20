@@ -206,7 +206,14 @@ documentation, you'll need to install
 - The [Clojure command line tool](https://clojure.org/guides/install_clojure)
 - [Babashka](https://github.com/babashka/babashka#installation)
 
-Once this is done, run this command:
+Next, clone the repository:
+
+```bash
+git clone git@github.com:mentat-collective/emmy.git
+cd emmy
+```
+
+Run this command in the cloned repository:
 
 ```sh
 bb clerk-watch
