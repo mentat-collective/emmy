@@ -2,6 +2,8 @@
 
 ## [unreleased]
 
+- #131 fixes accidental simplification of keywords to `nil`.
+
 ## [0.30.0]
 
 - #126:
