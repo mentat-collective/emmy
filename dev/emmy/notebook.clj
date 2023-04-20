@@ -25,13 +25,14 @@
  [:center
   [:img
    {:width "200" :alt "Emmy logo"
-    :src "https://raw.githubusercontent.com/mentat-collective/emmy/main/doc/img/logo.png"}]])
+    :src "https://raw.githubusercontent.com/mentat-collective/emmy/main/doc/img/logo.png"}]
+  [:br]
+  (clerk/md
+   "[![Build Status](https://github.com/mentat-collective/emmy/actions/workflows/kondo.yml/badge.svg?branch=main)](https://github.com/mentat-collective/emmy/actions/workflows/kondo.yml)
+[![License](https://img.shields.io/badge/license-GPLv3-brightgreen.svg)](https://github.com/mentat-collective/emmy/blob/main/LICENSE)
+[![cljdoc badge](https://cljdoc.org/badge/org.mentat/emmy)](https://cljdoc.org/d/org.mentat/emmy/CURRENT)
+[![Clojars Project](https://img.shields.io/clojars/v/org.mentat/emmy.svg)](https://clojars.org/org.mentat/emmy)")])
 
-;; [![Build Status](https://github.com/mentat-collective/emmy/actions/workflows/kondo.yml/badge.svg?branch=main)](https://github.com/mentat-collective/emmy/actions/workflows/kondo.yml)
-;; [![License](https://img.shields.io/badge/license-MIT-brightgreen.svg)](https://github.com/mentat-collective/emmy/blob/main/LICENSE)
-;; [![cljdoc badge](https://cljdoc.org/badge/org.mentat/emmy)](https://cljdoc.org/d/org.mentat/emmy/CURRENT)
-;; [![Clojars Project](https://img.shields.io/clojars/v/org.mentat/emmy.svg)](https://clojars.org/org.mentat/emmy)
-;;
 ;; > The interactive documentation on this page was generated
 ;; > using [Clerk](https://github.com/nextjournal/clerk). Follow
 ;; > the [instructions in the
@@ -464,6 +465,6 @@ clojure -Sdeps '{:deps {io.github.mentat-collective/emmy {:git/sha \"%s\"}}}' \\
 
 ;; Copyright © 2022-2023 Sam Ritchie and Colin Smith.
 
-;; Distributed under the [MIT
+;; Distributed under the [GPLv3
 ;; License](https://github.com/mentat-collective/emmy/blob/main/LICENSE).
 ;; See [LICENSE](https://github.com/mentat-collective/emmy/blob/main/LICENSE).
