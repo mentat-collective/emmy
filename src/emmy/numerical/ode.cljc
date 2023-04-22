@@ -151,12 +151,12 @@
                                 v))
                current-segment (atom (next-segment))
                evaluate-at (fn [x]
-                                 (when (< x (:x0 @current-segment))
-                                   (u/illegal-state "Cannot use interpolation function in backwards direction"))
-                                 (while (> x (:x1 @current-segment))
-                                   (let [s (next-segment)]
-                                     (reset! current-segment s)))
-                                 ((:f @current-segment) x))]
+                             (when (< x (:x0 @current-segment))
+                               (u/illegal-state "Cannot use interpolation function in backwards direction"))
+                             (while (> x (:x1 @current-segment))
+                               (let [s (next-segment)]
+                                 (reset! current-segment s)))
+                             ((:f @current-segment) x))]
            (fn f
              ([]
               (a/>!! step-requests false))
@@ -184,7 +184,8 @@
   the book. If the function is not compiled, a wrapper function is created to
   accomplish the same thing."
   [state-derivative derivative-args initial-state
-   {:keys [compile?] :as opts}]
+   {:keys [compile?] :as opts
+    :or {compile? true}}]
   (let [flat-initial-state (flatten initial-state)
         primitive-params   (double-array derivative-args)
         derivative-fn      (if compile?
@@ -283,7 +284,9 @@
   state derivative (and its argument package) from [0 to t1] in steps
   of size dt"
   [state-derivative state-derivative-args initial-state t1 dt]
-  (let [f (make-integrator* state-derivative state-derivative-args initial-state {})]
+  (let [f (make-integrator* state-derivative state-derivative-args initial-state
+                            {:epsilon 1e-6
+                             :compile? true})]
     (try
       (mapv f (for [x (range 0 (+ t1 dt) dt)
                     :when (< x (+ t1 (/ dt 2)))]

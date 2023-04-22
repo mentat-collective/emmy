@@ -285,7 +285,7 @@
 ;;
 ;; $$f^{\prime}(x) = {f(x + h) - f(x - h)} \over {2h}$$
 ;;
-;; without any roundoff error, the numerator /should/ be equal to $2h f'(x)$. In
+;; without any roundoff error, the numerator _should_ be equal to $2h f'(x)$. In
 ;; reality, for small values of $h$, $f(x + h)$ and $f(x - h)$ both have machine
 ;; representations in error by about $f(x) \epsilon$. Their difference doesn't
 ;; change the order, so we can say that their difference also has error of $f(x)
