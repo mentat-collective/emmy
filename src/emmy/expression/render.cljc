@@ -109,6 +109,7 @@
                                   (z/node loc)))]
               (z/replace loc result)
               loc))
+
           (render-unary-node [op arg upper-op]
             (case op
               (+ *) (str arg)
@@ -119,6 +120,7 @@
                   (str "1/" arg)
                   (str "1 / " arg))
               (str op " " arg)))
+
           (render-loc [loc]
             (if (z/branch? loc)
               ;; then the first child is the function and the rest are the
@@ -151,8 +153,8 @@
                              (not (or (and (= op '*) (= upper-op 'u-))
                                       (ratio-expr? op args)))))
 
-                   (or (and (special-handlers op)
-                            ((special-handlers op) args))
+                   (or (when-let [handler (special-handlers op)]
+                         (handler args))
 
                        (cond
                          (= (count args) 1)
@@ -165,9 +167,9 @@
                          ;; within sums are tagged as such by rewrite-negation.
                          (= op '+)
                          (let [u-term (fn [t] (let [{:keys [hint term]} t]
-                                                (if hint
-                                                  [(if (= hint :unary-minus) "-" "+") term]
-                                                  ["+" t])))
+                                               (if hint
+                                                 [(if (= hint :unary-minus) "-" "+") term]
+                                                 ["+" t])))
                                [t & terms] (map u-term args)
                                ;; hack any initial "+" off of the first term.
                                ;; If the first term is unary minus, pad on the
@@ -521,6 +523,26 @@
                 (str "\\begin{bmatrix}"
                      body
                      "\\end{bmatrix}")))
+
+      'matrix-by-rows
+      (fn [rows]
+        (let [body (->> rows
+                        (map (fn [row]
+                               (let [row' (map (comp displaystyle ->TeX*) row)]
+                                 (s/join " & " row'))))
+                        (s/join " \\cr \\cr "))]
+          (str "\\begin{bmatrix}"
+               body
+               "\\end{bmatrix}")))
+
+      'column-matrix
+      (fn [x]
+        (let [body (->> (map displaystyle x)
+                        (s/join " \\cr \\cr "))]
+          (str "\\begin{bmatrix}"
+               body
+               "\\end{bmatrix}")))
+
       'sqrt #(str "\\sqrt " (maybe-brace (first %)))
       '<= #(s/join " \\leq " %)
       '>= #(s/join " \\geq " %)}

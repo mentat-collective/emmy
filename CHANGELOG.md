@@ -2,6 +2,17 @@
 
 ## [unreleased]
 
+- #134:
+
+  - Adds `->TeX` handlers for `matrix-by-rows` and `column-matrix`.
+
+  - matrices now freeze into `(matrix-by-rows [...] [...])` instead of
+    `(matrix-by-rows (up ...) (up ...))`.
+
+  - functions in `emmy.numerical.ode` now set `:compile?` to `true` by default.
+
+  - Fixes some `TeX` typos in a few of the literate notebooks.
+
 - #131 fixes accidental simplification of keywords to `nil`.
 
 ## [0.30.0]

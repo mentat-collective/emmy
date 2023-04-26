@@ -88,9 +88,8 @@
 
 ;; Voila! The remaining terms include $D f(x)$ along with a series of
 ;; progressively-smaller "error terms" (since $h \to 0$). The first of these
-;; terms is ${1 \over 2} h D^2 f(x)$. It will come to dominate the error as $h
-;; \to 0$, so we say that the approximation we've just derived has error of
-;; $O(h)$.
+;; terms is ${1 \over 2} h D^2 f(x)$. It will come to dominate the error as $h \to 0$,
+;; so we say that the approximation we've just derived has error of $O(h)$.
 ;;
 ;; This particular formula, in the limit as $h \to 0$, is called the "forward
 ;; difference approximation" to $Df(x)$. Here's the Clojure implementation:
@@ -145,8 +144,7 @@
 
 ;; Notice that the two expansions, of $f(x + h)$ and $f(x - h)$, share every
 ;; term paired with an even power of $h$. The terms associated with odd powers
-;; of $h$ alternate in sign (because of the $-h$ in the expansion of $f(x -
-;; h)$).
+;; of $h$ alternate in sign (because of the $-h$ in the expansion of $f(x - h)$).
 ;;
 ;; We can find yet another method for approximating $Df(x)$ if we subtract these
 ;; two series. We're trying to solve for $Df(x)$, and $Df(x)$ appears paired
@@ -197,7 +195,7 @@
  (show (g// (g/- (g/+ fx-h fx+h) (g/* 2 (func 'x)))
             (g/square 'h))))
 
-;; This is the "central difference" approximation to the /second/ derivative of
+;; This is the "central difference" approximation to the _second_ derivative of
 ;; $f$. Note that the error term here is quadratic in $h$. Here it is in code:
 
 (defn central-difference-d2
@@ -259,9 +257,11 @@
 ;; difference is less than the minimum epsilon allowed by the system's floating
 ;; point representation.
 
-;; As Sussman states: "Hence we are in a race between truncation error, which
-;; starts out large and gets smaller, and roundoff error, which starts small and
-;; gets larger." ~Sussman, p12
+;; As Sussman states:
+;;
+;; > "Hence we are in a race between truncation error, which starts out large
+;; > and gets smaller, and roundoff error, which starts small and gets larger."
+;; > ~Sussman, p12
 ;;
 ;; ## Roundoff Error
 ;;
@@ -283,13 +283,12 @@
 ;;
 ;; For the central difference formula:
 ;;
-;; $$f^{\prime}(x) = {f(x + h) - f(x - h)} \over {2h}$$
+;; $$f^{\prime}(x) = {{f(x + h) - f(x - h)} \over {2h}}$$
 ;;
-;; without any roundoff error, the numerator /should/ be equal to $2h f'(x)$. In
+;; without any roundoff error, the numerator _should_ be equal to $2h f'(x)$. In
 ;; reality, for small values of $h$, $f(x + h)$ and $f(x - h)$ both have machine
 ;; representations in error by about $f(x) \epsilon$. Their difference doesn't
-;; change the order, so we can say that their difference also has error of $f(x)
-;; \epsilon$.
+;; change the order, so we can say that their difference also has error of $f(x)\epsilon$.
 ;;
 ;; Dividing these two together, the relative error is:
 ;;
@@ -305,7 +304,7 @@
 ;; next-highest-integer of the ratio above. The following method takes the ratio
 ;; above as an argument, and returns:
 ;;
-;; $$1 + floor(\lvert ratio \rvert)$$
+;; $$1 + \floor(\lvert ratio \rvert)$$
 
 (defn- roundoff-units
   "Returns the number of 'roundoff units', i.e., multiples of the machine epsilon,
