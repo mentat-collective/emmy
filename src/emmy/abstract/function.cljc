@@ -64,7 +64,7 @@
      (if (vector? d) d [d]))
    (sicm-set->exemplar range)])
 
-(deftype Function [name arity domain range]
+(deftype Function [f-name arity domain range]
   v/Value
   (zero? [_] false)
   (one? [_] false)
@@ -75,14 +75,14 @@
     (let [meta {:arity arity :from :identity-like}]
       (with-meta identity meta)))
   (exact? [f] (f/compose v/exact? f))
-  (freeze [_] (v/freeze name))
+  (freeze [_] (v/freeze f-name))
   (kind [_] ::function)
 
   f/IArity
   (arity [_] arity)
 
   Object
-  (toString [_] (str name))
+  (toString [_] (str f-name))
   #?(:clj (equals [a b] (f:= a b)))
 
   #?@(:clj
@@ -162,7 +162,7 @@
   other type is supplied."
   [f]
   {:pre [(literal-function? f)]}
-  (.-name ^Function f))
+  (.-f-name ^Function f))
 
 (defn- domain-types
   "Returns the `-domain` field of the supplied [[Function]] object. Errors if any
@@ -175,7 +175,8 @@
   "Returns the `-range` field of the supplied [[Function]] object. Errors if any
   other type is supplied."
   [f]
-  {:pre [(literal-function? f)]}
+  {:pre
+   [(literal-function? f)]}
   (.-range ^Function f))
 
 (defn- f:=
