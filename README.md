@@ -295,12 +295,12 @@ Distributed under the [GPL v3](LICENSE) license. See [LICENSE](LICENSE).
 [discord]: https://img.shields.io/discord/731131562002743336?style=flat&colorA=000000&colorB=000000&label=&logo=discord
 [emmy-clerk-template-url]: https://github.com/mentat-collective/emmy/tree/main/resources/emmy/clerk
 [emmy-slack-url]: https://clojurians.slack.com/archives/C01ECA9AA74
-[fdg-book-url]: http://mitpress.mit.edu/books/functional-differential-geometry
+[fdg-book-url]: https://mitpress.mit.edu/9780262019347/functional-differential-geometry/
 [gscm-url]: http://www.cs.rochester.edu/~gildea/guile-scmutils/
 [license]: https://img.shields.io/badge/license-GPLv3-brightgreen.svg
 [license-url]: LICENSE
 [physics-in-clj-talk-url]: https://www.youtube.com/watch?v=7PoajCqNKpg
 [scmutils-refman-url]: https://groups.csail.mit.edu/mac/users/gjs/6946/refman.txt
 [refman-url]: https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/reference-manual
-[sicm-book-url]: https://mitpress.mit.edu/books/structure-and-interpretation-classical-mechanics-second-edition
-[sicp-book-url]: http://mitpress.mit.edu/sicp/
+[sicm-book-url]: https://mitpress.mit.edu/9780262028967/structure-and-interpretation-of-classical-mechanics/
+[sicp-book-url]: https://mitpress.mit.edu/9780262510875/structure-and-interpretation-of-computer-programs/
