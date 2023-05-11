@@ -165,7 +165,7 @@
                 dual-basis [dx dy]
                 m ((m/point R2-rect) (up 'x0 'y0))]
             (is (= '(matrix-by-rows
-                     (up 1 0) (up 0 1))
+                     [1 0] [0 1])
                    (simplify
                     (matrix/generate
                      2 2

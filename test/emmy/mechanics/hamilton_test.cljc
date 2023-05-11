@@ -705,19 +705,19 @@
               least.")
 
           (is (= '(matrix-by-rows
-                   (up 0 0 0)
-                   (up 0 0 (+ (* -1 p) 1))
-                   (up 0 (+ p -1) 0))
+                   [0 0 0]
+                   [0 0 (+ (* -1 p) 1)]
+                   [0 (+ p -1) 0])
                  (simplify
                   ((H/symplectic? a-non-canonical-transform)
-                   (up 't 'theta 'p)))))
+                   ['t 'theta 'p]))))
 
           (is (= '(matrix-by-rows
-                   (up 0 (+ (* -1 p) 1))
-                   (up (+ p -1) 0))
+                   [0 (+ (* -1 p) 1)]
+                   [(+ p -1) 0])
                  (simplify
                   ((H/symplectic-transform? a-non-canonical-transform)
-                   (up 't 'theta 'p))))))))))
+                   ['t 'theta 'p])))))))))
 
 (deftest symplectic-tests
   (testing "unit"
@@ -737,11 +737,11 @@
 
   (testing "symplectic?"
     (is (= '(matrix-by-rows
-             (up 0 0 0 0 0)
-             (up 0 0 0 0 0)
-             (up 0 0 0 0 0)
-             (up 0 0 0 0 0)
-             (up 0 0 0 0 0))
+             [0 0 0 0 0]
+             [0 0 0 0 0]
+             [0 0 0 0 0]
+             [0 0 0 0 0]
+             [0 0 0 0 0])
            (simplify
             ((H/symplectic? (H/F->CT L/p->r))
              (up 't
@@ -751,10 +751,10 @@
   (testing "symplectic-transform?"
     ;; For example, point transforms are canonical
     (is (= '(matrix-by-rows
-             (up 0 0 0 0)
-             (up 0 0 0 0)
-             (up 0 0 0 0)
-             (up 0 0 0 0))
+             [0 0 0 0]
+             [0 0 0 0]
+             [0 0 0 0]
+             [0 0 0 0])
            (simplify
             ((H/symplectic-transform? (H/F->CT L/p->r))
              (up 't
@@ -870,7 +870,7 @@
                    (H/polar-canonical 'alpha))
              (up 't 'x 'p)))))
 
-    (is (= '(matrix-by-rows (up 0 0) (up 0 0))
+    (is (= '(matrix-by-rows [0 0] [0 0])
            (simplify
             ((H/symplectic-transform? (H/polar-canonical 'alpha))
              (up 't 'a 'I))))
@@ -883,9 +883,9 @@
              (up 't 'x 'p)))))
 
     (is (= '(matrix-by-rows
-             (up 0 0 0)
-             (up 0 0 0)
-             (up 0 0 0))
+             [0 0 0]
+             [0 0 0]
+             [0 0 0])
            (simplify
             ((H/symplectic? (H/polar-canonical 'alpha))
              (up 't 'a 'I)))))
@@ -912,11 +912,11 @@
                a-state))))
 
       (is (= '(matrix-by-rows
-               (up 0 0 0 0 0)
-               (up 0 0 0 0 0)
-               (up 0 0 0 0 0)
-               (up 0 0 0 0 0)
-               (up 0 0 0 0 0))
+               [0 0 0 0 0]
+               [0 0 0 0 0]
+               [0 0 0 0 0]
+               [0 0 0 0 0]
+               [0 0 0 0 0])
              (simplify
               ((H/symplectic? Cmix) a-state))))
 
