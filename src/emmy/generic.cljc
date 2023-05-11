@@ -1019,7 +1019,7 @@ defaults to `ln((1 + sqrt(1+x^2)) / x)`."
 ;; `defgeneric` installs a metadata-lookup handler for keywords by default; in
 ;; this case, we want to override that feature so that keywords simplify to
 ;; themselves.
-(defmethod simplify [#?(:clj Keyword :cljs 'cljs.core/Keyword)] [a] a)
+(defmethod simplify [#?(:clj Keyword :cljs cljs.core/Keyword)] [a] a)
 
 ;; This call registers a symbol for any non-multimethod we care about. These
 ;; will be returned instead of the actual function body when the user

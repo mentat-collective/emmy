@@ -13,11 +13,15 @@
             [emmy.util :as u]
             [emmy.value :as v])
   #?(:clj
-     (:import (clojure.lang PersistentVector
-                            IPersistentVector
-                            IPersistentMap
-                            IPersistentSet
-                            ISeq))))
+     (:import
+      (clojure.lang PersistentVector
+                    IPersistentVector
+                    ISeq
+                    PersistentHashSet
+                    PersistentTreeSet
+                    PersistentArrayMap
+                    PersistentHashMap
+                    PersistentTreeMap))))
 
 ;; ## Vector Implementations
 ;;
@@ -96,14 +100,9 @@
 ;; structure, or a dataframe-like structure with named fields instead of
 ;; positional fields. Nothing like this exists yet!
 
-#?(:clj
-   (derive IPersistentMap ::map)
-
-   :cljs
-   (do
-     (derive PersistentHashMap ::map)
-     (derive PersistentArrayMap ::map)
-     (derive PersistentTreeMap ::map)))
+(derive PersistentHashMap ::map)
+(derive PersistentArrayMap ::map)
+(derive PersistentTreeMap ::map)
 
 (defmethod g/negate [::map] [m]
   (u/map-vals g/negate m))
@@ -162,64 +161,104 @@
   (u/map-vals #(g/partial-derivative % selectors)
               m))
 
-#_{:clj-kondo/ignore [:redundant-do]}
-(#?@(:clj [do] :cljs [doseq [klass [PersistentHashMap PersistentArrayMap PersistentTreeMap]]])
- (extend-type #?(:clj IPersistentMap :cljs klass)
-   v/Value
-   (zero? [m] (every? v/zero? (vals m)))
-   (one? [_] false)
-   (identity? [_] false)
-   (zero-like [m] (u/map-vals v/zero-like m))
-   (one-like [m] (u/unsupported (str "one-like: " m)))
-   (identity-like [m] (u/unsupported (str "identity-like: " m)))
-   (exact? [m] (every? v/exact? (vals m)))
-   (freeze [m] (u/map-vals v/freeze m))
-   (kind [m] (if (sorted? m)
-               (type m)
-               (:type m (type m))))
+(doseq [klass [PersistentHashMap PersistentArrayMap PersistentTreeMap]]
+  #?(:clj
+     (extend klass
+       v/Value
+       {:zero? (fn [m] (every? v/zero? (vals m)))
+        :one? (fn [_] false)
+        :identity? (fn [_] false)
+        :zero-like (fn [m] (u/map-vals v/zero-like m))
+        :one-like (fn [m] (u/unsupported (str "one-like: " m)))
+        :identity-like (fn [m] (u/unsupported (str "identity-like: " m)))
+        :exact? (fn [m] (every? v/exact? (vals m)))
+        :freeze (fn [m] (u/map-vals v/freeze m))
+        :kind (fn [m] (if (sorted? m)
+                       (type m)
+                       (:type m (type m))))}
 
-   f/IArity
-   (arity [_] [:between 1 2])
+       f/IArity
+       {:arity (fn [_] [:between 1 2])}
 
-   d/IPerturbed
-   (perturbed? [m] (boolean (some d/perturbed? (vals m))))
-   (replace-tag [m old new] (u/map-vals #(d/replace-tag % old new) m))
-   (extract-tangent [m tag]
-     (if-let [t (:type m)]
-       ;; Do NOT attempt to recurse into the values if this map is being used as a
-       ;; simple representation for some other type, like a manifold point.
-       (u/unsupported (str "`extract-tangent` not supported for type " t "."))
-       (u/map-vals #(d/extract-tangent % tag) m)))))
+       d/IPerturbed
+       {:perturbed? (fn [m] (boolean (some d/perturbed? (vals m))))
+        :replace-tag (fn [m old new] (u/map-vals #(d/replace-tag % old new) m))
+        :extract-tangent
+        (fn [m tag]
+          (if-let [t (:type m)]
+            ;; Do NOT attempt to recurse into the values if this map is being used as a
+            ;; simple representation for some other type, like a manifold point.
+            (u/unsupported (str "`extract-tangent` not supported for type " t "."))
+            (u/map-vals #(d/extract-tangent % tag) m)))})
+
+     :cljs
+     (extend-type klass
+       v/Value
+       (zero? [m] (every? v/zero? (vals m)))
+       (one? [_] false)
+       (identity? [_] false)
+       (zero-like [m] (u/map-vals v/zero-like m))
+       (one-like [m] (u/unsupported (str "one-like: " m)))
+       (identity-like [m] (u/unsupported (str "identity-like: " m)))
+       (exact? [m] (every? v/exact? (vals m)))
+       (freeze [m] (u/map-vals v/freeze m))
+       (kind [m] (if (sorted? m)
+                   (type m)
+                   (:type m (type m))))
+
+       f/IArity
+       (arity [_] [:between 1 2])
+
+       d/IPerturbed
+       (perturbed? [m] (boolean (some d/perturbed? (vals m))))
+       (replace-tag [m old new] (u/map-vals #(d/replace-tag % old new) m))
+       (extract-tangent [m tag]
+         (if-let [t (:type m)]
+           ;; Do NOT attempt to recurse into the values if this map is being used as a
+           ;; simple representation for some other type, like a manifold point.
+           (u/unsupported (str "`extract-tangent` not supported for type " t "."))
+           (u/map-vals #(d/extract-tangent % tag) m))))))
 
 ;; ## Sets
 ;;
 ;; Emmy treats Clojure's set data structure as a monoid, with set union as
 ;; the addition operation and the empty set as the zero element.
 
-#?(:clj
-   (derive IPersistentSet ::set)
-
-   :cljs
-   (do
-     (derive PersistentHashSet ::set)
-     (derive PersistentTreeSet ::set)))
+(derive PersistentHashSet ::set)
+(derive PersistentTreeSet ::set)
 
 (defmethod g/add [::set ::set] [a b]
   (cs/union a b))
 
-#_{:clj-kondo/ignore [:redundant-do]}
-(#?@(:clj [do] :cljs [doseq [klass [PersistentHashSet PersistentTreeSet]]])
- (extend-type #?(:clj IPersistentSet :cljs klass)
-   v/Value
-   (zero? [s] (empty? s))
-   (one? [_] false)
-   (identity? [_] false)
-   (zero-like [_] #{})
-   (one-like [s] (u/unsupported (str "one-like: " s)))
-   (identity-like [s] (u/unsupported (str "identity-like: " s)))
-   (exact? [_] false)
-   (freeze [s] (u/unsupported (str "freeze: " s)))
-   (kind [s] (type s))
+(doseq [klass [PersistentHashSet PersistentTreeSet]]
+  #?(:clj
+     (extend klass
+       v/Value
+       {:zero? empty?
+        :one? (fn [_] false)
+        :identity? (fn [_] false)
+        :zero-like (fn [_] #{})
+        :one-like (fn [s] (u/unsupported (str "one-like: " s)))
+        :identity-like (fn [s] (u/unsupported (str "identity-like: " s)))
+        :exact? (fn [_] false)
+        :freeze (fn [s] (u/unsupported (str "freeze: " s)))
+        :kind type}
 
-   f/IArity
-   (arity [_] [:between 1 2])))
+       f/IArity
+       {:arity (fn [_] [:between 1 2])})
+
+     :cljs
+     (extend-type klass
+       v/Value
+       (zero? [s] (empty? s))
+       (one? [_] false)
+       (identity? [_] false)
+       (zero-like [_] #{})
+       (one-like [s] (u/unsupported (str "one-like: " s)))
+       (identity-like [s] (u/unsupported (str "identity-like: " s)))
+       (exact? [_] false)
+       (freeze [s] (u/unsupported (str "freeze: " s)))
+       (kind [s] (type s))
+
+       f/IArity
+       (arity [_] [:between 1 2]))))

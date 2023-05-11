@@ -2,6 +2,12 @@
 
 ## [unreleased]
 
+- #
+
+  - Remove quaternion unmap
+  - fix cljs keyword error
+  -
+
 - #134:
 
   - Adds `->TeX` handlers for `matrix-by-rows` and `column-matrix`.

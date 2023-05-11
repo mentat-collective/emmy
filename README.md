@@ -184,6 +184,8 @@ remains to be written. Some suggested next steps, for now:
   documentation
 - Watch Colin's ["Physics in Clojure"][physics-in-clj-talk-url] talk for an overview
   of Emmy and its implementation
+- Watch Sam's ["Emmy: Moldable Physics and Lispy Microworlds"][emmy-talk-url]
+  talk for the motivation behind the visual extensions to Emmy
 - Visit the HTML version of [Structure and Interpretation of Classical
   Mechanics](https://tgvaughan.github.io/sicm/). Many of the SICM exercises have
   been worked using Emmy; they live at [this Nextjournal
@@ -277,7 +279,7 @@ the project's open-source release.
 
 ## License
 
-Copyright © 2016-2023 Colin Smith, Sam Ritchie
+Copyright © 2016-2023 Colin Smith, Sam Ritchie.
 
 Distributed under the [GPL v3](LICENSE) license. See [LICENSE](LICENSE).
 
@@ -288,19 +290,20 @@ Distributed under the [GPL v3](LICENSE) license. See [LICENSE](LICENSE).
 [cljdoc]: https://cljdoc.org/badge/org.mentat/emmy
 [clojars-url]: https://clojars.org/org.mentat/emmy
 [clojars]: https://img.shields.io/clojars/v/org.mentat/emmy.svg
-[codecov]: https://img.shields.io/codecov/c/github/mentat-collective/emmy/main.svg?maxAge=3600
 [codecov-url]: https://codecov.io/github/mentat-collective/emmy
+[codecov]: https://img.shields.io/codecov/c/github/mentat-collective/emmy/main.svg?maxAge=3600
 [deps-new-url]: https://github.com/seancorfield/deps-new
 [discord-url]: https://discord.gg/hsRBqGEeQ4
 [discord]: https://img.shields.io/discord/731131562002743336?style=flat&colorA=000000&colorB=000000&label=&logo=discord
 [emmy-clerk-template-url]: https://github.com/mentat-collective/emmy/tree/main/resources/emmy/clerk
 [emmy-slack-url]: https://clojurians.slack.com/archives/C01ECA9AA74
+[emmy-talk-url]: https://www.youtube.com/watch?v=MNiqDZz-lp4
 [fdg-book-url]: https://mitpress.mit.edu/9780262019347/functional-differential-geometry/
 [gscm-url]: http://www.cs.rochester.edu/~gildea/guile-scmutils/
-[license]: https://img.shields.io/badge/license-GPLv3-brightgreen.svg
 [license-url]: LICENSE
+[license]: https://img.shields.io/badge/license-GPLv3-brightgreen.svg
 [physics-in-clj-talk-url]: https://www.youtube.com/watch?v=7PoajCqNKpg
-[scmutils-refman-url]: https://groups.csail.mit.edu/mac/users/gjs/6946/refman.txt
 [refman-url]: https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/reference-manual
+[scmutils-refman-url]: https://groups.csail.mit.edu/mac/users/gjs/6946/refman.txt
 [sicm-book-url]: https://mitpress.mit.edu/9780262028967/structure-and-interpretation-of-classical-mechanics/
 [sicp-book-url]: https://mitpress.mit.edu/9780262510875/structure-and-interpretation-of-computer-programs/
