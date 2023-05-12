@@ -563,8 +563,8 @@ Equivalent to `(invert (sin a))`."
 
 (defgeneric atan [1 2]
   "Computes the inverse tangent of the supplied argument `a`. Given two
-  arguments `a` and `a`, returns the inverse tangent of the angle formed by the
-  point `(a, b)` in a 2-dimensional euclidean plane.
+  arguments `a` and `b`, returns the inverse tangent of the angle formed by the
+  point `(b, a)` in a 2-dimensional euclidean plane.
 
   The two-argument version is sometimes
   called [Atan2](https://en.wikipedia.org/wiki/Atan2)."
