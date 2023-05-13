@@ -181,8 +181,8 @@
     (let [M (m/by-rows '[a b] '[c d])
           S (m/by-rows '[e f] '[g h])]
       (is (= '(matrix-by-rows
-               (up (+ (* a e) (* b g)) (+ (* a f) (* b h)))
-               (up (+ (* c e) (* d g)) (+ (* c f) (* d h))))
+               [(+ (* a e) (* b g)) (+ (* a f) (* b h))]
+               [(+ (* c e) (* d g)) (+ (* c f) (* d h))])
              (v/freeze
               (g/simplify (g/* M S)))))))
 

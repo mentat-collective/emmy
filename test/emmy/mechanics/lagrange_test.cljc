@@ -707,9 +707,9 @@
             (((expt D 2) L1) vs))))
 
     (is (= '(matrix-by-rows
-             (up m1 0 0 0)
-             (up 0 m1 0 0)
-             (up 0 0 m2 0)
-             (up 0 0 0 m2))
+             [m1 0 0 0]
+             [0 m1 0 0]
+             [0 0 m2 0]
+             [0 0 0 m2])
            (simplify
             (m/s->m vs (((expt D 2) L1) vs) vs))))))

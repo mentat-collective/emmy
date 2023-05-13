@@ -91,13 +91,13 @@
 (deftest euler-angles-to-rotation-tests
   (testing "Euler->M"
     (is (= '(matrix-by-rows
-             (up (+ (* -1 (sin phi) (cos theta) (sin psi)) (* (cos phi) (cos psi)))
-                 (+ (* -1 (sin phi) (cos theta) (cos psi)) (* -1 (sin psi) (cos phi)))
-                 (* (sin phi) (sin theta)))
-             (up (+ (* (cos theta) (sin psi) (cos phi)) (* (sin phi) (cos psi)))
-                 (+ (* (cos theta) (cos phi) (cos psi)) (* -1 (sin phi) (sin psi)))
-                 (* -1 (cos phi) (sin theta)))
-             (up (* (sin psi) (sin theta)) (* (cos psi) (sin theta)) (cos theta)))
+             [(+ (* -1 (sin phi) (cos theta) (sin psi)) (* (cos phi) (cos psi)))
+              (+ (* -1 (sin phi) (cos theta) (cos psi)) (* -1 (sin psi) (cos phi)))
+              (* (sin phi) (sin theta))]
+             [(+ (* (cos theta) (sin psi) (cos phi)) (* (sin phi) (cos psi)))
+              (+ (* (cos theta) (cos phi) (cos psi)) (* -1 (sin phi) (sin psi)))
+              (* -1 (cos phi) (sin theta))]
+             [(* (sin psi) (sin theta)) (* (cos psi) (sin theta)) (cos theta)])
            (simplify
             (r/Euler->M (up 'theta 'phi 'psi))))))
 
@@ -110,9 +110,9 @@
                  (r/rotate-y-matrix 'b)
                  (r/rotate-z-matrix 'c))]
     (is (= '(matrix-by-rows
-             (up 0 0 0)
-             (up 0 0 0)
-             (up 0 0 0))
+             [0 0 0]
+             [0 0 0]
+             [0 0 0])
            (simplify
             (- (r/Euler->M (r/M->Euler Rtest))
                Rtest)))

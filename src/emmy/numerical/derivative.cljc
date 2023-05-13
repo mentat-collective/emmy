@@ -304,7 +304,7 @@
 ;; next-highest-integer of the ratio above. The following method takes the ratio
 ;; above as an argument, and returns:
 ;;
-;; $$1 + \floor(\lvert ratio \rvert)$$
+;; $$1 + \left\lfloor \lvert ratio \rvert \right\rfloor$$
 
 (defn- roundoff-units
   "Returns the number of 'roundoff units', i.e., multiples of the machine epsilon,

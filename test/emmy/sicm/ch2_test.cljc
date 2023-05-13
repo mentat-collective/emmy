@@ -24,19 +24,19 @@
     (let [q (up θ φ ψ)
           M-on-path (compose Euler->M q)]
       (is (= '(matrix-by-rows
-               (up (+ (* -1 (sin (φ t)) (cos (θ t)) (sin (ψ t)))
-                      (* (cos (φ t)) (cos (ψ t))))
-                   (+ (* -1 (sin (φ t)) (cos (θ t)) (cos (ψ t)))
-                      (* -1 (sin (ψ t)) (cos (φ t))))
-                   (* (sin (φ t)) (sin (θ t))))
-               (up (+ (* (cos (θ t)) (sin (ψ t)) (cos (φ t)))
-                      (* (sin (φ t)) (cos (ψ t))))
-                   (+ (* (cos (θ t)) (cos (φ t)) (cos (ψ t)))
-                      (* -1 (sin (φ t)) (sin (ψ t))))
-                   (* -1 (cos (φ t)) (sin (θ t))))
-               (up (* (sin (ψ t)) (sin (θ t)))
-                   (* (cos (ψ t)) (sin (θ t)))
-                   (cos (θ t))))
+               [(+ (* -1 (sin (φ t)) (cos (θ t)) (sin (ψ t)))
+                   (* (cos (φ t)) (cos (ψ t))))
+                (+ (* -1 (sin (φ t)) (cos (θ t)) (cos (ψ t)))
+                   (* -1 (sin (ψ t)) (cos (φ t))))
+                (* (sin (φ t)) (sin (θ t)))]
+               [(+ (* (cos (θ t)) (sin (ψ t)) (cos (φ t)))
+                   (* (sin (φ t)) (cos (ψ t))))
+                (+ (* (cos (θ t)) (cos (φ t)) (cos (ψ t)))
+                   (* -1 (sin (φ t)) (sin (ψ t))))
+                (* -1 (cos (φ t)) (sin (θ t)))]
+               [(* (sin (ψ t)) (sin (θ t)))
+                (* (cos (ψ t)) (sin (θ t)))
+                (cos (θ t))])
              (e/freeze
               (simplify (M-on-path 't)))))
 

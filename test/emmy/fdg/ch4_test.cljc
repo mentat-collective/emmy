@@ -178,8 +178,7 @@
         ;; equations" alluded to on p.48 of FDG. By equating corresponding
         ;; entries, we may verify the solution of a, b, c given there.
         (is (= '(matrix-by-rows
-                 (up
-                  (+ (* a (sin phi) (sin psi) (sin theta))
+                 [(+ (* a (sin phi) (sin psi) (sin theta))
                      (* -1 b (sin psi) (cos phi) (cos theta))
                      (* -1 c (sin phi) (cos theta) (cos psi))
                      (* -1 b (sin phi) (cos psi))
@@ -190,9 +189,8 @@
                    (* c (sin phi) (sin psi) (cos theta))
                    (* b (sin phi) (sin psi))
                    (* -1 c (cos phi) (cos psi)))
-                  (+ (* a (sin phi) (cos theta)) (* b (sin theta) (cos phi))))
-                 (up
-                  (+ (* -1 a (sin psi) (sin theta) (cos phi))
+                  (+ (* a (sin phi) (cos theta)) (* b (sin theta) (cos phi)))]
+                 [(+ (* -1 a (sin psi) (sin theta) (cos phi))
                      (* -1 b (sin phi) (sin psi) (cos theta))
                      (* c (cos phi) (cos theta) (cos psi))
                      (* b (cos phi) (cos psi))
@@ -202,23 +200,20 @@
                      (* -1 c (sin psi) (cos phi) (cos theta))
                      (* -1 b (sin psi) (cos phi))
                      (* -1 c (sin phi) (cos psi)))
-                  (+ (* -1 a (cos phi) (cos theta)) (* b (sin phi) (sin theta))))
-                 (up
-                  (+ (* a (sin psi) (cos theta)) (* c (sin theta) (cos psi)))
+                  (+ (* -1 a (cos phi) (cos theta)) (* b (sin phi) (sin theta)))]
+                 [(+ (* a (sin psi) (cos theta)) (* c (sin theta) (cos psi)))
                   (+ (* a (cos theta) (cos psi)) (* -1 c (sin psi) (sin theta)))
-                  (* -1 a (sin theta))))
+                  (* -1 a (sin theta))])
                (simplify ((D g) 0))))
 
         (is (= '(matrix-by-rows
-                 (up 0 0 0)
-                 (up
-                  (* -1 (sin psi) (sin theta))
+                 [0 0 0]
+                 [(* -1 (sin psi) (sin theta))
                   (* -1 (sin theta) (cos psi))
-                  (* -1 (cos theta)))
-                 (up
-                  (+ (* (sin psi) (cos phi) (cos theta)) (* (sin phi) (cos psi)))
+                  (* -1 (cos theta))]
+                 [(+ (* (sin psi) (cos phi) (cos theta)) (* (sin phi) (cos psi)))
                   (+ (* (cos phi) (cos theta) (cos psi)) (* -1 (sin phi) (sin psi)))
-                  (* -1 (sin theta) (cos phi))))
+                  (* -1 (sin theta) (cos phi))])
                (simplify ((D h) 0))))))))
 
 (deftest section-4-3

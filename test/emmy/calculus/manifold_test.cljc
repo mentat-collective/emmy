@@ -102,6 +102,9 @@
     (is (m/check-point coord-system (m/typical-point coord-system))
         "Point returned by `typical-point` is always valid.")
 
+    (is (= point (g/simplify point))
+        "Points should not be touched by simplification.")
+
     (let [proto   (m/coordinate-prototype coord-system)
           proto   (if (sequential? proto) proto [proto])
           typical (m/typical-coords coord-system)

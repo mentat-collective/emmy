@@ -2,6 +2,23 @@
 
 ## [unreleased]
 
+- #139:
+
+  - Fixes matrix and simplification-related test failures introduced in the last
+    couple of PRs.
+
+  - Removes the custom `->Quaternion` constructor in `emmy.quaternion`; this was
+    causing build warnings in `cljs`. Any place you might have used
+    `->Quaternion`, please use `emmy.quaternion/make`.
+
+  - Backs off the various protocol extensions in `emmy.collection` from
+    `IPersistentMap` and `IPersistentSet` to the concrete types shipped with
+    Clojure. This prevents these implementations from attaching, on the JVM
+    side, to new `defrecord` instances or other types that extend those
+    protocols.
+
+  - Fixes a documentation error with `emmy.generic/atan`.
+
 - #134:
 
   - Adds `->TeX` handlers for `matrix-by-rows` and `column-matrix`.

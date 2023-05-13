@@ -83,7 +83,13 @@
       (is (every? v/zero? (v/zero-like (list 1 2 3)))
           "works with lists"))))
 
+(defrecord MyRecord [])
+
 (deftest map-tests
+  (testing "don't try and simplify records"
+    (let [r (MyRecord.)]
+      (is (= r (g/simplify r)))))
+
   (let [map-gen (gen/map gen/keyword sg/real {:max-elements 5})]
     (laws/additive-group 100 map-gen "Map"
                          :commutative? true))

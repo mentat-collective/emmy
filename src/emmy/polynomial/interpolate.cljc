@@ -145,6 +145,7 @@
 ;; The next few functions will discuss "rows" and "columns" of the tableau. That
 ;; refers to the rows and columns of this representation;
 ;;
+;; ```
 ;; p0 p01 p012 p0123 p01234
 ;; p1 p12 p123 p1234 .
 ;; p2 p23 p234 .     .
@@ -153,6 +154,7 @@
 ;; .  .   .    .     .
 ;; .  .   .    .     .
 ;; .  .   .    .     .
+;; ```
 ;;
 ;; The first column here is the initial set of points. Each entry in each
 ;; successive column is generated through some operation between the entry to
@@ -293,7 +295,7 @@
                     (lagrange-incremental points 'x))]
     (every? zero? diffs))
   ;; => true
-)
+  )
 
 ;; ## Generic Tableau Processing
 ;;

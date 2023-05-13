@@ -53,15 +53,14 @@
                    ((e/time-independent-canonical? a-non-canonical-transform)
                     (up 't 'theta 'p))))))
       (is (= '(matrix-by-rows
-               (up 0 0 0 0 0)
-               (up 0 0 0 1 0)
-               (up 0 0 0 0 1)
-               (up 0 -1 0 0 0)
-               (up 0 0 -1 0 0))
-             (e/freeze
-              (simplify (let [s (up 't (up 'x 'y) (down 'px 'py))
-                              s* (e/compatible-shape s)]
-                          (s->m s* ((D J-func) s*) s*))))))
+               [0 0 0 0 0]
+               [0 0 0 1 0]
+               [0 0 0 0 1]
+               [0 -1 0 0 0]
+               [0 0 -1 0 0])
+             (simplify (let [s (up 't (up 'x 'y) (down 'px 'py))
+                             s* (e/compatible-shape s)]
+                         (s->m s* ((D J-func) s*) s*)))))
       (let [symplectic? (fn [C]
                           (fn [s]
                             (let [s* (e/compatible-shape s)
@@ -69,30 +68,28 @@
                                   DCs (s->m s* ((D C) s) s)]
                               (- J (* DCs J (e/transpose DCs))))))]
         (is (= '(matrix-by-rows
-                 (up 0 0 0 0 0)
-                 (up 0 0 0 0 0)
-                 (up 0 0 0 0 0)
-                 (up 0 0 0 0 0)
-                 (up 0 0 0 0 0))
-               (e/freeze
-                (simplify
-                 ((symplectic? (F->CT p->r))
-                  (up 't
-                      (up 'r 'varphi)
-                      (down 'p_r 'p_varphi)))))))))
+                 [0 0 0 0 0]
+                 [0 0 0 0 0]
+                 [0 0 0 0 0]
+                 [0 0 0 0 0]
+                 [0 0 0 0 0])
+               (simplify
+                ((symplectic? (F->CT p->r))
+                 (up 't
+                     (up 'r 'varphi)
+                     (down 'p_r 'p_varphi))))))))
 
     (testing "symplectic"
       (is (= '(matrix-by-rows
-               (up 0 0 0 0)
-               (up 0 0 0 0)
-               (up 0 0 0 0)
-               (up 0 0 0 0))
-             (e/freeze
-              (simplify
-               ((e/symplectic-transform? (F->CT p->r))
-                (up 't
-                    (up 'r 'theta)
-                    (down 'p_r 'p_theta))))))))
+               [0 0 0 0]
+               [0 0 0 0]
+               [0 0 0 0]
+               [0 0 0 0])
+             (simplify
+              ((e/symplectic-transform? (F->CT p->r))
+               (up 't
+                   (up 'r 'theta)
+                   (down 'p_r 'p_theta)))))))
 
     (testing "rotating coordinates p. 336"
       (let [rotating (fn [n]
@@ -106,18 +103,17 @@
                 (fn [[_ [x y _] [p_x p_y _]]]
                   (* Omega (- (* x p_y) (* y p_x)))))]
         (is (= '(matrix-by-rows
-                 (up 0 0 0 0 0 0)
-                 (up 0 0 0 0 0 0)
-                 (up 0 0 0 0 0 0)
-                 (up 0 0 0 0 0 0)
-                 (up 0 0 0 0 0 0)
-                 (up 0 0 0 0 0 0))
-               (e/freeze
-                (simplify
-                 ((e/symplectic-transform? (C-rotating 'Omega))
-                  (up 't
-                      (up 'x 'y 'z)
-                      (down 'p_x 'p_y 'p_z)))))))
+                 [0 0 0 0 0 0]
+                 [0 0 0 0 0 0]
+                 [0 0 0 0 0 0]
+                 [0 0 0 0 0 0]
+                 [0 0 0 0 0 0]
+                 [0 0 0 0 0 0])
+               (simplify
+                ((e/symplectic-transform? (C-rotating 'Omega))
+                 (up 't
+                     (up 'x 'y 'z)
+                     (down 'p_x 'p_y 'p_z))))))
 
         ;; Note that the definition of K, above, differs from that given in
         ;; the 1st Ed. of SICM (our definition has the opposite sign). The

@@ -557,11 +557,11 @@
                     (-> (simplify expr)
                         (x/substitute (v/freeze S) 'p)))]
       (is (= '(matrix-by-rows
-               (up (((partial 0) H) p)
-                   (((partial 1 0) H) p)
-                   (((partial 1 1) H) p)
-                   (((partial 2 0) H) p)
-                   (((partial 2 1) H) p)))
+               [(((partial 0) H) p)
+                (((partial 1 0) H) p)
+                (((partial 1 1) H) p)
+                (((partial 2 0) H) p)
+                (((partial 2 1) H) p)])
              (present
               ((d/D-as-matrix (af/literal-function 'H (h/Hamiltonian 2)))
                S)))))
@@ -577,39 +577,39 @@
           present (fn [expr]
                     (-> (simplify expr)
                         (x/substitute (v/freeze S) 'p)))]
-      (is (= '(matrix-by-rows (up (((partial 0) C↑0) p)
-                                  (((partial 1 0) C↑0) p)
-                                  (((partial 1 1) C↑0) p)
-                                  (((partial 2 0) C↑0) p)
-                                  (((partial 2 1) C↑0) p))
-                              (up (((partial 0) C↑1↑0) p)
-                                  (((partial 1 0) C↑1↑0) p)
-                                  (((partial 1 1) C↑1↑0) p)
-                                  (((partial 2 0) C↑1↑0) p)
-                                  (((partial 2 1) C↑1↑0) p))
-                              (up (((partial 0) C↑1↑1) p)
-                                  (((partial 1 0) C↑1↑1) p)
-                                  (((partial 1 1) C↑1↑1) p)
-                                  (((partial 2 0) C↑1↑1) p)
-                                  (((partial 2 1) C↑1↑1) p))
-                              (up (((partial 0) C↑2_0) p)
-                                  (((partial 1 0) C↑2_0) p)
-                                  (((partial 1 1) C↑2_0) p)
-                                  (((partial 2 0) C↑2_0) p)
-                                  (((partial 2 1) C↑2_0) p))
-                              (up (((partial 0) C↑2_1) p)
-                                  (((partial 1 0) C↑2_1) p)
-                                  (((partial 1 1) C↑2_1) p)
-                                  (((partial 2 0) C↑2_1) p)
-                                  (((partial 2 1) C↑2_1) p)))
+      (is (= '(matrix-by-rows [(((partial 0) C↑0) p)
+                               (((partial 1 0) C↑0) p)
+                               (((partial 1 1) C↑0) p)
+                               (((partial 2 0) C↑0) p)
+                               (((partial 2 1) C↑0) p)]
+                              [(((partial 0) C↑1↑0) p)
+                               (((partial 1 0) C↑1↑0) p)
+                               (((partial 1 1) C↑1↑0) p)
+                               (((partial 2 0) C↑1↑0) p)
+                               (((partial 2 1) C↑1↑0) p)]
+                              [(((partial 0) C↑1↑1) p)
+                               (((partial 1 0) C↑1↑1) p)
+                               (((partial 1 1) C↑1↑1) p)
+                               (((partial 2 0) C↑1↑1) p)
+                               (((partial 2 1) C↑1↑1) p)]
+                              [(((partial 0) C↑2_0) p)
+                               (((partial 1 0) C↑2_0) p)
+                               (((partial 1 1) C↑2_0) p)
+                               (((partial 2 0) C↑2_0) p)
+                               (((partial 2 1) C↑2_0) p)]
+                              [(((partial 0) C↑2_1) p)
+                               (((partial 1 0) C↑2_1) p)
+                               (((partial 1 1) C↑2_1) p)
+                               (((partial 2 0) C↑2_1) p)
+                               (((partial 2 1) C↑2_1) p)])
              (present
               ((matrix/as-matrix (D C-general)) S))))
 
-      (is (= '(matrix-by-rows (up 0 0 0 0 0)
-                              (up 0 0 0 0 0)
-                              (up 0 0 0 0 0)
-                              (up 0 0 0 0 0)
-                              (up 0 0 0 0 0))
+      (is (= '(matrix-by-rows [0 0 0 0 0]
+                              [0 0 0 0 0]
+                              [0 0 0 0 0]
+                              [0 0 0 0 0]
+                              [0 0 0 0 0])
              (simplify
               ((- (d/D-as-matrix C-general)
                   (matrix/as-matrix (D C-general)))
@@ -630,10 +630,10 @@
 
     (testing "identical test in matrix form"
       (is (= '(matrix-by-rows
-               (up m1 0 0 0)
-               (up 0 m1 0 0)
-               (up 0 0 m2 0)
-               (up 0 0 0 m2))
+               [m1 0 0 0]
+               [0 m1 0 0]
+               [0 0 m2 0]
+               [0 0 0 m2])
              (simplify
               (matrix/s->m vs (((g/expt D 2) L1) vs) vs)))))))
 
@@ -652,31 +652,31 @@
                                  (DOWN Real Real))))
           s (s/up 't (s/up 'x 'y) (s/down 'px 'py))]
       (is (= '(matrix-by-rows
-               (up (((partial 0) C↑0) (up t (up x y) (down px py)))
-                   (((partial 1 0) C↑0) (up t (up x y) (down px py)))
-                   (((partial 1 1) C↑0) (up t (up x y) (down px py)))
-                   (((partial 2 0) C↑0) (up t (up x y) (down px py)))
-                   (((partial 2 1) C↑0) (up t (up x y) (down px py))))
-               (up (((partial 0) C↑1↑0) (up t (up x y) (down px py)))
-                   (((partial 1 0) C↑1↑0) (up t (up x y) (down px py)))
-                   (((partial 1 1) C↑1↑0) (up t (up x y) (down px py)))
-                   (((partial 2 0) C↑1↑0) (up t (up x y) (down px py)))
-                   (((partial 2 1) C↑1↑0) (up t (up x y) (down px py))))
-               (up (((partial 0) C↑1↑1) (up t (up x y) (down px py)))
-                   (((partial 1 0) C↑1↑1) (up t (up x y) (down px py)))
-                   (((partial 1 1) C↑1↑1) (up t (up x y) (down px py)))
-                   (((partial 2 0) C↑1↑1) (up t (up x y) (down px py)))
-                   (((partial 2 1) C↑1↑1) (up t (up x y) (down px py))))
-               (up (((partial 0) C↑2_0) (up t (up x y) (down px py)))
-                   (((partial 1 0) C↑2_0) (up t (up x y) (down px py)))
-                   (((partial 1 1) C↑2_0) (up t (up x y) (down px py)))
-                   (((partial 2 0) C↑2_0) (up t (up x y) (down px py)))
-                   (((partial 2 1) C↑2_0) (up t (up x y) (down px py))))
-               (up (((partial 0) C↑2_1) (up t (up x y) (down px py)))
-                   (((partial 1 0) C↑2_1) (up t (up x y) (down px py)))
-                   (((partial 1 1) C↑2_1) (up t (up x y) (down px py)))
-                   (((partial 2 0) C↑2_1) (up t (up x y) (down px py)))
-                   (((partial 2 1) C↑2_1) (up t (up x y) (down px py)))))
+               [(((partial 0) C↑0) (up t (up x y) (down px py)))
+                (((partial 1 0) C↑0) (up t (up x y) (down px py)))
+                (((partial 1 1) C↑0) (up t (up x y) (down px py)))
+                (((partial 2 0) C↑0) (up t (up x y) (down px py)))
+                (((partial 2 1) C↑0) (up t (up x y) (down px py)))]
+               [(((partial 0) C↑1↑0) (up t (up x y) (down px py)))
+                (((partial 1 0) C↑1↑0) (up t (up x y) (down px py)))
+                (((partial 1 1) C↑1↑0) (up t (up x y) (down px py)))
+                (((partial 2 0) C↑1↑0) (up t (up x y) (down px py)))
+                (((partial 2 1) C↑1↑0) (up t (up x y) (down px py)))]
+               [(((partial 0) C↑1↑1) (up t (up x y) (down px py)))
+                (((partial 1 0) C↑1↑1) (up t (up x y) (down px py)))
+                (((partial 1 1) C↑1↑1) (up t (up x y) (down px py)))
+                (((partial 2 0) C↑1↑1) (up t (up x y) (down px py)))
+                (((partial 2 1) C↑1↑1) (up t (up x y) (down px py)))]
+               [(((partial 0) C↑2_0) (up t (up x y) (down px py)))
+                (((partial 1 0) C↑2_0) (up t (up x y) (down px py)))
+                (((partial 1 1) C↑2_0) (up t (up x y) (down px py)))
+                (((partial 2 0) C↑2_0) (up t (up x y) (down px py)))
+                (((partial 2 1) C↑2_0) (up t (up x y) (down px py)))]
+               [(((partial 0) C↑2_1) (up t (up x y) (down px py)))
+                (((partial 1 0) C↑2_1) (up t (up x y) (down px py)))
+                (((partial 1 1) C↑2_1) (up t (up x y) (down px py)))
+                (((partial 2 0) C↑2_1) (up t (up x y) (down px py)))
+                (((partial 2 1) C↑2_1) (up t (up x y) (down px py)))])
              (simplify
               ((as-matrix (D C-general)) s)))))))
 
@@ -720,36 +720,36 @@
   (let [M (matrix/by-rows [(af/literal-function 'f) (af/literal-function 'g)]
                           [(af/literal-function 'h) (af/literal-function 'k)])]
     (is (= '(matrix-by-rows
-             (up (f t) (g t))
-             (up (h t) (k t)))
+             [(f t) (g t)]
+             [(h t) (k t)])
            (simplify (M 't))))
 
     (is (= '(matrix-by-rows
-             (up ((D f) t) ((D g) t))
-             (up ((D h) t) ((D k) t)))
+             [((D f) t) ((D g) t)]
+             [((D h) t) ((D k) t)])
            (simplify ((D M) 't))))
 
     (is (= '(matrix-by-rows
-             (up (+ (expt (f t) 2) (expt (h t) 2))
-                 (+ (* (f t) (g t)) (* (h t) (k t))))
-             (up (+ (* (f t) (g t)) (* (h t) (k t)))
-                 (+ (expt (g t) 2) (expt (k t) 2))))
+             [(+ (expt (f t) 2) (expt (h t) 2))
+              (+ (* (f t) (g t)) (* (h t) (k t)))]
+             [(+ (* (f t) (g t)) (* (h t) (k t)))
+              (+ (expt (g t) 2) (expt (k t) 2))])
            (simplify
             ((* (g/transpose M) M) 't))))
 
     (is (= '(matrix-by-rows
-             (up (+ (* 2 (f t) ((D f) t))
-                    (* 2 (h t) ((D h) t)))
-                 (+ (* (f t) ((D g) t))
-                    (* (g t) ((D f) t))
-                    (* (h t) ((D k) t))
-                    (* (k t) ((D h) t))))
-             (up (+ (* (f t) ((D g) t))
-                    (* (g t) ((D f) t))
-                    (* (h t) ((D k) t))
-                    (* (k t) ((D h) t)))
-                 (+ (* 2 (g t) ((D g) t))
-                    (* 2 (k t) ((D k) t)))))
+             [(+ (* 2 (f t) ((D f) t))
+                 (* 2 (h t) ((D h) t)))
+              (+ (* (f t) ((D g) t))
+                 (* (g t) ((D f) t))
+                 (* (h t) ((D k) t))
+                 (* (k t) ((D h) t)))]
+             [(+ (* (f t) ((D g) t))
+                 (* (g t) ((D f) t))
+                 (* (h t) ((D k) t))
+                 (* (k t) ((D h) t)))
+              (+ (* 2 (g t) ((D g) t))
+                 (* 2 (k t) ((D k) t)))])
            (simplify
             ((D (* (g/transpose M) M)) 't))))))
 

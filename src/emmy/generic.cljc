@@ -563,8 +563,8 @@ Equivalent to `(invert (sin a))`."
 
 (defgeneric atan [1 2]
   "Computes the inverse tangent of the supplied argument `a`. Given two
-  arguments `a` and `a`, returns the inverse tangent of the angle formed by the
-  point `(a, b)` in a 2-dimensional euclidean plane.
+  arguments `a` and `b`, returns the inverse tangent of the angle formed by the
+  point `(b, a)` in a 2-dimensional euclidean plane.
 
   The two-argument version is sometimes
   called [Atan2](https://en.wikipedia.org/wiki/Atan2)."
@@ -1019,7 +1019,7 @@ defaults to `ln((1 + sqrt(1+x^2)) / x)`."
 ;; `defgeneric` installs a metadata-lookup handler for keywords by default; in
 ;; this case, we want to override that feature so that keywords simplify to
 ;; themselves.
-(defmethod simplify [#?(:clj Keyword :cljs 'cljs.core/Keyword)] [a] a)
+(defmethod simplify [#?(:clj Keyword :cljs cljs.core/Keyword)] [a] a)
 
 ;; This call registers a symbol for any non-multimethod we care about. These
 ;; will be returned instead of the actual function body when the user

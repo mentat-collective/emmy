@@ -126,9 +126,9 @@
           v (up 'x 'y 'z)
           M (rotation/Euler->M Euler)]
       (is (= '(matrix-by-rows
-               (up 0 0 0)
-               (up 0 0 0)
-               (up 0 0 0))
+               [0 0 0]
+               [0 0 0]
+               [0 0 0])
              (simplify
               (- (* (rig/three-vector-components->antisymmetric (* M v)) M)
                  (* M (rig/three-vector-components->antisymmetric v)))))
