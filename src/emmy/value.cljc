@@ -12,6 +12,7 @@
   (:require #?@(:cljs [["complex.js" :as Complex]
                        ["fraction.js/bigfraction.js" :as Fraction]
                        [goog.array :as garray]
+                       [goog.object :as gobject]
                        [goog.math.Long]
                        [goog.math.Integer]])
             [clojure.core :as core]
@@ -437,6 +438,53 @@
        (freeze [x] x)
        (exact? [_] true)
        (kind [_] goog.math.Long))))
+
+#?(:cljs
+  ;; We find it convenient to be able to decorate "vanilla" JavaScript
+  ;; functions with metadata. In Clojurescript, using `with-meta` on a
+  ;; native function will replace it with an AFn (abstract function)
+  ;; instance, basically an object holding the function and its metadata
+  ;; in two ordinary properties. Such an object does not have the Function
+  ;; prototype, and is therefore not directly callable inJS.
+  ;;
+  ;; To fix this, we allow native functions to store metadata
+  ;; in a symbol-indexed property. The Clojurescript implementation
+  ;; is arguably more "hygienic," and gets around the difficulty of
+  ;; cloning the function as the `IWithMeta` contract would require,
+  ;; but this implementation should be safe enough for our purposes.
+  ;;
+  ;; By using a symbol instead of a string as the key for the metadata,
+  ;; the metadata annotation will not be visible among the object's other
+  ;; normal properties.
+   (let [metadata-symbol (. js/Symbol for "Symbol.__emmy_meta__")]
+     (extend-type function
+       IMeta
+       (-meta [f] (or (gobject/get f metadata-symbol) nil)))
+
+    ;; We would like to support IWithMeta, but that interface's contract
+    ;; requires the production of a _new_ object. Instead we provide a function
+    ;; to mutate a native object's metadata in place.
+     (defn set-js-meta!
+       "Mutates the native JS object `o` to have the given metadata. The
+       previous metadata, if any, is discarded. `o` is returned."
+       [o m]
+       (unchecked-set o metadata-symbol m)
+       o))
+   )
+
+#?(:cljs
+   (defn make-es6-callable
+     "Make s callable. This is done by re-hosting all of the object properties of `s`
+      in a new native JS function which delegates to the Clojure application. The
+      result of the application of this new function is supplied to the continuation `k`."
+     [s k]
+     (let [f (fn [& xs] (k (apply s xs)))]
+       (. js/Object setPrototypeOf f (. js/Object getPrototypeOf s))
+       (doseq [property-name (. js/Object getOwnPropertyNames s)]
+         (unchecked-set f property-name (gobject/get s property-name)))
+       (doseq [property-symbol (. js/Object getOwnPropertySymbols s)]
+         (unchecked-set f property-symbol (gobject/get s property-symbol)))
+       f)))
 
 (defn kind-predicate
   "Returns a predicate that returns true if its argument matches the supplied

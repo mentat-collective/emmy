@@ -13,7 +13,8 @@
             [emmy.operator :as o]
             [emmy.util :as u]
             [emmy.util.aggregate :as ua]
-            [emmy.value :as v])
+            [emmy.value :as v]
+            #?(:cljs [goog.object :as gobject]))
   #?(:clj
      (:import (clojure.lang Associative
                             AFn IFn
@@ -46,6 +47,7 @@
 (derive ::up ::structure)
 (derive ::down ::structure)
 (derive #?(:clj IPersistentVector :cljs PersistentVector) ::up)
+#?(:cljs (derive js/Array ::up))
 
 ;; Structures can interact with functions.
 (derive ::structure ::f/cofunction)
@@ -211,6 +213,9 @@
        ISeqable
        (-seq [_] (-seq v))
 
+       IIterable
+       (-iterator [_] (-iterator v))
+
        ICounted
        (-count [_] (-count v))
 
@@ -290,6 +295,41 @@
      (-> (list* ((.-orientation s) orientation->symbol)
                 (.-v s))
          (print-method w))))
+
+#?(:cljs
+   (defn ^:no-doc make-es6-indexable
+     "Using a proxy object, equip the given object `s` with a property-get method,
+      which will allow bracket notation `s[x]` to be used with the object. In the
+      event the index looks like an integer, we delegate to the underlying vector.
+      If the property `length` is requested, we return the vector length."
+     [s]
+     (js/Proxy.
+      s
+      #js {:get (fn [s ix]
+                  (cond (string? ix)
+                        (if (= ix "length")
+                          (count (.-v s))
+                          (let [i (js/parseInt ix)]
+                            (if-not (js/isNaN i)
+                              (nth (.-v s) (js/parseInt ix))
+                              (gobject/get s ix))))
+
+                        (number? ix)
+                        (nth (.-v s) ix)
+
+                        :else
+                        (gobject/get s ix)))})))
+
+#?(:cljs
+   (do
+     ;; In order for an Emmy structure to destructure itself into a JS
+     ;; argument list, it must be iterable in the ES6 sense, which we
+     ;; arrange for here.
+     (es6-iterable Structure)
+     ;; Some handy extension(s) to the Structure prototype to help these
+     ;; objects feel more like JS arrays
+     (set! (.. Structure -prototype -map) (fn [f] (this-as s (mapr f s))))
+     (set! (.. Structure -prototype -at) (fn [ix] (this-as s (nth (.-v s) ix))))))
 
 ;; ## Component Accessors
 

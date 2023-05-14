@@ -297,7 +297,7 @@ Distributed under the [GPL v3](LICENSE) license. See [LICENSE](LICENSE).
 [discord]: https://img.shields.io/discord/731131562002743336?style=flat&colorA=000000&colorB=000000&label=&logo=discord
 [emmy-clerk-template-url]: https://github.com/mentat-collective/emmy/tree/main/resources/emmy/clerk
 [emmy-slack-url]: https://clojurians.slack.com/archives/C01ECA9AA74
-[emmy-talk-url]: https://www.youtube.com/watch?v=MNiqDZz-lp4
+[emmy-talk-url]: https://www.youtube.com/watch?v=B9kqD8vBuwU
 [fdg-book-url]: https://mitpress.mit.edu/9780262019347/functional-differential-geometry/
 [gscm-url]: http://www.cs.rochester.edu/~gildea/guile-scmutils/
 [license-url]: LICENSE
