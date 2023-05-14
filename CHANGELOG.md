@@ -19,6 +19,39 @@
 
   - Fixes a documentation error with `emmy.generic/atan`.
 
+- #135:
+
+  - Adds some hidden features for use by `emmy.js` to support use of Emmy
+    from JavaScript. These features are not used by default, but are meant
+    to be opted-in by JS libraries that need them.
+
+  - The function object now uses the field `f-name` instead of `name` to
+    hold the name of the function. The name property of Function objects
+    in JS is readonly, so we need a different property that we can modify
+    in order to create a JS object which is both an Emmy and an ES6 function.
+
+  - Adds the function `make-es6-callable` to promote an IFn object to a
+    native JS function by birthing a new function object which delegates
+    to the original object's apply method, and copying over the rest of
+    the object's identity.
+
+  - Adds the function `make-es6-indexable` to promote an Emmy Structure
+    to something that behaves more like an ES6 array.
+
+  - Structure objects are declared `es6-iterable` using a standard CLJS
+    feature.
+
+  - Using `with-meta` on a function creates a new object which is not a
+    native JS function, though still invokable in Clojure. This is a
+    steep price to pay for the privilege of adding metadata to a function,
+    so for function objects we allow metadata to be directly applied.
+
+    The IMeta interface can be used to retrieve this property-based
+    metadata, but IWithMeta cannot be used to attach it (this interface
+    guarantees the production of a new object).
+    See `emmy.function/with-meta`.
+
+
 - #134:
 
   - Adds `->TeX` handlers for `matrix-by-rows` and `column-matrix`.

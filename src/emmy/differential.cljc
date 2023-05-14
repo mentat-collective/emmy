@@ -1266,11 +1266,11 @@
 
 (defn- discont-at-integers [f dfdx]
   (let [f (lift-1 f (fn [_] dfdx))
-        f-name (v/freeze f)]
+        name (v/freeze f)]
     (fn [x]
       (if (v/integral? (finite-term x))
         (u/illegal
-         (str "Derivative of g/" f-name " undefined at integral points."))
+         (str "Derivative of g/" name " undefined at integral points."))
         (f x)))))
 
 (defunary g/floor

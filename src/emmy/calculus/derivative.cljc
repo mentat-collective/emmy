@@ -61,9 +61,9 @@
     ((((D f) 'x) 'y) 'z))
   ;;=> (* y z)
 
-  (((partial 0) g/*) 'x 'y 'z)
+  (((partial 0) g/*) 'x 'y 'z))
   ;;=> (* y z)
-  )
+
 
 ;; To `extract-tangent` from a function, we need to compose the
 ;; `extract-tangent` operation with the returned function.
@@ -200,25 +200,37 @@
 ;; preserved through tag replacement and extraction.
 
 (extend-protocol d/IPerturbed
-  #?(:clj Fn :cljs function)
-  (perturbed? [#?(:cljs _ :clj f)]
-    #?(:clj (:perturbed? (meta f) false)
-       :cljs false))
-  (replace-tag [f old new] (replace-tag-fn f old new))
-  (extract-tangent [f tag] (extract-tangent-fn f tag))
-
-  #?@(:cljs
-      [MetaFn
-       (perturbed? [f] (:perturbed? (.-meta f) false))
-       (replace-tag [f old new]
-                    (replace-tag-fn (.-afn f) old new))
-       (extract-tangent [f tag]
-                        (extract-tangent-fn (.-afn f) tag))])
 
   MultiFn
   (perturbed? [_] false)
   (replace-tag [f old new] (replace-tag-fn f old new))
-  (extract-tangent [f tag] (extract-tangent-fn f tag)))
+  (extract-tangent [f tag] (extract-tangent-fn f tag))
+
+  #?@(:clj
+      [;; In Clojure, metadata can live directly on function objects.
+       Fn
+       (perturbed? [f] (:perturbed? (meta f) false))
+       (replace-tag [f old new] (replace-tag-fn f old new))
+       (extract-tangent [f tag] (extract-tangent-fn f tag))]
+
+      :cljs
+      [;; In Clojurescript, we arrange for metadata to live directly on
+       ;; function objects by setting a special property and implementing
+       ;; IMeta: see [[emmy.value]].
+       function
+       (perturbed? [f] (:perturbed? (meta f) false))
+       (replace-tag [f old new] (replace-tag-fn f old new))
+       (extract-tangent [f tag] (extract-tangent-fn f tag))
+       ;; The official way to get metadata onto a function in Clojurescript
+       ;; is to promote the fn to an AFn-implementing object and store the
+       ;; metadata on a directly-visible object property, which we also
+       ;; support, although such objects are not naively callable in JavaScript
+       MetaFn
+       (perturbed? [f] (:perturbed? (.-meta f) false))
+       (replace-tag [f old new]
+                    (replace-tag-fn (.-afn f) old new))
+       (extract-tangent [f tag]
+                        (extract-tangent-fn (.-afn f) tag))]))
 
 ;; ## Single and Multivariable Calculus
 ;;

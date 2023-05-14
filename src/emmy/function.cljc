@@ -7,7 +7,7 @@
   See [the `Function`
   cljdocs](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/data-types/function)
   for a discussion of generic function arithmetic."
-  (:refer-clojure :exclude [get get-in memoize])
+  (:refer-clojure :exclude [get get-in memoize with-meta name])
   (:require [clojure.core :as core]
             [clojure.core.match :refer [match]]
             [emmy.generic :as g]
@@ -51,6 +51,19 @@
   [f]
   (isa? (v/kind f) ::v/function))
 
+(defn- with-meta
+  "The current Clojurescript definition of `with-meta` first tests its
+   argument with `js-fn?` and generates a MetaFn if so, frustrating our
+   definition of IWithMeta on native JS function objects. This wrapper
+   delegates to our definition, which allows native functions to safely
+   carry metadata. Note that in Clojure one is guaranteed a fresh object
+   with the new metadata, but in Clojurescript the target is mutated.
+   This function is safe to use on freshly created functions, but may
+   require careful consideration in other contexts."
+  [f m]
+  #?(:cljs (v/set-js-meta! f m)
+     :clj (clojure.core/with-meta f m)))
+
 (defn with-arity
   "Appends the supplied `arity` to the metadata of `f`, knocking out any
   pre-existing arity notation.
@@ -73,7 +86,7 @@
   [& fns]
   (let [a (arity (or (last fns)
                      identity))]
-    (with-meta (apply comp fns) {:arity a})))
+    (with-arity (apply comp fns) a)))
 
 (defn memoize
   "meta-preserving version of `clojure.core/memoize`.
@@ -86,8 +99,7 @@
         m (if (:arity m)
             m
             (assoc m :arity (arity f)))]
-    (with-meta (core/memoize f)
-      m)))
+    (with-meta (core/memoize f) m)))
 
 (defn get
   "For non-functions, acts like [[clojure.core/get]]. For function
@@ -128,27 +140,21 @@
      (core/get-in f ks not-found))))
 
 (defn- zero-like [f]
-  (let [meta {:arity (arity f)
-              :from :zero-like}]
-    (-> (fn [& args]
-          (v/zero-like (apply f args)))
-        (with-meta meta))))
+  (-> (fn [& args]
+        (v/zero-like (apply f args)))
+      (with-arity (arity f) {:from :zero-like})))
 
 (defn- one-like [f]
-  (let [meta {:arity (arity f)
-              :from :one-like}]
-    (-> (fn [& args]
-          (v/one-like (apply f args)))
-        (with-meta meta))))
+  (-> (fn [& args]
+        (v/one-like (apply f args)))
+      (with-arity (arity f) {:from :one-like})))
 
 (def I
   "Identity function. Returns its argument."
   identity)
 
 (defn- identity-like [f]
-  (let [meta {:arity (arity f)
-              :from :identity-like}]
-    (with-meta identity meta)))
+  (with-arity identity (arity f) {:from :identity-like}))
 
 (defn arg-shift
   "Takes a function `f` and a sequence of `shifts`, and returns a new function
@@ -163,7 +169,7 @@
   (let [shifts (concat shifts (repeat 0))]
     (-> (fn [& xs]
           (apply f (map g/+ xs shifts)))
-        (with-meta {:arity (arity f)}))))
+        (with-arity (arity f)))))
 
 (defn arg-scale
   "Takes a function `f` and a sequence of `factors`, and returns a new function
@@ -178,7 +184,7 @@
   (let [factors (concat factors (repeat 1))]
     (-> (fn [& xs]
           (apply f (map g/* xs factors)))
-        (with-meta {:arity (arity f)}))))
+        (with-arity (arity f)))))
 
 (extend-protocol v/Value
   MultiFn
@@ -364,7 +370,7 @@
    :cljs
    (extend-protocol IArity
      function
-     (arity [f] (reflect-on-arity f))
+     (arity [f] (:arity (meta f) (reflect-on-arity f)))
 
      MetaFn
      (arity [f] (:arity (meta f) (reflect-on-arity f)))))
@@ -387,24 +393,23 @@
      (if (pos? (compare (first a) (first b)))
        (combine-arities b a)
        (match [a b]
-              [[:at-least k] [:at-least k2]] [:at-least (max k k2)]
-              [[:at-least k] [:between m n]] (let [m (max k m)]
-                                               (cond (= m n) [:exactly m]
-                                                     (< m n) [:between m n]
-                                                     :else (fail)))
-              [[:at-least k] [:exactly l]] (if (>= l k)
-                                             [:exactly l]
-                                             (fail))
-              [[:between m n] [:between m2 n2]] (let [m (max m m2)
-                                                      n (min n n2)]
-                                                  (cond (= m n) [:exactly m]
-                                                        (< m n) [:between m n]
-                                                        :else (fail)))
-              [[:between m n] [:exactly k]] (if (and (<= m k)
-                                                     (<= k n))
-                                              [:exactly k]
-                                              (fail))
-              [[:exactly k] [:exactly l]] (if (= k l) [:exactly k] (fail)))))))
+         [[:at-least k] [:at-least k2]] [:at-least (max k k2)]
+         [[:at-least k] [:between m n]] (let [m (max k m)]
+                                          (cond (= m n) [:exactly m]
+                                                (< m n) [:between m n]
+                                                :else (fail)))
+         [[:at-least k] [:exactly l]] (if (>= l k)
+                                        [:exactly l]
+                                        (fail))
+         [[:between m n] [:between m2 n2]] (let [m (max m m2)
+                                                 n (min n n2)]
+                                             (cond (= m n) [:exactly m]
+                                                   (< m n) [:between m n]
+                                                   :else (fail)))
+         [[:between m n] [:exactly k]] (if (<= m k n)
+                                         [:exactly k]
+                                         (fail))
+         [[:exactly k] [:exactly l]] (if (= k l) [:exactly k] (fail)))))))
 
 (defn joint-arity
   "Find the most relaxed possible statement of the joint arity of the given sequence of `arities`.
@@ -435,7 +440,7 @@
   ```"
   [f]
   (-> (partial comp f)
-      (with-meta {:arity [:exactly 1]})))
+      (with-arity [:exactly 1])))
 
 (defn coerce-to-fn
   "Given a [[value/numerical?]] input `x`, returns a function of arity `arity`
@@ -445,7 +450,7 @@
   ([x arity]
    (if (v/numerical? x)
      (-> (constantly x)
-         (with-meta {:arity arity}))
+         (with-arity arity))
      x)))
 
 (defn- binary-operation
@@ -465,12 +470,9 @@
                   g-arity (if (v/numerical? g) f-arity   (arity g))
                   f1      (coerce-to-fn f f-arity)
                   g1      (coerce-to-fn g g-arity)
-                  arity (joint-arity [f-arity g-arity])]
-              (-> (fn [& args]
-                    (op (apply f1 args)
-                        (apply g1 args)))
-                  (with-meta {:arity arity}))))]
-    (with-meta h {:arity [:exactly 2]})))
+                  arity   (joint-arity [f-arity g-arity])]
+              (with-arity (fn [& args] (op (apply f1 args) (apply g1 args))) arity)))]
+    (with-arity h [:exactly 2])))
 
 (defn- defunary
   "Given a generic unary function `generic-op`, define the multimethods necessary
