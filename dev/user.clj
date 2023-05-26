@@ -19,37 +19,21 @@
   "dev/emmy/notebook.clj")
 
 (def notebooks
-  ["src/emmy/**/**.cljc"
-   "src/emmy/collection.cljc"
-   "src/emmy/complex.cljc"
-   "src/emmy/euclid.cljc"
-   "src/emmy/env.cljc"
-   "src/emmy/function.cljc"
-   "src/emmy/generic.cljc"
-   "src/emmy/matrix.cljc"
-   "src/emmy/modint.cljc"
-   "src/emmy/numbers.cljc"
-   "src/emmy/numsymb.cljc"
-   "src/emmy/quaternion.cljc"
-   "src/emmy/ratio.cljc"
-   "src/emmy/rational_function.cljc"
-   "src/emmy/sci.cljc"
-   "src/emmy/series.cljc"
-   "src/emmy/util.cljc"
-
+  [
    ;; NOTE: including any of these namespaces (with a deftype? reify??) causes
    ;; the static build to fail. We'll need to fix this with the Clerk team...
    ;; "src/emmy/value.cljc"
    ;; "src/emmy/simplify.cljc"
    ;; "src/emmy/expression.cljc"
-   ;; "src/emmy/differential.cljc"
-   ;; "src/emmy/operator.cljc"
+   "src/emmy/differential.cljc"
+   "src/emmy/calculus/derivative.cljc"
+
    ;; "src/emmy/polynomial.cljc"
    ;; "src/emmy/structure.cljc"
    ])
 
 (def defaults
-  {:index index
+  {#_#_:index index
    :browse? true
    :watch-paths ["src" "dev"]
    #_#_
@@ -59,7 +43,7 @@
   (assoc defaults
          :browse? false
          :paths notebooks
-         :cname "emmy.mentat.org"
+         ;; :cname "emmy.mentat.org"
          :git/url "https://github.com/mentat-collective/emmy"))
 
 (defn serve!
