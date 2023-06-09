@@ -62,7 +62,7 @@ Clojars page:
 Or grab the most recent code using a Git dependency:
 
 ```clj
-;; deps
+;; Replace $GIT_SHA with the most recent commit:
 {io.github.mentat-collective/emmy
   {:git/sha "$GIT_SHA"}}
 ```
@@ -174,11 +174,11 @@ There is so much more! This is a dense library, and lots of documentation
 remains to be written. Some suggested next steps, for now:
 
 - Open up the live, interactive [Emmy tutorial on
-  Nextjournal](https://nextjournal.com/try/samritchie/emmy), play with the
+  Nextjournal](https://nextjournal.com/try/samritchie/sicmutils), play with the
   examples above and start to explore on your own.
 - Read the [Emmy Reference Manual][refman-url] ("refman") for inspiration. All
   of the code snippets in the refman will work in the [Nextjournal
-  environment](https://nextjournal.com/try/samritchie/emmy). Use the two
+  environment](https://nextjournal.com/try/samritchie/sicmutils). Use the two
   together.
 - Visit our [CLJDocs][cljdoc-url] page for an introduction and detailed
   documentation
@@ -269,7 +269,7 @@ license = {GPL-3.0},
 month = {4},
 title = {{Emmy: Functional Computer Algebra in Clojure}},
 url = {https://github.com/mentat-collective/emmy},
-version = {0.30.0},
+version = {0.31.0},
 year = {2016}
 ```
 
