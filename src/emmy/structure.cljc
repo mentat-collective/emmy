@@ -305,7 +305,7 @@
      [s]
      (js/Proxy.
       s
-      #js {:get (fn [s ix]
+      #js {:get (fn [^Structure s ix]
                   (cond (string? ix)
                         (if (= ix "length")
                           (count (.-v s))
@@ -329,7 +329,7 @@
      ;; Some handy extension(s) to the Structure prototype to help these
      ;; objects feel more like JS arrays
      (set! (.. Structure -prototype -map) (fn [f] (this-as s (mapr f s))))
-     (set! (.. Structure -prototype -at) (fn [ix] (this-as s (nth (.-v s) ix))))))
+     (set! (.. Structure -prototype -at) (fn [ix] (this-as s (nth (.-v ^Structure s) ix))))))
 
 ;; ## Component Accessors
 
