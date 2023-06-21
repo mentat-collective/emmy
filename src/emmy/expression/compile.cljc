@@ -341,6 +341,27 @@
       code)))
 
 (defn- primitive-body
+  "If the calling convention is `:primitive`, and the top level of the
+   expression we're compiling is a structure (introduced by `up`, `down`
+   or `vector`), then replace the expression with a sequence of `aset`
+   instructions to store the individual values to a flat primitive array."
+
+  [{:keys [calling-convention argv] :as code}]
+  (letfn [(children? [x]
+            (and (sequential? x) ('#{up down vector} (first x))))
+          (aset-form [index value]
+            `(aset ~index ~value))]
+    (if (= calling-convention :primitive)
+      (update code :body
+              (fn [body]
+                (if (children? body)
+                  (let [array-symbol (nth argv 1)
+                        values (filter (complement children?) (tree-seq children? rest body))]
+                    `(doto ~array-symbol ~@(map-indexed aset-form values)))
+                  body)))
+      code)))
+
+(defn- old-primitive-body
   "In the case of primitive calling convention, unrolls the source of the
   vector-producing statement of the body into a sequence of `aset` calls to
   populate the derivative output array. Returns an updated code object."
@@ -365,6 +386,7 @@
     (case calling-convention
       :primitive
       (update code :body (fn [body]
+                           (println "primitive-body" body)
                            (let [z (z/seq-zip body)
                                  z (if (= `let (z/node (z/next z)))
                                      (z/next (z/next (z/next z)))
@@ -647,10 +669,10 @@
                                      :params (when generic-params? params)
                                      :state-model generic-state)
                                (state-argv gensym-fn)
-                               (cse #(gensym-fn "_") deterministic?)
                                (update :body apply-numeric-ops)
-                               (primitive-bindings)
-                               (primitive-body))
+                               (primitive-body)
+                               (cse #(gensym-fn "_") deterministic?)
+                               (primitive-bindings))
              compiler      (case mode
                              :source #?(:clj compile->clj :cljs compile->js)
                              :clj compile->clj
@@ -691,3 +713,43 @@
      (compile-state-fn f false argv (merge {:calling-convention :native
                                             :arity n}
                                            opts)))))
+
+(comment
+
+
+  (def form '(up t (up x y) (up (+ vx 2) vy) (down 1 (up 3 4) 2)))
+
+  (defn child [x] (and (sequential? x) ('#{up down vector} (first x))))
+
+  (filter (complement child) (tree-seq child rest form))
+
+
+
+
+
+  (flatten)
+
+  (def vector-constructor->aset
+    [x]
+    (letfn [(go [x n]
+                (cond
+                  (and (seq? x)
+                       (= (first x) 'up))
+                  )
+
+
+
+
+                )]
+      (go x 0))
+
+    )
+
+
+
+
+
+
+
+
+  )
