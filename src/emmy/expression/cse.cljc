@@ -163,8 +163,7 @@
   "Considers an S-expression from the point of view of optimizing its evaluation
   by isolating common subexpressions into auxiliary variables.
 
-
-  Accepts:
+ Accepts:
 
   - A symbolic expression `expr`
   - a continuation fn `continue` of two arguments:
@@ -182,20 +181,9 @@
 
   `:gensym-fn`: side-effecting function that returns a new, unique
   variable name prefixed by its argument on each invocation.
-   `monotonic-symbol-generator` by default.
-
-  NOTE that the symbols should appear in sorted order! Otherwise we can't
-  guarantee that the binding sequence passed to `continue` won't contain entries
-  that reference previous entries.
-
-  `:deterministic?`: if true, the function will assign aux variables by sorting
-  the string representations of each term before assignment. Otherwise, the
-  nondeterministic order of hash maps inside this function won't guarantee a
-  consistent variable naming convention in the returned function. For tests, set
-  `:deterministic? true`. NB: I do not think this can happen in the F90 algorithm,
-  where intermediate values are numbered by their post-order of discovery."
+  `monotonic-symbol-generator` by default."
   ([expr continue] (extract-common-subexpressions expr continue {}))
-  ([expr continue {:keys [gensym-fn deterministic?]
+  ([expr continue {:keys [gensym-fn]
                    :or {gensym-fn (a/monotonic-symbol-generator 8 "_")}}]
    (us/start sw)
    (let [u (uid-assigner)]
@@ -228,66 +216,3 @@
        (if (= (first expr) `doto)
          (handle-doto-statement)
          (handle-single-expression))))))
-
-(->clerk-only
- (extract-common-subexpressions
-  '(+ (* (sin x) (cos x))
-      (* (sin x) (cos x))
-      (* (sin x) (cos x)))
-  cons))
-
-;; This final function implements common subexpression extraction in
-;; continuation-passing-style. Pass it a callback and it will invoke the
-;; callback with the two arguments described above, and detailed below in its
-;; docstring.
-;;
-;; The algorithm is:
-;;
-;; - For every subexpression that appears more than once in the supplied
-;;   expression, generate a new, unique symbol.
-;;
-;; - Generate a new expression by replacing every subexpression in the supplied
-;;   expression with a symbol using the new mapping of symbol -> subexpression.
-;;
-;; - Recursively keep going until there are no more common subexpressions to
-;;   replace. At this point, discard all extra bindings (see
-;;   `discard-unreferenced-syms` above) and call the continuation function with
-;;   the /new/ slimmed expression, and a sorted-by-symbol list of binding pairs.
-;;
-;; These two return values satisfy the invariant we described above: the new
-;; expression, rehydrated using the symbol->subexpression map, should give us
-;; back the old expression.
-;;
-;; NOTE that the algorithm as implemented below uses a postwalk tree traversal!
-;; This is important, as it forces us to consider smaller subexpressions first.
-;; Consider some expression like:
-
-(->clerk-only
- '(+ (* (sin x) (cos x))
-     (* (sin x) (cos x))
-     (* (sin x) (cos x))))
-
-;; At first pass, we have three repeated subexpressions:
-;;
-;; - `(sin x)`
-;; - `(cos x)`
-;; - `(* (sin x) (cos x))`
-;;
-;; Postwalk traversal guarantees that we replace the `sin` and `cos` terms
-;; before the larger term that contains them both. And in fact the returned pair
-;; looks like:
-
-(->clerk-only
- '[(+ g3 g3 g3) ([g1 (sin x)] [g2 (cos x)] [g3 (* g1 g2)])])
-
-;; NOTE also that:
-;;
-;; - this is why the `:gensym-fn` below must generate symbols that sort
-;;   in the order they're generated. Else, the final binding vector might put
-;;   the `g3` term in the example above /before/ the smaller subexpressions it
-;;   uses.
-;;
-;; - This algorithm justifies `discard-unreferenced-syms` above. Each pass will
-;;   larger subexpressions like `'(* (sin x) (cos x))` that should never make it
-;;   out, since they never appear in this form (since they contain smaller
-;;   subexpressions).

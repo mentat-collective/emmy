@@ -42,7 +42,6 @@
                                     (up 't 'theta 'thetadot)
                                     {:mode :clj
                                      :gensym-fn (a/monotonic-symbol-generator 2)
-                                     :deterministic? true
                                      :calling-convention calling-convention}))]
     (is (= `(fn [[~'y01 ~'y02 ~'y03] [~'p04 ~'p05 ~'p06 ~'p07 ~'p08]]
               (let [~'_09 (~'Math/sin ~'y02)]
@@ -94,8 +93,7 @@
                             '[m l g a omega]
                             (up 't 'theta 'thetadot)
                             {:mode :js
-                             :gensym-fn (a/monotonic-symbol-generator 2)
-                             :deterministic? true})))
+                             :gensym-fn (a/monotonic-symbol-generator 2)})))
   (is (= ["a09" "a10" "a11"
           (maybe-defloatify
            (str
@@ -116,8 +114,7 @@
                             (up 't 'theta 'thetadot)
                             {:mode :js
                              :calling-convention :primitive
-                             :gensym-fn (a/monotonic-symbol-generator 2)
-                             :deterministic? true})))
+                             :gensym-fn (a/monotonic-symbol-generator 2)})))
 
   (is (= ["[y01, y02, y03]"
           "_"
@@ -136,5 +133,4 @@
           []
           (e/->H-state 't 'theta 'p_theta)
           {:mode :js
-           :gensym-fn (a/monotonic-symbol-generator 2)
-           :deterministic? true}))))
+           :gensym-fn (a/monotonic-symbol-generator 2)}))))

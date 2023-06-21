@@ -92,8 +92,7 @@
                            {:mode :js
                             :calling-convention :structure
                             :generic-params? false
-                            :gensym-fn (a/monotonic-symbol-generator 2)
-                            :deterministic? true})))
+                            :gensym-fn (a/monotonic-symbol-generator 2)})))
 
 
   (is (= ["[y01, [y02, y03], [y04, y05]]"
@@ -115,8 +114,7 @@
           '[1 1 1 1 'g]
           (up 't (up 'theta 'phi) (up 'thetadot 'phidot))
           {:mode :js
-           :gensym-fn (a/monotonic-symbol-generator 2)
-           :deterministic? true})))
+           :gensym-fn (a/monotonic-symbol-generator 2)})))
 
   (let [eq (e/simplify
             ((e/Hamiltonian->state-derivative
@@ -126,43 +124,40 @@
     (is (= "up(1, up((- l₁ p_ψ cos(ψ - θ) + l₂ p_θ) / (l₁² l₂ m₂ sin²(ψ - θ) + l₁² l₂ m₁), (- l₂ m₂ p_θ cos(ψ - θ) + l₁ m₁ p_ψ + l₁ m₂ p_ψ) / (l₁ l₂² m₂² sin²(ψ - θ) + l₁ l₂² m₁ m₂)), down((- g l₁³ l₂² m₁ m₂² (cos(ψ - θ))⁴ sin(θ) - g l₁³ l₂² m₂³ (cos(ψ - θ))⁴ sin(θ) + 2 g l₁³ l₂² m₁² m₂ cos²(ψ - θ) sin(θ) + 4 g l₁³ l₂² m₁ m₂² cos²(ψ - θ) sin(θ) + 2 g l₁³ l₂² m₂³ cos²(ψ - θ) sin(θ) - g l₁³ l₂² m₁³ sin(θ) - 3 g l₁³ l₂² m₁² m₂ sin(θ) - 3 g l₁³ l₂² m₁ m₂² sin(θ) - g l₁³ l₂² m₂³ sin(θ) + l₁ l₂ m₂ p_ψ p_θ cos²(ψ - θ) sin(ψ - θ) - l₁² m₁ p_ψ² cos(ψ - θ) sin(ψ - θ) - l₁² m₂ p_ψ² cos(ψ - θ) sin(ψ - θ) - l₂² m₂ p_θ² cos(ψ - θ) sin(ψ - θ) + l₁ l₂ m₁ p_ψ p_θ sin(ψ - θ) + l₁ l₂ m₂ p_ψ p_θ sin(ψ - θ)) / (l₁² l₂² m₂² (cos(ψ - θ))⁴ + 2 l₁² l₂² m₁ m₂ sin²(ψ - θ) - 2 l₁² l₂² m₂² cos²(ψ - θ) + l₁² l₂² m₁² + l₁² l₂² m₂²), (- g l₁² l₂³ m₂³ (cos(ψ - θ))⁴ sin(ψ) - 2 g l₁² l₂³ m₁ m₂² sin²(ψ - θ) sin(ψ) + 2 g l₁² l₂³ m₂³ cos²(ψ - θ) sin(ψ) - g l₁² l₂³ m₁² m₂ sin(ψ) - g l₁² l₂³ m₂³ sin(ψ) - l₁ l₂ m₂ p_ψ p_θ cos²(ψ - θ) sin(ψ - θ) + l₁² m₁ p_ψ² cos(ψ - θ) sin(ψ - θ) + l₁² m₂ p_ψ² cos(ψ - θ) sin(ψ - θ) + l₂² m₂ p_θ² cos(ψ - θ) sin(ψ - θ) - l₁ l₂ m₁ p_ψ p_θ sin(ψ - θ) - l₁ l₂ m₂ p_ψ p_θ sin(ψ - θ)) / (l₁² l₂² m₂² (cos(ψ - θ))⁴ + 2 l₁² l₂² m₁ m₂ sin²(ψ - θ) - 2 l₁² l₂² m₂² cos²(ψ - θ) + l₁² l₂² m₁² + l₁² l₂² m₂²)))"
            (e/->infix eq)))
 
-    #?(:clj
-       ;; even with the deterministic flag, this is not quite reproducing in
-       ;; ClojureScript.
-       (is (= ["[y01, [y02, y03], [y04, y05]]"
-               "_"
-               (str
-                "  const _09 = - y03;\n"
-                "  const _18 = Math.pow(l_1, 2.0);\n"
-                "  const _19 = Math.pow(l_1, 3.0);\n"
-                "  const _20 = Math.pow(l_2, 2.0);\n"
-                "  const _21 = Math.pow(l_2, 3.0);\n"
-                "  const _22 = Math.pow(m_1, 2.0);\n"
-                "  const _23 = Math.pow(m_2, 2.0);\n"
-                "  const _24 = Math.pow(m_2, 3.0);\n"
-                "  const _25 = Math.pow(y04, 2.0);\n"
-                "  const _26 = Math.pow(y05, 2.0);\n"
-                "  const _28 = Math.sin(y02);\n"
-                "  const _29 = Math.sin(y03);\n"
-                "  const _32 = _18 * _20 * _22;\n"
-                "  const _34 = _18 * _20 * _23;\n"
-                "  const _36 = y02 + _09;\n"
-                "  const _46 = Math.cos(_36);\n"
-                "  const _50 = Math.sin(_36);\n"
-                "  const _55 = Math.pow(_46, 2.0);\n"
-                "  const _56 = Math.pow(_46, 4.0);\n"
-                "  const _57 = Math.pow(_50, 2.0);\n"
-                "  const _58 = - 2.0 * _18 * _20 * _23 * _55;\n"
-                "  const _59 = 2.0 * _18 * _20 * m_1 * m_2 * _57;\n"
-                "  const _60 = _18 * _20 * _23 * _56;\n"
-                "  const _62 = _60 + _59 + _58 + _32 + _34;\n"
-                "  return [1.0, [(- l_1 * y05 * _46 + l_2 * y04) / (_18 * l_2 * m_2 * _57 + _18 * l_2 * m_1), (- l_2 * m_2 * y04 * _46 + l_1 * m_1 * y05 + l_1 * m_2 * y05) / (l_1 * _20 * _23 * _57 + l_1 * _20 * m_1 * m_2)], [(- g * _19 * _20 * m_1 * _23 * _56 * _28 - g * _19 * _20 * _24 * _56 * _28 + 2.0 * g * _19 * _20 * _22 * m_2 * _55 * _28 + 4.0 * g * _19 * _20 * m_1 * _23 * _55 * _28 + 2.0 * g * _19 * _20 * _24 * _55 * _28 - g * _19 * _20 * Math.pow(m_1, 3.0) * _28 - 3.0 * g * _19 * _20 * _22 * m_2 * _28 - 3.0 * g * _19 * _20 * m_1 * _23 * _28 - g * _19 * _20 * _24 * _28 - l_1 * l_2 * m_2 * y04 * y05 * _55 * _50 + _18 * m_1 * _26 * _46 * _50 + _18 * m_2 * _26 * _46 * _50 + _20 * m_2 * _25 * _46 * _50 - l_1 * l_2 * m_1 * y04 * y05 * _50 - l_1 * l_2 * m_2 * y04 * y05 * _50) / _62, (- g * _18 * _21 * _24 * _56 * _29 - 2.0 * g * _18 * _21 * m_1 * _23 * _57 * _29 + 2.0 * g * _18 * _21 * _24 * _55 * _29 - g * _18 * _21 * _22 * m_2 * _29 - g * _18 * _21 * _24 * _29 + l_1 * l_2 * m_2 * y04 * y05 * _55 * _50 - _18 * m_1 * _26 * _46 * _50 - _18 * m_2 * _26 * _46 * _50 - _20 * m_2 * _25 * _46 * _50 + l_1 * l_2 * m_1 * y04 * y05 * _50 + l_1 * l_2 * m_2 * y04 * y05 * _50) / _62]];")]
-              (c/compile-state-fn
-               #(e/Hamiltonian->state-derivative
-                 (e/Lagrangian->Hamiltonian
-                  (double/L 'm_1 'm_2 'l_1 'l_2 'g)))
-               []
-               (e/->H-state 't (up 'theta 'psi) (down 'p_theta 'p_psi))
-               {:mode :js
-                :gensym-fn (a/monotonic-symbol-generator 2)
-                :deterministic? true}))))))
+
+    (is (= ["[y01, [y02, y03], [y04, y05]]"
+            "_"
+            (str
+             "  const _09 = - y03;\n"
+             "  const _18 = Math.pow(l_1, 2.0);\n"
+             "  const _19 = Math.pow(l_1, 3.0);\n"
+             "  const _20 = Math.pow(l_2, 2.0);\n"
+             "  const _21 = Math.pow(l_2, 3.0);\n"
+             "  const _22 = Math.pow(m_1, 2.0);\n"
+             "  const _23 = Math.pow(m_2, 2.0);\n"
+             "  const _24 = Math.pow(m_2, 3.0);\n"
+             "  const _25 = Math.pow(y04, 2.0);\n"
+             "  const _26 = Math.pow(y05, 2.0);\n"
+             "  const _28 = Math.sin(y02);\n"
+             "  const _29 = Math.sin(y03);\n"
+             "  const _32 = _18 * _20 * _22;\n"
+             "  const _34 = _18 * _20 * _23;\n"
+             "  const _36 = y02 + _09;\n"
+             "  const _46 = Math.cos(_36);\n"
+             "  const _50 = Math.sin(_36);\n"
+             "  const _55 = Math.pow(_46, 2.0);\n"
+             "  const _56 = Math.pow(_46, 4.0);\n"
+             "  const _57 = Math.pow(_50, 2.0);\n"
+             "  const _58 = - 2.0 * _18 * _20 * _23 * _55;\n"
+             "  const _59 = 2.0 * _18 * _20 * m_1 * m_2 * _57;\n"
+             "  const _60 = _18 * _20 * _23 * _56;\n"
+             "  const _62 = _60 + _59 + _58 + _32 + _34;\n"
+             "  return [1.0, [(- l_1 * y05 * _46 + l_2 * y04) / (_18 * l_2 * m_2 * _57 + _18 * l_2 * m_1), (- l_2 * m_2 * y04 * _46 + l_1 * m_1 * y05 + l_1 * m_2 * y05) / (l_1 * _20 * _23 * _57 + l_1 * _20 * m_1 * m_2)], [(- g * _19 * _20 * m_1 * _23 * _56 * _28 - g * _19 * _20 * _24 * _56 * _28 + 2.0 * g * _19 * _20 * _22 * m_2 * _55 * _28 + 4.0 * g * _19 * _20 * m_1 * _23 * _55 * _28 + 2.0 * g * _19 * _20 * _24 * _55 * _28 - g * _19 * _20 * Math.pow(m_1, 3.0) * _28 - 3.0 * g * _19 * _20 * _22 * m_2 * _28 - 3.0 * g * _19 * _20 * m_1 * _23 * _28 - g * _19 * _20 * _24 * _28 - l_1 * l_2 * m_2 * y04 * y05 * _55 * _50 + _18 * m_1 * _26 * _46 * _50 + _18 * m_2 * _26 * _46 * _50 + _20 * m_2 * _25 * _46 * _50 - l_1 * l_2 * m_1 * y04 * y05 * _50 - l_1 * l_2 * m_2 * y04 * y05 * _50) / _62, (- g * _18 * _21 * _24 * _56 * _29 - 2.0 * g * _18 * _21 * m_1 * _23 * _57 * _29 + 2.0 * g * _18 * _21 * _24 * _55 * _29 - g * _18 * _21 * _22 * m_2 * _29 - g * _18 * _21 * _24 * _29 + l_1 * l_2 * m_2 * y04 * y05 * _55 * _50 - _18 * m_1 * _26 * _46 * _50 - _18 * m_2 * _26 * _46 * _50 - _20 * m_2 * _25 * _46 * _50 + l_1 * l_2 * m_1 * y04 * y05 * _50 + l_1 * l_2 * m_2 * y04 * y05 * _50) / _62]];")]
+           (c/compile-state-fn
+            #(e/Hamiltonian->state-derivative
+              (e/Lagrangian->Hamiltonian
+               (double/L 'm_1 'm_2 'l_1 'l_2 'g)))
+            []
+            (e/->H-state 't (up 'theta 'psi) (down 'p_theta 'p_psi))
+            {:mode :js
+             :gensym-fn (a/monotonic-symbol-generator 2)})))))

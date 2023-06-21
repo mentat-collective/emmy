@@ -17,15 +17,13 @@
          (c/extract-common-subexpressions
           '(* (+ x y) (+ x z) (+ x y))
           vector
-          {:deterministic? true
-           :gensym-fn (a/monotonic-symbol-generator 1 "g")}))
+          {:gensym-fn (a/monotonic-symbol-generator 1 "g")}))
       "common (+ x y) variable is extracted.")
 
   (let [expr '(+ (* (sin x) (cos x))
                  (* (sin x) (cos x))
                  (* (sin x) (cos x)))
-        opts {:deterministic? true
-              :gensym-fn (a/monotonic-symbol-generator 1 "g")}
+        opts {:gensym-fn (a/monotonic-symbol-generator 1 "g")}
         slimmed '(+ g4 g4 g4)
         expected-subs '([g2 (cos x)]
                         [g3 (sin x)]
@@ -43,8 +41,7 @@
 
   (let [expr '(+ (sin x) (expt (sin x) 2)
                  (cos x) (sqrt (cos x)))
-        opts {:deterministic? true
-              :gensym-fn (a/monotonic-symbol-generator 1 "K")}
+        opts {:gensym-fn (a/monotonic-symbol-generator 1 "K")}
         slimmed '(+ K2 (expt K2 2) K1 (sqrt K1))
         expected-subs '([K1 (cos x)]
                         [K2 (sin x)])]

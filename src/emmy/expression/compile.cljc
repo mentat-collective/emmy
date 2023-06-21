@@ -311,14 +311,14 @@
   Local bindings for the common sub-expressions found are appended to the
   binding structure of the body, and the (possibly) simplified code replaces
   that in the previous code body."
-  [x gensym-fn deterministic?]
+  [x gensym-fn]
   (extract-common-subexpressions
    (:body x)
    (fn [new-body new-locals]
      (assoc x :body (if (seq new-locals)
                       (append-bindings new-body new-locals)
                       new-body)))
-   {:gensym-fn gensym-fn :deterministic? deterministic?}))
+   {:gensym-fn gensym-fn}))
 
 (defn- primitive-bindings
   "In the primitive calling convention case, introduces a sequence of local
@@ -600,10 +600,6 @@
     - `:cache`: If falsy, the compilation cache is avoided (it will neither
       be consulted nor updated).
 
-    - `:deterministic?` requests that the compiler expend some effort to get
-      reproducible results down to the symbol name level for tests. It has
-      no observable effect on the compiled function's behavior.
-
     - `:gensym-fn` allows injection of a symbol generator for unit test
       purposes
 
@@ -628,20 +624,17 @@
                                    arity
                                    generic-params?
                                    gensym-fn
-                                   deterministic?
                                    cache?
                                    simplify?]
                             :or {mode *mode*
                                  calling-convention :structure
                                  generic-params? (boolean params)
                                  gensym-fn (a/monotonic-symbol-generator 4)
-                                 deterministic? false
                                  cache? true
                                  simplify? true}}]
 
    (let [key {:calling-convention calling-convention
               :generic-params? generic-params?
-              :deterministic? deterministic?
               :mode mode
               :arity arity
               :f f}]
@@ -671,7 +664,7 @@
                                (state-argv gensym-fn)
                                (update :body apply-numeric-ops)
                                (primitive-body)
-                               (cse #(gensym-fn "_") deterministic?)
+                               (cse #(gensym-fn "_"))
                                (primitive-bindings))
              compiler      (case mode
                              :source #?(:clj compile->clj :cljs compile->js)
