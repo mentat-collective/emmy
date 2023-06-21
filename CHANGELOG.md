@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+- #142 fixes advanced compilation warnings and bumps Clerk to a new version.
+
+## [0.31.0]
+
 - #139:
 
   - Fixes matrix and simplification-related test failures introduced in the last
