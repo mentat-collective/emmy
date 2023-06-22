@@ -2,7 +2,7 @@
 
 (ns emmy.sicm.ch3-test
   (:refer-clojure :exclude [+ - * / zero? partial])
-  (:require [clojure.string]
+  (:require [clojure.string :as s]
             [clojure.test :refer [is deftest testing use-fixtures]]
             [emmy.env :as e
              :refer [+ zero? up down literal-function]]
@@ -22,7 +22,7 @@
    Our expected values come from the reference Clojure implementation,
    and this function will convert to the Clojurescript expected form."
   [s]
-  #?(:cljs (clojure.string/replace s #"\b(\d+)\.0\b" (fn [[_ m]] m))
+  #?(:cljs (s/replace s #"\b(\d+)\.0\b" (fn [[_ m]] m))
      :clj s))
 
 (def simplify
@@ -153,12 +153,61 @@
       (is (= ["[y01, [y02, y03, y04], [y05, y06, y07]]"
               "_"
               (maybe-defloatify
-               (str
-                "  const _08 = Math.sin(y02);\n"
-                "  const _09 = Math.cos(y02);\n"
-                "  const _12 = Math.pow(_08, 2.0);\n"
-                "  const _13 = Math.pow(_09, 2.0);\n"
-                "  return [1.0, [y05 / A, (- y07 * _09 + y06) / (A * _12), (A * y07 * _12 + C * y07 * _13 - C * y06 * _09) / (A * C * _12)], [(A * gMR * Math.pow(_09, 4.0) - 2.0 * A * gMR * _13 - y06 * y07 * _13 + Math.pow(y06, 2.0) * _09 + Math.pow(y07, 2.0) * _09 + A * gMR - y06 * y07) / (A * Math.pow(_08, 3.0)), 0.0, 0.0]];"))]
+               (s/join "\n" ["  const _08 = 1.0;"
+                             "  const _09 = y05 / A;"
+                             "  const _10 = -1.0;"
+                             "  const _11 = _10 * y07;"
+                             "  const _12 = Math.cos(y02);"
+                             "  const _13 = _11 * _12;"
+                             "  const _14 = _13 + y06;"
+                             "  const _15 = Math.sin(y02);"
+                             "  const _16 = 2.0;"
+                             "  const _17 = Math.pow(_15, _16);"
+                             "  const _18 = A * _17;"
+                             "  const _19 = _14 / _18;"
+                             "  const _20 = A * y07;"
+                             "  const _21 = _20 * _17;"
+                             "  const _22 = C * y07;"
+                             "  const _23 = Math.pow(_12, _16);"
+                             "  const _24 = _22 * _23;"
+                             "  const _25 = _21 + _24;"
+                             "  const _26 = _10 * C;"
+                             "  const _27 = _26 * y06;"
+                             "  const _28 = _27 * _12;"
+                             "  const _29 = _25 + _28;"
+                             "  const _30 = A * C;"
+                             "  const _31 = _30 * _17;"
+                             "  const _32 = _29 / _31;"
+                             "  const _33 = [_09, _19, _32];"
+                             "  const _34 = A * gMR;"
+                             "  const _35 = 4.0;"
+                             "  const _36 = Math.pow(_12, _35);"
+                             "  const _37 = _34 * _36;"
+                             "  const _38 = -2.0;"
+                             "  const _39 = _38 * A;"
+                             "  const _40 = _39 * gMR;"
+                             "  const _41 = _40 * _23;"
+                             "  const _42 = _37 + _41;"
+                             "  const _43 = _10 * y06;"
+                             "  const _44 = _43 * y07;"
+                             "  const _45 = _44 * _23;"
+                             "  const _46 = _42 + _45;"
+                             "  const _47 = Math.pow(y06, _16);"
+                             "  const _48 = _47 * _12;"
+                             "  const _49 = _46 + _48;"
+                             "  const _50 = Math.pow(y07, _16);"
+                             "  const _51 = _50 * _12;"
+                             "  const _52 = _49 + _51;"
+                             "  const _53 = _52 + _34;"
+                             "  const _54 = _53 + _44;"
+                             "  const _55 = 3.0;"
+                             "  const _56 = Math.pow(_15, _55);"
+                             "  const _57 = A * _56;"
+                             "  const _58 = _54 / _57;"
+                             "  const _59 = 0.0;"
+                             "  const _60 = [_58, _59, _59];"
+                             "  const _61 = [_08, _33, _60];"
+                             "  return _61;"]))]
              (c/compile-state-fn (fn [] sysder) [] top-state
                {:mode :js
                 :gensym-fn (a/monotonic-symbol-generator 2)})))))
@@ -196,13 +245,46 @@
         (is (= ["[y01, y02, y03]"
                 "_"
                 (maybe-defloatify
-                 (str
-                  "  const _04 = Math.sin(y02);\n"
-                  "  const _05 = Math.cos(y02);\n"
-                  "  const _06 = Math.pow(l, 2.0);\n"
-                  "  const _08 = omega * y01;\n"
-                  "  const _09 = Math.sin(_08);\n"
-                  "  return [1, (a * l * m * omega * _09 * _04 + y03) / (_06 * m), (- Math.pow(a, 2.0) * l * m * Math.pow(omega, 2.0) * Math.pow(_09, 2.0) * _04 * _05 - a * omega * y03 * _09 * _05 - g * _06 * m * _04) / l];"))]
+                 (s/join "\n" ["  const _04 = 1.0;"
+                               "  const _05 = a * l;"
+                               "  const _06 = _05 * m;"
+                               "  const _07 = _06 * omega;"
+                               "  const _08 = omega * y01;"
+                               "  const _09 = Math.sin(_08);"
+                               "  const _10 = _07 * _09;"
+                               "  const _11 = Math.sin(y02);"
+                               "  const _12 = _10 * _11;"
+                               "  const _13 = _12 + y03;"
+                               "  const _14 = 2.0;"
+                               "  const _15 = Math.pow(l, _14);"
+                               "  const _16 = _15 * m;"
+                               "  const _17 = _13 / _16;"
+                               "  const _18 = -1.0;"
+                               "  const _19 = Math.pow(a, _14);"
+                               "  const _20 = _18 * _19;"
+                               "  const _21 = _20 * l;"
+                               "  const _22 = _21 * m;"
+                               "  const _23 = Math.pow(omega, _14);"
+                               "  const _24 = _22 * _23;"
+                               "  const _25 = Math.pow(_09, _14);"
+                               "  const _26 = _24 * _25;"
+                               "  const _27 = _26 * _11;"
+                               "  const _28 = Math.cos(y02);"
+                               "  const _29 = _27 * _28;"
+                               "  const _30 = _18 * a;"
+                               "  const _31 = _30 * omega;"
+                               "  const _32 = _31 * y03;"
+                               "  const _33 = _32 * _09;"
+                               "  const _34 = _33 * _28;"
+                               "  const _35 = _29 + _34;"
+                               "  const _36 = _18 * g;"
+                               "  const _37 = _36 * _15;"
+                               "  const _38 = _37 * m;"
+                               "  const _39 = _38 * _11;"
+                               "  const _40 = _35 + _39;"
+                               "  const _41 = _40 / l;"
+                               "  const _42 = [_04, _17, _41];"
+                               "  return _42;"]))]
                (c/compile-state-fn
                 (fn []
                   (e/Hamiltonian->state-derivative

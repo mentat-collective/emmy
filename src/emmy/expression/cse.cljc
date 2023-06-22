@@ -7,12 +7,9 @@
   "This namespace implements subexpression extraction and \"elimination\", the
   process we use to avoid redundant computation inside of a simplified function
   body."
-  (:require [clojure.pprint :as pp]
-            [clojure.walk :as w]
-            [emmy.expression.analyze :as a]
+  (:require [emmy.expression.analyze :as a]
             [emmy.util :as u]
-            [mentat.clerk-utils :refer [->clerk-only]]
-            [emmy.util.stopwatch :as us]))
+            [mentat.clerk-utils :refer [->clerk-only]]))
 
 ;; ## Common Sub-Expression Elimination
 
@@ -153,12 +150,6 @@
 ;; single variable, but the platform code generators probably do not our help
 ;; with that.)
 
-;; At this point in the experiment with the F90 algorithm, we lift our results
-;; into the format produced by the prior algorithm. This interface could be made
-;; simpler (in particular, there is no reason for us to be equipped with a symbol
-;; generator here).
-
-(def ^:private sw (us/stopwatch :started? false))
 (defn extract-common-subexpressions
   "Considers an S-expression from the point of view of optimizing its evaluation
   by isolating common subexpressions into auxiliary variables.
@@ -185,25 +176,38 @@
   ([expr continue] (extract-common-subexpressions expr continue {}))
   ([expr continue {:keys [gensym-fn]
                    :or {gensym-fn (a/monotonic-symbol-generator 8 "_")}}]
-   (us/start sw)
    (let [u (uid-assigner)]
      (letfn
       [(dag->symbols-and-values
-         [continue]
-         (let [dag     (u :table)
-               n       (count dag)
-               symbols (into [] (repeatedly n gensym-fn))
-               subst   (fn [x] (if (integer? x) (symbols x) x))
-               values  (for [d dag]
-                         (if (vector? d)
-                           (list* (first d) (map subst (next d)))
-                           d))]
-           (continue symbols values)))
-       (handle-single-expression []
-         (u expr)
-         (dag->symbols-and-values
-          (fn [symbols values] (continue (last symbols) (map vector symbols values)))))
-       (handle-doto-statement []
+        ;; After we're done feeding the expression(s) to the UID assigner,
+        ;; we get a list of constants and function application forms with
+        ;; arguments which are either symbols or integer placeholders. The
+        ;; integers represent the index of a sub-computation earlier in the
+        ;; list. We generate symbols and paste them over the integers here.
+        [continue]
+        (let [dag     (u :table)
+              n       (count dag)
+              symbols (into [] (repeatedly n gensym-fn))
+              subst   (fn [x] (if (integer? x) (symbols x) x))
+              values  (for [d dag]
+                        (if (vector? d)
+                          (list* (first d) (map subst (next d)))
+                          d))]
+          (continue symbols values)))
+       (handle-single-expression
+        ;; The simple case
+        []
+        (u expr)
+        (dag->symbols-and-values
+         (fn [symbols values] (continue (last symbols) (map vector symbols values)))))
+       (handle-doto-statement
+        ;; In this case we want to feed the right hand sides of all the `aset`
+        ;; statements within the `doto` to the UID assigner, generate the needed
+        ;; quantity of new symbols, and then paste the symbols into the RHS
+        ;; position of the `aset`s. The new `doto` statement becomes the new
+        ;; expression; all the supporting computation is effected by evaluating
+        ;; the subexpressions.
+        []
          (let [[_doto array-symbol & aset-statements] expr
                indexed-uids (doall (for [[_aset index expr] aset-statements]
                                      [index (u expr)]))]
@@ -211,8 +215,7 @@
             (fn [symbols values]
               (continue
                `(doto ~array-symbol ~@(map (fn [[i j]] `(aset ~i ~(if (integer? j) (symbols j) j))) indexed-uids))
-               (map vector symbols values))))))
-       ]
-       (if (= (first expr) `doto)
-         (handle-doto-statement)
-         (handle-single-expression))))))
+               (map vector symbols values))))))]
+       (cond (not (sequential? expr)) (continue expr nil)
+             (= (first expr) `doto) (handle-doto-statement)
+             :else (handle-single-expression))))))
