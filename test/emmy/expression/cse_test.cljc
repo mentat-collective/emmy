@@ -1,6 +1,5 @@
 (ns emmy.expression.cse-test
   (:require [clojure.test :refer [is deftest]]
-            [clojure.walk :as w]
             [emmy.expression.analyze :as a]
             [emmy.expression.cse :as c]))
 

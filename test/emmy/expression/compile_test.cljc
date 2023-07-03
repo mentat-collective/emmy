@@ -8,9 +8,9 @@
             [emmy.expression.compile :as c]
             [emmy.generic :as g]
             [emmy.structure :refer [up down]]
+            [emmy.util :as u]
             [emmy.value :as v]
-            [same.core :refer [ish?]]
-            [emmy.util :as u])
+            [same.core :refer [ish?]])
   #?(:clj
      (:import (clojure.lang ExceptionInfo))))
 
@@ -331,8 +331,7 @@
     (let [f (fn [x]
               (g/+ (g/square (g/sin x))
                    (g/square (g/cos x))))
-          one #?(:clj 1.0 :cljs 1)
-          two #?(:clj 2.0 :cljs 2)]
+          one #?(:clj 1.0 :cljs 1)]
       (is (= `(fn [~'y0001] ~one)
              (c/compile-fn f 1 {:mode :clj :simplify? true}))
           "simplify? true triggers body simplification.")
