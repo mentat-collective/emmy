@@ -8,7 +8,8 @@
             [emmy.examples.driven-pendulum :as driven]
             [emmy.expression.analyze :as a]
             [emmy.expression.compile :refer [compile-state-fn]]
-            [emmy.simplify :refer [hermetic-simplify-fixture]]))
+            [emmy.simplify :refer [hermetic-simplify-fixture]]
+            [emmy.util :as u]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 
@@ -37,57 +38,58 @@
 
 (deftest as-clojure
   (let [compile (fn [calling-convention]
-                  (compile-state-fn driven/state-derivative
-                                    '[m l g a omega]
-                                    (up 't 'theta 'thetadot)
-                                    {:mode :clj
-                                     :gensym-fn (a/monotonic-symbol-generator 2)
-                                     :calling-convention calling-convention}))]
-    (is (= '(clojure.core/fn [[y01 y02 y03] [p04 p05 p06 p07 p08]]
-              (clojure.core/let [_09 1.0
-                                 _10 2.0
-                                 _11 (Math/pow p08 _10)
-                                 _12 (clojure.core/* p07 _11)
-                                 _13 (Math/sin y02)
-                                 _14 (clojure.core/* _12 _13)
-                                 _15 (clojure.core/* p08 y01)
-                                 _16 (Math/cos _15)
-                                 _17 (clojure.core/* _14 _16)
-                                 _18 -1.0
-                                 _19 (clojure.core/* _18 p06)
-                                 _20 (clojure.core/* _19 _13)
-                                 _21 (clojure.core/+ _17 _20)
-                                 _22 (clojure.core// _21 p05)
-                                 _23 (clojure.core/vector _09 y03 _22)]
+                  (u/without-symbol-namespaces
+                   (compile-state-fn driven/state-derivative
+                                     '[m l g a omega]
+                                     (up 't 'theta 'thetadot)
+                                     {:mode :clj
+                                      :gensym-fn (a/monotonic-symbol-generator 2)
+                                      :calling-convention calling-convention})))]
+    (is (= '(fn [[y01 y02 y03] [p04 p05 p06 p07 p08]]
+              (let [_09 1.0
+                    _10 2.0
+                    _11 (pow p08 _10)
+                    _12 (* p07 _11)
+                    _13 (sin y02)
+                    _14 (* _12 _13)
+                    _15 (* p08 y01)
+                    _16 (cos _15)
+                    _17 (* _14 _16)
+                    _18 -1.0
+                    _19 (* _18 p06)
+                    _20 (* _19 _13)
+                    _21 (+ _17 _20)
+                    _22 (/ _21 p05)
+                    _23 (vector _09 y03 _22)]
                 _23))
            (compile :structure)))
-    (is (= '(clojure.core/fn [a09 a10 a11]
-              (clojure.core/let [y01 (clojure.core/aget a09 0)
-                y02 (clojure.core/aget a09 1)
-                y03 (clojure.core/aget a09 2)
-                p04 (clojure.core/aget a11 0)
-                p05 (clojure.core/aget a11 1)
-                p06 (clojure.core/aget a11 2)
-                p07 (clojure.core/aget a11 3)
-                p08 (clojure.core/aget a11 4)
-                _12 1.0
-                _13 2.0
-                _14 (Math/pow p08 _13)
-                _15 (clojure.core/* p07 _14)
-                _16 (Math/sin y02)
-                _17 (clojure.core/* _15 _16)
-                _18 (clojure.core/* p08 y01)
-                _19 (Math/cos _18)
-                _20 (clojure.core/* _17 _19)
-                _21 -1.0
-                _22 (clojure.core/* _21 p06)
-                _23 (clojure.core/* _22 _16)
-                _24 (clojure.core/+ _20 _23)
-                _25 (clojure.core// _24 p05)]
-                (clojure.core/doto a10
-                  (clojure.core/aset 0 _12)
-                  (clojure.core/aset 1 y03)
-                  (clojure.core/aset 2 _25))))
+    (is (= '(fn [a09 a10 a11]
+              (let [y01 (aget a09 0)
+                    y02 (aget a09 1)
+                    y03 (aget a09 2)
+                    p04 (aget a11 0)
+                    p05 (aget a11 1)
+                    p06 (aget a11 2)
+                    p07 (aget a11 3)
+                    p08 (aget a11 4)
+                    _12 1.0
+                    _13 2.0
+                    _14 (pow p08 _13)
+                    _15 (* p07 _14)
+                    _16 (sin y02)
+                    _17 (* _15 _16)
+                    _18 (* p08 y01)
+                    _19 (cos _18)
+                    _20 (* _17 _19)
+                    _21 -1.0
+                    _22 (* _21 p06)
+                    _23 (* _22 _16)
+                    _24 (+ _20 _23)
+                    _25 (/ _24 p05)]
+                (doto a10
+                  (aset 0 _12)
+                  (aset 1 y03)
+                  (aset 2 _25))))
            (compile :primitive)))))
 
 (deftest as-javascript
