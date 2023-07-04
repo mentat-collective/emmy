@@ -102,10 +102,9 @@
                     i)))
             (uid [x]
                 (cond
-                  (symbol? x) x
-                  (number? x) (install x)
                   (seq? x) (install (into [(first x)] (map uid) (next x)))
-                  :else (u/exception (str "cse? " x))))]
+                  (number? x) (install x)
+                  :else x))]
       (fn
         ([] (->> @table (sort-by second) (map first)))
         ([expr] (uid (dissociate '#{+ *} expr)))))))
@@ -175,12 +174,11 @@
   `:gensym-fn`: side-effecting function that returns a new, unique
   variable name prefixed by its argument on each invocation.
   `monotonic-symbol-generator` by default."
-  ([expr continue] (extract-common-subexpressions expr continue {}))
-  ([expr continue {:keys [gensym-fn]
-                   :or {gensym-fn (a/monotonic-symbol-generator 8 "_")}}]
-   (let [u (uid-assigner)]
-     (letfn
-      [(dag->symbols-and-values
+  [expr continue {:keys [gensym-fn]
+                  :or {gensym-fn (a/monotonic-symbol-generator 8 "_")}}]
+  (let [u (uid-assigner)]
+    (letfn
+     [(dag->symbols-and-values
         ;; After we're done feeding the expression(s) to the UID assigner,
         ;; we get a list of constants and function application forms with
         ;; arguments which are either symbols or integer placeholders. The
@@ -196,13 +194,13 @@
                           (list* (first d) (map subst (next d)))
                           d))]
           (continue symbols values)))
-       (handle-single-expression
+      (handle-single-expression
         ;; The simple case
         []
         (u expr)
         (dag->symbols-and-values
          (fn [symbols values] (continue (last symbols) (map vector symbols values)))))
-       (handle-doto-statement
+      (handle-doto-statement
         ;; In this case we want to feed the right hand sides of all the `aset`
         ;; statements within the `doto` to the UID assigner, generate the needed
         ;; quantity of new symbols, and then paste the symbols into the RHS
@@ -210,14 +208,14 @@
         ;; expression; all the supporting computation is effected by evaluating
         ;; the subexpressions.
         []
-         (let [[_doto array-symbol & aset-statements] expr
-               indexed-uids (doall (for [[_aset index expr] aset-statements]
-                                     [index (u expr)]))]
-           (dag->symbols-and-values
-            (fn [symbols values]
-              (continue
-               `(doto ~array-symbol ~@(map (fn [[i j]] `(aset ~i ~(if (integer? j) (symbols j) j))) indexed-uids))
-               (map vector symbols values))))))]
-       (cond (not (sequential? expr)) (continue expr nil)
-             (= (first expr) `doto) (handle-doto-statement)
-             :else (handle-single-expression))))))
+        (let [[_doto array-symbol & aset-statements] expr
+              indexed-uids (doall (for [[_aset index expr] aset-statements]
+                                    [index (u expr)]))]
+          (dag->symbols-and-values
+           (fn [symbols values]
+             (continue
+              `(doto ~array-symbol ~@(map (fn [[i j]] `(aset ~i ~(if (integer? j) (symbols j) j))) indexed-uids))
+              (map vector symbols values))))))]
+      (cond (not (sequential? expr)) (continue expr nil)
+            (= (first expr) `doto) (handle-doto-statement)
+            :else (handle-single-expression)))))
