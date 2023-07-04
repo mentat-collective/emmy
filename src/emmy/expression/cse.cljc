@@ -61,8 +61,11 @@
   (letfn [(go [x]
               (cond
                 (not (seq? x)) x
-                (not (f? (first x))) (map go x)
-                (< (count x) 4) (map go x)
+
+                (or (not (f? (first x)))
+                    (< (count x) 4))
+                (map go x)
+
                 :else (let [[f & xs] x]
                         (reduce (partial list f) (map go xs)))))]
     (go x)))
@@ -74,7 +77,7 @@
 ;; position represent back-references to the indexed computation emitted
 ;; previously (that is, in the nth expression, indices in the range [0..n-1]
 ;; may appear). Thus the computation may be efficiently performed by
-;; evaluation the subexpressions in the order reported.
+;; evaluating the subexpressions in the order reported.
 
 (defn- uid-assigner
   "Produces a function which takes an S-expression and produces the
@@ -84,11 +87,11 @@
   by new expressions; in this way, multiple expressions in the same scope
   may be compacted.
 
-  Passing the argument `:table` will result in a sequence
-  of simple forms with a function symbol at the head followed by arguments.
-  The arguments are either symbols drawn from the original expression or
-  integers which represent the the index of the value of a computation
-  performed earlier in the sequence."
+  Passing no argument will \"dump\" the current table as a sequence of
+  simple forms with a function symbol at the head followed by arguments
+  (or a constant). The arguments are either symbols drawn from the original
+  expression or integers which represent the the index of the value of a
+  computation performed earlier in the sequence."
   []
   (let [counter (atom -1)
         table   (atom {})]
@@ -101,12 +104,11 @@
                 (cond
                   (symbol? x) x
                   (number? x) (install x)
-                  (seq? x) (install (into [(first x)] (map uid (next x))))
-                  :else (throw (u/exception (str "cse? " x)))))]
-      (fn [expr]
-        (if (= expr :table)
-          (->> @table (sort-by second) (map first))
-          (uid (dissociate '#{+ *} expr)))))))
+                  (seq? x) (install (into [(first x)] (map uid) (next x)))
+                  :else (u/exception (str "cse? " x))))]
+      (fn
+        ([] (->> @table (sort-by second) (map first)))
+        ([expr] (uid (dissociate '#{+ *} expr)))))))
 
 ;; An example will make this process clear:
 
@@ -116,7 +118,7 @@
                   '(+ (* (sin x) (cos x))
                       (* (sin x) (cos x))
                       (* (sin x) (cos x)))))
-   (u :table)))
+   (u)))
 
 ;; This produces the sequence
 ;;
@@ -136,7 +138,7 @@
 (->clerk-only
  (let [u (uid-assigner)]
    (u '(+ (expt a 2) (expt a 3)))
-   (u :table)))
+   (u)))
 
 ;; We get
 ;;
@@ -144,11 +146,11 @@
 ;;
 ;; in which the constants 2 and 3 are stored in values 0 and 2, and referred to
 ;; by those indices when needed.  This is reminiscent of a technique called the
-;; "literal pool", used by compilers on architectures which lack immediate-mode
+;; "literal pool," used by compilers on architectures which lack immediate-mode
 ;; instructions, so that values have to be loaded by address. (It does have the
 ;; side effect of coalescing the use of the same constant more than once in a
-;; single variable, but the platform code generators probably do not our help
-;; with that.)
+;; single variable, but the platform code generators probably do not need our
+;; help with that.)
 
 (defn extract-common-subexpressions
   "Considers an S-expression from the point of view of optimizing its evaluation
@@ -185,7 +187,7 @@
         ;; integers represent the index of a sub-computation earlier in the
         ;; list. We generate symbols and paste them over the integers here.
         [continue]
-        (let [dag     (u :table)
+        (let [dag     (u)
               n       (count dag)
               symbols (into [] (repeatedly n gensym-fn))
               subst   (fn [x] (if (integer? x) (symbols x) x))

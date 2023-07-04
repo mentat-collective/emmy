@@ -345,7 +345,6 @@
    expression we're compiling is a structure (introduced by `up`, `down`
    or `vector`), then replace the expression with a sequence of `aset`
    instructions to store the individual values to a flat primitive array."
-
   [{:keys [calling-convention argv] :as code}]
   (letfn [(children? [x]
             (and (sequential? x) ('#{up down vector} (first x))))
@@ -356,7 +355,7 @@
               (fn [body]
                 (if (children? body)
                   (let [array-symbol (nth argv 1)
-                        values (filter (complement children?) (tree-seq children? rest body))]
+                        values (remove children? (rest (tree-seq children? rest body)))]
                     `(doto ~array-symbol ~@(map-indexed aset-form values)))
                   body)))
       code)))
