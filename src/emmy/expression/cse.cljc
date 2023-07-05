@@ -8,7 +8,6 @@
   process we use to avoid redundant computation inside of a simplified function
   body."
   (:require [emmy.expression.analyze :as a]
-            [emmy.util :as u]
             [mentat.clerk-utils :refer [->clerk-only]]))
 
 ;; ## Common Sub-Expression Elimination
