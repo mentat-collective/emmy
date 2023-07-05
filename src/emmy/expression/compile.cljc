@@ -311,14 +311,14 @@
   Local bindings for the common sub-expressions found are appended to the
   binding structure of the body, and the (possibly) simplified code replaces
   that in the previous code body."
-  [x gensym-fn deterministic?]
+  [x gensym-fn]
   (extract-common-subexpressions
    (:body x)
    (fn [new-body new-locals]
      (assoc x :body (if (seq new-locals)
                       (append-bindings new-body new-locals)
                       new-body)))
-   {:gensym-fn gensym-fn :deterministic? deterministic?}))
+   {:gensym-fn gensym-fn}))
 
 (defn- primitive-bindings
   "In the primitive calling convention case, introduces a sequence of local
@@ -341,37 +341,23 @@
       code)))
 
 (defn- primitive-body
-  "In the case of primitive calling convention, unrolls the source of the
-  vector-producing statement of the body into a sequence of `aset` calls to
-  populate the derivative output array. Returns an updated code object."
+  "If the calling convention is `:primitive`, and the top level of the
+   expression we're compiling is a structure (introduced by `up`, `down`
+   or `vector`), then replace the expression with a sequence of `aset`
+   instructions to store the individual values to a flat primitive array."
   [{:keys [calling-convention argv] :as code}]
-  (letfn [(vector-sequence?
-            ;; Returns true if the expression `x` is a vector constructor,
-            ;; i.e., a sequence commencing with `up`, `down` or `vector`.
-            [x]
-            (and (sequential? x) (#{'up 'down 'vector} (first x))))
-          (flatten-state-vector
-            ;; "Returns a flat sequence of expressions making up a state vector."
-            [v]
-            (filter (complement vector-sequence?)
-                    (tree-seq vector-sequence? rest v)))
-          (expressions-to-array
-            ;; Returns a (possibly compound) statement which will arrange for
-            ;; the expressions in `exps `to be stored, one by one, into the
-            ;; elements of the primitive array denoted by `array-symbol `.
-            [array-symbol exps]
-            `(doto ~array-symbol
-               ~@(map-indexed (fn [i v] `(aset ~i ~v)) exps)))]
-    (case calling-convention
-      :primitive
-      (update code :body (fn [body]
-                           (let [z (z/seq-zip body)
-                                 z (if (= `let (z/node (z/next z)))
-                                     (z/next (z/next (z/next z)))
-                                     z)]
-                             (z/root
-                              (z/replace z (expressions-to-array (nth argv 1) (flatten-state-vector (z/node z)))))
-                             )) )
+  (letfn [(children? [x]
+            (and (sequential? x) ('#{up down vector} (first x))))
+          (aset-form [index value]
+            `(aset ~index ~value))]
+    (if (= calling-convention :primitive)
+      (update code :body
+              (fn [body]
+                (if (children? body)
+                  (let [array-symbol (nth argv 1)
+                        values (remove children? (rest (tree-seq children? rest body)))]
+                    `(doto ~array-symbol ~@(map-indexed aset-form values)))
+                  body)))
       code)))
 
 ;; The following functions compile state functions in either native or SCI mode.
@@ -578,10 +564,6 @@
     - `:cache`: If falsy, the compilation cache is avoided (it will neither
       be consulted nor updated).
 
-    - `:deterministic?` requests that the compiler expend some effort to get
-      reproducible results down to the symbol name level for tests. It has
-      no observable effect on the compiled function's behavior.
-
     - `:gensym-fn` allows injection of a symbol generator for unit test
       purposes
 
@@ -606,20 +588,17 @@
                                    arity
                                    generic-params?
                                    gensym-fn
-                                   deterministic?
                                    cache?
                                    simplify?]
                             :or {mode *mode*
                                  calling-convention :structure
                                  generic-params? (boolean params)
                                  gensym-fn (a/monotonic-symbol-generator 4)
-                                 deterministic? false
                                  cache? true
                                  simplify? true}}]
 
    (let [key {:calling-convention calling-convention
               :generic-params? generic-params?
-              :deterministic? deterministic?
               :mode mode
               :arity arity
               :f f}]
@@ -647,10 +626,10 @@
                                      :params (when generic-params? params)
                                      :state-model generic-state)
                                (state-argv gensym-fn)
-                               (cse #(gensym-fn "_") deterministic?)
                                (update :body apply-numeric-ops)
-                               (primitive-bindings)
-                               (primitive-body))
+                               (primitive-body)
+                               (cse #(gensym-fn "_"))
+                               (primitive-bindings))
              compiler      (case mode
                              :source #?(:clj compile->clj :cljs compile->js)
                              :clj compile->clj

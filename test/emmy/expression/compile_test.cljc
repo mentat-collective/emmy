@@ -1,12 +1,14 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
 (ns emmy.expression.compile-test
-  (:require [clojure.test :refer [is deftest testing]]
+  (:require [clojure.string :as s]
+            [clojure.test :refer [is deftest testing]]
             [emmy.abstract.number]
             [emmy.expression.analyze :as a]
             [emmy.expression.compile :as c]
             [emmy.generic :as g]
             [emmy.structure :refer [up down]]
+            [emmy.util :as u]
             [emmy.value :as v]
             [same.core :refer [ish?]])
   #?(:clj
@@ -40,31 +42,38 @@
                     (c/compile-state-fn f '[m] (up 't (up 'x0 'x1) (up 'v0 'v1))
                                         (merge {:gensym-fn (a/monotonic-symbol-generator 1)}
                                                opts)))]
-      (is (= `(fn [[~'y1 [~'y2 ~'y3] [~'y4 ~'y5]] [~'p6]] (* ~'p6 ~'y1))
+      (is (= `(fn [[~'y1 [~'y2 ~'y3] [~'y4 ~'y5]] [~'p6]] (let [~'_7 (* ~'p6 ~'y1)] ~'_7))
              (compile {:mode :clj :calling-convention :structure})))
-      (is (= `(fn [~'a7 ~'a8 ~'a9]
-                (let [~'y1 (aget ~'a7 0)
-                      ~'y2 (aget ~'a7 1)
-                      ~'y3 (aget ~'a7 2)
-                      ~'y4 (aget ~'a7 3)
-                      ~'y5 (aget ~'a7 4)
-                      ~'p6 (aget ~'a9 0)]
-                  (doto ~'a8 (aset 0 (* ~'p6 ~'y1)))))
-             (compile {:mode :clj :calling-convention :primitive})))
-      (is (= ["[y1, [y2, y3], [y4, y5]]" "[p6]" "  return p6 * y1;"]
+      (is (= '(fn [a07 a08 a09]
+                (let [y01 (aget a07 0)
+                      y02 (aget a07 1)
+                      y03 (aget a07 2)
+                      y04 (aget a07 3)
+                      y05 (aget a07 4)
+                      p06 (aget a09 0)
+                      _10 (* p06 y01)]
+                  _10))
+              (u/without-symbol-namespaces
+               (compile {:mode :clj
+                         :calling-convention :primitive
+                         :gensym-fn (a/monotonic-symbol-generator 2)}))))
+      (is (= ["[y1, [y2, y3], [y4, y5]]" "[p6]" (s/join "\n" ["  const _7 = p6 * y1;"
+                                                              "  return _7;"])]
              (compile {:mode :js :calling-convention :structure})))
-      (is (= ["a7"
-              "a8"
-              "a9"
-              (str
-               "  const y1 = a7[0];\n"
-               "  const y2 = a7[1];\n"
-               "  const y3 = a7[2];\n"
-               "  const y4 = a7[3];\n"
-               "  const y5 = a7[4];\n"
-               "  const p6 = a9[0];\n"
-               "  a8[0] = p6 * y1;")]
-             (compile {:mode :js :calling-convention :primitive})))
+      (is (= ["a07"
+              "a08"
+              "a09"
+              (s/join "\n" ["  const y01 = a07[0];"
+                            "  const y02 = a07[1];"
+                            "  const y03 = a07[2];"
+                            "  const y04 = a07[3];"
+                            "  const y05 = a07[4];"
+                            "  const p06 = a09[0];"
+                            "  const _10 = p06 * y01;"
+                            "  return _10;" ])]
+             (compile {:mode :js
+                       :calling-convention :primitive
+                       :gensym-fn (a/monotonic-symbol-generator 2)})))
       (is (thrown? ExceptionInfo
                    (compile {:calling-convention :bogus}))
           "unknown calling convention will throw")))
@@ -87,30 +96,45 @@
                  ((c/compile-state-fn f params initial-state)
                   initial-state params))))
 
-        (testing "bind gensym to `identity` so we can check the result (multi language)"
-          (doseq [[mode expected-source] {:clj `(fn [[~'y] [~'p]]
-                                                  (vector (+ (* ~'p ~'y) (* 0.5 ~'p))))
-                                          :js ["[y]" "[p]" "  return [p * y + 0.5 * p];"]}]
+        (testing "bind gensym so we can check the result (multi language)"
+          (doseq [[mode expected-source] {:clj '(fn [[y1] [p2]]
+                                                  (let [_3 (* p2 y1)
+                                                        _4 0.5
+                                                        _5 (* _4 p2)
+                                                        _6 (+ _3 _5)
+                                                        _7 (vector _6)]
+                                                    _7))
+                                          :js ["[y1]" "[p2]"
+                                               (s/join "\n" ["  const _3 = p2 * y1;"
+                                                             "  const _4 = 0.5;"
+                                                             "  const _5 = _4 * p2;"
+                                                             "  const _6 = _3 + _5;"
+                                                             "  const _7 = [_6];"
+                                                             "  return _7;"])]}]
             (binding [c/*mode* mode]
-              (let [compiler #(c/compile-state-fn
-                               f params initial-state
-                               {:gensym-fn identity})
+
+              (let [gensym-fn (a/monotonic-symbol-generator 1)
+                    compiler #(u/without-symbol-namespaces
+                               (c/compile-state-fn
+                                f params initial-state
+                                {:gensym-fn gensym-fn}))
                     f-source (compiler)]
                 (is (= expected-source f-source)
                     "source code for your native language!")
 
                 (binding [c/*mode* :native]
                   (is (= expected-source
-                         (c/compile-state-fn
-                          f params initial-state
-                          {:gensym-fn identity
-                           :mode mode}))
+                         (u/without-symbol-namespaces
+                          (c/compile-state-fn
+                           f params initial-state
+                           {:gensym-fn gensym-fn
+                            :mode mode})))
                       "explicit `:mode` overrides the dynamic binding."))
 
                 (is (thrown? ExceptionInfo
                              (c/compile-state-fn
                               f params initial-state
-                              {:gensym-fn identity
+                              {:gensym-fn gensym-fn
                                :mode :invalid}))
                     "explicit invalid modes will throw!")))
 
@@ -130,29 +154,53 @@
 
 
           (doseq [[mode expected-source]
-                  {:clj `(fn ~'[[y1 [y2 [y3 [y4]]]]]
-                           (vector (+ (* 3.1 ~'y1) 1.55)))
-                   :js ["[y1, [y2, [y3, [y4]]]]" "  return [3.1 * y1 + 1.55];"]}]
+                  {:clj '(fn [[y1 [y2 [y3 [y4]]]]]
+                           (let [_5 3.1
+                                 _6 (* _5 y1)
+                                 _7 1.55
+                                 _8 (+ _6 _7)
+                                 _9 (vector _8)]
+                             _9))
+                   :js ["[y1, [y2, [y3, [y4]]]]"
+                        (s/join "\n" ["  const _5 = 3.1;"
+                                      "  const _6 = _5 * y1;"
+                                      "  const _7 = 1.55;"
+                                      "  const _8 = _6 + _7;"
+                                      "  const _9 = [_8];"
+                                      "  return _9;"])]}]
             (is (= expected-source
-                   (c/compile-state-fn
-                    f params initial-state
-                    {:calling-convention :structure
-                     :generic-params? false
-                     :gensym-fn (a/monotonic-symbol-generator 1)
-                     :mode mode}))
+                   (u/without-symbol-namespaces
+                    (c/compile-state-fn
+                     f params initial-state
+                     {:calling-convention :structure
+                      :generic-params? false
+                      :gensym-fn (a/monotonic-symbol-generator 1)
+                      :mode mode})))
                 "nested argument vector, no params."))
 
           (doseq [[mode expected-source]
-                  {:clj `(fn ~'[[y1 [y2 [y3 [y4]]]] [p5]]
-                           (vector (+ (* ~'p5 ~'y1) (* 0.5 ~'p5))))
-                   :js ["[y1, [y2, [y3, [y4]]]]" "[p5]" "  return [p5 * y1 + 0.5 * p5];"]}]
+                  {:clj '(fn [[y01 [y02 [y03 [y04]]]] [p05]]
+                         (let [_06 (* p05 y01)
+                               _07 0.5
+                               _08 (* _07 p05)
+                               _09 (+ _06 _08)
+                               _10 (vector _09)]
+                           _10))
+                   :js ["[y01, [y02, [y03, [y04]]]]" "[p05]"
+                        (s/join "\n" ["  const _06 = p05 * y01;"
+                                      "  const _07 = 0.5;"
+                                      "  const _08 = _07 * p05;"
+                                      "  const _09 = _06 + _08;"
+                                      "  const _10 = [_09];"
+                                      "  return _10;"])]}]
             (is (= expected-source
-                   (c/compile-state-fn
-                    f params initial-state
-                    {:calling-convention :structure
-                     :generic-params? true
-                     :gensym-fn (a/monotonic-symbol-generator 1)
-                     :mode mode}))
+                   (u/without-symbol-namespaces
+                    (c/compile-state-fn
+                     f params initial-state
+                     {:calling-convention :structure
+                      :generic-params? true
+                      :gensym-fn (a/monotonic-symbol-generator 2)
+                      :mode mode})))
                 "nested argument vector, params."))))))
 
   (testing "non-state-fns"
@@ -173,13 +221,22 @@
             (let [[f-source clj-source] (with-redefs [gensym (fn
                                                                ([] (clojure.core/gensym))
                                                                ([x] x))]
-                                          [(c/compile-fn f)
+                                          [(u/without-symbol-namespaces (c/compile-fn f))
                                            (binding [c/*mode* :clj] (c/compile-fn f))])]
-              (is (= #?(:clj `(fn [~'y0001]
-                                (vector
-                                 (+ (~'Math/pow ~'y0001 3.0)
-                                    (~'Math/sin ~'y0001))))
-                        :cljs ["y0001" "  return [Math.pow(y0001, 3) + Math.sin(y0001)];"])
+              (is (= #?(:clj '(fn [y0001]
+                                (let [_0002 3.0
+                                      _0003 (pow y0001 _0002)
+                                      _0004 (sin y0001)
+                                      _0005 (+ _0003 _0004)
+                                      _0006 (vector _0005)]
+                                  _0006))
+                        :cljs ["y0001"
+                               (s/join "\n" ["  const _0002 = 3;"
+                                             "  const _0003 = Math.pow(y0001, _0002);"
+                                             "  const _0004 = Math.sin(y0001);"
+                                             "  const _0005 = _0003 + _0004;"
+                                             "  const _0006 = [_0005];"
+                                             "  return _0006;"])])
                      f-source)
                   "source code in your native language!")
 
@@ -189,19 +246,41 @@
             (with-redefs [gensym (fn
                                    ([] (clojure.core/gensym))
                                    ([x] x))]
-              (is (= #?(:clj `(fn [~'y0001] (+ (* -1.0 ~'y0001) 28.0))
-                        :cljs ["y0001" "  return - y0001 + 28;"])
-                     (c/compile-fn
-                      (fn [x]
-                        (g/- (g/* 8 (g/+ (g// 1 2) 3))
-                             x))))
+              (is (= #?(:clj '(fn [y0001]
+                                (let [_0002 -1.0
+                                      _0003 (* _0002 y0001)
+                                      _0004 28.0
+                                      _0005 (+ _0003 _0004)]
+                                  _0005))
+                        :cljs ["y0001"
+                               (s/join "\n" ["  const _0002 = -1;"
+                                             "  const _0003 = _0002 * y0001;"
+                                             "  const _0004 = 28;"
+                                             "  const _0005 = _0003 + _0004;"
+                                             "  return _0005;"])])
+                     (u/without-symbol-namespaces
+                      (c/compile-fn
+                       (fn [x]
+                         (g/- (g/* 8 (g/+ (g// 1 2) 3))
+                              x)))))
                   "fractional arithmetic results in double literals.")
 
-              (is (= #?(:clj `(fn [~'y0001] (vector 2.0 (+ ~'y0001 0.5)))
-                        :cljs ["y0001" "  return [2, y0001 + 0.5];"])
-                     (c/compile-fn
-                      (fn [x]
-                        (up 2 (g/+ (g// 1 2) x)))))
+              (is (= #?(:clj '(fn [y0001]
+                                (let [_0002 2.0
+                                      _0003 0.5
+                                      _0004 (+ y0001 _0003)
+                                      _0005 (vector _0002 _0004)]
+                                  _0005))
+                        :cljs ["y0001"
+                               (s/join "\n" ["  const _0002 = 2;"
+                                             "  const _0003 = 0.5;"
+                                             "  const _0004 = y0001 + _0003;"
+                                             "  const _0005 = [_0002, _0004];"
+                                             "  return _0005;"])])
+                     (u/without-symbol-namespaces
+                      (c/compile-fn
+                       (fn [x]
+                         (up 2 (g/+ (g// 1 2) x))))))
                   "`(/ 1 2)` is resolved into 0.5 at compile time.")))))))
 
   (let [f          (fn [x] (g/+ 1 (g/square (g/sin x))))
@@ -252,16 +331,21 @@
     (let [f (fn [x]
               (g/+ (g/square (g/sin x))
                    (g/square (g/cos x))))
-          one #?(:clj 1.0 :cljs 1)
-          two #?(:clj 2.0 :cljs 2)]
+          one #?(:clj 1.0 :cljs 1)]
       (is (= `(fn [~'y0001] ~one)
              (c/compile-fn f 1 {:mode :clj :simplify? true}))
           "simplify? true triggers body simplification.")
 
-      (is (= `(fn [~'y0001]
-                (+ (~'Math/pow (~'Math/sin ~'y0001) ~two)
-                   (~'Math/pow (~'Math/cos ~'y0001) ~two)))
-             (c/compile-fn f 1 {:mode :clj :simplify? false}))
+      (is (= '(fn [y0001]
+                (let [_0002 (sin y0001)
+                      _0003 2.0
+                      _0004 (pow _0002 _0003)
+                      _0005 (cos y0001)
+                      _0006 (pow _0005 _0003)
+                      _0007 (+ _0004 _0006)]
+                  _0007))
+             (u/without-symbol-namespaces
+              (c/compile-fn f 1 {:mode :clj :simplify? false})))
           "simplify? false leaves body untouched."))))
 
 (deftest compile-state-tests

@@ -7,152 +7,154 @@
   "This namespace implements subexpression extraction and \"elimination\", the
   process we use to avoid redundant computation inside of a simplified function
   body."
-  (:require [clojure.set :as set]
-            [clojure.walk :as w]
-            [emmy.expression :as x]
-            [emmy.expression.analyze :as a]
-            [emmy.util :as u]
+  (:require [emmy.expression.analyze :as a]
             [mentat.clerk-utils :refer [->clerk-only]]))
 
 ;; ## Common Sub-Expression Elimination
 
-;;  The goal of this process is to split some symbolic expression into:
+;; We implement the algorithm described in \[F90\]:
 ;;
-;;  - a map of symbol -> redundant subexpression
-;;  - a new expression with each redundant subexpression replaced with its
-;;    corresponding symbol.
+;;   [Analytic Variations on the Common Subexpression Problem]
+;;   (https://algo.inria.fr/flajolet/Publications/FlSiSt90.pdf)
+;;   Philippe Flajolet, Paolo Sipala, Jean-Marc Steyaert (1990)
 ;;
-;;  The invariant we want to achieve is that the new expression, rehydrated using
-;;  the symbol->subexpression map, should be equivalent to the old expression.
+;; From the abstract:
 ;;
-;;  First, we write a function to determine how often each subexpression appears.
-;;  Subexpressions that appear just once aren't worth extracting, but two
-;;  appearances is enough.
+;; > Any tree can be represented in a maximally compact form as
+;; > a directed acyclic graph where common subtrees are factored and
+;; > shared, being represented only once. Such a compaction can be
+;; > effected in linear time. It is used to save storage in
+;; > implementations of functional programming languages, as
+;; > well as in symbolic manipulation and computer algebra systems.
+;;
+;; which is exactly what we want.
+;;
+;; The heart of the algorithm is a function which computes a unique
+;; identifier (UID) for a subtree, such that isomorphic subtrees receive the
+;; same UID. If we regard each node of the tree as the root of such a
+;; subtree, the UID assignment will have the effect of partitioning
+;; the nodes of the tree into equivalence classes. We can then produce
+;; a DAG encoding of the original tree by using these class indices.
+;;
+;; The paper assumes the input trees are binary, but Emmy expressions
+;; often have sums and products in which the `+` and `*` functions are
+;; applied to long strings of arguments. We have observed that such long
+;; chains of operands can frustrate this kind of optimization, by hiding
+;; common (permuted) subsequences of operand within two similar
+;; subexpressions of a commutative operation.
+;;
+;; We begin by rewriting our input expression to avoid this. While this
+;; will likely generate a tree with more nodes, it exposes each primitive
+;; computation to the algorithm which enables a maximal factoring (at the
+;; cost, as we will see, of generating code in which operations are limited
+;; to two operands. This may produce less compact-looking compiled code,
+;; but should be perfectly transparent to the code generators of the host
+;; languages.)
 
-(defn- expr-frequencies
-  "Returns a map from distinct subexpressions in the supplied `expr` to the
-  number of times each appears.
+(defn- dissociate
+  "If `x` is an expression like `(f x1 x2 x3...)`, where `(f? f)` is true,
+  returns `(f ... (f x1 x2) x3 ...)`, i.e., we replace applications with
+  arity > 2 with left-associative nested applications of arity 2. Otherwise
+  `x` is returned."
+  [f? x]
+  (letfn [(go [x]
+              (cond
+                (not (seq? x)) x
 
-  If `skip?` returns true given a subexpression it won't be included as a key in
-  the returned map."
-  [expr skip?]
-  (let [children (partial filter seq?)]
-    (->> (rest
-          (tree-seq seq? children expr))
-         (remove skip?)
-         (frequencies))))
+                (or (not (f? (first x)))
+                    (< (count x) 4))
+                (map go x)
 
-;; The next function assumes that we have the two data structures we referenced
-;; earlier. We want to be careful that we only generate and bind subexpressions
-;; that are actually used in the final computation.
-;;
-;; `discard-unreferenced-syms` ensures this by removing any entry from our
-;; replacement map that doesn't appear in the expression it's passed, or any
-;; subexpression referenced by a symbol in the expression, etc etc.
-;;
-;; The algorithm is:
-;;
-;; - consider the intersection of all variables in the replacement map and the
-;;   supplied expression, and store these into a map of "referenced" symbols.
-;;
-;; - Look up the corresponding subexpression for each of these symbols, and add
-;;   all potential replacements from each subexpression into the "referenced"
-;;   list, continuing this process recursively until all candidates are
-;;   exhausted.
-;;
-;; - Return subset of the original `sym->expr` by removing any key not found in
-;; - the accumulated "referenced" set.
+                :else (let [[f & xs] x]
+                        (reduce (partial list f) (map go xs)))))]
+    (go x)))
 
-(defn- discard-unreferenced-syms
-  "Trims down a proposed map of `sym->expr` replacements (suitable for a let-binding,
-  say) to include only entries relevant to the supplied `expr`.
+;; This is the heart of the F90 algorithm. We do a post-order traversal
+;; of the tree, building an association between equivalence classes of
+;; subtree to small integers. We can then represent the maximally factored
+;; DAG as a simple sequence of expressions, where integers in argument
+;; position represent back-references to the indexed computation emitted
+;; previously (that is, in the nth expression, indices in the range [0..n-1]
+;; may appear). Thus the computation may be efficiently performed by
+;; evaluating the subexpressions in the order reported.
 
-  Accepts:
+(defn- uid-assigner
+  "Produces a function which takes an S-expression and produces the
+  compacted DAG representation of the tree, as described in [Flajolet 90].
+  Returns the ID of the root of the tree. The assigner generated by this
+  function can be used multiple times, and earlier compact forms will be reused
+  by new expressions; in this way, multiple expressions in the same scope
+  may be compacted.
 
-  - `sym->expr`, a map of symbol -> symbolic expression
-  - `expr`, an expression that potentially contains symbols referenced in the
-    keyset of `sym->expr`
+  Passing no argument will \"dump\" the current table as a sequence of
+  simple forms with a function symbol at the head followed by arguments
+  (or a constant). The arguments are either symbols drawn from the original
+  expression or integers which represent the the index of the value of a
+  computation performed earlier in the sequence."
+  []
+  (let [counter (atom -1)
+        table   (atom {})]
+    (letfn [(install [x]
+              (or (@table x)
+                  (let [i (swap! counter inc)]
+                    (swap! table assoc x i)
+                    i)))
+            (uid [x]
+                (cond
+                  (seq? x) (install (into [(first x)] (map uid) (next x)))
+                  (number? x) (install x)
+                  :else x))]
+      (fn
+        ([] (->> @table (sort-by second) (map first)))
+        ([expr] (uid (dissociate '#{+ *} expr)))))))
 
-  And returns a subset of `sym->expr` containing only entries where the
-  symbol-key is found in:
-
-  - the original `expr`, or
-  - in an expression referenced by a symbol in the original `expr`"
-  [sym->expr expr]
-  (let [syms        (u/keyset sym->expr)
-        lookup-syms (mapcat (comp x/variables-in sym->expr))]
-    (loop [referenced #{}
-           sym-batch  (-> (x/variables-in expr)
-                          (set/intersection syms))]
-      (if (empty? sym-batch)
-        (select-keys sym->expr referenced)
-        (let [referenced'   (set/union referenced sym-batch)
-              syms-in-exprs (-> (into #{} lookup-syms sym-batch)
-                                (set/intersection syms)
-                                (set/difference referenced'))]
-          (recur referenced' syms-in-exprs))))))
-
-;; This final function implements common subexpression extraction in
-;; continuation-passing-style. Pass it a callback and it will invoke the
-;; callback with the two arguments described above, and detailed below in its
-;; docstring.
-;;
-;; The algorithm is:
-;;
-;; - For every subexpression that appears more than once in the supplied
-;;   expression, generate a new, unique symbol.
-;;
-;; - Generate a new expression by replacing every subexpression in the supplied
-;;   expression with a symbol using the new mapping of symbol -> subexpression.
-;;
-;; - Recursively keep going until there are no more common subexpressions to
-;;   replace. At this point, discard all extra bindings (see
-;;   `discard-unreferenced-syms` above) and call the continuation function with
-;;   the /new/ slimmed expression, and a sorted-by-symbol list of binding pairs.
-;;
-;; These two return values satisfy the invariant we described above: the new
-;; expression, rehydrated using the symbol->subexpression map, should give us
-;; back the old expression.
-;;
-;; NOTE that the algorithm as implemented below uses a postwalk tree traversal!
-;; This is important, as it forces us to consider smaller subexpressions first.
-;; Consider some expression like:
+;; An example will make this process clear:
 
 (->clerk-only
- '(+ (* (sin x) (cos x))
-     (* (sin x) (cos x))
-     (* (sin x) (cos x))))
+ (let [u (uid-assigner)]
+   (u (dissociate '#{+ *}
+                  '(+ (* (sin x) (cos x))
+                      (* (sin x) (cos x))
+                      (* (sin x) (cos x)))))
+   (u)))
 
-;; At first pass, we have three repeated subexpressions:
+;; This produces the sequence
 ;;
-;; - `(sin x)`
-;; - `(cos x)`
-;; - `(* (sin x) (cos x))`
+;; `[sin x] [cos x] [* 0 1] [+ 2 2] [+ 3 2]`
 ;;
-;; Postwalk traversal guarantees that we replace the `sin` and `cos` terms
-;; before the larger term that contains them both. And in fact the returned pair
-;; looks like:
+;; Which we may interpret as follows:
+;;
+;; `(sin x)` and `(cos x)` are computed and considered values 0 and 1, respectively.
+;; To get value 2, we multiply values 0 and 1: `(* (sin x) (cos x))`
+;; To get value 3, we add value 2 to itself, and to get value 4, we add values 3 and 2.
+;; This is the "unrolled form" of the sum of the three identical elements.
+;;
+;; What about numbers that may appear in the original expression? We've tweaked the
+;; algorithm to stash such numbers into an indexed sub-computation so that there is
+;; no ambiguity
 
 (->clerk-only
- '[(+ g3 g3 g3) ([g1 (sin x)] [g2 (cos x)] [g3 (* g1 g2)])])
+ (let [u (uid-assigner)]
+   (u '(+ (expt a 2) (expt a 3)))
+   (u)))
 
-;; NOTE also that:
+;; We get
 ;;
-;; - this is why the `:gensym-fn` below must generate symbols that sort
-;;   in the order they're generated. Else, the final binding vector might put
-;;   the `g3` term in the example above /before/ the smaller subexpressions it
-;;   uses.
+;; `(2 [expt a 0] 3 [expt a 2] [+ 1 3])`
 ;;
-;; - This algorithm justifies `discard-unreferenced-syms` above. Each pass will
-;;   larger subexpressions like `'(* (sin x) (cos x))` that should never make it
-;;   out, since they never appear in this form (since they contain smaller
-;;   subexpressions).
+;; in which the constants 2 and 3 are stored in values 0 and 2, and referred to
+;; by those indices when needed.  This is reminiscent of a technique called the
+;; "literal pool," used by compilers on architectures which lack immediate-mode
+;; instructions, so that values have to be loaded by address. (It does have the
+;; side effect of coalescing the use of the same constant more than once in a
+;; single variable, but the platform code generators probably do not need our
+;; help with that.)
 
 (defn extract-common-subexpressions
   "Considers an S-expression from the point of view of optimizing its evaluation
   by isolating common subexpressions into auxiliary variables.
 
-  Accepts:
+ Accepts:
 
   - A symbolic expression `expr`
   - a continuation fn `continue` of two arguments:
@@ -163,37 +165,56 @@
 
   Calls the continuation at completion and returns the continuation's value.
 
+  The special form `(doto v (aset i v_i)...)` is recognized at the top level,
+  and the CSE process is then confined to the $v_i$ expressions.
+
   ### Optional Arguments
 
   `:gensym-fn`: side-effecting function that returns a new, unique
   variable name prefixed by its argument on each invocation.
-   `monotonic-symbol-generator` by default.
-
-  NOTE that the symbols should appear in sorted order! Otherwise we can't
-  guarantee that the binding sequence passed to `continue` won't contain entries
-  that reference previous entries.
-
-  `:deterministic?`: if true, the function will assign aux variables by sorting
-  the string representations of each term before assignment. Otherwise, the
-  nondeterministic order of hash maps inside this function won't guarantee a
-  consistent variable naming convention in the returned function. For tests, set
-  `:deterministic? true`."
-  ([expr continue] (extract-common-subexpressions expr continue {}))
-  ([expr continue {:keys [gensym-fn deterministic?]
-                   :or {gensym-fn (a/monotonic-symbol-generator 8 "_")}}]
-   (let [sort (if deterministic?
-                (partial sort-by (comp str vec first))
-                identity)]
-     (loop [x         expr
-            expr->sym {}]
-       (let [expr->count (expr-frequencies x expr->sym)
-             new-syms    (into {} (for [[k v] (sort expr->count)
-                                        :when (> v 1)]
-                                    [k (gensym-fn)]))]
-         (if (empty? new-syms)
-           (let [sym->expr (-> (set/map-invert expr->sym)
-                               (discard-unreferenced-syms x))]
-             (continue x (sort-by key sym->expr)))
-           (let [expr->sym' (merge expr->sym new-syms)]
-             (recur (w/postwalk-replace expr->sym' x)
-                    expr->sym'))))))))
+  `monotonic-symbol-generator` by default."
+  [expr continue {:keys [gensym-fn]
+                  :or {gensym-fn (a/monotonic-symbol-generator 8 "_")}}]
+  (let [u (uid-assigner)]
+    (letfn
+     [(dag->symbols-and-values
+        ;; After we're done feeding the expression(s) to the UID assigner,
+        ;; we get a list of constants and function application forms with
+        ;; arguments which are either symbols or integer placeholders. The
+        ;; integers represent the index of a sub-computation earlier in the
+        ;; list. We generate symbols and paste them over the integers here.
+        [continue]
+        (let [dag     (u)
+              n       (count dag)
+              symbols (into [] (repeatedly n gensym-fn))
+              subst   (fn [x] (if (integer? x) (symbols x) x))
+              values  (for [d dag]
+                        (if (vector? d)
+                          (list* (first d) (map subst (next d)))
+                          d))]
+          (continue symbols values)))
+      (handle-single-expression
+        ;; The simple case
+        []
+        (u expr)
+        (dag->symbols-and-values
+         (fn [symbols values] (continue (last symbols) (map vector symbols values)))))
+      (handle-doto-statement
+        ;; In this case we want to feed the right hand sides of all the `aset`
+        ;; statements within the `doto` to the UID assigner, generate the needed
+        ;; quantity of new symbols, and then paste the symbols into the RHS
+        ;; position of the `aset`s. The new `doto` statement becomes the new
+        ;; expression; all the supporting computation is effected by evaluating
+        ;; the subexpressions.
+        []
+        (let [[_doto array-symbol & aset-statements] expr
+              indexed-uids (doall (for [[_aset index expr] aset-statements]
+                                    [index (u expr)]))]
+          (dag->symbols-and-values
+           (fn [symbols values]
+             (continue
+              `(doto ~array-symbol ~@(map (fn [[i j]] `(aset ~i ~(if (integer? j) (symbols j) j))) indexed-uids))
+              (map vector symbols values))))))]
+      (cond (not (sequential? expr)) (continue expr nil)
+            (= (first expr) `doto) (handle-doto-statement)
+            :else (handle-single-expression)))))

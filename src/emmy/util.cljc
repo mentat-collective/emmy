@@ -6,7 +6,8 @@
   (:require #?(:clj [clojure.core :as core])
             #?(:clj [clojure.math.numeric-tower :as nt])
             #?(:cljs goog.math.Integer)
-            #?(:cljs goog.math.Long))
+            #?(:cljs goog.math.Long)
+            [clojure.walk :as w])
   #?(:clj
      (:import (clojure.lang BigInt)
               (java.util UUID)
@@ -127,3 +128,10 @@
 
 (defn throwable? [t]
   (instance? #?(:clj Throwable :cljs js/Error) t))
+
+(defn without-symbol-namespaces
+  "Walks x, removing namespaces from any symbols that are found.
+  Convenient in unit tests, where the distinction between symbols
+  in `clojure.core` vs. `cljs.core` is unimportant"
+  [x]
+  (w/postwalk (fn [s] (if (qualified-symbol? s) (symbol (name s)) s)) x))

@@ -2,6 +2,22 @@
 
 ## [unreleased]
 
+- #143:
+
+  - Replace the implementation of common subexpression elimination with
+    the algorithm described in Flajolet's 1990 paper (cited within).
+    This algorithm does not have any dependence on hash collection
+    ordering, so the `deterministic?` flag has been removed.
+
+  - Update unit test expected data to remove symbol namespaces that may
+    differ between clj and cljs. Restore a test found not to be stable
+    in cljs that has become so with the simpler Flajolet algorithm.
+
+  - The structure of the emitted code changes with this revision, to
+    a more assembly-like form in which operations are fanned out into
+    a sequence of two-operand forms in the commutative cases, boiling
+    down to the return of a single symbol.
+
 - #142 fixes advanced compilation warnings and bumps Clerk to a new version.
 
 ## [0.31.0]
