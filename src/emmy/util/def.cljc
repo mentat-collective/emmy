@@ -9,7 +9,7 @@
      (:require-macros [emmy.util.def])))
 
 (u/sci-macro
-  (defmacro ^:no-doc fork
+  (defmacro fork
     "I borrowed this lovely, mysterious macro from `macrovich`:
     https://github.com/cgrand/macrovich. This allows us to fork behavior inside of
     a macro at macroexpansion time, not at read time."
@@ -245,9 +245,9 @@
                          ", being replaced by: "
                          ~(str "#'" ns-sym "/" sym))))]
        (fn [sym form]
-         (if (remote? sym)
-           `(do
-              ~(warn sym)
-              (ns-unmap '~ns-sym '~sym)
-              (intern '~ns-sym '~sym ~form))
-           `(def ~sym ~form))))))
+         `(do
+            ;; in sci, remote? is not true even when the var exists, so we always
+            ;; take the ns-unmap+intern path – @mhuebert
+            ~(when (remote? sym) (warn sym))
+            (ns-unmap '~ns-sym '~sym)
+            (intern '~ns-sym '~sym ~form))))))
