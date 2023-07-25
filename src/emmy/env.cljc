@@ -76,7 +76,7 @@
             [emmy.sr.boost]
             [emmy.sr.frames]
             [emmy.structure :as structure]
-            [emmy.util]
+            [emmy.util :as u]
             [emmy.util.aggregate]
             [emmy.util.def :refer [import-def import-vars]]
             [emmy.util.permute]
@@ -97,27 +97,32 @@
                :refer
                (into [] (keys (ns-publics 'emmy.env)))]))
 
-(defmacro literal-function
-  ([f] `(af/literal-function ~f))
-  ([f sicm-signature]
-   (if (and (list? sicm-signature)
-            (core/= '-> (first sicm-signature)))
-     `(af/literal-function ~f '~sicm-signature)
-     `(af/literal-function ~f ~sicm-signature)))
-  ([f domain range]
-   `(af/literal-function ~f ~domain ~range)))
+(u/sci-macro
+  (defmacro literal-function
+    ([f] `(af/literal-function ~f))
+    ([f sicm-signature]
+     (if (and (list? sicm-signature)
+              (core/= '-> (first sicm-signature)))
+       `(af/literal-function ~f '~sicm-signature)
+       `(af/literal-function ~f ~sicm-signature)))
+    ([f domain range]
+     `(af/literal-function ~f ~domain ~range))))
 
-(defmacro with-literal-functions [& args]
-  `(af/with-literal-functions ~@args))
+(u/sci-macro
+  (defmacro with-literal-functions [& args]
+    `(af/with-literal-functions ~@args)))
 
-(defmacro let-coordinates [& args]
-  `(cc/let-coordinates ~@args))
+(u/sci-macro
+  (defmacro let-coordinates [& args]
+    `(cc/let-coordinates ~@args)))
 
-(defmacro using-coordinates [& args]
-  `(cc/using-coordinates ~@args))
+(u/sci-macro
+  (defmacro using-coordinates [& args]
+    `(cc/using-coordinates ~@args)))
 
-(defmacro define-coordinates [& args]
-  `(cc/define-coordinates ~@args))
+(u/sci-macro
+  (defmacro define-coordinates [& args]
+    `(cc/define-coordinates ~@args)))
 
 (defn ref
   "A shim so that ref can act like nth in SICM contexts, as clojure core ref

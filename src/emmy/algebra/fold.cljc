@@ -13,6 +13,7 @@
   (:refer-clojure :exclude [min max count])
   (:require [clojure.core :as core]
             [emmy.generic :as g]
+            [emmy.util :as u]
             [emmy.util.def :as ud]
             [mentat.clerk-utils :refer [->clerk ->clerk-only]])
   #?(:cljs
@@ -483,14 +484,15 @@
        (let [~@(mapcat #(klein-term % delta) prefix)]
          [~@prefix (+ ~final ~delta)]))]))
 
-(defmacro kbk-n
-  "Given some order `n`, returns a fold implementing `n`-th order
-  Kahan-Babushka-Klein summation.
+(u/sci-macro
+  (defmacro kbk-n
+    "Given some order `n`, returns a fold implementing `n`-th order
+    Kahan-Babushka-Klein summation.
 
-  Given `n` == 0, this is identical to a naive sum.
-  Given `n` == 1, identical to [[kahan-babushka-neumaier]].
-  Given `n` == 2, identical to [[kahan-babushka-klein]].
+    Given `n` == 0, this is identical to a naive sum.
+    Given `n` == 1, identical to [[kahan-babushka-neumaier]].
+    Given `n` == 2, identical to [[kahan-babushka-klein]].
 
-  `n` > 2 represent new compensated summation algorithms."
-  [n]
-  `(fn ~@(kbk-n-body n)))
+    `n` > 2 represent new compensated summation algorithms."
+    [n]
+    `(fn ~@(kbk-n-body n))))

@@ -11,7 +11,9 @@
   #?(:clj
      (:import (clojure.lang BigInt)
               (java.util UUID)
-              (java.util.concurrent TimeoutException))))
+              (java.util.concurrent TimeoutException)))
+  #?(:cljs
+     (:require-macros emmy.util)))
 
 (defn counted
   "Takes a function and returns a pair of:
@@ -135,3 +137,16 @@
   in `clojure.core` vs. `cljs.core` is unimportant"
   [x]
   (w/postwalk (fn [s] (if (qualified-symbol? s) (symbol (name s)) s)) x))
+
+(defmacro sci-macro [form]
+  (if (:ns &env)
+    (let [[_defmacro name & body] form
+          [doc body] (if (string? (first body))
+                       [(first body) (rest body)]
+                       [nil body])
+          arities (if (vector? (first body)) (list body) body)
+          arities (map (fn [[argv & body]] (list* (into '[&form &env] argv) body)) arities)]
+      `(defn ~(vary-meta name assoc :sci/macro true)
+         ~@(when doc [doc])
+         ~@arities))
+    form))

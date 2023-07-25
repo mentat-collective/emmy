@@ -229,10 +229,11 @@
              (entry->fn entry)])
           litfns)))
 
-(defmacro with-literal-functions [litfns & body]
-  (let [pairs    (binding-pairs litfns)
-        bindings (into [] cat pairs)]
-    `(let ~bindings ~@body)))
+(u/sci-macro
+  (defmacro with-literal-functions [litfns & body]
+    (let [pairs (binding-pairs litfns)
+          bindings (into [] cat pairs)]
+      `(let ~bindings ~@body))))
 
 ;; ## Differentiation of literal functions
 
