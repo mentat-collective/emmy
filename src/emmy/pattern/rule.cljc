@@ -76,74 +76,71 @@
      (m/matcher form pred)
      (m/matcher form))))
 
-(u/sci-macro
-  (defmacro pattern
-    "Takes an unevaluated pattern form (or matcher combinator) and an optional
-    predicate `pred`, and returns a matcher appropriate for passing to [[rule*]]."
-    ([form]
-     `(pattern*
-        ~(ps/compile-pattern form)))
-    ([form pred]
-     `(pattern*
-        ~(ps/compile-pattern form)
-        ~@(when pred [pred])))))
+(u/sci-macro pattern
+  "Takes an unevaluated pattern form (or matcher combinator) and an optional
+  predicate `pred`, and returns a matcher appropriate for passing to [[rule*]]."
+  ([form]
+   `(pattern*
+      ~(ps/compile-pattern form)))
+  ([form pred]
+   `(pattern*
+      ~(ps/compile-pattern form)
+      ~@(when pred [pred]))))
 
-(u/sci-macro
-  (defmacro consequence
-    "Accepts a skeleton expression `form` and returns a function from a pattern
-    matcher's binding map to a data structure of identical shape to `skel`, with:
+(u/sci-macro consequence
+  "Accepts a skeleton expression `form` and returns a function from a pattern
+  matcher's binding map to a data structure of identical shape to `skel`, with:
 
-    - all variable binding forms like `?x` replaced by their entries in the
-      binding map
-    - same with any segment or reverse-segment binding form like `??x` or `$$x`,
-      with the added note that these will be spliced in
-    - any `unquote` or `unquote-splicing` forms respected.
+  - all variable binding forms like `?x` replaced by their entries in the
+    binding map
+  - same with any segment or reverse-segment binding form like `??x` or `$$x`,
+    with the added note that these will be spliced in
+  - any `unquote` or `unquote-splicing` forms respected.
 
-    Compared to [[template]], these two forms are equivalent:
+  Compared to [[template]], these two forms are equivalent:
 
-    ```clojure
-    (fn [m] (template m <form>))
-    (consequence <form>)
-    ```"
-    [form]
-    (let [sym (gensym)]
-      `(fn [~sym]
-         ~(c/compile-skeleton sym form)))))
+  ```clojure
+  (fn [m] (template m <form>))
+  (consequence <form>)
+  ```"
+  [form]
+  (let [sym (gensym)]
+    `(fn [~sym]
+       ~(c/compile-skeleton sym form))))
 
-(u/sci-macro
-  (defmacro template
-    "Provided with a single `form`, [[template]] is similar to Clojure's `unquote`
-    facility, except that symbols are not prefixed by namespace. For example:
+(u/sci-macro template
+  "Provided with a single `form`, [[template]] is similar to Clojure's `unquote`
+  facility, except that symbols are not prefixed by namespace. For example:
 
-    ```clojure
-    (let [x 10]
-      (template (+ ~x y z ~@[4 5])))
-    ;;=> (+ 10 y z 4 5)
-    ```
+  ```clojure
+  (let [x 10]
+    (template (+ ~x y z ~@[4 5])))
+  ;;=> (+ 10 y z 4 5)
+  ```
 
-    When you provide a binding map `m`, [[template]] returns its input form, but
-    replaces any:
+  When you provide a binding map `m`, [[template]] returns its input form, but
+  replaces any:
 
-    - variable binding form like `?x`
-    - segment binding form like `??x`
-    - reverse-segment binding form, like `$$x`
+  - variable binding form like `?x`
+  - segment binding form like `??x`
+  - reverse-segment binding form, like `$$x`
 
-    with the appropriate entry in `m`. (`m` can be a symbol referencing a binding
-    map in the environment.)
+  with the appropriate entry in `m`. (`m` can be a symbol referencing a binding
+  map in the environment.)
 
-    Splices and unquote splices are respected. For example:
+  Splices and unquote splices are respected. For example:
 
-    ```clojure
-    (let [m {'?x 10 '?y 12 '??z [1 2 3]}]
-      (template m (+ ?x ?y ??z ~m ~@[1 2])))
-    ;;=> (+ 10 12 1 2 3 {?x 10, ?y 12, ??z [1 2 3]} 1 2)
-    ```"
-    ([form]
-     (c/compile-skeleton {} form))
-    ([m form]
-     (let [sym (gensym)]
-       `(let [~sym ~m]
-          ~(c/compile-skeleton sym form))))))
+  ```clojure
+  (let [m {'?x 10 '?y 12 '??z [1 2 3]}]
+    (template m (+ ?x ?y ??z ~m ~@[1 2])))
+  ;;=> (+ 10 12 1 2 3 {?x 10, ?y 12, ??z [1 2 3]} 1 2)
+  ```"
+  ([form]
+   (c/compile-skeleton {} form))
+  ([m form]
+   (let [sym (gensym)]
+     `(let [~sym ~m]
+        ~(c/compile-skeleton sym form)))))
 
 (defn rule*
   "Functional version of [[rule]]. See [[rule]] for documentation."
@@ -170,37 +167,36 @@
    `(rule* (pattern ~p ~pred)
            (consequence ~skeleton))))
 
-(u/sci-macro
-  (defmacro rule
-    "Accepts either:
+(u/sci-macro rule
+  "Accepts either:
 
-    - A pattern written using the syntax from `emmy.pattern.syntax` and a consequence
-      function from binding map => failure or return form, or
-    - A pattern, predicate and a consequence _skeleton_,
+  - A pattern written using the syntax from `emmy.pattern.syntax` and a consequence
+    function from binding map => failure or return form, or
+  - A pattern, predicate and a consequence _skeleton_,
 
-    And returns a rule. A rule is a function from some data object to either
+  And returns a rule. A rule is a function from some data object to either
 
-    - A special `failure` singleton (test for this with [[failed?]]), or
-    - A successful transformation provided by a consequence function.
+  - A special `failure` singleton (test for this with [[failed?]]), or
+  - A successful transformation provided by a consequence function.
 
-    In the 2-argument case, you must provide an explicit function of the binding
-    map. A return of `failure`, `nil` or `false` will cause the whole rule to
-    fail. To successfully return `nil` or `false`, wrap the result in [[succeed]].
+  In the 2-argument case, you must provide an explicit function of the binding
+  map. A return of `failure`, `nil` or `false` will cause the whole rule to
+  fail. To successfully return `nil` or `false`, wrap the result in [[succeed]].
 
-    Notes for the 3-argument case:
+  Notes for the 3-argument case:
 
-    - If the predicate returns `nil`, `false` or `failure`, the rule fails.
+  - If the predicate returns `nil`, `false` or `failure`, the rule fails.
 
-    - The predicate can succeed by returning anything else. If the return value is
-      a map, the rule will call the consequence function with this map merged in to
-      the bindings.
+  - The predicate can succeed by returning anything else. If the return value is
+    a map, the rule will call the consequence function with this map merged in to
+    the bindings.
 
-    - the third form is a consequence 'skeleton' instead of an explicit function
-      See [[consequence]] for details."
-    ([pattern consequent-fn]
-     (compile-rule pattern consequent-fn))
-    ([pattern pred skeleton]
-     (compile-rule pattern pred skeleton))))
+  - the third form is a consequence 'skeleton' instead of an explicit function
+    See [[consequence]] for details."
+  ([pattern consequent-fn]
+   (compile-rule pattern consequent-fn))
+  ([pattern pred skeleton]
+   (compile-rule pattern pred skeleton)))
 
 ;; ## Rules, Rule Combinators
 ;;
@@ -536,26 +532,25 @@
   (attempt
    (apply choice rules)))
 
-(u/sci-macro
-  (defmacro ruleset
-    "Accepts triplets of the form:
+(u/sci-macro ruleset
+  "Accepts triplets of the form:
 
-    <pattern> <predicate> <consequence-template>
+  <pattern> <predicate> <consequence-template>
 
-    and returns a new rule that will attempt to match the rules compiled from each
-    triplet in sequence, returning the filled-in `<consequence-template>` of the
-    first successful match.
+  and returns a new rule that will attempt to match the rules compiled from each
+  triplet in sequence, returning the filled-in `<consequence-template>` of the
+  first successful match.
 
-    If none of the rules match, the returned rule returns its input data
-    unchanged.
+  If none of the rules match, the returned rule returns its input data
+  unchanged.
 
-    See [[ruleset*]] for a function version that takes explicit
-    already-constructed rules."
-    [& patterns-and-consequences]
-    {:pre (zero? (mod (count patterns-and-consequences) 3))}
-    (let [inputs (partition 3 patterns-and-consequences)
-          rules (map #(apply compile-rule %) inputs)]
-      `(ruleset* ~@rules))))
+  See [[ruleset*]] for a function version that takes explicit
+  already-constructed rules."
+  [& patterns-and-consequences]
+  {:pre (zero? (mod (count patterns-and-consequences) 3))}
+  (let [inputs (partition 3 patterns-and-consequences)
+        rules (map #(apply compile-rule %) inputs)]
+    `(ruleset* ~@rules)))
 
 (defn rule-simplifier
   "Given some number of `rules`, returns a new rule that will attempt to apply

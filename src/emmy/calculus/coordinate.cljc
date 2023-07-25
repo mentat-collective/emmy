@@ -67,114 +67,111 @@
         (symbol? p) [p]
         :else (u/illegal (str "Invalid coordinate prototype: " p))))
 
-(u/sci-macro
-  (defmacro let-coordinates
-    "similar to a `let` binding that holds pairs of
+(u/sci-macro let-coordinates
+  "similar to a `let` binding that holds pairs of
 
-    <coordinate-structure-prototype>, <coordinate-system>
+  <coordinate-structure-prototype>, <coordinate-system>
 
-    And internally binds, for each pair: (take `[x y]` and `m/R2-rect` as
-    examples):
+  And internally binds, for each pair: (take `[x y]` and `m/R2-rect` as
+  examples):
 
-    - The coordinate system symbol `R2-rect` to a new version of the coordinate
-      system with its `coordinate-prototype` replaced by the one you supplied.
-      That's `(up x y)` in this example.
+  - The coordinate system symbol `R2-rect` to a new version of the coordinate
+    system with its `coordinate-prototype` replaced by the one you supplied.
+    That's `(up x y)` in this example.
 
-    - the entries `x` and `y` to coordinate functions, i.e., functions from manifold
-      point to this particular coordinate
+  - the entries `x` and `y` to coordinate functions, i.e., functions from manifold
+    point to this particular coordinate
 
-    - `d:dx` and `d:dy` vector field procedures (I'm fuzzy here!)
+  - `d:dx` and `d:dy` vector field procedures (I'm fuzzy here!)
 
-    - `dx` and `dy` 1-forms for each coordinate (fuzzy here too!)
+  - `dx` and `dy` 1-forms for each coordinate (fuzzy here too!)
 
-    Example:
+  Example:
 
-    ```clojure
-    (let-coordinates [[x y]    R2-rect
-                     [r theta] R2-polar]
-      ;; bindings:
-      ;; R2-rect, x, y, d:dx, d:dy, dx, dy
-      ;; R2-polar, r, theta, d:dr, d:dtheta, dr, dtheta
-      body...)
-    ```"
-    [bindings & body]
-    (when-not (even? (count bindings))
-      (u/illegal "let-coordinates requires an even number of bindings"))
-    (let [pairs (partition 2 bindings)
-          prototypes (map first pairs)
-          c-systems (map second pairs)
-          system-names (map (comp symbol name) c-systems)
-          coordinate-names (mapcat symbols-from-prototype prototypes)
-          coordinate-vector-field-names (map vf/coordinate-name->vf-name coordinate-names)
-          coordinate-form-field-names (map ff/coordinate-name->ff-name coordinate-names)]
-      `(let [[~@system-names :as c-systems#]
-             (mapv m/with-coordinate-prototype
-                   ~(into [] c-systems)
-                   ~(mapv quotify-coordinate-prototype prototypes))
+  ```clojure
+  (let-coordinates [[x y]    R2-rect
+                   [r theta] R2-polar]
+    ;; bindings:
+    ;; R2-rect, x, y, d:dx, d:dy, dx, dy
+    ;; R2-polar, r, theta, d:dr, d:dtheta, dr, dtheta
+    body...)
+  ```"
+  [bindings & body]
+  (when-not (even? (count bindings))
+    (u/illegal "let-coordinates requires an even number of bindings"))
+  (let [pairs (partition 2 bindings)
+        prototypes (map first pairs)
+        c-systems (map second pairs)
+        system-names (map (comp symbol name) c-systems)
+        coordinate-names (mapcat symbols-from-prototype prototypes)
+        coordinate-vector-field-names (map vf/coordinate-name->vf-name coordinate-names)
+        coordinate-form-field-names (map ff/coordinate-name->ff-name coordinate-names)]
+    `(let [[~@system-names :as c-systems#]
+           (mapv m/with-coordinate-prototype
+                 ~(into [] c-systems)
+                 ~(mapv quotify-coordinate-prototype prototypes))
 
-             ~(into [] coordinate-names)
-             (flatten
-               (map coordinate-functions c-systems#))
+           ~(into [] coordinate-names)
+           (flatten
+             (map coordinate-functions c-systems#))
 
-             ~(into [] coordinate-vector-field-names)
-             (flatten
-               (map vf/coordinate-system->vector-basis c-systems#))
+           ~(into [] coordinate-vector-field-names)
+           (flatten
+             (map vf/coordinate-system->vector-basis c-systems#))
 
-             ~(into [] coordinate-form-field-names)
-             (flatten
-               (map ff/coordinate-system->oneform-basis c-systems#))]
-         ~@body))))
+           ~(into [] coordinate-form-field-names)
+           (flatten
+             (map ff/coordinate-system->oneform-basis c-systems#))]
+       ~@body)))
 
-(u/sci-macro
-  (defmacro using-coordinates
-    "[[using-coordinates]] wraps [[let-coordinates]] and allows you to supply a
-    single coordinate prototype and a single coordinate system.
-    See [[let-coordinates]] for details about what symbols are bound inside the
-    body.
+(u/sci-macro using-coordinates
+  "[[using-coordinates]] wraps [[let-coordinates]] and allows you to supply a
+  single coordinate prototype and a single coordinate system.
+  See [[let-coordinates]] for details about what symbols are bound inside the
+  body.
 
-    Example:
+  Example:
 
-    ```clojure
-    (using-coordinates (up x y) R2-rect
-                       body...)
-    ```"
-    [coordinate-prototype coordinate-system & body]
-    `(let-coordinates [~coordinate-prototype ~coordinate-system]
-                      ~@body)))
+  ```clojure
+  (using-coordinates (up x y) R2-rect
+                     body...)
+  ```"
+  [coordinate-prototype coordinate-system & body]
+  `(let-coordinates [~coordinate-prototype ~coordinate-system]
+                    ~@body))
 
-(u/sci-macro
-  (defmacro define-coordinates
-    "Give some `coordinate-system` like `R2-rect` and a `coordinate-prototype` like
-    `[x y]` or `(up x y), `binds the following definitions into the namespace
-    where [[define-coordinates]] is invoked:
+(u/sci-macro define-coordinates
+  "Give some `coordinate-system` like `R2-rect` and a `coordinate-prototype` like
+  `[x y]` or `(up x y), `binds the following definitions into the namespace
+  where [[define-coordinates]] is invoked:
 
-    - `R2-rect` binds to a new version of the coordinate system with its
-      `coordinate-prototype` replaced by the supplied prototype
+  - `R2-rect` binds to a new version of the coordinate system with its
+    `coordinate-prototype` replaced by the supplied prototype
 
-    - `x` and `y` bind to coordinate functions, i.e., functions from manifold point
-    to that particular coordinate
+  - `x` and `y` bind to coordinate functions, i.e., functions from manifold point
+  to that particular coordinate
 
-    - `d:dx` and `d:dy` bind to the corresponding vector field procedures
+  - `d:dx` and `d:dy` bind to the corresponding vector field procedures
 
-    - `dx` and `dy` bind to 1-forms for each coordinate."
-    [coordinate-prototype coordinate-system]
-    (let [sys-name (symbol (name coordinate-system))
-          coord-names (symbols-from-prototype coordinate-prototype)
-          vector-field-names (map vf/coordinate-name->vf-name coord-names)
-          form-field-names (map ff/coordinate-name->ff-name coord-names)
-          sys-sym (gensym)
-          value-sym (gensym)
-          bind (ud/careful-def *ns*)]
-      `(let [~sys-sym (m/with-coordinate-prototype
-                        ~coordinate-system
-                        ~(quotify-coordinate-prototype coordinate-prototype))]
-         ~(bind sys-name sys-sym)
-         (let [~value-sym
-               (into [] (flatten
-                          [(coordinate-functions ~sys-sym)
-                           (vf/coordinate-system->vector-basis ~sys-sym)
-                           (ff/coordinate-system->oneform-basis ~sys-sym)]))]
-           ~@(map-indexed
-               (fn [i sym]
-                 (bind sym `(nth ~value-sym ~i)))
-               (concat coord-names vector-field-names form-field-names)))))))
+  - `dx` and `dy` bind to 1-forms for each coordinate."
+  [coordinate-prototype coordinate-system]
+  (let [sys-name (symbol (name coordinate-system))
+        coord-names (symbols-from-prototype coordinate-prototype)
+        vector-field-names (map vf/coordinate-name->vf-name coord-names)
+        form-field-names (map ff/coordinate-name->ff-name coord-names)
+        sys-sym (gensym)
+        value-sym (gensym)
+        bind (ud/careful-def &env *ns*)]
+    `(let [~sys-sym (m/with-coordinate-prototype
+                      ~coordinate-system
+                      ~(quotify-coordinate-prototype coordinate-prototype))]
+       ~(bind sys-name sys-sym)
+       (let [~value-sym
+             (into [] (flatten
+                        [(coordinate-functions ~sys-sym)
+                         (vf/coordinate-system->vector-basis ~sys-sym)
+                         (ff/coordinate-system->oneform-basis ~sys-sym)]))]
+         ~@(map-indexed
+             (fn [i sym]
+               (bind sym `(nth ~value-sym ~i)))
+             (concat coord-names vector-field-names form-field-names))))))

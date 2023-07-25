@@ -167,14 +167,13 @@
                             attr)]
      [(with-meta name attr) body])))
 
-(u/sci-macro
-  (defmacro defintegrator
-    "Helper macro for defining integrators."
-    [sym & body]
-    (let [meta {:arglists (list 'quote '([f a b] [f a b opts]))}
-          [sym body] (name-with-attributes sym body meta)
-          {:keys [area-fn seq-fn]} (apply hash-map body)]
-      (assert seq-fn (str "defintegrator " sym ": seq-fn cannot be nil"))
-      (assert area-fn (str "defintegrator " sym ": area-fn cannot be nil"))
-      `(def ~sym
-         (make-integrator-fn ~area-fn ~seq-fn)))))
+(u/sci-macro defintegrator
+  "Helper macro for defining integrators."
+  [sym & body]
+  (let [meta {:arglists (list 'quote '([f a b] [f a b opts]))}
+        [sym body] (name-with-attributes sym body meta)
+        {:keys [area-fn seq-fn]} (apply hash-map body)]
+    (assert seq-fn (str "defintegrator " sym ": seq-fn cannot be nil"))
+    (assert area-fn (str "defintegrator " sym ": area-fn cannot be nil"))
+    `(def ~sym
+       (make-integrator-fn ~area-fn ~seq-fn))))

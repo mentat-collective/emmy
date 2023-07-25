@@ -97,32 +97,27 @@
                :refer
                (into [] (keys (ns-publics 'emmy.env)))]))
 
-(u/sci-macro
-  (defmacro literal-function
-    ([f] `(af/literal-function ~f))
-    ([f sicm-signature]
-     (if (and (list? sicm-signature)
-              (core/= '-> (first sicm-signature)))
-       `(af/literal-function ~f '~sicm-signature)
-       `(af/literal-function ~f ~sicm-signature)))
-    ([f domain range]
-     `(af/literal-function ~f ~domain ~range))))
+(u/sci-macro literal-function
+  ([f] `(af/literal-function ~f))
+  ([f sicm-signature]
+   (if (and (list? sicm-signature)
+            (core/= '-> (first sicm-signature)))
+     `(af/literal-function ~f '~sicm-signature)
+     `(af/literal-function ~f ~sicm-signature)))
+  ([f domain range]
+   `(af/literal-function ~f ~domain ~range)))
 
-(u/sci-macro
-  (defmacro with-literal-functions [& args]
-    `(af/with-literal-functions ~@args)))
+(u/sci-macro with-literal-functions [& args]
+  `(af/with-literal-functions ~@args))
 
-(u/sci-macro
-  (defmacro let-coordinates [& args]
-    `(cc/let-coordinates ~@args)))
+(u/sci-macro let-coordinates [& args]
+  `(cc/let-coordinates ~@args))
 
-(u/sci-macro
-  (defmacro using-coordinates [& args]
-    `(cc/using-coordinates ~@args)))
+(u/sci-macro using-coordinates [& args]
+  `(cc/using-coordinates ~@args))
 
-(u/sci-macro
-  (defmacro define-coordinates [& args]
-    `(cc/define-coordinates ~@args)))
+(u/sci-macro define-coordinates [& args]
+  `(cc/define-coordinates ~@args))
 
 (defn ref
   "A shim so that ref can act like nth in SICM contexts, as clojure core ref

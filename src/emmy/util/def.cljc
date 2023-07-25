@@ -2,23 +2,23 @@
 
 (ns emmy.util.def
   (:require [emmy.util :as u]
+            [sci.core]
             #?(:cljs [cljs.analyzer.api :as aa]))
   #?(:clj
      (:import (clojure.lang Keyword RT)))
   #?(:cljs
      (:require-macros [emmy.util.def])))
 
-(u/sci-macro
-  (defmacro fork
-    "I borrowed this lovely, mysterious macro from `macrovich`:
-    https://github.com/cgrand/macrovich. This allows us to fork behavior inside of
-    a macro at macroexpansion time, not at read time."
-    [& {:keys [cljs clj]}]
-    (if (contains? &env '&env)
-      `(if (:ns ~'&env) ~cljs ~clj)
-      (if #?(:clj (:ns &env) :cljs true)
-        cljs
-        clj))))
+(u/sci-macro fork
+  "I borrowed this lovely, mysterious macro from `macrovich`:
+  https://github.com/cgrand/macrovich. This allows us to fork behavior inside of
+  a macro at macroexpansion time, not at read time."
+  [& {:keys [cljs clj]}]
+  (if (contains? &env '&env)
+    `(if (:ns ~'&env) ~cljs ~clj)
+    (if #?(:clj (:ns &env) :cljs true)
+      cljs
+      clj)))
 
 (def ^:no-doc lowercase-symbols
   (map (comp symbol str char)
@@ -48,48 +48,47 @@
         (alter-var-root dst (constantly @src))
         (alter-meta! dst merge (dissoc (meta src) :name))))))
 
-(u/sci-macro
-  (defmacro defgeneric
-    "Defines a multifn using the provided symbol. Arranges for the multifn
-    to answer the :arity message, reporting either `[:exactly a]` or
-    `[:between a b]` according to the arguments given.
+(u/sci-macro defgeneric
+  "Defines a multifn using the provided symbol. Arranges for the multifn
+  to answer the :arity message, reporting either `[:exactly a]` or
+  `[:between a b]` according to the arguments given.
 
-    - `arities` can be either a single or a vector of 2 numbers.
+  - `arities` can be either a single or a vector of 2 numbers.
 
-    The `options` allowed differs slightly from `defmulti`:
+  The `options` allowed differs slightly from `defmulti`:
 
-    - the first optional argument is a docstring.
+  - the first optional argument is a docstring.
 
-    - the second optional argument is a dict of metadata. When you query the
-    defined multimethod with a keyword, it will pass that keyword along as a query
-    to this metadata map. (`:arity` is always overridden if supplied, and `:name`
-    defaults to the symbol `f`.)
+  - the second optional argument is a dict of metadata. When you query the
+  defined multimethod with a keyword, it will pass that keyword along as a query
+  to this metadata map. (`:arity` is always overridden if supplied, and `:name`
+  defaults to the symbol `f`.)
 
-    Any remaining options are passed along to `defmulti`."
-    {:arglists '([name arities docstring? attr-map? & options])}
-    [f arities & options]
-    (let [[a b] (if (vector? arities) arities [arities])
-          arity (if b [:between a b] [:exactly a])
-          docstring (if (string? (first options))
-                      (str "generic " f ".\n\n" (first options))
-                      (str "generic " f))
-          options (if (string? (first options))
-                    (next options)
-                    options)
-          [attr options] (if (map? (first options))
-                           [(first options) (next options)]
-                           [{} options])
-          kwd-klass (fork :clj Keyword :cljs 'cljs.core/Keyword)
-          attr (assoc attr
-                 :arity arity
-                 :name (:name attr `'~f))]
-      `(do
-         (defmulti ~f
-                   ~docstring
-                   {:arglists '~(arglists a b)}
-                   v/argument-kind ~@options)
-         (defmethod ~f [~kwd-klass] [k#]
-           (~attr k#))))))
+  Any remaining options are passed along to `defmulti`."
+  {:arglists '([name arities docstring? attr-map? & options])}
+  [f arities & options]
+  (let [[a b] (if (vector? arities) arities [arities])
+        arity (if b [:between a b] [:exactly a])
+        docstring (if (string? (first options))
+                    (str "generic " f ".\n\n" (first options))
+                    (str "generic " f))
+        options (if (string? (first options))
+                  (next options)
+                  options)
+        [attr options] (if (map? (first options))
+                         [(first options) (next options)]
+                         [{} options])
+        kwd-klass (fork :clj Keyword :cljs 'cljs.core/Keyword)
+        attr (assoc attr
+               :arity arity
+               :name (:name attr `'~f))]
+    `(do
+       (defmulti ~f
+                 ~docstring
+                 {:arglists '~(arglists a b)}
+                 v/argument-kind ~@options)
+       (defmethod ~f [~kwd-klass] [k#]
+         (~attr k#)))))
 
 (defmacro import-macro
   "Given a macro in another namespace, defines a macro with the same name in
@@ -143,9 +142,9 @@
    `(import-def ~sym nil))
   ([sym var-name]
    (let [vr #?(:clj (resolve sym) :cljs (aa/resolve &env sym))
-         m  (meta vr)
-         n  (or var-name (:name m))
-         n  (with-meta n (if (:dynamic m) {:dynamic true} {}))]
+         m (meta vr)
+         n (or var-name (:name m))
+         n (with-meta n (if (:dynamic m) {:dynamic true} {}))]
      (when-not vr
        (u/illegal (str "Don't recognize " sym)))
      (when (:macro m)
@@ -197,12 +196,12 @@
          ~@(map
             (fn [sym]
               (let [vr #?(:clj (resolve sym) :cljs (aa/resolve &env sym))
-                    m  (meta vr)]
+                    m (meta vr)]
                 (cond
-                  (nil? vr)  `(throw
-                               (ex-info (format "`%s` does not exist" '~sym) {}))
+                  (nil? vr) `(throw
+                              (ex-info (format "`%s` does not exist" '~sym) {}))
                   (:macro m) `(import-macro ~sym)
-                  :else      `(import-def ~sym))))
+                  :else `(import-def ~sym))))
             imports)))))
 
 #_{:clj-kondo/ignore [:redundant-fn-wrapper]}
@@ -222,10 +221,15 @@
   (In ClojureScript, only forms like `(def ~sym ~form)` are emitted, since the
   compiler does not currently error in case 2 and already handles emitting the
   warning for us.)"
-  [#?(:clj ns :cljs _)]
+  [env ns]
   #?(:cljs
      (fn [sym form]
-       `(def ~sym ~form))
+       (if (empty? env)
+         ;; sci is expanding a macro using compiled js
+         `(do
+            (ns-unmap *ns* `~sym)
+            (def ~sym ~form))
+         `(def ~sym ~form)))
 
      :clj
      (let [ns-sym (ns-name ns)
