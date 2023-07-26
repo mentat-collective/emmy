@@ -156,21 +156,26 @@
   ([sym var-name]
    (let [vr #?(:clj (resolve sym) :cljs (aa/resolve &env sym))
          m (meta vr)
-         n (or var-name (:name m))]
+         n (or var-name (:name m))
+         quoted-meta (-> (select-keys m [:dynamic :doc :arglists])
+                         (update-some {:arglists #(list 'quote %)})
+                         (assoc :imported-from (list 'quote (ns-name (:ns m)))))]
      (when-not vr
        (u/illegal (str "Don't recognize " sym)))
      (when (:macro m)
        (u/illegal
         (str "Calling import-def on a macro: " sym)))
-     (fork
-      :cljs `(def ~(with-meta n (-> (select-keys m [:dynamic :doc :arglists])
-                                    (update-some {:arglists #(list 'quote %)}))) ~sym)
-      :clj
-      `(do
-         (def ~n @~vr)
-         (alter-meta! (var ~n) merge (dissoc (meta ~vr) :name))
-         (link-vars ~vr (var ~n))
-         ~vr)))))
+     (if (empty? &env)
+       ;; sci
+       `(def ~(with-meta n quoted-meta) ~sym)
+       (fork
+        :cljs `(def ~(with-meta n quoted-meta) ~sym)
+        :clj
+        `(do
+           (def ~n @~vr)
+           (alter-meta! (var ~n) merge (dissoc (meta ~vr) :name))
+           (link-vars ~vr (var ~n))
+           ~vr))))))
 
 (defmacro import-vars
   "import multiple defs from multiple namespaces. works for vars and fns, macros
