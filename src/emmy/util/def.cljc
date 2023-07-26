@@ -1,7 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
 (ns emmy.util.def
-  (:require [emmy.util :as u]
+  (:require [clojure.set :as set]
+            [emmy.util :as u]
             [sci.core]
             #?(:cljs [cljs.analyzer.api :as aa]))
   #?(:clj
@@ -124,6 +125,18 @@
          (link-vars ~vr (var ~n))
          ~vr)))))
 
+(defn update-some [m fns]
+  (reduce-kv (fn [m k f]
+               (if-some [v (get m k)]
+                 (assoc m k (f v))
+                 m)) m fns))
+
+(defn keep-some [m]
+  (reduce-kv (fn [m k v]
+               (if (nil? v)
+                 (dissoc m k)
+                 m)) m m))
+
 (defmacro import-def
   "Given a regular def'd var from another namespace, defined a new var with the
    same name in the current namespace.
@@ -143,15 +156,15 @@
   ([sym var-name]
    (let [vr #?(:clj (resolve sym) :cljs (aa/resolve &env sym))
          m (meta vr)
-         n (or var-name (:name m))
-         n (with-meta n (if (:dynamic m) {:dynamic true} {}))]
+         n (or var-name (:name m))]
      (when-not vr
        (u/illegal (str "Don't recognize " sym)))
      (when (:macro m)
        (u/illegal
         (str "Calling import-def on a macro: " sym)))
      (fork
-      :cljs `(def ~n ~sym)
+      :cljs `(def ~(with-meta n (-> (select-keys m [:dynamic :doc :arglists])
+                                    (update-some {:arglists #(list 'quote %)}))) ~sym)
       :clj
       `(do
          (def ~n @~vr)
