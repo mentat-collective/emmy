@@ -268,9 +268,15 @@
                          ", being replaced by: "
                          ~(str "#'" ns-sym "/" sym))))]
        (fn [sym form]
-         `(do
-            ;; in sci, remote? is not true even when the var exists, so we always
-            ;; take the ns-unmap+intern path – @mhuebert
-            ~(when (remote? sym) (warn sym))
-            (ns-unmap '~ns-sym '~sym)
-            (intern '~ns-sym '~sym ~form))))))
+         (if (:ns env)
+           `(let [v# ~form]
+              (declare ~sym)
+              (if (~'exists? ~sym)
+                (set! ~sym v#)
+                (def ~sym ~form)))
+           `(do
+              ;; in sci, remote? is not true even when the var exists, so we always
+              ;; take the ns-unmap+intern path – @mhuebert
+              ~(when (remote? sym) (warn sym))
+              (ns-unmap '~ns-sym '~sym)
+              (intern '~ns-sym '~sym ~form)))))))
