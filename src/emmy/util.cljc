@@ -138,7 +138,8 @@
   [x]
   (w/postwalk (fn [s] (if (qualified-symbol? s) (symbol (name s)) s)) x))
 
-(defmacro sci-macro [name & body]
+(defmacro sci-macro
+  [name & body]
   (if (:ns &env)
     (let [[doc body] (if (string? (first body))
                        [(first body) (rest body)]

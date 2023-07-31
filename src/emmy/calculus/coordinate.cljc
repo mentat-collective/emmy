@@ -125,7 +125,7 @@
        ~@body)))
 
 (u/sci-macro using-coordinates
-  "[[using-coordinates]] wraps [[let-coordinates]] and allows you to supply a
+             "[[using-coordinates]] wraps [[let-coordinates]] and allows you to supply a
   single coordinate prototype and a single coordinate system.
   See [[let-coordinates]] for details about what symbols are bound inside the
   body.
@@ -136,12 +136,13 @@
   (using-coordinates (up x y) R2-rect
                      body...)
   ```"
-  [coordinate-prototype coordinate-system & body]
-  `(let-coordinates [~coordinate-prototype ~coordinate-system]
-                    ~@body))
+             [coordinate-prototype coordinate-system & body]
+             `(let-coordinates [~coordinate-prototype ~coordinate-system]
+                ~@body))
 
+#_{:clj-kondo/ignore [:unresolved-symbol]}
 (u/sci-macro define-coordinates
-  "Give some `coordinate-system` like `R2-rect` and a `coordinate-prototype` like
+             "Give some `coordinate-system` like `R2-rect` and a `coordinate-prototype` like
   `[x y]` or `(up x y), `binds the following definitions into the namespace
   where [[define-coordinates]] is invoked:
 
@@ -154,24 +155,24 @@
   - `d:dx` and `d:dy` bind to the corresponding vector field procedures
 
   - `dx` and `dy` bind to 1-forms for each coordinate."
-  [coordinate-prototype coordinate-system]
-  (let [sys-name (symbol (name coordinate-system))
-        coord-names (symbols-from-prototype coordinate-prototype)
-        vector-field-names (map vf/coordinate-name->vf-name coord-names)
-        form-field-names (map ff/coordinate-name->ff-name coord-names)
-        sys-sym (gensym)
-        value-sym (gensym)
-        bind (ud/careful-def &env *ns*)]
-    `(let [~sys-sym (m/with-coordinate-prototype
-                      ~coordinate-system
-                      ~(quotify-coordinate-prototype coordinate-prototype))]
-       ~(bind sys-name sys-sym)
-       (let [~value-sym
-             (into [] (flatten
-                        [(coordinate-functions ~sys-sym)
-                         (vf/coordinate-system->vector-basis ~sys-sym)
-                         (ff/coordinate-system->oneform-basis ~sys-sym)]))]
-         ~@(map-indexed
-             (fn [i sym]
-               (bind sym `(nth ~value-sym ~i)))
-             (concat coord-names vector-field-names form-field-names))))))
+             [coordinate-prototype coordinate-system]
+             (let [sys-name (symbol (name coordinate-system))
+                   coord-names (symbols-from-prototype coordinate-prototype)
+                   vector-field-names (map vf/coordinate-name->vf-name coord-names)
+                   form-field-names (map ff/coordinate-name->ff-name coord-names)
+                   sys-sym (gensym)
+                   value-sym (gensym)
+                   bind (ud/careful-def &env *ns*)]
+               `(let [~sys-sym (m/with-coordinate-prototype
+                                 ~coordinate-system
+                                 ~(quotify-coordinate-prototype coordinate-prototype))]
+                  ~(bind sys-name sys-sym)
+                  (let [~value-sym
+                        (into [] (flatten
+                                  [(coordinate-functions ~sys-sym)
+                                   (vf/coordinate-system->vector-basis ~sys-sym)
+                                   (ff/coordinate-system->oneform-basis ~sys-sym)]))]
+                    ~@(map-indexed
+                       (fn [i sym]
+                         (bind sym `(nth ~value-sym ~i)))
+                       (concat coord-names vector-field-names form-field-names))))))

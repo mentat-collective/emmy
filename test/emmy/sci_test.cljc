@@ -127,24 +127,15 @@
   (testing "internal defn, funky symbols, internal with-literal-functions macro"
     (is (= "down(- m r(t) (Dφ(t))² + m D²r(t) + DU(r(t)), m (r(t))² D²φ(t) + 2 m r(t) Dφ(t) Dr(t))"
            (eval
-             '(do (defn L-central-polar [m U]
-                    (fn [[_ [r] [rdot φdot]]]
-                      (- (* (/ 1 2) m
-                            (+ (square rdot)
-                               (square (* r φdot))))
-                         (U r))))
-                  (with-literal-functions [U r φ]
-                                          (let [L (L-central-polar 'm U)
-                                                state (up r φ)]
-                                            (->infix
-                                              (simplify
-                                                (((Lagrange-equations L) state) 't)))))))))))
-
-(comment
-  (cljs.test/run-tests 'emmy.sci-test)
-
-  (eval '(do
-           (ns foo
-             (:require [clojure.set :refer [union]]))
-           (ns-unmap *ns* 'union)
-           (def union :foo))))
+            '(do (defn L-central-polar [m U]
+                   (fn [[_ [r] [rdot φdot]]]
+                     (- (* (/ 1 2) m
+                           (+ (square rdot)
+                              (square (* r φdot))))
+                        (U r))))
+                 (with-literal-functions [U r φ]
+                   (let [L (L-central-polar 'm U)
+                         state (up r φ)]
+                     (->infix
+                      (simplify
+                       (((Lagrange-equations L) state) 't)))))))))))

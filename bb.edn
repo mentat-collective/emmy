@@ -63,6 +63,15 @@
   {:doc "Release the library to Clojars."
    :task (shell "clojure -T:build publish")}
 
+  lint-deps
+  {:requires ([clj-kondo.core :as kondo])
+   :doc "Lint dependencies."
+   :task (kondo/run!
+          {:lint [(with-out-str
+                    (babashka.tasks/clojure
+                     "-Spath -A:nextjournal/clerk"))]
+           :dependencies true})}
+
   lint
   {:doc "Lint with clj-kondo."
    :task (exec 'clj-kondo.core/exec)

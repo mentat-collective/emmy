@@ -1,8 +1,7 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
 (ns emmy.util.def
-  (:require [clojure.set :as set]
-            [emmy.util :as u]
+  (:require [emmy.util :as u]
             [sci.core]
             #?(:cljs [cljs.analyzer.api :as aa]))
   #?(:clj
@@ -10,16 +9,18 @@
   #?(:cljs
      (:require-macros [emmy.util.def])))
 
+
+#_{:clj-kondo/ignore [:unresolved-symbol]}
 (u/sci-macro fork
-  "I borrowed this lovely, mysterious macro from `macrovich`:
+             "I borrowed this lovely, mysterious macro from `macrovich`:
   https://github.com/cgrand/macrovich. This allows us to fork behavior inside of
   a macro at macroexpansion time, not at read time."
-  [& {:keys [cljs clj]}]
-  (if (contains? &env '&env)
-    `(if (:ns ~'&env) ~cljs ~clj)
-    (if #?(:clj (:ns &env) :cljs true)
-      cljs
-      clj)))
+             [& {:keys [cljs clj]}]
+             (if (contains? &env '&env)
+               `(if (:ns ~'&env) ~cljs ~clj)
+               (if #?(:clj (:ns &env) :cljs true)
+                 cljs
+                 clj)))
 
 (def ^:no-doc lowercase-symbols
   (map (comp symbol str char)
@@ -240,7 +241,7 @@
   (In ClojureScript, only forms like `(def ~sym ~form)` are emitted, since the
   compiler does not currently error in case 2 and already handles emitting the
   warning for us.)"
-  [env ns]
+  [#?(:clj _ :cljs env) #?(:clj ns :cljs _)]
   #?(:cljs
      (fn [sym form]
        (if (empty? env)
