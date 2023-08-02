@@ -156,22 +156,20 @@
   - `dx` and `dy` bind to 1-forms for each coordinate."
   [coordinate-prototype coordinate-system]
   (let [sys-name (symbol (name coordinate-system))
+        value-sym (symbol (str sys-name "-values"))
         coord-names (symbols-from-prototype coordinate-prototype)
         vector-field-names (map vf/coordinate-name->vf-name coord-names)
-        form-field-names (map ff/coordinate-name->ff-name coord-names)
-        sys-sym (gensym)
-        value-sym (gensym)
-        bind (ud/careful-def &env *ns*)]
-    `(let [~sys-sym (m/with-coordinate-prototype
-                      ~coordinate-system
-                      ~(quotify-coordinate-prototype coordinate-prototype))]
-       ~(bind sys-name sys-sym)
-       (let [~value-sym
-             (into [] (flatten
-                        [(coordinate-functions ~sys-sym)
-                         (vf/coordinate-system->vector-basis ~sys-sym)
-                         (ff/coordinate-system->oneform-basis ~sys-sym)]))]
-         ~@(map-indexed
-             (fn [i sym]
-               (bind sym `(nth ~value-sym ~i)))
-             (concat coord-names vector-field-names form-field-names))))))
+        form-field-names (map ff/coordinate-name->ff-name coord-names)]
+    `(do
+       (ud/careful-def ~sys-name (m/with-coordinate-prototype
+                                  ~coordinate-system
+                                  ~(quotify-coordinate-prototype coordinate-prototype)))
+       (def ~value-sym
+         (into [] (flatten
+                   [(coordinate-functions ~sys-name)
+                    (vf/coordinate-system->vector-basis ~sys-name)
+                    (ff/coordinate-system->oneform-basis ~sys-name)])))
+       ~@(map-indexed
+          (fn [i sym]
+            `(ud/careful-def ~sym (nth ~value-sym ~i)))
+          (concat coord-names vector-field-names form-field-names)))))

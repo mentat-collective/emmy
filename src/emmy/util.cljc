@@ -138,7 +138,11 @@
   [x]
   (w/postwalk (fn [s] (if (qualified-symbol? s) (symbol (name s)) s)) x))
 
-(defmacro sci-macro [name & body]
+(defmacro sci-macro
+  "Like `defmacro` but when emitting cljs, emits a function
+  with &env and &form prepended to arglists and :sci/macro metadata,
+  so that the macro can be imported into sci using copy-var."
+  [name & body]
   (if (:ns &env)
     (let [[doc body] (if (string? (first body))
                        [(first body) (rest body)]
@@ -147,7 +151,9 @@
                            [(first body) (rest body)]
                            [nil body])
           arities (if (vector? (first body)) (list body) body)
-          arities (map (fn [[argv & body]] (list* (into '[&form &env] argv) body)) arities)]
+          arities (map (fn [[argv & body]] (list (into '[&form &env] argv)
+                                                 `(let [~'&env (assoc ~'&env :sci? true)]
+                                                    ~@body))) arities)]
       `(defn ~(vary-meta name assoc :sci/macro true)
          ~@(when doc [doc])
          ~@(when options [options])
@@ -160,4 +166,4 @@
    (list 'sci.core/copy-ns
          ns-sym
          sci-ns
-         (merge {:copy-meta [:doc :arglists :macro :imported-from]} opts))))
+         (merge {:copy-meta [:doc :arglists :macro :sci/macro :imported-from]} opts))))

@@ -1,10 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
 (ns emmy.util.def
-  (:require [clojure.set :as set]
-            [emmy.util :as u]
-            [sci.core]
-            #?(:cljs [cljs.analyzer.api :as aa]))
+  (:require [emmy.util :as u]
+            [cljs.analyzer.api :as aa])
   #?(:clj
      (:import (clojure.lang Keyword RT)))
   #?(:cljs
@@ -131,11 +129,14 @@
                  (assoc m k (f v))
                  m)) m fns))
 
-(defn keep-some [m]
-  (reduce-kv (fn [m k v]
-               (if (nil? v)
-                 (dissoc m k)
-                 m)) m m))
+(defn var-meta [env sym]
+  (let [vr #?(:clj (if (:ns env)
+                     (aa/resolve env sym)
+                     (resolve sym))
+              :cljs (aa/resolve env sym))]
+    (if (map? vr)
+      vr
+      (meta vr))))
 
 (defmacro import-def
   "Given a regular def'd var from another namespace, defined a new var with the
@@ -154,29 +155,24 @@
   ([sym]
    `(import-def ~sym nil))
   ([sym var-name]
-   (let [vr #?(:clj (resolve sym) :cljs (aa/resolve &env sym))
-         m (meta vr)
-         n (or var-name (:name m))
+   (let [m (var-meta &env sym)
+         n (or var-name (-> (:name m) name symbol))
          quoted-meta (-> (select-keys m [:dynamic :doc :arglists])
                          (update-some {:arglists #(list 'quote %)})
                          (assoc :imported-from (list 'quote (symbol (str (ns-name (:ns m)))
                                                                     (str (:name m))))))]
-     (when-not vr
+     (when-not m
        (u/illegal (str "Don't recognize " sym)))
      (when (:macro m)
        (u/illegal
         (str "Calling import-def on a macro: " sym)))
-     (if (empty? &env)
-       ;; sci
+     (if (:ns &env)
        `(def ~(with-meta n quoted-meta) ~sym)
-       (fork
-        :cljs `(def ~(with-meta n quoted-meta) ~sym)
-        :clj
-        `(do
-           (def ~n @~vr)
-           (alter-meta! (var ~n) merge (dissoc (meta ~vr) :name))
-           (link-vars ~vr (var ~n))
-           ~vr))))))
+       `(let [v# (var ~sym)]
+          (def ~n ~sym)
+          (alter-meta! (var ~n) merge (dissoc (meta v#) :name))
+          (link-vars v# (var ~n))
+          v#)))))
 
 (defmacro import-vars
   "import multiple defs from multiple namespaces. works for vars and fns, macros
@@ -214,17 +210,16 @@
       `(do
          ~@(map
             (fn [sym]
-              (let [vr #?(:clj (resolve sym) :cljs (aa/resolve &env sym))
-                    m (meta vr)]
+              (let [m (var-meta &env sym)]
                 (cond
-                  (nil? vr) `(throw
-                              (ex-info (format "`%s` does not exist" '~sym) {}))
+                  (nil? m) `(throw
+                             (ex-info (format "`%s` does not exist" '~sym) {}))
                   (:macro m) `(import-macro ~sym)
                   :else `(import-def ~sym))))
             imports)))))
 
 #_{:clj-kondo/ignore [:redundant-fn-wrapper]}
-(defn careful-def
+(u/sci-macro careful-def
   "Given some namespace `ns`, returns a function of some binding symbol and a form
   to bind. The function returns either
 
@@ -240,43 +235,34 @@
   (In ClojureScript, only forms like `(def ~sym ~form)` are emitted, since the
   compiler does not currently error in case 2 and already handles emitting the
   warning for us.)"
-  [env ns]
-  #?(:cljs
-     (fn [sym form]
-       (if (empty? env)
-         ;; sci is expanding a macro using compiled js
-         `(do
-            (ns-unmap *ns* `~sym)
-            (def ~sym ~form))
-         `(def ~sym ~form)))
+  [sym form]
+  (let [value-sym (gensym (str sym "-value"))]
+    (if (:sci? &env)
+      `(do
+         ;; sci only supports ns-unmap at top level, so we
+         ;; create a temporary `def` instead of using `let`
+         (def ~value-sym ~form)
+         (ns-unmap *ns* '~sym)
+         (def ~sym ~value-sym)
+         (ns-unmap *ns* '~value-sym)
+         (var ~sym))
+      #?(:clj
+         `(let [v# ~form]
+            (ns-unmap '~(symbol (str *ns*)) '~sym)
+            (def ~sym v#))
+         :cljs `(let [v# ~form]
+                  (declare ~sym)
+                  (if (~'exists? ~sym)
+                    (set! ~sym v#)
+                    (def ~sym v#)))))))
 
-     :clj
-     (let [ns-sym (ns-name ns)
-           nsm (ns-map ns)
-           remote? (fn [sym]
-                     (when-let [v (nsm sym)]
-                       (not= ns (:ns (meta v)))))
-           warn (fn [sym]
-                  `(.println
-                    (RT/errPrintWriter)
-                    (str "WARNING: "
-                         '~sym
-                         " already refers to: "
-                         ~(nsm sym)
-                         " in namespace: "
-                         '~ns-sym
-                         ", being replaced by: "
-                         ~(str "#'" ns-sym "/" sym))))]
-       (fn [sym form]
-         (if (:ns env)
-           `(let [v# ~form]
-              (declare ~sym)
-              (if (~'exists? ~sym)
-                (set! ~sym v#)
-                (def ~sym v#)))
-           `(do
-              ;; in sci, remote? is not true even when the var exists, so we always
-              ;; take the ns-unmap+intern path – @mhuebert
-              ~(when (remote? sym) (warn sym))
-              (ns-unmap '~ns-sym '~sym)
-              (intern '~ns-sym '~sym ~form)))))))
+#_`(.println
+    (RT/errPrintWriter)
+    (str "WARNING: "
+         '~sym
+         " already refers to: "
+         ~(nsm sym)
+         " in namespace: "
+         '~ns-sym
+         ", being replaced by: "
+         ~(str "#'" ns-sym "/" sym)))
