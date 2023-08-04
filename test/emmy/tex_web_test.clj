@@ -1,6 +1,5 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
-#_{:clj-kondo/ignore [:refer-all]}
 (ns emmy.tex-web-test
   (:refer-clojure :exclude [+ - * / = compare ref partial zero? numerator denominator])
   (:require [emmy.env :as e :refer :all]

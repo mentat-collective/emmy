@@ -18,7 +18,6 @@
            (read-string {:readers {'emmy/bigint u/parse-bigint}}
                         (pr-str #emmy/bigint 10))))
 
-    #_{:clj-kondo/ignore [:unused-binding]}
     (let [one-e-40 (apply str "1" (repeat 40 "0"))]
       (is (= #?(:clj (bigint 1e40)
                 :cljs (list 'emmy.util/bigint one-e-40))

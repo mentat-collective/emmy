@@ -1,7 +1,7 @@
 {:deps {org.babashka/http-server {:mvn/version "0.1.11"}
         org.babashka/cli {:mvn/version "0.2.23"}
         io.github.clj-kondo/clj-kondo-bb
-        {:git/tag "v2023.01.20" :git/sha "adfc7df"}}
+        {:git/sha "178b027e827172da0d63122a754bb4d765a6faeb"}}
  :tasks
  {:requires ([babashka.cli :as cli])
   :init

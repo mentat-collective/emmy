@@ -272,7 +272,15 @@
     (testing "a series of fns is a fn too"
       (let [nats*index-series (-> (fn [i] (g/* i nats))
                                   (s/generate ::s/series))]
-        (take 6 (nats*index-series 'x))))))
+        (is (= '(0
+                 1
+                 (+ (* 2 x) 2)
+                 (+ (* 3 (expt x 2)) (* 4 x) 3)
+                 (+ (* 4 (expt x 3)) (* 6 (expt x 2)) (* 6 x) 4)
+                 (+ (* 5 (expt x 4)) (* 8 (expt x 3)) (* 9 (expt x 2)) (* 8 x) 5))
+               (v/freeze
+                (g/simplify
+                 (take 6 (nats*index-series 'x))))))))))
 
 (deftest series-specific-tests
   (let [Q (s/power-series 4)

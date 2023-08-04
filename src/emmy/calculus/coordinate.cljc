@@ -140,7 +140,6 @@
   `(let-coordinates [~coordinate-prototype ~coordinate-system]
      ~@body))
 
-#_{:clj-kondo/ignore [:unresolved-symbol]}
 (u/sci-macro define-coordinates
   "Give some `coordinate-system` like `R2-rect` and a `coordinate-prototype` like
   `[x y]` or `(up x y), `binds the following definitions into the namespace
