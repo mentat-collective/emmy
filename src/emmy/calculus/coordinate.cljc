@@ -157,7 +157,7 @@
   - `dx` and `dy` bind to 1-forms for each coordinate."
   [coordinate-prototype coordinate-system]
   (let [sys-name           (symbol (name coordinate-system))
-        value-sym          (symbol (str sys-name "-values"))
+        value-sym          (gensym (str sys-name "-values"))
         coord-names        (symbols-from-prototype coordinate-prototype)
         vector-field-names (map vf/coordinate-name->vf-name coord-names)
         form-field-names   (map ff/coordinate-name->ff-name coord-names)]

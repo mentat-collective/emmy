@@ -6,7 +6,7 @@
   #?(:cljs
      (:require-macros [emmy.util.def]))
   #?(:clj
-     (:import (clojure.lang Keyword))))
+     (:import (clojure.lang Keyword RT))))
 
 (u/sci-macro fork
   "I borrowed this lovely, mysterious macro from `macrovich`:
@@ -218,17 +218,16 @@
                   :else `(import-def ~sym))))
             imports)))))
 
-#_{:clj-kondo/ignore [:redundant-fn-wrapper]}
 (u/sci-macro careful-def
   "Given some namespace `ns`, returns a function of some binding symbol and a
-   form to bind. The function returns either
+  form to bind. The function returns either
 
-   - A form like `(def ~sym ~form)`, if `sym` is not currently bound into `ns`
+  - A form like `(def ~sym ~form)`, if `sym` is not currently bound into `ns`
 
-   - If `sym` is bound already, returns a form that emits a warning and then
-     uses `ns-unmap` and `intern` to reassign the binding.
+  - If `sym` is bound already, returns a form that emits a warning and then
+    uses `ns-unmap` and `intern` to reassign the binding.
 
-   In Clojure, this behavior matches redefinitions of symbols bound in
+  In Clojure, this behavior matches redefinitions of symbols bound in
   `clojure.core`. Symbols bound with `def` that are already imported from other
   namespaces cause an exception, hence this more careful workaround.
 
@@ -236,10 +235,28 @@
   compiler does not currently error in case 2 and already handles emitting the
   warning for us.)"
   [sym form]
-  (let [value-sym (gensym (str sym "-value"))]
-    (if (or (:sci? &env)
-            #?(:clj true))
+  (let [value-sym (gensym (str sym "-value"))
+        #?@(:clj
+            [ns-sym    (symbol (str *ns*))
+             nsm       (ns-map *ns*)
+             remote?   (fn [sym]
+                         (when-let [v (nsm sym)]
+                           (not= *ns* (:ns (meta v)))))
+             warn      (fn [sym]
+                         `(.println
+                           (RT/errPrintWriter)
+                           (str "WARNING: "
+                                '~sym
+                                " already refers to: "
+                                ~(nsm sym)
+                                " in namespace: "
+                                '~ns-sym
+                                ", being replaced by: "
+                                ~(str "#'" ns-sym "/" sym))))])]
+    (if (or (:sci? &env) #?(:clj true))
       `(do
+         #?(:clj ~(when (remote? sym)
+                    (warn sym)))
          ;; ns-unmap only works at top level
          (def ~value-sym ~form)
          (ns-unmap *ns* '~sym)
@@ -251,18 +268,3 @@
          (if (~'exists? ~sym)
            (set! ~sym v#)
            (def ~sym v#))))))
-
-(comment
-  ;; previously, careful-def would print a warning when redefining a var:
-  #?(:clj
-     (:import (clojure.lang Keyword RT)))
-  `(.println
-    (RT/errPrintWriter)
-    (str "WARNING: "
-         '~sym
-         " already refers to: "
-         ~(nsm sym)
-         " in namespace: "
-         '~ns-sym
-         ", being replaced by: "
-         ~(str "#'" ns-sym "/" sym))))
