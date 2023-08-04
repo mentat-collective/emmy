@@ -2,6 +2,29 @@
 
 ## [unreleased]
 
+- #145 (thank you to @mhuebert for amazing work here!!):
+
+  - Adds `emmy.util/sci-macro` for defining macros meant to be exposed via SCI,
+    without requiring redefinition as a `fn`.
+
+  - Modifies `emmy.sci` so that SCI has access to all of the metadata we need
+    for a great experience on https://2.maria.cloud and other platforms that use
+    SCI.
+
+  - Removes some unused `kondo/ignore` metadata and upgrades `clj-kondo` to
+    2023.07.13, which caught a couple more errors like a test with no assertion
+    and a block of tests accidentally included in another test block.
+
+  - Upgrades `emmy.calculus.coordinate/define-coordinates` and
+    `emmy.util.def/{import-vars,careful-def}` to play nicely with SCI.
+
+  - Resolves the ambiguous `simplify` implementation for subvectors.
+
+  - Adds docstrings to the aliased macros in `emmy.env`.
+
+  - Exposes `emmy.calculus.coordinate/coordinate-functions` as
+    `emmy.env/coordinate-functions`.
+
 - #143:
 
   - Replace the implementation of common subexpression elimination with

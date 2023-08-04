@@ -3,134 +3,89 @@
 (ns emmy.sci
   (:refer-clojure :exclude [ns-map])
   (:require [emmy.env]
-            [emmy.sci.macros :as macros]
-            [emmy.util :as u]
+            [emmy.util :refer [copy-ns]]
             [sci.core :as sci]
-            [sci.ctx-store]))
-
-(def macro? (comp :macro meta))
-(def dynamic? (comp :dynamic meta))
-
-(defn ns-macros
-  "Given a map of symbol => var, returns a sequence of the symbols associated with
-  macro value."
-  [sym->var]
-  (mapcat (fn [[sym var]]
-            (if (macro? var) [sym] []))
-          sym->var))
-
-(defn sci-ns
-  "Given a map of symbol => var, returns a map of symbol => var with:
-
-  - any pair removed whose value is a macro (tagged with `:macro true` metadata)
-  - all other values resolved"
-  [sym->var]
-  (letfn [(process [[sym var]]
-            (cond
-              ;; Inside SCI, macros are replaced by rewritten-as-functions
-              ;; versions of themselves, with additional slots for `&form` and
-              ;; `&env`. We exclude them here so they can be replaced later.
-              (macro? var) []
-
-              ;; Keep dynamic variables as unresolved vars, so that they can
-              ;; at least be inspected (at which point they'll reveal any
-              ;; rebindings applied by the system)
-              (dynamic? var) [[sym var]]
-
-              ;; by default, the SCI environment holds values, not the vars
-              ;; that they were attached to in non-SCI land.
-              :else [[sym @var]]))]
-    (into {} (mapcat process) sym->var)))
-
-(def ns->publics
-  "Map whose values are the symbols of of all namespaces explicitly
-  checked and whitelisted for SCI compilation and interesting enough in their own
-  right to expose to a user by default. Each value is the sym->var map for the
-  corresponding namespace."
-  {'emmy.algebra.fold                   (ns-publics 'emmy.algebra.fold)
-   'emmy.complex                        (ns-publics 'emmy.complex)
-   'emmy.differential                   (ns-publics 'emmy.differential)
-   'emmy.env                            (ns-publics 'emmy.env)
-   'emmy.expression                     (ns-publics 'emmy.expression)
-   'emmy.function                       (ns-publics 'emmy.function)
-   'emmy.generic                        (ns-publics 'emmy.generic)
-   'emmy.matrix                         (ns-publics 'emmy.matrix)
-   'emmy.modint                         (ns-publics 'emmy.modint)
-   'emmy.numsymb                        (ns-publics 'emmy.numsymb)
-   'emmy.operator                       (ns-publics 'emmy.operator)
-   'emmy.pattern.consequence            (ns-publics 'emmy.pattern.consequence)
-   'emmy.pattern.match                  (ns-publics 'emmy.pattern.match)
-   'emmy.pattern.rule                   (ns-publics 'emmy.pattern.rule)
-   'emmy.pattern.syntax                 (ns-publics 'emmy.pattern.syntax)
-   'emmy.polynomial                     (ns-publics 'emmy.polynomial)
-   'emmy.polynomial.factor              (ns-publics 'emmy.polynomial.factor)
-   'emmy.polynomial.gcd                 (ns-publics 'emmy.polynomial.gcd)
-   'emmy.polynomial.interpolate         (ns-publics 'emmy.polynomial.interpolate)
-   'emmy.polynomial.richardson          (ns-publics 'emmy.polynomial.richardson)
-   'emmy.quaternion                     (ns-publics 'emmy.quaternion)
-   'emmy.ratio                          (ns-publics 'emmy.ratio)
-   'emmy.rational-function              (ns-publics 'emmy.rational-function)
-   'emmy.rational-function.interpolate  (ns-publics 'emmy.rational-function.interpolate)
-   'emmy.series                         (ns-publics 'emmy.series)
-   'emmy.simplify                       (ns-publics 'emmy.simplify)
-   'emmy.simplify.rules                 (ns-publics 'emmy.simplify.rules)
-   'emmy.structure                      (ns-publics 'emmy.structure)
-   'emmy.util                           (ns-publics 'emmy.util)
-   'emmy.value                          (ns-publics 'emmy.value)
-   'emmy.abstract.function              (ns-publics 'emmy.abstract.function)
-   'emmy.abstract.number                (ns-publics 'emmy.abstract.number)
-   'emmy.calculus.basis                 (ns-publics 'emmy.calculus.basis)
-   'emmy.calculus.connection            (ns-publics 'emmy.calculus.connection)
-   'emmy.calculus.coordinate            (ns-publics 'emmy.calculus.coordinate)
-   'emmy.calculus.covariant             (ns-publics 'emmy.calculus.covariant)
-   'emmy.calculus.curvature             (ns-publics 'emmy.calculus.curvature)
-   'emmy.calculus.derivative            (ns-publics 'emmy.calculus.derivative)
-   'emmy.calculus.form-field            (ns-publics 'emmy.calculus.form-field)
-   'emmy.calculus.frame                 (ns-publics 'emmy.calculus.frame)
-   'emmy.calculus.hodge-star            (ns-publics 'emmy.calculus.hodge-star)
-   'emmy.calculus.indexed               (ns-publics 'emmy.calculus.indexed)
-   'emmy.calculus.manifold              (ns-publics 'emmy.calculus.manifold)
-   'emmy.calculus.metric                (ns-publics 'emmy.calculus.metric)
-   'emmy.calculus.map                   (ns-publics 'emmy.calculus.map)
-   'emmy.calculus.vector-calculus       (ns-publics 'emmy.calculus.vector-calculus)
-   'emmy.calculus.vector-field          (ns-publics 'emmy.calculus.vector-field)
-   'emmy.expression.analyze             (ns-publics 'emmy.expression.analyze)
-   'emmy.expression.compile             (ns-publics 'emmy.expression.compile)
-   'emmy.expression.cse                 (ns-publics 'emmy.expression.cse)
-   'emmy.expression.render              (ns-publics 'emmy.expression.render)
-   'emmy.mechanics.lagrange             (ns-publics 'emmy.mechanics.lagrange)
-   'emmy.mechanics.hamilton             (ns-publics 'emmy.mechanics.hamilton)
-   'emmy.mechanics.noether              (ns-publics 'emmy.mechanics.noether)
-   'emmy.mechanics.rigid                (ns-publics 'emmy.mechanics.rigid)
-   'emmy.mechanics.rotation             (ns-publics 'emmy.mechanics.rotation)
-   'emmy.mechanics.routhian             (ns-publics 'emmy.mechanics.routhian)
-   'emmy.mechanics.time-evolution       (ns-publics 'emmy.mechanics.time-evolution)
-   'emmy.numerical.derivative           (ns-publics 'emmy.numerical.derivative)
-   'emmy.numerical.minimize             (ns-publics 'emmy.numerical.minimize)
-   'emmy.numerical.ode                  (ns-publics 'emmy.numerical.ode)
-   'emmy.numerical.quadrature           (ns-publics 'emmy.numerical.quadrature)
-   'emmy.numerical.multimin.nelder-mead (ns-publics 'emmy.numerical.multimin.nelder-mead)
-   'emmy.numerical.unimin.bracket       (ns-publics 'emmy.numerical.unimin.bracket)
-   'emmy.numerical.unimin.brent         (ns-publics 'emmy.numerical.unimin.brent)
-   'emmy.numerical.unimin.golden        (ns-publics 'emmy.numerical.unimin.golden)
-   'emmy.special.elliptic               (ns-publics 'emmy.special.elliptic)
-   'emmy.special.factorial              (ns-publics 'emmy.special.factorial)
-   'emmy.sr.boost                       (ns-publics 'emmy.sr.boost)
-   'emmy.sr.frames                      (ns-publics 'emmy.sr.frames)
-   'emmy.util.aggregate                 (ns-publics 'emmy.util.aggregate)
-   'emmy.util.def                       (ns-publics 'emmy.util.def)
-   'emmy.util.logic                     (ns-publics 'emmy.util.logic)
-   'emmy.util.permute                   (ns-publics 'emmy.util.permute)
-   'emmy.util.stream                    (ns-publics 'emmy.util.stream)})
+            [sci.ctx-store])
+  #?(:cljs (:require-macros [emmy.sci])))
 
 (def namespaces
-  "SCI namespace map generated from `ns->publics`. Consumers wishing to use a more
-  minimal SCI environment should select their desired namespaces from this map.
-
-  Since in normal (not self-hosted) ClojureScript `ns-publics` does not include
-  macros, they are added explicitly."
-  (let [ns-map (u/map-vals sci-ns ns->publics)]
-    (merge-with merge ns-map macros/ns-bindings)))
+  "SCI namespace map. Consumers wishing to use a more
+  minimal SCI environment should select their desired namespaces from this map."
+  {'emmy.algebra.fold                   (copy-ns emmy.algebra.fold (sci/create-ns 'emmy.algebra.fold))
+   'emmy.complex                        (copy-ns emmy.complex (sci/create-ns 'emmy.complex))
+   'emmy.differential                   (copy-ns emmy.differential (sci/create-ns 'emmy.differential))
+   'emmy.env                            (copy-ns emmy.env (sci/create-ns 'emmy.env))
+   'emmy.expression                     (copy-ns emmy.expression (sci/create-ns 'emmy.expression))
+   'emmy.function                       (copy-ns emmy.function (sci/create-ns 'emmy.function))
+   'emmy.generic                        (copy-ns emmy.generic (sci/create-ns 'emmy.generic))
+   'emmy.matrix                         (copy-ns emmy.matrix (sci/create-ns 'emmy.matrix))
+   'emmy.modint                         (copy-ns emmy.modint (sci/create-ns 'emmy.modint))
+   'emmy.numsymb                        (copy-ns emmy.numsymb (sci/create-ns 'emmy.numsymb))
+   'emmy.operator                       (copy-ns emmy.operator (sci/create-ns 'emmy.operator))
+   'emmy.pattern.consequence            (copy-ns emmy.pattern.consequence (sci/create-ns 'emmy.pattern.consequence))
+   'emmy.pattern.match                  (copy-ns emmy.pattern.match (sci/create-ns 'emmy.pattern.match))
+   'emmy.pattern.rule                   (copy-ns emmy.pattern.rule (sci/create-ns 'emmy.pattern.rule))
+   'emmy.pattern.syntax                 (copy-ns emmy.pattern.syntax (sci/create-ns 'emmy.pattern.syntax))
+   'emmy.polynomial                     (copy-ns emmy.polynomial (sci/create-ns 'emmy.polynomial))
+   'emmy.polynomial.factor              (copy-ns emmy.polynomial.factor (sci/create-ns 'emmy.polynomial.factor))
+   'emmy.polynomial.gcd                 (copy-ns emmy.polynomial.gcd (sci/create-ns 'emmy.polynomial.gcd))
+   'emmy.polynomial.interpolate         (copy-ns emmy.polynomial.interpolate (sci/create-ns 'emmy.polynomial.interpolate))
+   'emmy.polynomial.richardson          (copy-ns emmy.polynomial.richardson (sci/create-ns 'emmy.polynomial.richardson))
+   'emmy.quaternion                     (copy-ns emmy.quaternion (sci/create-ns 'emmy.quaternion))
+   'emmy.ratio                          (copy-ns emmy.ratio (sci/create-ns 'emmy.ratio))
+   'emmy.rational-function              (copy-ns emmy.rational-function (sci/create-ns 'emmy.rational-function))
+   'emmy.rational-function.interpolate  (copy-ns emmy.rational-function.interpolate (sci/create-ns 'emmy.rational-function.interpolate))
+   'emmy.series                         (copy-ns emmy.series (sci/create-ns 'emmy.series))
+   'emmy.simplify                       (copy-ns emmy.simplify (sci/create-ns 'emmy.simplify))
+   'emmy.simplify.rules                 (copy-ns emmy.simplify.rules (sci/create-ns 'emmy.simplify.rules))
+   'emmy.structure                      (copy-ns emmy.structure (sci/create-ns 'emmy.structure))
+   'emmy.util                           (copy-ns emmy.util (sci/create-ns 'emmy.util))
+   'emmy.value                          (copy-ns emmy.value (sci/create-ns 'emmy.value))
+   'emmy.abstract.function              (copy-ns emmy.abstract.function (sci/create-ns 'emmy.abstract.function))
+   'emmy.abstract.number                (copy-ns emmy.abstract.number (sci/create-ns 'emmy.abstract.number))
+   'emmy.calculus.basis                 (copy-ns emmy.calculus.basis (sci/create-ns 'emmy.calculus.basis))
+   'emmy.calculus.connection            (copy-ns emmy.calculus.connection (sci/create-ns 'emmy.calculus.connection))
+   'emmy.calculus.coordinate            (copy-ns emmy.calculus.coordinate (sci/create-ns 'emmy.calculus.coordinate))
+   'emmy.calculus.covariant             (copy-ns emmy.calculus.covariant (sci/create-ns 'emmy.calculus.covariant))
+   'emmy.calculus.curvature             (copy-ns emmy.calculus.curvature (sci/create-ns 'emmy.calculus.curvature))
+   'emmy.calculus.derivative            (copy-ns emmy.calculus.derivative (sci/create-ns 'emmy.calculus.derivative))
+   'emmy.calculus.form-field            (copy-ns emmy.calculus.form-field (sci/create-ns 'emmy.calculus.form-field))
+   'emmy.calculus.frame                 (copy-ns emmy.calculus.frame (sci/create-ns 'emmy.calculus.frame))
+   'emmy.calculus.hodge-star            (copy-ns emmy.calculus.hodge-star (sci/create-ns 'emmy.calculus.hodge-star))
+   'emmy.calculus.indexed               (copy-ns emmy.calculus.indexed (sci/create-ns 'emmy.calculus.indexed))
+   'emmy.calculus.manifold              (copy-ns emmy.calculus.manifold (sci/create-ns 'emmy.calculus.manifold))
+   'emmy.calculus.metric                (copy-ns emmy.calculus.metric (sci/create-ns 'emmy.calculus.metric))
+   'emmy.calculus.map                   (copy-ns emmy.calculus.map (sci/create-ns 'emmy.calculus.map))
+   'emmy.calculus.vector-calculus       (copy-ns emmy.calculus.vector-calculus (sci/create-ns 'emmy.calculus.vector-calculus))
+   'emmy.calculus.vector-field          (copy-ns emmy.calculus.vector-field (sci/create-ns 'emmy.calculus.vector-field))
+   'emmy.expression.analyze             (copy-ns emmy.expression.analyze (sci/create-ns 'emmy.expression.analyze))
+   'emmy.expression.compile             (copy-ns emmy.expression.compile (sci/create-ns 'emmy.expression.compile))
+   'emmy.expression.cse                 (copy-ns emmy.expression.cse (sci/create-ns 'emmy.expression.cse))
+   'emmy.expression.render              (copy-ns emmy.expression.render (sci/create-ns 'emmy.expression.render))
+   'emmy.mechanics.lagrange             (copy-ns emmy.mechanics.lagrange (sci/create-ns 'emmy.mechanics.lagrange))
+   'emmy.mechanics.hamilton             (copy-ns emmy.mechanics.hamilton (sci/create-ns 'emmy.mechanics.hamilton))
+   'emmy.mechanics.noether              (copy-ns emmy.mechanics.noether (sci/create-ns 'emmy.mechanics.noether))
+   'emmy.mechanics.rigid                (copy-ns emmy.mechanics.rigid (sci/create-ns 'emmy.mechanics.rigid))
+   'emmy.mechanics.rotation             (copy-ns emmy.mechanics.rotation (sci/create-ns 'emmy.mechanics.rotation))
+   'emmy.mechanics.routhian             (copy-ns emmy.mechanics.routhian (sci/create-ns 'emmy.mechanics.routhian))
+   'emmy.mechanics.time-evolution       (copy-ns emmy.mechanics.time-evolution (sci/create-ns 'emmy.mechanics.time-evolution))
+   'emmy.numerical.derivative           (copy-ns emmy.numerical.derivative (sci/create-ns 'emmy.numerical.derivative))
+   'emmy.numerical.minimize             (copy-ns emmy.numerical.minimize (sci/create-ns 'emmy.numerical.minimize))
+   'emmy.numerical.ode                  (copy-ns emmy.numerical.ode (sci/create-ns 'emmy.numerical.ode))
+   'emmy.numerical.quadrature           (copy-ns emmy.numerical.quadrature (sci/create-ns 'emmy.numerical.quadrature))
+   'emmy.numerical.multimin.nelder-mead (copy-ns emmy.numerical.multimin.nelder-mead (sci/create-ns 'emmy.numerical.multimin.nelder-mead))
+   'emmy.numerical.unimin.bracket       (copy-ns emmy.numerical.unimin.bracket (sci/create-ns 'emmy.numerical.unimin.bracket))
+   'emmy.numerical.unimin.brent         (copy-ns emmy.numerical.unimin.brent (sci/create-ns 'emmy.numerical.unimin.brent))
+   'emmy.numerical.unimin.golden        (copy-ns emmy.numerical.unimin.golden (sci/create-ns 'emmy.numerical.unimin.golden))
+   'emmy.special.elliptic               (copy-ns emmy.special.elliptic (sci/create-ns 'emmy.special.elliptic))
+   'emmy.special.factorial              (copy-ns emmy.special.factorial (sci/create-ns 'emmy.special.factorial))
+   'emmy.sr.boost                       (copy-ns emmy.sr.boost (sci/create-ns 'emmy.sr.boost))
+   'emmy.sr.frames                      (copy-ns emmy.sr.frames (sci/create-ns 'emmy.sr.frames))
+   'emmy.util.aggregate                 (copy-ns emmy.util.aggregate (sci/create-ns 'emmy.util.aggregate))
+   'emmy.util.def                       (copy-ns emmy.util.def (sci/create-ns 'emmy.util.def))
+   'emmy.util.logic                     (copy-ns emmy.util.logic (sci/create-ns 'emmy.util.logic))
+   'emmy.util.permute                   (copy-ns emmy.util.permute (sci/create-ns 'emmy.util.permute))
+   'emmy.util.stream                    (copy-ns emmy.util.stream (sci/create-ns 'emmy.util.stream))})
 
 (def config
   "Default sci context options required (currently only `:namespace`

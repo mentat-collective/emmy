@@ -209,88 +209,88 @@
                              "  const _61 = [_08, _33, _60];"
                              "  return _61;"]))]
              (c/compile-state-fn (fn [] sysder) [] top-state
-               {:mode :js
-                :gensym-fn (a/monotonic-symbol-generator 2)})))))
+                                 {:mode :js
+                                  :gensym-fn (a/monotonic-symbol-generator 2)}))))))
 
-  (deftest section-3-5
-    (testing "p.221"
-      (let [H ((e/Lagrangian->Hamiltonian
-                (driven/L 'm 'l 'g 'a 'omega))
-               (up 't 'theta 'p_theta))]
-        (is (= '(/ (+ (* (/ -1 2)
-                         (expt a 2) (expt l 2) (expt m 2)
-                         (expt omega 2)
-                         (expt (sin (* omega t)) 2)
-                         (expt (cos theta) 2))
-                      (* a g (expt l 2) (expt m 2) (cos (* omega t)))
-                      (* a l m omega p_theta (sin (* omega t)) (sin theta))
-                      (* -1 g (expt l 3) (expt m 2) (cos theta))
-                      (* (/ 1 2) (expt p_theta 2)))
-                   (* (expt l 2) m))
-               (simplify H))))
-      (let [sysder (simplify
-                    ((e/Hamiltonian->state-derivative
-                      (e/Lagrangian->Hamiltonian
-                       (driven/L 'm 'l 'g 'a 'omega)))
-                     (up 't 'theta 'p_theta)))]
-        (is (= '(up 1
-                    (/ (+ (* a l m omega (sin (* omega t)) (sin theta)) p_theta)
-                       (* (expt l 2) m))
-                    (/ (+ (* -1 (expt a 2) l m (expt omega 2) (expt (sin (* omega t)) 2) (sin theta) (cos theta))
-                          (* -1 a omega p_theta (sin (* omega t)) (cos theta))
-                          (* -1 g (expt l 2) m (sin theta)))
-                       l))
-               sysder))
+(deftest section-3-5
+  (testing "p.221"
+    (let [H ((e/Lagrangian->Hamiltonian
+              (driven/L 'm 'l 'g 'a 'omega))
+             (up 't 'theta 'p_theta))]
+      (is (= '(/ (+ (* (/ -1 2)
+                       (expt a 2) (expt l 2) (expt m 2)
+                       (expt omega 2)
+                       (expt (sin (* omega t)) 2)
+                       (expt (cos theta) 2))
+                    (* a g (expt l 2) (expt m 2) (cos (* omega t)))
+                    (* a l m omega p_theta (sin (* omega t)) (sin theta))
+                    (* -1 g (expt l 3) (expt m 2) (cos theta))
+                    (* (/ 1 2) (expt p_theta 2)))
+                 (* (expt l 2) m))
+             (simplify H))))
+    (let [sysder (simplify
+                  ((e/Hamiltonian->state-derivative
+                    (e/Lagrangian->Hamiltonian
+                     (driven/L 'm 'l 'g 'a 'omega)))
+                   (up 't 'theta 'p_theta)))]
+      (is (= '(up 1
+                  (/ (+ (* a l m omega (sin (* omega t)) (sin theta)) p_theta)
+                     (* (expt l 2) m))
+                  (/ (+ (* -1 (expt a 2) l m (expt omega 2) (expt (sin (* omega t)) 2) (sin theta) (cos theta))
+                        (* -1 a omega p_theta (sin (* omega t)) (cos theta))
+                        (* -1 g (expt l 2) m (sin theta)))
+                     l))
+             sysder))
 
-        (is (= ["[y01, y02, y03]"
-                "_"
-                (maybe-defloatify
-                 (s/join "\n" ["  const _04 = 1.0;"
-                               "  const _05 = a * l;"
-                               "  const _06 = _05 * m;"
-                               "  const _07 = _06 * omega;"
-                               "  const _08 = omega * y01;"
-                               "  const _09 = Math.sin(_08);"
-                               "  const _10 = _07 * _09;"
-                               "  const _11 = Math.sin(y02);"
-                               "  const _12 = _10 * _11;"
-                               "  const _13 = _12 + y03;"
-                               "  const _14 = 2.0;"
-                               "  const _15 = Math.pow(l, _14);"
-                               "  const _16 = _15 * m;"
-                               "  const _17 = _13 / _16;"
-                               "  const _18 = -1.0;"
-                               "  const _19 = Math.pow(a, _14);"
-                               "  const _20 = _18 * _19;"
-                               "  const _21 = _20 * l;"
-                               "  const _22 = _21 * m;"
-                               "  const _23 = Math.pow(omega, _14);"
-                               "  const _24 = _22 * _23;"
-                               "  const _25 = Math.pow(_09, _14);"
-                               "  const _26 = _24 * _25;"
-                               "  const _27 = _26 * _11;"
-                               "  const _28 = Math.cos(y02);"
-                               "  const _29 = _27 * _28;"
-                               "  const _30 = _18 * a;"
-                               "  const _31 = _30 * omega;"
-                               "  const _32 = _31 * y03;"
-                               "  const _33 = _32 * _09;"
-                               "  const _34 = _33 * _28;"
-                               "  const _35 = _29 + _34;"
-                               "  const _36 = _18 * g;"
-                               "  const _37 = _36 * _15;"
-                               "  const _38 = _37 * m;"
-                               "  const _39 = _38 * _11;"
-                               "  const _40 = _35 + _39;"
-                               "  const _41 = _40 / l;"
-                               "  const _42 = [_04, _17, _41];"
-                               "  return _42;"]))]
-               (c/compile-state-fn
-                (fn []
-                  (e/Hamiltonian->state-derivative
-                   (e/Lagrangian->Hamiltonian
-                    (driven/L 'm 'l 'g 'a 'omega))))
-                []
-                (up 't 'theta 'p_theta)
-                {:mode :js
-                 :gensym-fn (a/monotonic-symbol-generator 2)})))))))
+      (is (= ["[y01, y02, y03]"
+              "_"
+              (maybe-defloatify
+               (s/join "\n" ["  const _04 = 1.0;"
+                             "  const _05 = a * l;"
+                             "  const _06 = _05 * m;"
+                             "  const _07 = _06 * omega;"
+                             "  const _08 = omega * y01;"
+                             "  const _09 = Math.sin(_08);"
+                             "  const _10 = _07 * _09;"
+                             "  const _11 = Math.sin(y02);"
+                             "  const _12 = _10 * _11;"
+                             "  const _13 = _12 + y03;"
+                             "  const _14 = 2.0;"
+                             "  const _15 = Math.pow(l, _14);"
+                             "  const _16 = _15 * m;"
+                             "  const _17 = _13 / _16;"
+                             "  const _18 = -1.0;"
+                             "  const _19 = Math.pow(a, _14);"
+                             "  const _20 = _18 * _19;"
+                             "  const _21 = _20 * l;"
+                             "  const _22 = _21 * m;"
+                             "  const _23 = Math.pow(omega, _14);"
+                             "  const _24 = _22 * _23;"
+                             "  const _25 = Math.pow(_09, _14);"
+                             "  const _26 = _24 * _25;"
+                             "  const _27 = _26 * _11;"
+                             "  const _28 = Math.cos(y02);"
+                             "  const _29 = _27 * _28;"
+                             "  const _30 = _18 * a;"
+                             "  const _31 = _30 * omega;"
+                             "  const _32 = _31 * y03;"
+                             "  const _33 = _32 * _09;"
+                             "  const _34 = _33 * _28;"
+                             "  const _35 = _29 + _34;"
+                             "  const _36 = _18 * g;"
+                             "  const _37 = _36 * _15;"
+                             "  const _38 = _37 * m;"
+                             "  const _39 = _38 * _11;"
+                             "  const _40 = _35 + _39;"
+                             "  const _41 = _40 / l;"
+                             "  const _42 = [_04, _17, _41];"
+                             "  return _42;"]))]
+             (c/compile-state-fn
+              (fn []
+                (e/Hamiltonian->state-derivative
+                 (e/Lagrangian->Hamiltonian
+                  (driven/L 'm 'l 'g 'a 'omega))))
+              []
+              (up 't 'theta 'p_theta)
+              {:mode :js
+               :gensym-fn (a/monotonic-symbol-generator 2)}))))))

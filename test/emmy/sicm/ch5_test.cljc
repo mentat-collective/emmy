@@ -146,7 +146,6 @@
                (simplify (- (omega zeta1 zeta2)
                             (omega (* DCs zeta1) (* DCs zeta2)))))))))
 
-#_{:clj-kondo/ignore [:unused-binding]}
 (deftest section-5-7
   (let [;; going further means solving exercise 5.22.
         ;; XXX at the moment, nothing below is tested, because we have to think
@@ -170,9 +169,9 @@
                        (((C alpha omega omega0) (- t (first state0))) state0))))
         sol ((solution 'α 'ω 'ω_0) (up 't_0 'q_0 'p_0))
         solution-C (sol 't)
-        q (ref solution-C 0)
-        p (ref solution-C 1)
-        Dsol ((D sol) 't)]))
+        _q (ref solution-C 0)
+        _p (ref solution-C 1)
+        _Dsol ((D sol) 't)]))
 
 (deftest section-5-10
   (letfn [(H-harmonic [m k]

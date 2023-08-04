@@ -76,7 +76,7 @@
      (m/matcher form pred)
      (m/matcher form))))
 
-(defmacro pattern
+(u/sci-macro pattern
   "Takes an unevaluated pattern form (or matcher combinator) and an optional
   predicate `pred`, and returns a matcher appropriate for passing to [[rule*]]."
   ([form]
@@ -87,7 +87,7 @@
      ~(ps/compile-pattern form)
      ~@(when pred [pred]))))
 
-(defmacro consequence
+(u/sci-macro consequence
   "Accepts a skeleton expression `form` and returns a function from a pattern
   matcher's binding map to a data structure of identical shape to `skel`, with:
 
@@ -108,7 +108,7 @@
     `(fn [~sym]
        ~(c/compile-skeleton sym form))))
 
-(defmacro template
+(u/sci-macro template
   "Provided with a single `form`, [[template]] is similar to Clojure's `unquote`
   facility, except that symbols are not prefixed by namespace. For example:
 
@@ -167,7 +167,7 @@
    `(rule* (pattern ~p ~pred)
            (consequence ~skeleton))))
 
-(defmacro rule
+(u/sci-macro rule
   "Accepts either:
 
   - A pattern written using the syntax from `emmy.pattern.syntax` and a consequence
@@ -532,7 +532,7 @@
   (attempt
    (apply choice rules)))
 
-(defmacro ruleset
+(u/sci-macro ruleset
   "Accepts triplets of the form:
 
   <pattern> <predicate> <consequence-template>

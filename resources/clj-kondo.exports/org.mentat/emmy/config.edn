@@ -7,6 +7,7 @@
 
  :lint-as
  {emmy.numerical.quadrature.common/defintegrator clojure.core/def
+  emmy.util/sci-macro clojure.core/defmacro
   emmy.util.def/import-vars potemkin/import-vars
   emmy.util.def/defgeneric clojure.core/defmulti}
 
@@ -41,6 +42,8 @@
 
    emmy.env/with-literal-functions
    hooks.emmy.abstract.function/with-literal-functions
+
+   emmy.util/copy-ns hooks.emmy.util/copy-ns
 
    emmy.util.def/import-def hooks.emmy.util.def/import-def
    emmy.util.def/import-macro hooks.emmy.util.def/import-def

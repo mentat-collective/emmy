@@ -24,5 +24,8 @@ jobs:
           key: ${{ runner.os }}-kondo
           restore-keys: ${{ runner.os }}-kondo
 
+      - name: Lint dependencies
+        run: bb lint-deps
+
       - name: Run clj-kondo
         run: bb lint --config '{:output {:pattern "::{{level}} file={{filename}},line={{row}},col={{col}}::{{message}}"}}'

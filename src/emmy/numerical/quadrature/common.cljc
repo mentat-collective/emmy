@@ -6,7 +6,8 @@
   - code to wrap a sequence of progressively better estimates in a common `integrator` interface
   - data structures implementing various integration intervals."
   (:refer-clojure :exclude [infinite?])
-  (:require [emmy.util.stream :as us]
+  (:require [emmy.util :as u]
+            [emmy.util.stream :as us]
             [taoensso.timbre :as log])
   #?(:cljs
      (:require-macros [emmy.numerical.quadrature.common])))
@@ -166,11 +167,11 @@
                             attr)]
      [(with-meta name attr) body])))
 
-(defmacro defintegrator
+(u/sci-macro defintegrator
   "Helper macro for defining integrators."
   [sym & body]
-  (let [meta       {:arglists (list 'quote '([f a b] [f a b opts]))}
-        [sym body] (name-with-attributes sym body meta)
+  (let [meta                     {:arglists (list 'quote '([f a b] [f a b opts]))}
+        [sym body]               (name-with-attributes sym body meta)
         {:keys [area-fn seq-fn]} (apply hash-map body)]
     (assert seq-fn (str "defintegrator " sym ": seq-fn cannot be nil"))
     (assert area-fn (str "defintegrator " sym ": area-fn cannot be nil"))

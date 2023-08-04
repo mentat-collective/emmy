@@ -13,6 +13,7 @@
   (:refer-clojure :exclude [min max count])
   (:require [clojure.core :as core]
             [emmy.generic :as g]
+            [emmy.util :as u]
             [emmy.util.def :as ud]
             [mentat.clerk-utils :refer [->clerk ->clerk-only]])
   #?(:cljs
@@ -483,7 +484,7 @@
        (let [~@(mapcat #(klein-term % delta) prefix)]
          [~@prefix (+ ~final ~delta)]))]))
 
-(defmacro kbk-n
+(u/sci-macro kbk-n
   "Given some order `n`, returns a fold implementing `n`-th order
   Kahan-Babushka-Klein summation.
 
