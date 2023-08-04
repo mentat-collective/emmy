@@ -236,20 +236,16 @@
   warning for us.)"
   [sym form]
   (let [value-sym (gensym (str sym "-value"))]
-    (if (:sci? &env)
+    (if (or (:sci? &env)
+            #?(:clj true))
       `(do
-         ;; sci only supports ns-unmap at top level, so we
-         ;; create a temporary `def` instead of using `let`
+         ;; ns-unmap only works at top level
          (def ~value-sym ~form)
          (ns-unmap *ns* '~sym)
          (def ~sym ~value-sym)
          (ns-unmap *ns* '~value-sym)
          (var ~sym))
-      #?(:clj
-         `(let [v# ~form]
-            (ns-unmap '~(symbol (str *ns*)) '~sym)
-            (def ~sym v#))
-         :cljs `(let [v# ~form]
+      #?(:cljs `(let [v# ~form]
                   (declare ~sym)
                   (if (~'exists? ~sym)
                     (set! ~sym v#)

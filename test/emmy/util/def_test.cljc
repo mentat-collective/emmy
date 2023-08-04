@@ -1,5 +1,5 @@
 (ns emmy.util.def-test
-  (:require [cljs.test :refer [deftest testing is]]
+  (:require [clojure.test :refer [deftest testing is]]
             [emmy.util :as u]
             [emmy.util.def :as d]))
 
