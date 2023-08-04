@@ -151,9 +151,10 @@
                            [(first body) (rest body)]
                            [nil body])
           arities (if (vector? (first body)) (list body) body)
-          arities (map (fn [[argv & body]] (list (into '[&form &env] argv)
-                                                 `(let [~'&env (assoc ~'&env :sci? true)]
-                                                    ~@body))) arities)]
+          arities (map (fn [[argv & body]]
+                         (list (into '[&form &env] argv)
+                               `(let [~'&env (assoc ~'&env :sci? true)]
+                                  ~@body))) arities)]
       `(defn ~(vary-meta name assoc :sci/macro true)
          ~@(when doc [doc])
          ~@(when options [options])

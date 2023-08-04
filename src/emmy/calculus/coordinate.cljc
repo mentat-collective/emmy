@@ -176,5 +176,9 @@
           (fn [i sym]
             `(ud/careful-def ~sym (nth ~value-sym ~i)))
           (concat coord-names vector-field-names form-field-names))
-       (ns-unmap *ns* '~value-sym)
+
+       ~(ud/fork
+         :clj  `(ns-unmap *ns* '~value-sym)
+         :cljs `(set! ~value-sym nil))
+
        (var ~sys-name))))
