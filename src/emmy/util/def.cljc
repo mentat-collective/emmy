@@ -159,8 +159,7 @@
          n (or var-name (-> (:name m) name symbol))
          quoted-meta (-> (select-keys m [:dynamic :doc :arglists])
                          (update-some {:arglists #(list 'quote %)})
-                         (assoc :imported-from (list 'quote (symbol (str (ns-name (:ns m)))
-                                                                    (str (:name m))))))]
+                         (assoc :imported-from (list 'quote (:name m))))]
      (when-not m
        (u/illegal (str "Don't recognize " sym)))
      (when (:macro m)
