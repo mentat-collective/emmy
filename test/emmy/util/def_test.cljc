@@ -7,5 +7,5 @@
 (d/import-vars [emmy.util map-vals])
 
 (deftest target
-   (is (= #{:a :b} (keyset {:a 1 :b 2})))
-   (is (= {:a 1} (map-vals inc {:a 0}))))
+  (is (= #{:a :b} (keyset {:a 1 :b 2})))
+  (is (= {:a 1} (map-vals inc {:a 0}))))

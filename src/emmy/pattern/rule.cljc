@@ -81,11 +81,11 @@
   predicate `pred`, and returns a matcher appropriate for passing to [[rule*]]."
   ([form]
    `(pattern*
-      ~(ps/compile-pattern form)))
+     ~(ps/compile-pattern form)))
   ([form pred]
    `(pattern*
-      ~(ps/compile-pattern form)
-      ~@(when pred [pred]))))
+     ~(ps/compile-pattern form)
+     ~@(when pred [pred]))))
 
 (u/sci-macro consequence
   "Accepts a skeleton expression `form` and returns a function from a pattern
@@ -549,7 +549,7 @@
   [& patterns-and-consequences]
   {:pre (zero? (mod (count patterns-and-consequences) 3))}
   (let [inputs (partition 3 patterns-and-consequences)
-        rules (map #(apply compile-rule %) inputs)]
+        rules  (map #(apply compile-rule %) inputs)]
     `(ruleset* ~@rules)))
 
 (defn rule-simplifier

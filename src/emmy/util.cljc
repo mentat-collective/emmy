@@ -13,7 +13,7 @@
               (java.util UUID)
               (java.util.concurrent TimeoutException)))
   #?(:cljs
-     (:require-macros emmy.util)))
+     (:require-macros [emmy.util])))
 
 (defn counted
   "Takes a function and returns a pair of:
