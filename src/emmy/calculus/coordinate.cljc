@@ -177,8 +177,9 @@
             `(ud/careful-def ~sym (nth ~value-sym ~i)))
           (concat coord-names vector-field-names form-field-names))
 
-       ~(ud/fork
-         :clj  `(ns-unmap *ns* '~value-sym)
-         :cljs `(set! ~value-sym nil))
+       #_{:clj-kondo/ignore [:unresolved-symbol]}
+       ~(if (or (:sci? &env) #?(:clj (not (:ns &env))))
+          `(ns-unmap *ns* '~value-sym)
+          `(set! ~value-sym nil))
 
        (var ~sys-name))))

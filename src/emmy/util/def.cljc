@@ -11,20 +11,12 @@
 (u/sci-macro fork
   "I borrowed this lovely, mysterious macro from `macrovich`:
    https://github.com/cgrand/macrovich. This allows us to fork behavior inside
-   of a macro at macroexpansion time, not at read time.
-
-   Code executing in an SCI environment will take the `:clj` branch always,
-   whether in Clojure or ClojureScript. CLJS code will take the `cljs` branch.
-
-   NOTE that I believe the first branch covers the case of self-hosted
-   ClojureScript, and does NOT know about SCI."
+   of a macro at macroexpansion time, not at read time."
   [& {:keys [cljs clj]}]
   #_{:clj-kondo/ignore [:unresolved-symbol]}
   (if (contains? &env '&env)
     `(if (:ns ~'&env) ~cljs ~clj)
-    (if (and (not (:sci? &env))
-             #?(:clj (:ns &env)
-                :cljs true))
+    (if #?(:clj (:ns &env) :cljs true)
       cljs
       clj)))
 
@@ -126,7 +118,7 @@
 
       :clj
       `(do
-         (def ~n ~@vr)
+         (def ~n @~vr)
          (alter-meta! (var ~n) merge (dissoc (meta ~vr) :name))
          (.setMacro (var ~n))
          (link-vars ~vr (var ~n))
@@ -261,14 +253,14 @@
                                 '~ns-sym
                                 ", being replaced by: "
                                 ~(str "#'" ns-sym "/" sym))))])]
-    (fork
-     :cljs `(def ~sym ~form)
-     :clj  `(do
-              #?(:clj ~(when (remote? sym)
-                         (warn sym)))
-              ;; ns-unmap only works at top level
-              (def ~value-sym ~form)
-              (ns-unmap *ns* '~sym)
-              (def ~sym ~value-sym)
-              (ns-unmap *ns* '~value-sym)
-              (var ~sym)))))
+    (if (or (:sci? &env) #?(:clj (not (:ns &env))))
+      `(do
+         #?(:clj ~(when (remote? sym)
+                    (warn sym)))
+         ;; ns-unmap only works at top level
+         (def ~value-sym ~form)
+         (ns-unmap *ns* '~sym)
+         (def ~sym ~value-sym)
+         (ns-unmap *ns* '~value-sym)
+         (var ~sym))
+      `(def ~sym ~form))))

@@ -33,6 +33,10 @@
 (defmethod g/simplify [PersistentVector] [v]
   (mapv g/simplify v))
 
+#?(:clj
+   (defmethod g/simplify [clojure.lang.APersistentVector$SubVector] [v]
+     (mapv g/simplify v)))
+
 (extend-type #?(:clj IPersistentVector :cljs PersistentVector)
   v/Value
   (zero? [v] (every? v/zero? v))

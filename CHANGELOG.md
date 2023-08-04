@@ -18,6 +18,13 @@
   - Upgrades `emmy.calculus.coordinate/define-coordinates` and
     `emmy.util.def/{import-vars,careful-def}` to play nicely with SCI.
 
+  - Resolves the ambiguous `simplify` implementation for subvectors.
+
+  - Adds docstrings to the aliased macros in `emmy.env`.
+
+  - Exposes `emmy.calculus.coordinate/coordinate-functions` as
+    `emmy.env/coordinate-functions`.
+
 - #143:
 
   - Replace the implementation of common subexpression elimination with

@@ -110,14 +110,71 @@
 (u/sci-macro with-literal-functions [& args]
   `(af/with-literal-functions ~@args))
 
-(u/sci-macro let-coordinates [& args]
-  `(cc/let-coordinates ~@args))
+(u/sci-macro let-coordinates
+  "similar to a `let` binding that holds pairs of
 
-(u/sci-macro using-coordinates [& args]
-  `(cc/using-coordinates ~@args))
+  <coordinate-structure-prototype>, <coordinate-system>
 
-(u/sci-macro define-coordinates [& args]
-  `(cc/define-coordinates ~@args))
+  And internally binds, for each pair: (take `[x y]` and `m/R2-rect` as
+  examples):
+
+  - The coordinate system symbol `R2-rect` to a new version of the coordinate
+    system with its `coordinate-prototype` replaced by the one you supplied.
+    That's `(up x y)` in this example.
+
+  - the entries `x` and `y` to coordinate functions, i.e., functions from manifold
+    point to this particular coordinate
+
+  - `d:dx` and `d:dy` vector field procedures (I'm fuzzy here!)
+
+  - `dx` and `dy` 1-forms for each coordinate (fuzzy here too!)
+
+  Example:
+
+  ```clojure
+  (let-coordinates [[x y]    R2-rect
+                   [r theta] R2-polar]
+    ;; bindings:
+    ;; R2-rect, x, y, d:dx, d:dy, dx, dy
+    ;; R2-polar, r, theta, d:dr, d:dtheta, dr, dtheta
+    body...)
+  ```"
+  [bindings & body]
+  `(cc/let-coordinates ~bindings ~@body))
+
+(u/sci-macro using-coordinates
+  "[[using-coordinates]] wraps [[let-coordinates]] and allows you to supply a
+  single coordinate prototype and a single coordinate system.
+  See [[let-coordinates]] for details about what symbols are bound inside the
+  body.
+
+  Example:
+
+  ```clojure
+  (using-coordinates (up x y) R2-rect
+                     body...)
+  ```"
+  [coordinate-prototype coordinate-system & body]
+  `(cc/using-coordinates ~coordinate-prototype
+                         ~coordinate-system
+                         ~@body))
+
+(u/sci-macro define-coordinates
+  "Given some `coordinate-system` like `R2-rect` and a `coordinate-prototype` like
+  `[x y]` or `(up x y), `binds the following definitions into the namespace
+  where [[define-coordinates]] is invoked:
+
+  - `R2-rect` binds to a new version of the coordinate system with its
+    `coordinate-prototype` replaced by the supplied prototype
+
+  - `x` and `y` bind to coordinate functions, i.e., functions from manifold point
+  to that particular coordinate
+
+  - `d:dx` and `d:dy` bind to the corresponding vector field procedures
+
+  - `dx` and `dy` bind to 1-forms for each coordinate."
+  [coordinate-prototype coordinate-system]
+  `(cc/define-coordinates ~coordinate-prototype ~coordinate-system))
 
 (defn ref
   "A shim so that ref can act like nth in SICM contexts, as clojure core ref
@@ -306,6 +363,8 @@
   vector-basis->dual
   make-constant-vector-field
   Jacobian]
+
+ [emmy.calculus.coordinate coordinate-functions]
 
  [emmy.calculus.connection
   make-Christoffel-1
