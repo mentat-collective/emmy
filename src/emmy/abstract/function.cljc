@@ -230,7 +230,7 @@
           litfns)))
 
 (u/sci-macro with-literal-functions [litfns & body]
-  (let [pairs (binding-pairs litfns)
+  (let [pairs    (binding-pairs litfns)
         bindings (into [] cat pairs)]
     `(let ~bindings ~@body)))
 

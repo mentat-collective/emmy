@@ -1,10 +1,10 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
 (ns emmy.util.def
-  (:require [emmy.util :as u]
-            [cljs.analyzer.api :as aa])
+  (:require [cljs.analyzer.api :as aa]
+            [emmy.util :as u])
   #?(:clj
-     (:import (clojure.lang Keyword RT)))
+     (:import (clojure.lang Keyword #_RT)))
   #?(:cljs
      (:require-macros [emmy.util.def])))
 
@@ -13,6 +13,7 @@
   https://github.com/cgrand/macrovich. This allows us to fork behavior inside of
   a macro at macroexpansion time, not at read time."
   [& {:keys [cljs clj]}]
+  #_{:clj-kondo/ignore [:unresolved-symbol]}
   (if (contains? &env '&env)
     `(if (:ns ~'&env) ~cljs ~clj)
     (if #?(:clj (:ns &env) :cljs true)
@@ -66,26 +67,26 @@
   Any remaining options are passed along to `defmulti`."
   {:arglists '([name arities docstring? attr-map? & options])}
   [f arities & options]
-  (let [[a b] (if (vector? arities) arities [arities])
-        arity (if b [:between a b] [:exactly a])
-        docstring (if (string? (first options))
-                    (str "generic " f ".\n\n" (first options))
-                    (str "generic " f))
-        options (if (string? (first options))
-                  (next options)
-                  options)
+  (let [[a b]          (if (vector? arities) arities [arities])
+        arity          (if b [:between a b] [:exactly a])
+        docstring      (if (string? (first options))
+                         (str "generic " f ".\n\n" (first options))
+                         (str "generic " f))
+        options        (if (string? (first options))
+                         (next options)
+                         options)
         [attr options] (if (map? (first options))
                          [(first options) (next options)]
                          [{} options])
-        kwd-klass (fork :clj Keyword :cljs 'cljs.core/Keyword)
-        attr (assoc attr
-               :arity arity
-               :name (:name attr `'~f))]
+        kwd-klass      (fork :clj Keyword :cljs 'cljs.core/Keyword)
+        attr           (assoc attr
+                              :arity arity
+                              :name (:name attr `'~f))]
     `(do
        (defmulti ~f
-                 ~docstring
-                 {:arglists '~(arglists a b)}
-                 v/argument-kind ~@options)
+         ~docstring
+         {:arglists '~(arglists a b)}
+         v/argument-kind ~@options)
        (defmethod ~f [~kwd-klass] [k#]
          (~attr k#)))))
 
@@ -217,7 +218,6 @@
                   :else `(import-def ~sym))))
             imports)))))
 
-#_{:clj-kondo/ignore [:redundant-fn-wrapper]}
 (u/sci-macro careful-def
   "Given some namespace `ns`, returns a function of some binding symbol and a form
   to bind. The function returns either
@@ -255,6 +255,7 @@
                     (set! ~sym v#)
                     (def ~sym v#)))))))
 
+;; TODO can we get this back in?
 #_`(.println
     (RT/errPrintWriter)
     (str "WARNING: "

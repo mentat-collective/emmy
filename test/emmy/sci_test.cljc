@@ -15,31 +15,30 @@
 (defn eval [form]
   (let [ctx (sci/fork es/context)]
     (sci/binding [sci/ns @sci/ns]
-                 (sci/eval-form ctx '(require '[emmy.env :refer :all]))
-                 (sci/eval-form ctx form))))
-
+      (sci/eval-form ctx '(require '[emmy.env :refer :all]))
+      (sci/eval-form ctx form))))
 
 (deftest pattern-tests
   (is (= ['(+ 2 1) "done!"]
          (eval
-           '(do (require '[emmy.pattern.rule :as r :refer [=>]])
-                (let [R (r/ruleset
-                          (+ 10 _) => "done!"
-                          (+ ?a ?b) => (+ ?b ?a))]
-                  [(R '(+ 1 2))
-                   (R (R '(+ 11 10)))])))))
+          '(do (require '[emmy.pattern.rule :as r :refer [=>]])
+               (let [R (r/ruleset
+                        (+ 10 _) => "done!"
+                        (+ ?a ?b) => (+ ?b ?a))]
+                 [(R '(+ 1 2))
+                  (R (R '(+ 11 10)))])))))
 
   (is (= '(+ 6)
          (eval
-           '(do (require '[emmy.pattern.rule :as r :refer [=>]])
-                (let [R (r/term-rewriting
-                          (r/rule (+ ?a ?b ??c) => (+ ?b ??c)))]
-                  (R '(+ 1 2 3 4 5 6))))))))
+          '(do (require '[emmy.pattern.rule :as r :refer [=>]])
+               (let [R (r/term-rewriting
+                        (r/rule (+ ?a ?b ??c) => (+ ?b ??c)))]
+                 (R '(+ 1 2 3 4 5 6))))))))
 
 (deftest basic-sci-tests
   (is (= [:at-least 0]
          (eval '(arity
-                  (fn ([x] 1) ([x y] x)))))
+                 (fn ([x] 1) ([x y] x)))))
       "This isn't a GOOD thing; but this documents that arity inside an SCI
       environment isn't something we can trust.")
 
@@ -49,8 +48,8 @@
 
   (is (= "{\\cos}^{2}\\left(x\\right) + {\\sin}^{2}\\left({x}^{2}\\right)"
          (eval '(->TeX
-                  (simplify (+ (square (sin (square 'x)))
-                               (square (cos 'x))))))))
+                 (simplify (+ (square (sin (square 'x)))
+                              (square (cos 'x))))))))
 
   (is (= (e/literal-function 'U)
          (eval '(literal-function 'U)))
@@ -58,40 +57,40 @@
 
   (is (= o/identity
          (eval
-           '(do (require '[emmy.operator :as o])
-                o/identity)))
+          '(do (require '[emmy.operator :as o])
+               o/identity)))
       "can sci internally require namespaces?")
 
   (is (v/= '(* 10 face)
            (eval
-             '(do (require '[emmy.env :as e])
-                  (e/simplify (e/* 'face 10)))))
+            '(do (require '[emmy.env :as e])
+                 (e/simplify (e/* 'face 10)))))
       "emmy.env is available as a namespace and also included as the
       default bindings in `user`.")
 
   (testing "sci-specific macro definitions"
     (is (= 2.0 (eval
-                 '(do (require '[emmy.algebra.fold :as af])
-                      (let [sum (af/fold->sum-fn (af/kbk-n 2))]
-                        (sum [1.0 1e100 1.0 -1e100])))))
+                '(do (require '[emmy.algebra.fold :as af])
+                     (let [sum (af/fold->sum-fn (af/kbk-n 2))]
+                       (sum [1.0 1e100 1.0 -1e100])))))
         "compensated summation with a macro inside SCI")
 
     (is (= [true true true true]
-           (eval '(let-coordinates [[x y] R2-rect
+           (eval '(let-coordinates [[x y]     R2-rect
                                     [r theta] R2-polar]
-                                   (let [p ((point R2-rect) (up 1 2))]
-                                     [(= 1 (x p))
-                                      (= 2 (y p))
-                                      (= (sqrt 5) (r p))
-                                      (= (atan 2) (theta p))]))))
+                    (let [p ((point R2-rect) (up 1 2))]
+                      [(= 1 (x p))
+                       (= 2 (y p))
+                       (= (sqrt 5) (r p))
+                       (= (atan 2) (theta p))]))))
         "let-coordinates macro works")
 
     (is (= [true true]
            (eval '(using-coordinates
-                    [x y] R2-rect
-                    (let [p ((point R2-rect) (up 1 2))]
-                      [(= 1 (x p))
-                       (= 2 (y p))]))))
+                   [x y] R2-rect
+                   (let [p ((point R2-rect) (up 1 2))]
+                     [(= 1 (x p))
+                      (= 2 (y p))]))))
         "using-coordinates works!")
 
     (is (= [true true true true]
@@ -112,14 +111,14 @@
         "define-coordinates version of that test")
 
     (is (eval
-          '(do (define-coordinates (up x y) R2-rect)
+         '(do (define-coordinates (up x y) R2-rect)
 
-               (let [circular (- (* x d:dy) (* y d:dx))]
-                 (= '(+ (* 3 x0) (* -2 y0))
-                    (freeze
-                      (simplify
-                        ((circular (+ (* 2 x) (* 3 y)))
-                         ((point R2-rect) (up 'x0 'y0)))))))))
+              (let [circular (- (* x d:dy) (* y d:dx))]
+                (= '(+ (* 3 x0) (* -2 y0))
+                   (freeze
+                    (simplify
+                     ((circular (+ (* 2 x) (* 3 y)))
+                      ((point R2-rect) (up 'x0 'y0)))))))))
         "define-coordinates works with a test from form_field_test.cljc")))
 
 (deftest more-sci-tests
@@ -127,24 +126,15 @@
   (testing "internal defn, funky symbols, internal with-literal-functions macro"
     (is (= "down(- m r(t) (Dφ(t))² + m D²r(t) + DU(r(t)), m (r(t))² D²φ(t) + 2 m r(t) Dφ(t) Dr(t))"
            (eval
-             '(do (defn L-central-polar [m U]
-                    (fn [[_ [r] [rdot φdot]]]
-                      (- (* (/ 1 2) m
-                            (+ (square rdot)
-                               (square (* r φdot))))
-                         (U r))))
-                  (with-literal-functions [U r φ]
-                                          (let [L (L-central-polar 'm U)
-                                                state (up r φ)]
-                                            (->infix
-                                              (simplify
-                                                (((Lagrange-equations L) state) 't)))))))))))
-
-(comment
-  (cljs.test/run-tests 'emmy.sci-test)
-
-  (eval '(do
-           (ns foo
-             (:require [clojure.set :refer [union]]))
-           (ns-unmap *ns* 'union)
-           (def union :foo))))
+            '(do (defn L-central-polar [m U]
+                   (fn [[_ [r] [rdot φdot]]]
+                     (- (* (/ 1 2) m
+                           (+ (square rdot)
+                              (square (* r φdot))))
+                        (U r))))
+                 (with-literal-functions [U r φ]
+                   (let [L     (L-central-polar 'm U)
+                         state (up r φ)]
+                     (->infix
+                      (simplify
+                       (((Lagrange-equations L) state) 't)))))))))))

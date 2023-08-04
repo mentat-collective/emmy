@@ -143,6 +143,7 @@
   with &env and &form prepended to arglists and :sci/macro metadata,
   so that the macro can be imported into sci using copy-var."
   [name & body]
+  {:style/indent :defn}
   (if (:ns &env)
     (let [[doc body] (if (string? (first body))
                        [(first body) (rest body)]
@@ -152,8 +153,8 @@
                            [nil body])
           arities (if (vector? (first body)) (list body) body)
           arities (map (fn [[argv & body]] (list (into '[&form &env] argv)
-                                                 `(let [~'&env (assoc ~'&env :sci? true)]
-                                                    ~@body))) arities)]
+                                                `(let [~'&env (assoc ~'&env :sci? true)]
+                                                   ~@body))) arities)]
       `(defn ~(vary-meta name assoc :sci/macro true)
          ~@(when doc [doc])
          ~@(when options [options])

@@ -1,5 +1,5 @@
 (ns emmy.util.def-test
-  (:require [cljs.test :refer [deftest testing is]]
+  (:require [cljs.test :refer [deftest is]]
             [emmy.util :as u]
             [emmy.util.def :as d]))
 
@@ -7,5 +7,5 @@
 (d/import-vars [emmy.util map-vals])
 
 (deftest target
-   (is (= #{:a :b} (keyset {:a 1 :b 2})))
-   (is (= {:a 1} (map-vals inc {:a 0}))))
+  (is (= #{:a :b} (keyset {:a 1 :b 2})))
+  (is (= {:a 1} (map-vals inc {:a 0}))))

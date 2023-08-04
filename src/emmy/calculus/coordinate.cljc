@@ -99,13 +99,13 @@
   [bindings & body]
   (when-not (even? (count bindings))
     (u/illegal "let-coordinates requires an even number of bindings"))
-  (let [pairs (partition 2 bindings)
-        prototypes (map first pairs)
-        c-systems (map second pairs)
-        system-names (map (comp symbol name) c-systems)
-        coordinate-names (mapcat symbols-from-prototype prototypes)
+  (let [pairs                         (partition 2 bindings)
+        prototypes                    (map first pairs)
+        c-systems                     (map second pairs)
+        system-names                  (map (comp symbol name) c-systems)
+        coordinate-names              (mapcat symbols-from-prototype prototypes)
         coordinate-vector-field-names (map vf/coordinate-name->vf-name coordinate-names)
-        coordinate-form-field-names (map ff/coordinate-name->ff-name coordinate-names)]
+        coordinate-form-field-names   (map ff/coordinate-name->ff-name coordinate-names)]
     `(let [[~@system-names :as c-systems#]
            (mapv m/with-coordinate-prototype
                  ~(into [] c-systems)
@@ -113,15 +113,15 @@
 
            ~(into [] coordinate-names)
            (flatten
-             (map coordinate-functions c-systems#))
+            (map coordinate-functions c-systems#))
 
            ~(into [] coordinate-vector-field-names)
            (flatten
-             (map vf/coordinate-system->vector-basis c-systems#))
+            (map vf/coordinate-system->vector-basis c-systems#))
 
            ~(into [] coordinate-form-field-names)
            (flatten
-             (map ff/coordinate-system->oneform-basis c-systems#))]
+            (map ff/coordinate-system->oneform-basis c-systems#))]
        ~@body)))
 
 (u/sci-macro using-coordinates
@@ -138,7 +138,7 @@
   ```"
   [coordinate-prototype coordinate-system & body]
   `(let-coordinates [~coordinate-prototype ~coordinate-system]
-                    ~@body))
+     ~@body))
 
 (u/sci-macro define-coordinates
   "Give some `coordinate-system` like `R2-rect` and a `coordinate-prototype` like
@@ -155,15 +155,16 @@
 
   - `dx` and `dy` bind to 1-forms for each coordinate."
   [coordinate-prototype coordinate-system]
-  (let [sys-name (symbol (name coordinate-system))
-        value-sym (symbol (str sys-name "-values"))
-        coord-names (symbols-from-prototype coordinate-prototype)
+  (let [sys-name           (symbol (name coordinate-system))
+        value-sym          (symbol (str sys-name "-values"))
+        coord-names        (symbols-from-prototype coordinate-prototype)
         vector-field-names (map vf/coordinate-name->vf-name coord-names)
-        form-field-names (map ff/coordinate-name->ff-name coord-names)]
+        form-field-names   (map ff/coordinate-name->ff-name coord-names)]
     `(do
-       (ud/careful-def ~sys-name (m/with-coordinate-prototype
-                                  ~coordinate-system
-                                  ~(quotify-coordinate-prototype coordinate-prototype)))
+       (ud/careful-def ~sys-name
+         (m/with-coordinate-prototype
+           ~coordinate-system
+           ~(quotify-coordinate-prototype coordinate-prototype)))
        (def ~value-sym
          (into [] (flatten
                    [(coordinate-functions ~sys-name)
