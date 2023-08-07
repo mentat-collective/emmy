@@ -3,7 +3,8 @@
 (ns emmy.expression.render
   "Functions and utilities for rendering symbolic expressions to various backends
   like LaTeX, infix or Javascript."
-  (:require [clojure.set :as set]
+  (:require [clojure.pprint :as pp]
+            [clojure.set :as set]
             [clojure.string :as s]
             [clojure.zip :as z]
             [emmy.generic :as g]
@@ -11,7 +12,9 @@
             [emmy.ratio :as r]
             [emmy.simplify.rules :refer [negative-number?]]
             [emmy.util :as u]
-            [emmy.value :as v]))
+            [emmy.value :as v])
+  #?(:clj
+     (:import (clojure.lang IDeref))))
 
 (def ^:private rewrite-trig-powers
   "Historical preference is to write `sin^2(x)` rather than `(sin(x))^2`."
@@ -339,7 +342,7 @@
     ##-Inf "-∞"
     nil))
 
-(def ->infix
+(def ->infix-str
   "Converts an S-expression to printable infix form. Numeric exponents are
   written as superscripts. Partial derivatives get subscripts."
   (make-infix-renderer
@@ -583,7 +586,7 @@
                          (brace s))
                        v))))))))))
 
-(defn ->TeX
+(defn ->TeX-str
   "Convert the given expression to TeX format, as a string.
 
   If you set the `:equation` keyword argument to a truthy value, the result will
@@ -614,6 +617,20 @@
              label tex-string
              "\n\\end{equation}"))
       tex-string)))
+
+(deftype TexWrapper [s v]
+  Object
+  (toString [_] s)
+
+  IDeref
+  (#?(:cljs -deref :clj deref) [_] v))
+
+(defn ->TeX [v & opts]
+  (TexWrapper. (apply ->TeX-str v opts) v))
+
+#?(:clj
+   (defmethod print-method TexWrapper [^TexWrapper s ^java.io.Writer w]
+     (.write w (str "\"" (.toString s) "\""))))
 
 (def ->JavaScript
   "Converts an S-expression to JavaScript."
