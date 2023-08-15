@@ -33,7 +33,7 @@
 
 (declare fmap s-zero s-one s-identity series-value)
 
-(deftype Series [xs m]
+(deftype Series [xs]
   f/IArity
   (arity [_] (f/arity (first xs)))
 
@@ -66,8 +66,8 @@
   #?@
   (:clj
    [IObj
-    (meta [_] m)
-    (withMeta [_ meta] (Series. xs meta))
+    (meta [_] (meta xs))
+    (withMeta [_ meta] (Series. (.withMeta ^IObj xs meta)))
 
     Sequential
 
@@ -77,57 +77,57 @@
     IFn
     ;; Invoking a series uses `series-value` to generate a new series.
     (invoke [_]
-            (Series. (series-value xs []) nil))
+            (Series. (series-value xs [])))
     (invoke [_ a]
-            (Series. (series-value xs [a]) nil))
+            (Series. (series-value xs [a])))
     (invoke [_ a b]
-            (Series. (series-value xs [a b]) nil))
+            (Series. (series-value xs [a b])))
     (invoke [_ a b c]
-            (Series. (series-value xs [a b c]) nil))
+            (Series. (series-value xs [a b c])))
     (invoke [_ a b c d]
-            (Series. (series-value xs [a b c d]) nil))
+            (Series. (series-value xs [a b c d])))
     (invoke [_ a b c d e]
-            (Series. (series-value xs [a b c d e]) nil))
+            (Series. (series-value xs [a b c d e])))
     (invoke [_ a b c d e f]
-            (Series. (series-value xs [a b c d e f]) nil))
+            (Series. (series-value xs [a b c d e f])))
     (invoke [_ a b c d e f g]
-            (Series. (series-value xs [a b c d e f g]) nil))
+            (Series. (series-value xs [a b c d e f g])))
     (invoke [_ a b c d e f g h]
-            (Series. (series-value xs [a b c d e f g h]) nil))
+            (Series. (series-value xs [a b c d e f g h])))
     (invoke [_ a b c d e f g h i]
-            (Series. (series-value xs [a b c d e f g h i]) nil))
+            (Series. (series-value xs [a b c d e f g h i])))
     (invoke [_ a b c d e f g h i j]
-            (Series. (series-value xs [a b c d e f g h i j]) nil))
+            (Series. (series-value xs [a b c d e f g h i j])))
     (invoke [_ a b c d e f g h i j k]
-            (Series. (series-value xs [a b c d e f g h i j k]) nil))
+            (Series. (series-value xs [a b c d e f g h i j k])))
     (invoke [_ a b c d e f g h i j k l]
-            (Series. (series-value xs [a b c d e f g h i j k l]) nil))
+            (Series. (series-value xs [a b c d e f g h i j k l])))
     (invoke [_ a b c d e f g h i j k l m]
-            (Series. (series-value xs [a b c d e f g h i j k l m]) nil))
+            (Series. (series-value xs [a b c d e f g h i j k l m])))
     (invoke [_ a b c d e f g h i j k l m n]
-            (Series. (series-value xs [a b c d e f g h i j k l m n]) nil))
+            (Series. (series-value xs [a b c d e f g h i j k l m n])))
     (invoke [_ a b c d e f g h i j k l m n o]
-            (Series. (series-value xs [a b c d e f g h i j k l m n o]) nil))
+            (Series. (series-value xs [a b c d e f g h i j k l m n o])))
     (invoke [_ a b c d e f g h i j k l m n o p]
-            (Series. (series-value xs [a b c d e f g h i j k l m n o p]) nil))
+            (Series. (series-value xs [a b c d e f g h i j k l m n o p])))
     (invoke [_ a b c d e f g h i j k l m n o p q]
-            (Series. (series-value xs [a b c d e f g h i j k l m n o p q]) nil))
+            (Series. (series-value xs [a b c d e f g h i j k l m n o p q])))
     (invoke [_ a b c d e f g h i j k l m n o p q r]
-            (Series. (series-value xs [a b c d e f g h i j k l m n o p q r]) nil))
+            (Series. (series-value xs [a b c d e f g h i j k l m n o p q r])))
     (invoke [_ a b c d e f g h i j k l m n o p q r s]
-            (Series. (series-value xs [a b c d e f g h i j k l m n o p q r s]) nil))
+            (Series. (series-value xs [a b c d e f g h i j k l m n o p q r s])))
     (invoke [_ a b c d e f g h i j k l m n o p q r s t]
-            (Series. (series-value xs [a b c d e f g h i j k l m n o p q r s t]) nil))
+            (Series. (series-value xs [a b c d e f g h i j k l m n o p q r s t])))
     (invoke [_ a b c d e f g h i j k l m n o p q r s t rest]
-            (Series. (series-value xs (concat [a b c d e f g h i j k l m n o p q r s t] rest)) nil))
+            (Series. (series-value xs (concat [a b c d e f g h i j k l m n o p q r s t] rest))))
     (applyTo [s xs] (AFn/applyToHelper s xs))]
 
    :cljs
    [IMeta
-    (-meta [_] m)
+    (-meta [_] (meta xs))
 
     IWithMeta
-    (-with-meta [_ meta] (Series. xs meta))
+    (-with-meta [_ meta] (Series. (-with-meta xs meta)))
 
     ISequential
 
@@ -143,49 +143,49 @@
 
     IFn
     (-invoke [_]
-             (Series. (series-value xs []) nil))
+             (Series. (series-value xs [])))
     (-invoke [_ a]
-             (Series. (series-value xs [a]) nil))
+             (Series. (series-value xs [a])))
     (-invoke [_ a b]
-             (Series. (series-value xs [a b]) nil))
+             (Series. (series-value xs [a b])))
     (-invoke [_ a b c]
-             (Series. (series-value xs [a b c]) nil))
+             (Series. (series-value xs [a b c])))
     (-invoke [_ a b c d]
-             (Series. (series-value xs [a b c d]) nil))
+             (Series. (series-value xs [a b c d])))
     (-invoke [_ a b c d e]
-             (Series. (series-value xs [a b c d e]) nil))
+             (Series. (series-value xs [a b c d e])))
     (-invoke [_ a b c d e f]
-             (Series. (series-value xs [a b c d e f]) nil))
+             (Series. (series-value xs [a b c d e f])))
     (-invoke [_ a b c d e f g]
-             (Series. (series-value xs [a b c d e f g]) nil))
+             (Series. (series-value xs [a b c d e f g])))
     (-invoke [_ a b c d e f g h]
-             (Series. (series-value xs [a b c d e f g h]) nil))
+             (Series. (series-value xs [a b c d e f g h])))
     (-invoke [_ a b c d e f g h i]
-             (Series. (series-value xs [a b c d e f g h i]) nil))
+             (Series. (series-value xs [a b c d e f g h i])))
     (-invoke [_ a b c d e f g h i j]
-             (Series. (series-value xs [a b c d e f g h i j]) nil))
+             (Series. (series-value xs [a b c d e f g h i j])))
     (-invoke [_ a b c d e f g h i j k]
-             (Series. (series-value xs [a b c d e f g h i j k]) nil))
+             (Series. (series-value xs [a b c d e f g h i j k])))
     (-invoke [_ a b c d e f g h i j k l]
-             (Series. (series-value xs [a b c d e f g h i j k l]) nil))
+             (Series. (series-value xs [a b c d e f g h i j k l])))
     (-invoke [_ a b c d e f g h i j k l m]
-             (Series. (series-value xs [a b c d e f g h i j k l m]) nil))
+             (Series. (series-value xs [a b c d e f g h i j k l m])))
     (-invoke [_ a b c d e f g h i j k l m n]
-             (Series. (series-value xs [a b c d e f g h i j k l m n]) nil))
+             (Series. (series-value xs [a b c d e f g h i j k l m n])))
     (-invoke [_ a b c d e f g h i j k l m n o]
-             (Series. (series-value xs [a b c d e f g h i j k l m n o]) nil))
+             (Series. (series-value xs [a b c d e f g h i j k l m n o])))
     (-invoke [_ a b c d e f g h i j k l m n o p]
-             (Series. (series-value xs [a b c d e f g h i j k l m n o p]) nil))
+             (Series. (series-value xs [a b c d e f g h i j k l m n o p])))
     (-invoke [_ a b c d e f g h i j k l m n o p q]
-             (Series. (series-value xs [a b c d e f g h i j k l m n o p q]) nil))
+             (Series. (series-value xs [a b c d e f g h i j k l m n o p q])))
     (-invoke [_ a b c d e f g h i j k l m n o p q r]
-             (Series. (series-value xs [a b c d e f g h i j k l m n o p q r]) nil))
+             (Series. (series-value xs [a b c d e f g h i j k l m n o p q r])))
     (-invoke [_ a b c d e f g h i j k l m n o p q r s]
-             (Series. (series-value xs [a b c d e f g h i j k l m n o p q r s]) nil))
+             (Series. (series-value xs [a b c d e f g h i j k l m n o p q r s])))
     (-invoke [_ a b c d e f g h i j k l m n o p q r s t]
-             (Series. (series-value xs [a b c d e f g h i j k l m n o p q r s t]) nil))
+             (Series. (series-value xs [a b c d e f g h i j k l m n o p q r s t])))
     (-invoke [_ a b c d e f g h i j k l m n o p q r s t rest]
-             (Series. (series-value xs (concat [a b c d e f g h i j k l m n o p q r s t] rest)) nil))]))
+             (Series. (series-value xs (concat [a b c d e f g h i j k l m n o p q r s t] rest))))]))
 
 ;; Unmap the auto-generated constructor and replace it with a better one.
 
@@ -205,7 +205,7 @@
 
 (declare zero one identity power-series-value)
 
-(deftype PowerSeries [xs m]
+(deftype PowerSeries [xs]
   f/IArity
   (arity [_] [:exactly 1])
 
@@ -240,8 +240,8 @@
   #?@
   (:clj
    [IObj
-    (meta [_] m)
-    (withMeta [_ meta] (PowerSeries. xs meta))
+    (meta [_] (meta xs))
+    (withMeta [_ meta] (PowerSeries. (.withMeta ^IObj xs meta)))
 
     Sequential
 
@@ -249,15 +249,15 @@
     (seq [_] xs)
 
     IFn
-    (invoke [_ a] (Series. (power-series-value xs a) nil))
+    (invoke [_ a] (Series. (power-series-value xs a)))
     (applyTo [s xs] (AFn/applyToHelper s xs))]
 
    :cljs
    [IMeta
-    (-meta [_] m)
+    (-meta [_] (-meta xs))
 
     IWithMeta
-    (-with-meta [_ meta] (PowerSeries. xs meta))
+    (-with-meta [_ meta] (PowerSeries. (-with-meta xs meta)))
 
     ISequential
 
@@ -265,7 +265,7 @@
     (-seq [_] xs)
 
     IFn
-    (-invoke [_ a] (Series. (power-series-value xs a) nil))
+    (-invoke [_ a] (Series. (power-series-value xs a)))
 
     IPrintWithWriter
     (-pr-writer [this writer _]
@@ -315,7 +315,7 @@
   "Given a sequence, returns a new [[Series]] object that wraps that
   sequence (potentially padding its tail with zeros if it's finite)."
   [prefix]
-  (->Series (i/->series prefix) nil))
+  (->Series (i/->series prefix)))
 
 (defn series
   "Return a [[Series]] starting with the supplied values. The remainder of the
@@ -330,7 +330,7 @@
   "Given a sequence, returns a new [[PowerSeries]] object that wraps that
   sequence (potentially padding its tail with zeros if it's finite)."
   [prefix]
-  (->PowerSeries (i/->series prefix) nil))
+  (->PowerSeries (i/->series prefix)))
 
 (defn power-series
   "Return a [[PowerSeries]] starting with the supplied values. The remainder of
@@ -367,7 +367,7 @@
   Optionally, pass `kind` of either `::series` or `::power-series` to specify
   the type of series returned."
   ([c] (power-series* [c]))
-  ([c kind] ((kind->make kind) (i/->series [c]) nil)))
+  ([c kind] ((kind->make kind) (i/->series [c]))))
 
 (defn xpow
   "Returns a [[PowerSeries]] instance representing $x^n$."
@@ -380,9 +380,9 @@
 
   Optionally, pass `kind` of either `::series` or `::power-series` to specify
   the type of series returned."
-  ([f] (->PowerSeries (map f (range)) nil))
+  ([f] (->PowerSeries (map f (range))))
   ([f kind]
-   ((kind->make kind) (map f (range)) nil)))
+   ((kind->make kind) (map f (range)))))
 
 (defn ->function
   "Accepts a [[Series]] or [[PowerSeries]] and coerces the input to
@@ -392,7 +392,7 @@
   Supplying a non-series will throw."
   [s]
   (cond (power-series? s) s
-        (series? s) (->PowerSeries (seq s) (meta s))
+        (series? s) (->PowerSeries (seq s))
         :else (u/illegal "non-series provided to ->function.")))
 
 ;; To go the other way we need Taylor's theorem to give us a power series:
@@ -431,7 +431,7 @@
                     (gen (inc i)
                          (g/partial-derivative f [])
                          (* fact-n i)))))]
-     (->PowerSeries (gen 1 f 1) nil))))
+     (->PowerSeries (gen 1 f 1)))))
 
 ;; ## Application
 ;;
@@ -582,8 +582,7 @@
   [s t]
   {:pre [(power-series? s)
          (power-series? t)]}
-  (->PowerSeries (i/compose (seq s) (seq t))
-                 nil))
+  (->PowerSeries (i/compose (seq s) (seq t))))
 
 (defn revert
   "Returns a new [[PowerSeries]] $U$ that represents the compositional inverse (the
@@ -594,8 +593,7 @@
   ```"
   [s]
   {:pre [(power-series? s)]}
-  (->PowerSeries (i/revert (seq s))
-                 (meta s)))
+  (->PowerSeries (i/revert (seq s))))
 
 (defn integral
   "Returns a [[PowerSeries]] $U$ that represents the definite integral of the
@@ -607,8 +605,7 @@
   ([s] (integral s 0))
   ([s constant]
    {:pre [(power-series? s)]}
-   (->PowerSeries (i/integral (seq s) constant)
-                  (meta s))))
+   (->PowerSeries (i/integral (seq s) constant))))
 
 (defn arg-scale
   "Given a univariate [[PowerSeries]] and a singleton sequence of `factors`,
@@ -648,25 +645,25 @@
 ;; enough to be included. There are, of course, far more! Please feel free to
 ;; open a PR if you have a series you think should be included.
 
-(def exp-series (->PowerSeries i/expx nil))
-(def sin-series (->PowerSeries i/sinx nil))
-(def cos-series (->PowerSeries i/cosx nil))
-(def tan-series (->PowerSeries i/tanx nil))
-(def sec-series (->PowerSeries i/secx nil))
+(def exp-series (->PowerSeries i/expx))
+(def sin-series (->PowerSeries i/sinx))
+(def cos-series (->PowerSeries i/cosx))
+(def tan-series (->PowerSeries i/tanx))
+(def sec-series (->PowerSeries i/secx))
 
-(def asin-series (->PowerSeries i/asinx nil))
-(def acos-series (->PowerSeries i/acosx nil))
-(def atan-series (->PowerSeries i/atanx nil))
-(def acot-series (->PowerSeries i/acotx nil))
+(def asin-series (->PowerSeries i/asinx))
+(def acos-series (->PowerSeries i/acosx))
+(def atan-series (->PowerSeries i/atanx))
+(def acot-series (->PowerSeries i/acotx))
 
-(def sinh-series (->PowerSeries i/sinhx nil))
-(def cosh-series (->PowerSeries i/coshx nil))
-(def tanh-series (->PowerSeries i/tanhx nil))
-(def asinh-series (->PowerSeries i/asinhx nil))
-(def atanh-series (->PowerSeries i/atanhx nil))
+(def sinh-series (->PowerSeries i/sinhx))
+(def cosh-series (->PowerSeries i/coshx))
+(def tanh-series (->PowerSeries i/tanhx))
+(def asinh-series (->PowerSeries i/asinhx))
+(def atanh-series (->PowerSeries i/atanhx))
 
-(def log1+x-series (->PowerSeries i/log1+x nil))
-(def log1-x-series (->PowerSeries i/log1-x nil))
+(def log1+x-series (->PowerSeries i/log1+x))
+(def log1-x-series (->PowerSeries i/log1-x))
 
 (defn binomial-series
   "Returns a [[PowerSeries]] instance representing a
@@ -677,17 +674,17 @@
   $$f(x) = (1 + x)^\\alpha$$
   ```"
   [alpha]
-  (->PowerSeries (i/binomial alpha) nil))
+  (->PowerSeries (i/binomial alpha)))
 
 ;; ## Series (vs PowerSeries)
 ;;
 ;; These are interesting sequences, not taylor series, but nice to have in a
 ;; library like Emmy.
 
-(def fib-series (->Series i/fib nil))
-(def catalan-series (->Series i/catalan nil))
-(def harmonic-series (->Series i/harmonic nil))
-(def bell-series (->Series i/bell nil))
+(def fib-series (->Series i/fib))
+(def catalan-series (->Series i/catalan))
+(def harmonic-series (->Series i/harmonic))
+(def bell-series (->Series i/bell))
 
 ;; ## Generic Implementations
 ;;
@@ -716,70 +713,57 @@
 (doseq [[ctor kind] [[->Series ::series]
                      [->PowerSeries ::power-series]]]
   (defmethod g/add [kind kind] [s t]
-    (ctor (i/seq:+ (seq s) (seq t)) nil))
+    (ctor (i/seq:+ (seq s) (seq t))))
 
   (defmethod g/add [::coseries kind] [c s]
-    (ctor (i/c+seq c (seq s))
-          (meta s)))
+    (ctor (i/c+seq c (seq s))))
 
   (defmethod g/add [kind ::coseries] [s c]
-    (ctor (i/seq+c (seq s) c)
-          (meta s)))
+    (ctor (i/seq+c (seq s) c)))
 
   (defmethod g/negate [kind] [s]
-    (ctor (i/negate (seq s))
-          (meta s)))
+    (ctor (i/negate (seq s))))
 
   (defmethod g/sub [kind kind] [s t]
-    (ctor (i/seq:- (seq s) (seq t)) nil))
+    (ctor (i/seq:- (seq s) (seq t))))
 
   (defmethod g/sub [::coseries kind] [c s]
-    (ctor (i/c-seq c (seq s))
-          (meta s)))
+    (ctor (i/c-seq c (seq s))))
 
   (defmethod g/sub [kind ::coseries] [s c]
-    (ctor (i/seq-c (seq s) c)
-          (meta s)))
+    (ctor (i/seq-c (seq s) c)))
 
   (defmethod g/mul [kind kind] [s t]
-    (ctor (i/seq:* (seq s) (seq t)) nil))
+    (ctor (i/seq:* (seq s) (seq t))))
 
   (defmethod g/mul [::coseries kind] [c s]
-    (ctor (i/c*seq c (seq s))
-          (meta s)))
+    (ctor (i/c*seq c (seq s))))
 
   (defmethod g/mul [kind ::coseries] [s c]
-    (ctor (i/seq*c (seq s) c)
-          (meta s)))
+    (ctor (i/seq*c (seq s) c)))
 
   (defmethod g/square [kind] [s]
     (let [xs (seq s)]
-      (ctor (i/seq:* xs xs)
-            (meta s))))
+      (ctor (i/seq:* xs xs))))
 
   (defmethod g/cube [kind] [s]
     (let [xs (seq s)]
-      (ctor (i/seq:* (i/seq:* xs xs) xs)
-            (meta s))))
+      (ctor (i/seq:* (i/seq:* xs xs) xs))))
 
   (defmethod g/expt [kind ::v/native-integral] [s e]
-    (ctor (i/expt (seq s) e)
-          (meta s)))
+    (ctor (i/expt (seq s) e)))
 
   (defmethod g/invert [kind] [s]
-    (ctor (i/invert (seq s))
-          (meta s)))
+    (ctor (i/invert (seq s))))
 
   (defmethod g/div [::coseries kind] [c s]
-    (ctor (i/c-div-seq c (seq s))
-          (meta s)))
+    (ctor (i/c-div-seq c (seq s))))
 
   (defmethod g/div [kind ::coseries] [s c]
-    (ctor (i/seq-div-c (seq s) c)
-          (meta s)))
+    (ctor (i/seq-div-c (seq s) c)))
 
   (defmethod g/div [kind kind] [s t]
-    (ctor (i/div (seq s) (seq t)) nil))
+    (ctor (i/div (seq s) (seq t))))
 
   (defmethod g/solve-linear-right [::coseries kind] [c s] (g/div c s))
   (defmethod g/solve-linear-right [kind ::coseries] [s c] (g/div s c))
@@ -808,60 +792,46 @@
 ;; series that represents `(g/exp (s x))`.
 
 (defmethod g/exp [::power-series] [s]
-  (->PowerSeries (i/compose i/expx (seq s))
-                 (meta s)))
+  (->PowerSeries (i/compose i/expx (seq s))))
 
 (defmethod g/cos [::power-series] [s]
-  (->PowerSeries (i/compose i/cosx (seq s))
-                 (meta s)))
+  (->PowerSeries (i/compose i/cosx (seq s))))
 
 (defmethod g/sin [::power-series] [s]
-  (->PowerSeries (i/compose i/sinx (seq s))
-                 (meta s)))
+  (->PowerSeries (i/compose i/sinx (seq s))))
 
 (defmethod g/tan [::power-series] [s]
-  (->PowerSeries (i/compose i/tanx (seq s))
-                 (meta s)))
+  (->PowerSeries (i/compose i/tanx (seq s))))
 
 (defmethod g/sec [::power-series] [s]
-  (->PowerSeries (i/compose i/secx (seq s))
-                 (meta s)))
+  (->PowerSeries (i/compose i/secx (seq s))))
 
 (defmethod g/asin [::power-series] [s]
-  (->PowerSeries (i/compose i/asinx (seq s))
-                 (meta s)))
+  (->PowerSeries (i/compose i/asinx (seq s))))
 
 (defmethod g/acos [::power-series] [s]
-  (->PowerSeries (i/compose i/acosx (seq s))
-                 (meta s)))
+  (->PowerSeries (i/compose i/acosx (seq s))))
 
 (defmethod g/atan [::power-series] [s]
-  (->PowerSeries (i/compose i/atanx (seq s))
-                 (meta s)))
+  (->PowerSeries (i/compose i/atanx (seq s))))
 
 (defmethod g/acot [::power-series] [s]
-  (->PowerSeries (i/compose i/acotx (seq s))
-                 (meta s)))
+  (->PowerSeries (i/compose i/acotx (seq s))))
 
 (defmethod g/cosh [::power-series] [s]
-  (->PowerSeries (i/compose i/coshx (seq s))
-                 (meta s)))
+  (->PowerSeries (i/compose i/coshx (seq s))))
 
 (defmethod g/sinh [::power-series] [s]
-  (->PowerSeries (i/compose i/sinhx (seq s))
-                 (meta s)))
+  (->PowerSeries (i/compose i/sinhx (seq s))))
 
 (defmethod g/tanh [::power-series] [s]
-  (->PowerSeries (i/compose i/tanhx (seq s))
-                 (meta s)))
+  (->PowerSeries (i/compose i/tanhx (seq s))))
 
 (defmethod g/asinh [::power-series] [s]
-  (->PowerSeries (i/compose i/asinhx (seq s))
-                 (meta s)))
+  (->PowerSeries (i/compose i/asinhx (seq s))))
 
 (defmethod g/atanh [::power-series] [s]
-  (->PowerSeries (i/compose i/atanhx (seq s))
-                 (meta s)))
+  (->PowerSeries (i/compose i/atanhx (seq s))))
 
 ;; ## Derivatives
 ;;
@@ -870,8 +840,7 @@
 
 (defmethod g/partial-derivative [::series v/seqtype] [^Series s selectors]
   (->Series (map #(g/partial-derivative % selectors)
-                 (.-xs s))
-            (.-m s)))
+                 (.-xs s))))
 
 ;; A `PowerSeries` is itself a single-variable function, so
 ;; `g/partial-derivative` simply takes the series derivative of the contained
@@ -879,7 +848,6 @@
 
 (defmethod g/partial-derivative [::power-series v/seqtype] [^PowerSeries s selectors]
   (if (empty? selectors)
-    (->PowerSeries (i/deriv (.-xs s))
-                   (.-m s))
+    (->PowerSeries (i/deriv (.-xs s)))
     (u/illegal
      (str "Cannot yet take partial derivatives of a power series: " s selectors))))
