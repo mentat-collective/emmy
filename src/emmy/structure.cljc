@@ -73,12 +73,12 @@
 
 (declare s:= mapr)
 
-(deftype Structure [orientation v m]
+(deftype Structure [orientation v]
   v/Value
   (zero? [_] (every? v/zero? v))
   (one? [_] false)
   (identity? [_] false)
-  (zero-like [_] (Structure. orientation (v/zero-like v) m))
+  (zero-like [_] (Structure. orientation (v/zero-like v)))
   (one-like [_] 1)
   (identity-like [_] 1)
   (exact? [_] (every? v/exact? v))
@@ -104,21 +104,21 @@
                           ")"))
 
        IObj
-       (meta [_] m)
-       (withMeta [_ m] (Structure. orientation v m))
+       (meta [_] (meta v))
+       (withMeta [_ m] (Structure. orientation (with-meta v m)))
 
        Sequential
 
        Associative
-       (assoc [_ k entry] (Structure. orientation (assoc v k entry) m))
+       (assoc [_ k entry] (Structure. orientation (assoc v k entry)))
        (containsKey [_ k] (.containsKey ^Associative v k))
        (entryAt [_ k] (.entryAt ^Associative v k))
-       (cons [_ o] (Structure. orientation (conj v o) m))
+       (cons [_ o] (Structure. orientation (conj v o)))
        (count [_] (.count ^Associative v))
        (seq [_] (.seq ^Associative v))
        (valAt [_ key] (.valAt ^Associative v key))
        (valAt [_ key default] (.valAt ^Associative v key default))
-       (empty [_] (Structure. orientation [] nil))
+       (empty [_] (Structure. orientation []))
        (equiv [this that] (s:= this that))
 
        Indexed
@@ -137,49 +137,49 @@
 
        IFn
        (invoke [_]
-               (Structure. orientation (mapv #(%) v) m))
+               (Structure. orientation (mapv #(%) v)))
        (invoke [_ a]
-               (Structure. orientation (mapv #(% a) v) m))
+               (Structure. orientation (mapv #(% a) v)))
        (invoke [_ a b]
-               (Structure. orientation (mapv #(% a b) v) m))
+               (Structure. orientation (mapv #(% a b) v)))
        (invoke [_ a b c]
-               (Structure. orientation (mapv #(% a b c) v) m))
+               (Structure. orientation (mapv #(% a b c) v)))
        (invoke [_ a b c d]
-               (Structure. orientation (mapv #(% a b c d) v) m))
+               (Structure. orientation (mapv #(% a b c d) v)))
        (invoke [_ a b c d e]
-               (Structure. orientation (mapv #(% a b c d e) v) m))
+               (Structure. orientation (mapv #(% a b c d e) v)))
        (invoke [_ a b c d e f]
-               (Structure. orientation (mapv #(% a b c d e f) v) m))
+               (Structure. orientation (mapv #(% a b c d e f) v)))
        (invoke [_ a b c d e f g]
-               (Structure. orientation (mapv #(% a b c d e f g) v) m))
+               (Structure. orientation (mapv #(% a b c d e f g) v)))
        (invoke [_ a b c d e f g h]
-               (Structure. orientation (mapv #(% a b c d e f g h) v) m))
+               (Structure. orientation (mapv #(% a b c d e f g h) v)))
        (invoke [_ a b c d e f g h i]
-               (Structure. orientation (mapv #(% a b c d e f g h i) v) m))
+               (Structure. orientation (mapv #(% a b c d e f g h i) v)))
        (invoke [_ a b c d e f g h i j]
-               (Structure. orientation (mapv #(% a b c d e f g h i j) v) m))
+               (Structure. orientation (mapv #(% a b c d e f g h i j) v)))
        (invoke [_ a b c d e f g h i j k]
-               (Structure. orientation (mapv #(% a b c d e f g h i j k) v) m))
+               (Structure. orientation (mapv #(% a b c d e f g h i j k) v)))
        (invoke [_ a b c d e f g h i j k l]
-               (Structure. orientation (mapv #(% a b c d e f g h i j k l) v) m))
+               (Structure. orientation (mapv #(% a b c d e f g h i j k l) v)))
        (invoke [_ a b c d e f g h i j k l m-arg]
-               (Structure. orientation (mapv #(% a b c d e f g h i j k l m-arg) v) m))
+               (Structure. orientation (mapv #(% a b c d e f g h i j k l m-arg) v)))
        (invoke [_ a b c d e f g h i j k l m-arg n]
-               (Structure. orientation (mapv #(% a b c d e f g h i j k l m-arg n) v) m))
+               (Structure. orientation (mapv #(% a b c d e f g h i j k l m-arg n) v)))
        (invoke [_ a b c d e f g h i j k l m-arg n o]
-               (Structure. orientation (mapv #(% a b c d e f g h i j k l m-arg n o) v) m))
+               (Structure. orientation (mapv #(% a b c d e f g h i j k l m-arg n o) v)))
        (invoke [_ a b c d e f g h i j k l m-arg n o p]
-               (Structure. orientation (mapv #(% a b c d e f g h i j k l m-arg n o p) v) m))
+               (Structure. orientation (mapv #(% a b c d e f g h i j k l m-arg n o p) v)))
        (invoke [_ a b c d e f g h i j k l m-arg n o p q]
-               (Structure. orientation (mapv #(% a b c d e f g h i j k l m-arg n o p q) v) m))
+               (Structure. orientation (mapv #(% a b c d e f g h i j k l m-arg n o p q) v)))
        (invoke [_ a b c d e f g h i j k l m-arg n o p q r]
-               (Structure. orientation (mapv #(% a b c d e f g h i j k l m-arg n o p q r) v) m))
+               (Structure. orientation (mapv #(% a b c d e f g h i j k l m-arg n o p q r) v)))
        (invoke [_ a b c d e f g h i j k l m-arg n o p q r s]
-               (Structure. orientation (mapv #(% a b c d e f g h i j k l m-arg n o p q r s) v) m))
+               (Structure. orientation (mapv #(% a b c d e f g h i j k l m-arg n o p q r s) v)))
        (invoke [_ a b c d e f g h i j k l m-arg n o p q r s t]
-               (Structure. orientation (mapv #(% a b c d e f g h i j k l m-arg n o p q r s t) v) m))
+               (Structure. orientation (mapv #(% a b c d e f g h i j k l m-arg n o p q r s t) v)))
        (invoke [_ a b c d e f g h i j k l m-arg n o p q r s t rest]
-               (Structure. orientation (mapv #(apply % a b c d e f g h i j k l m-arg n o p q r s t rest) v) m))
+               (Structure. orientation (mapv #(apply % a b c d e f g h i j k l m-arg n o p q r s t rest) v)))
        (applyTo [s xs] (AFn/applyToHelper s xs))]
 
       :cljs
@@ -190,20 +190,20 @@
                           ")"))
 
        IMeta
-       (-meta [_] m)
+       (-meta [_] (-meta v))
 
        IWithMeta
-       (-with-meta [_ m] (Structure. orientation v m))
+       (-with-meta [_ m] (Structure. orientation (-with-meta v m)))
 
        IPrintWithWriter
        (-pr-writer [x writer _]
                    (write-all writer (.toString x)))
 
        ICollection
-       (-conj [_ item] (Structure. orientation (-conj v item) m))
+       (-conj [_ item] (Structure. orientation (-conj v item)))
 
        IEmptyableCollection
-       (-empty [_] (Structure. orientation [] m))
+       (-empty [_] (Structure. orientation []))
 
        ISequential
 
@@ -228,7 +228,7 @@
        (-lookup [_ k not-found] (-lookup v k not-found))
 
        IAssociative
-       (-assoc [_ k entry] (Structure. orientation (-assoc v k entry) m))
+       (-assoc [_ k entry] (Structure. orientation (-assoc v k entry)))
        (-contains-key? [_ k] (-contains-key? v k))
 
        IFind
@@ -246,49 +246,49 @@
 
        IFn
        (-invoke [_]
-                (Structure. orientation (mapv #(%) v) m))
+                (Structure. orientation (mapv #(%) v)))
        (-invoke [_ a]
-                (Structure. orientation (mapv #(% a) v) m))
+                (Structure. orientation (mapv #(% a) v)))
        (-invoke [_ a b]
-                (Structure. orientation (mapv #(% a b) v) m))
+                (Structure. orientation (mapv #(% a b) v)))
        (-invoke [_ a b c]
-                (Structure. orientation (mapv #(% a b c) v) m))
+                (Structure. orientation (mapv #(% a b c) v)))
        (-invoke [_ a b c d]
-                (Structure. orientation (mapv #(% a b c d) v) m))
+                (Structure. orientation (mapv #(% a b c d) v)))
        (-invoke [_ a b c d e]
-                (Structure. orientation (mapv #(% a b c d e) v) m))
+                (Structure. orientation (mapv #(% a b c d e) v)))
        (-invoke [_ a b c d e f]
-                (Structure. orientation (mapv #(% a b c d e f) v) m))
+                (Structure. orientation (mapv #(% a b c d e f) v)))
        (-invoke [_ a b c d e f g]
-                (Structure. orientation (mapv #(% a b c d e f g) v) m))
+                (Structure. orientation (mapv #(% a b c d e f g) v)))
        (-invoke [_ a b c d e f g h]
-                (Structure. orientation (mapv #(% a b c d e f g h) v) m))
+                (Structure. orientation (mapv #(% a b c d e f g h) v)))
        (-invoke [_ a b c d e f g h i]
-                (Structure. orientation (mapv #(% a b c d e f g h i) v) m))
+                (Structure. orientation (mapv #(% a b c d e f g h i) v)))
        (-invoke [_ a b c d e f g h i j]
-                (Structure. orientation (mapv #(% a b c d e f g h i j) v) m))
+                (Structure. orientation (mapv #(% a b c d e f g h i j) v)))
        (-invoke [_ a b c d e f g h i j k]
-                (Structure. orientation (mapv #(% a b c d e f g h i j k) v) m))
+                (Structure. orientation (mapv #(% a b c d e f g h i j k) v)))
        (-invoke [_ a b c d e f g h i j k l]
-                (Structure. orientation (mapv #(% a b c d e f g h i j k l) v) m))
+                (Structure. orientation (mapv #(% a b c d e f g h i j k l) v)))
        (-invoke [_ a b c d e f g h i j k l m-arg]
-                (Structure. orientation (mapv #(% a b c d e f g h i j k l m-arg) v) m))
+                (Structure. orientation (mapv #(% a b c d e f g h i j k l m-arg) v)))
        (-invoke [_ a b c d e f g h i j k l m-arg n]
-                (Structure. orientation (mapv #(% a b c d e f g h i j k l m-arg n) v) m))
+                (Structure. orientation (mapv #(% a b c d e f g h i j k l m-arg n) v)))
        (-invoke [_ a b c d e f g h i j k l m-arg n o]
-                (Structure. orientation (mapv #(% a b c d e f g h i j k l m-arg n o) v) m))
+                (Structure. orientation (mapv #(% a b c d e f g h i j k l m-arg n o) v)))
        (-invoke [_ a b c d e f g h i j k l m-arg n o p]
-                (Structure. orientation (mapv #(% a b c d e f g h i j k l m-arg n o p) v) m))
+                (Structure. orientation (mapv #(% a b c d e f g h i j k l m-arg n o p) v)))
        (-invoke [_ a b c d e f g h i j k l m-arg n o p q]
-                (Structure. orientation (mapv #(% a b c d e f g h i j k l m-arg n o p q) v) m))
+                (Structure. orientation (mapv #(% a b c d e f g h i j k l m-arg n o p q) v)))
        (-invoke [_ a b c d e f g h i j k l m-arg n o p q r]
-                (Structure. orientation (mapv #(% a b c d e f g h i j k l m-arg n o p q r) v) m))
+                (Structure. orientation (mapv #(% a b c d e f g h i j k l m-arg n o p q r) v)))
        (-invoke [_ a b c d e f g h i j k l m-arg n o p q r s]
-                (Structure. orientation (mapv #(% a b c d e f g h i j k l m-arg n o p q r s) v) m))
+                (Structure. orientation (mapv #(% a b c d e f g h i j k l m-arg n o p q r s) v)))
        (-invoke [_ a b c d e f g h i j k l m-arg n o p q r s t]
-                (Structure. orientation (mapv #(% a b c d e f g h i j k l m-arg n o p q r s t) v) m))
+                (Structure. orientation (mapv #(% a b c d e f g h i j k l m-arg n o p q r s t) v)))
        (-invoke [_ a b c d e f g h i j k l m-arg n o p q r s t rest]
-                (Structure. orientation (mapv #(apply % a b c d e f g h i j k l m-arg n o p q r s t rest) v) m))]))
+                (Structure. orientation (mapv #(apply % a b c d e f g h i j k l m-arg n o p q r s t rest) v)))]))
 
 #?(:clj
    (defmethod print-method Structure [^Structure s w]
@@ -531,7 +531,7 @@
   "Generate a structure with the supplied orientation, given some sequence `xs`"
   [orientation xs]
   (let [xs (if (vector? xs) xs (into [] xs))]
-    (->Structure orientation xs nil)))
+    (->Structure orientation xs)))
 
 (defn up*
   "Construct an up (contravariant) tuple from the supplied sequence. For a
@@ -547,7 +547,7 @@
   sequence. (If you pass a vector to [[up*]]) it will be just as efficient."
   [v]
   {:pre [(vector? v)]}
-  (->Structure ::up v nil))
+  (->Structure ::up v))
 
 (defn up
   "Construct an up (contravariant) tuple from the arguments.
@@ -570,7 +570,7 @@
   sequence. (If you pass a vector to [[down*]]) it will be just as efficient."
   [v]
   {:pre [(vector? v)]}
-  (->Structure ::down v nil))
+  (->Structure ::down v))
 
 (defn down
   "Construct a down (covariant) tuple from the arguments. Variadic version
@@ -612,7 +612,7 @@
   where i ranges from `[0..dimension)`."
   [dimension orientation f]
   {:pre [(valid-orientation? orientation)]}
-  (->Structure orientation (mapv f (range dimension)) nil))
+  (->Structure orientation (mapv f (range dimension))))
 
 (defn literal
   "Generates a structure of the specified `orientation` and dimension `size`
@@ -822,8 +822,7 @@
   [s]
   (if (structure? s)
     (->Structure (opposite-orientation (orientation s))
-                 (mapv transpose (structure->vector s))
-                 (meta s))
+                 (mapv transpose (structure->vector s)))
     s))
 
 (defn transpose-outer
@@ -1016,7 +1015,7 @@
   structures."
   [op s t]
   (if (= (count s) (count t))
-    (->Structure (orientation s) (mapv op s t) nil)
+    (->Structure (orientation s) (mapv op s t))
     (u/arithmetic-ex (str op " provided arguments of differing length"))))
 
 (defmethod g/add [::down ::down] [a b] (elementwise g/+ a b))
