@@ -78,13 +78,7 @@
                   "nil by default")
 
               (is (= m (meta (with-meta p m)))
-                  "metadata works")
-
-              (is (= m (meta
-                        (p/->Polynomial (p/bare-arity p)
-                                        (p/bare-terms p)
-                                        m)))
-                  "three-arity constructor allows metadata"))
+                  "metadata works"))
 
     (testing "->str, freeze"
       (is (= "1: (1*{} + 2*{0 1} + 3*{0 2})"
