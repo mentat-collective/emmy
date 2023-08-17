@@ -117,7 +117,7 @@
 
 (declare evaluate constant ->str eq map-coefficients)
 
-(deftype Polynomial [arity terms m]
+(deftype Polynomial [arity terms]
   ;; Polynomial evaluation works for any number of arguments up to and including
   ;; the full arity. Evaluating a polynomial with fewer arguments `n` than arity
   ;; triggers a partial evaluation of the first `n` indeterminates.
@@ -169,7 +169,7 @@
                 (v/one-like (i/coefficient term))
                 1)
           term (i/make-term (xpt/make 0 1) one)]
-      (Polynomial. 1 [term] m)))
+      (Polynomial. 1 [term])))
 
   (exact? [_] false)
   (freeze [_] `(~'polynomial ~arity ~terms))
@@ -181,8 +181,8 @@
        (toString [p] (->str p))
 
        IObj
-       (meta [_] m)
-       (withMeta [_ meta] (Polynomial. arity terms meta))
+       (meta [_] (meta terms))
+       (withMeta [_ meta] (Polynomial. arity (with-meta terms meta)))
 
        Seqable
        (seq [_] (seq terms))
@@ -242,10 +242,10 @@
        (-equiv [this that] (eq this that))
 
        IMeta
-       (-meta [_] m)
+       (-meta [_] (meta terms))
 
        IWithMeta
-       (-with-meta [_ m] (Polynomial. arity terms m))
+       (-with-meta [_ m] (Polynomial. arity (with-meta terms m)))
 
        ISeqable
        (-seq [_] (seq terms))
@@ -352,10 +352,10 @@
              (i/constant-term? (nth terms 0)))
         (let [c (i/coefficient (nth terms 0))]
           (if (polynomial? c)
-            (->Polynomial arity terms nil)
+            (->Polynomial arity terms)
             c))
 
-        :else (->Polynomial arity terms nil)))
+        :else (->Polynomial arity terms)))
 
 (defn make
   "Generates a [[Polynomial]] instance (or a bare coefficient!) from either:
@@ -416,7 +416,7 @@
   returned [[Polynomial]]."
   ([c] (constant 1 c))
   ([arity c]
-   (->Polynomial arity (i/constant->terms c) nil)))
+   (->Polynomial arity (i/constant->terms c))))
 
 (defn identity
   "Generates a [[Polynomial]] instance representing a single indeterminate with
@@ -437,7 +437,7 @@
   ([arity i]
    {:pre [(and (>= i 0) (< i arity))]}
    (let [expts (xpt/make i 1)]
-     (->Polynomial arity [(i/make-term expts 1)] nil))))
+     (->Polynomial arity [(i/make-term expts 1)]))))
 
 (defn new-variables
   "Returns a sequence of `n` monomials of arity `n`, each with an exponent of `1`
@@ -488,7 +488,7 @@
         (zero? n)   (constant arity c)
         :else
         (let [term (i/make-term (xpt/make 0 n) c)]
-          (->Polynomial arity [term] nil))))
+          (->Polynomial arity [term]))))
 
 ;; ## Constructors of Special Polynomials
 
@@ -812,7 +812,7 @@
                (if (empty? f-expts)
                  p
                  (let [arity (force-arity)]
-                   (->Polynomial arity [(i/make-term f-expts p)] nil)))))]
+                   (->Polynomial arity [(i/make-term f-expts p)])))))]
      (cond (polynomial? p)
            (make (or new-arity (bare-arity p))
                  (for [[expts c] (bare-terms p)
@@ -1274,7 +1274,7 @@
     p
     (let [a (bare-arity p)]
       (if (> n a)
-        (->Polynomial (inc n) (bare-terms p) (meta p))
+        (->Polynomial (inc n) (bare-terms p))
         (map-exponents #(xpt/raise % n 0)
                        p
                        (inc a))))))
@@ -1327,7 +1327,7 @@
                            :let [expts (xpt/raise
                                         ys 0 (xpt/monomial-degree x 0))]]
                        (i/make-term expts c)))]
-          (->Polynomial a terms (meta p))))
+          (->Polynomial a terms)))
     (constant a p)))
 
 (defn with-lower-arity
