@@ -10,7 +10,7 @@ will change in the coming months!
 Emmy is best experienced in an interactive environment like the
 https://clojure.org/guides/repl/introduction[Clojure REPL]. We support a number
 of environments with rich support for https://en.wikipedia.org/wiki/TeX[TeX]
-rendering and plotting. These are catalogued below., paired with "Getting
+rendering and plotting. These are catalogued below, paired with "Getting
 Started" instructions.
 
 After setting up your environment with any of the listed methods, visit the
