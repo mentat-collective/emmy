@@ -138,11 +138,6 @@
   (numerical? [_] true)
 
   v/Value
-  (zero? [c]
-    #?(:clj (and (zero? (real c))
-                 (zero? (imaginary c)))
-       :cljs (.isZero ^js c)))
-
   (one? [c]
     (and (v/one? (real c))
          (zero? (imaginary c))))
@@ -152,7 +147,7 @@
   (identity-like [_] ONE)
   (freeze [c] (let [re (real c)
                     im (imaginary c)]
-                (if (v/zero? im)
+                (if (g/zero? im)
                   re
                   (list 'complex re im))))
   (exact? [c] (and (v/exact? (real c))
@@ -183,10 +178,10 @@
   details."
   [z]
   (if (complex? z)
-    (and (v/almost-integral? (real z))
-         (v/almost-integral? (imaginary z)))
+    (and (g/almost-integral? (real z))
+         (g/almost-integral? (imaginary z)))
     (and (v/real? z)
-         (v/almost-integral? z))))
+         (g/almost-integral? z))))
 
 ;; ## Complex GCD
 
@@ -213,8 +208,8 @@
   NOTE that the GCD of two complex numbers is determined up to a factor of ±1
   and ±i."
   [l r]
-  (cond (v/zero? l) r
-        (v/zero? r) l
+  (cond (g/zero? l) r
+        (g/zero? r) l
         (v/= l r)   (abs-real l)
         (not (or (gaussian-integer? l)
                  (gaussian-integer? r)))
@@ -234,24 +229,26 @@
                             [l r] [r l])]
                 (loop [a (round l)
                        b (round r)]
-                  (if (v/zero? b)
+                  (if (g/zero? b)
                     (abs-real a)
                     (recur b (g/sub a (g/mul (round (g/div a b)) b))))))))
 
 ;; ## Generic Method Installation
-
+(defmethod g/zero? [::complex] [c] #?(:clj (and (zero? (real c))
+                                                (zero? (imaginary c)))
+                                      :cljs (.isZero ^js c)))
 (defmethod g/gcd [::complex ::complex] [a b] (gcd a b))
 (defmethod g/gcd [::complex ::v/real] [a b] (gcd a b))
 (defmethod g/gcd [::v/real ::complex] [a b] (gcd a b))
 
 (defmethod g/make-rectangular [::v/real ::v/real] [re im]
-  (if (v/zero? im)
+  (if (g/zero? im)
     re
     (complex re im)))
 
 (defmethod g/make-polar [::v/real ::v/real] [radius angle]
-  (cond (v/zero? radius) radius
-        (v/zero? angle)  radius
+  (cond (g/zero? radius) radius
+        (g/zero? angle)  radius
         :else
         #?(:cljs (Complex. #js {:abs (js/Number radius)
                                 :arg (js/Number angle)})
@@ -378,19 +375,19 @@
 (defmethod g/integer-part [::complex] [a]
   (let [re (g/integer-part (real a))
         im (g/integer-part (imaginary a))]
-    (if (v/zero? im)
+    (if (g/zero? im)
       re
       (complex re im))))
 
 (defmethod g/fractional-part [::complex] [a]
   (let [re (g/fractional-part (real a))
         im (g/fractional-part (imaginary a))]
-    (if (v/zero? im)
+    (if (g/zero? im)
       re
       (complex re im))))
 
 (defmethod g/negative? [::complex] [a]
-  (and (v/zero? (imaginary a))
+  (and (g/zero? (imaginary a))
        (g/negative? (real a))))
 
 (defmethod g/infinite? [::complex] [a]
@@ -417,14 +414,14 @@
      (defmethod g/floor [::complex] [^Complex a]
        (let [re (g/floor (.getReal a))
              im (g/floor (.getImaginary a))]
-         (if (v/zero? im)
+         (if (g/zero? im)
            re
            (complex re im))))
 
      (defmethod g/ceiling [::complex] [^Complex a]
        (let [re (g/ceiling (.getReal a))
              im (g/ceiling (.getImaginary a))]
-         (if (v/zero? im)
+         (if (g/zero? im)
            re
            (complex re im))))
 

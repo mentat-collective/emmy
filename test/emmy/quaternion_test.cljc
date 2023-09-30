@@ -153,14 +153,14 @@
   (testing "value protocol"
     (testing "zero?"
       (is (q/zero? q/ZERO))
-      (is (v/zero? (q/make 0 0 0 0)))
-      (is (not (v/zero? (q/make 1 0 0 0)))))
+      (is (g/zero? (q/make 0 0 0 0)))
+      (is (not (g/zero? (q/make 1 0 0 0)))))
 
     (checking "zero-like" 100 [x (sg/quaternion)]
-              (if (v/zero? x)
+              (if (g/zero? x)
                 (is (= x (q/make 0 0 0 0)))
-                (do (is (v/zero? (v/zero-like x)))
-                    (is (v/zero? (empty x))
+                (do (is (g/zero? (v/zero-like x)))
+                    (is (g/zero? (empty x))
                         "empty also returns the zero"))))
 
     (testing "one?"
@@ -543,7 +543,7 @@
             (let [m      (q/magnitude x)
                   normal (q/normalize x)]
               (is (ish? normal (q/normalize normal)))
-              (if (v/zero? m)
+              (if (g/zero? m)
                 (is (q/zero? x)
                     "can't normalize if the quaternion is zero.")
 
@@ -560,7 +560,7 @@
                 (is (q/pure? q1xq2)
                     "quaternion cross product has no real component")
 
-                (is (v/zero? (g/dot-product q1 q1xq2))
+                (is (g/zero? (g/dot-product q1 q1xq2))
                     "dot of quaternion with an orthogonal quaternion == 0")
 
                 (testing "cross with scalar"
@@ -620,20 +620,20 @@
   (checking "q/commutator" 100
             [q1 (sg/quaternion sg/small-integral)
              q2 (sg/quaternion sg/small-integral)]
-            (is (v/zero?
+            (is (g/zero?
                  (q/commutator
                   (q/make (first (q/->complex-pair q1)))
                   (q/make (first (q/->complex-pair q2)))))
                 "complex multiplication commutes, so the commutator of the
                 complex part (r,i) is always zero.")
 
-            (is (v/zero?
+            (is (g/zero?
                  (q/commutator
                   (q/make (q/real-part q1))
                   q2))
                 "real quaternions commute with all other quaternions")
 
-            (is (v/zero?
+            (is (g/zero?
                  (q/commutator
                   q1
                   (q/make (q/real-part q2))))

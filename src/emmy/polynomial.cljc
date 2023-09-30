@@ -136,9 +136,6 @@
     (map-coefficients #(sd/extract-tangent % tag) this))
 
   v/Value
-  (zero? [_]
-    (empty? terms))
-
   (one? [_]
     (and (= (count terms) 1)
          (let [[term] terms]
@@ -466,7 +463,7 @@
   If `root` is 0, [[linear]] is equivalent to the two-argument version
   of [[identity]]."
   [arity i root]
-  (if (v/zero? root)
+  (if (g/zero? root)
     (identity arity i)
     (add (constant arity (g/negate root))
          (identity arity i))))
@@ -484,7 +481,7 @@
   NOTE that negative exponents are not allowed."
   [arity c n]
   {:pre [(>= n 0)]}
-  (cond (v/zero? c) c
+  (cond (g/zero? c) c
         (zero? n)   (constant arity c)
         :else
         (let [term (i/make-term (xpt/make 0 n) c)]
@@ -530,7 +527,7 @@
   [p]
   (cond (polynomial? p) (bare-terms p)
         (vector? p) p
-        (v/zero? p) []
+        (g/zero? p) []
         :else [(i/make-term p)]))
 
 (defn ^:no-doc check-same-arity
@@ -592,7 +589,7 @@
   for color on why this is the case.
   "
   ([p]
-   (cond (v/zero? p) zero-degree
+   (cond (g/zero? p) zero-degree
          (polynomial? p)
          (xpt/monomial-degree
           (i/exponents
@@ -600,7 +597,7 @@
          :else coeff-arity))
   ([p i]
    (let [i (validate-arity! p i)]
-     (cond (v/zero? p) zero-degree
+     (cond (g/zero? p) zero-degree
            (polynomial? p)
            (letfn [(i-degree [term]
                      (-> (i/exponents term)
@@ -655,7 +652,7 @@
   If `p` is zero, returns an empty list."
   [p]
   (cond (polynomial? p) (map i/coefficient (->terms p))
-        (v/zero? p) []
+        (g/zero? p) []
         :else [p]))
 
 (defn leading-term
@@ -722,7 +719,7 @@
         (xpt/monomial-degree
          (i/exponents
           (nth (bare-terms p) 0)))
-        (v/zero? p) zero-degree
+        (g/zero? p) zero-degree
         :else coeff-arity))
 
 (defn monomial?
@@ -818,7 +815,7 @@
                  (for [[expts c] (bare-terms p)
                        :let [f-expts (f expts)]]
                    (i/make-term f-expts c)))
-           (v/zero? p) p
+           (g/zero? p) p
            :else (handle-constant)))))
 
 ;; ## Manipulations
@@ -911,7 +908,7 @@
   NOTE that [[scale]] will return a non-[[Polynomial]] if the result of the
   mapping has only a constant term."
   [p c]
-  (if (v/zero? c)
+  (if (g/zero? c)
     c
     (map-coefficients #(g/* % c) p)))
 
@@ -924,7 +921,7 @@
   NOTE that [[scale-l]] will return a non-[[Polynomial]] if the result of the
   mapping has only a constant term."
   [c p]
-  (if (v/zero? c)
+  (if (g/zero? c)
     c
     (map-coefficients #(g/* c %) p)))
 
@@ -946,7 +943,7 @@
    (normalize p (leading-coefficient p)))
   ([p c]
    (cond (v/one? c) p
-         (v/zero? c) (u/arithmetic-ex
+         (g/zero? c) (u/arithmetic-ex
                       (str "Divide by zero: " p c))
          (polynomial? c) (evenly-divide p c)
          :else (scale p (g/invert c)))))
@@ -1106,7 +1103,7 @@
       (u/illegal (str "No inverse -- FPF:EXPT:" p n))
 
       (v/one? p)  p
-      (v/zero? p) (if (v/zero? n)
+      (g/zero? p) (if (g/zero? n)
                     (u/arithmetic-ex "poly 0^0")
                     p)
 
@@ -1123,10 +1120,10 @@
   u == (add (mul quotient v) remainder)
   ```"
   [u v]
-  (cond (v/zero? v)
+  (cond (g/zero? v)
         (u/illegal "internal polynomial division by zero")
 
-        (or (v/zero? u) (v/one? v))
+        (or (g/zero? u) (v/one? v))
         [u 0]
 
         :else
@@ -1147,7 +1144,7 @@
   satisfies [[emmy.value/zero?]]."
   [n d]
   (let [[_ r] (divide n d)]
-    (v/zero? r)))
+    (g/zero? r)))
 
 (defn evenly-divide
   "Returns the result of dividing the polynomial `u` by `v` (non-[[Polynomial]]
@@ -1159,7 +1156,7 @@
   (if (v/one? v)
     u
     (let [[q r] (divide u v)]
-      (when-not (v/zero? r)
+      (when-not (g/zero? r)
         (u/illegal-state
          (str "expected even division left a remainder! " u " / " v " r " r)))
       q)))
@@ -1198,7 +1195,7 @@
   [u v]
   {:pre [(univariate? u)
          (univariate? v)
-         (not (v/zero? v))]}
+         (not (g/zero? v))]}
   (let [[vn-expts vn-coeff] (leading-term v)
         #?@(:cljs [vn-coeff (->big vn-coeff)])
         *vn (fn [p] (scale p vn-coeff))
@@ -1410,7 +1407,7 @@
       (assert (<= (count xs) a)
               (str "Too many args: " xs))
       (cond (empty? xs) p
-            (v/zero? p) 0
+            (g/zero? p) 0
             :else
             (let [x (first xs)
                   x (if (and (polynomial? x) (> a 1))
@@ -1463,7 +1460,7 @@
                               (call next-degree np nq nr ne
                                     (drop-leading-term a))
                               (cont np nq (* 2 nr)
-                                    (* v/machine-epsilon
+                                    (* u/machine-epsilon
                                        (+ (- ne (Math/abs ^double np)) ne)))))]
                (cond (= n 1)
                      (let [np (+ (* z p) (leading-coefficient a))
@@ -1577,13 +1574,13 @@
   instances."
   {'+ (ua/monoid g/add 0)
    '- (ua/group g/sub g/add g/negate 0)
-   '* (ua/monoid g/mul 1 v/zero?)
+   '* (ua/monoid g/mul 1 g/zero?)
    'negate g/negate
    'expt g/expt
    'square g/square
    'cube g/cube
    'gcd (ua/monoid g/gcd 0)
-   'lcm (ua/monoid g/lcm 1 v/zero?)})
+   'lcm (ua/monoid g/lcm 1 g/zero?)})
 
 (def ^:no-doc operators-known
   "Set of all arithmetic functions allowed between [[Polynomial]] and coefficient
@@ -1719,6 +1716,7 @@
 ;; NOTE: What about `g/modulo`? Does that belong for [[Polynomial]] instances?
 ;; How does it differ from `g/remainder`?
 
+(defmethod g/zero? [::polynomial] [a] (empty? (bare-terms a)))
 (defmethod g/negative? [::polynomial] [a] (negative? a))
 (defmethod g/abs [::polynomial] [a] (abs a))
 (defmethod g/negate [::polynomial] [a] (negate a))

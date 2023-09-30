@@ -66,7 +66,6 @@
 
 (deftype Function [f-name arity domain range]
   v/Value
-  (zero? [_] false)
   (one? [_] false)
   (identity? [_] false)
   (zero-like [_] (fn [& _] (v/zero-like range)))
@@ -263,7 +262,7 @@
         partials (s/map-chain
                   (fn [x path _]
                     (let [dx (d/tangent-part x tag)]
-                      (if (v/zero? dx)
+                      (if (g/zero? dx)
                         0
                         (d/d:* (literal-apply
                                 (literal-partial f path) ve)

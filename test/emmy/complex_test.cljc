@@ -54,7 +54,7 @@
 (deftest value-protocol
   (testing "v/Value protocol implementation"
     (is (every?
-         v/zero?
+         g/zero?
          [(c/complex -0.0 -0.0)
           (c/complex 0.0 -0.0)
           (c/complex -0.0 0.0)
@@ -65,8 +65,8 @@
           #emmy/complex "0"])
         "negative zero doesn't affect zero")
 
-    (is (not (v/zero? c/ONE)))
-    (is (not (v/zero? (c/complex 1.0))))
+    (is (not (g/zero? c/ONE)))
+    (is (not (g/zero? (c/complex 1.0))))
     (is (= c/ZERO (v/zero-like (c/complex 2))))
     (is (= c/ZERO (v/zero-like #emmy/complex "0 + 3.14i")))
 
@@ -284,7 +284,7 @@
              (g/negate (c/complex 10 -2)))))
 
     (testing "invert"
-      (is (v/zero? (g/add c/I (g/invert c/I)))))
+      (is (g/zero? (g/add c/I (g/invert c/I)))))
 
     (testing "abs"
       (is (= 5.0 (g/abs (c/complex 3 4)))))
@@ -353,9 +353,9 @@
 
     (letfn [(check [l r]
               (let [z (g/gcd l r)]
-                (if (v/zero? z)
-                  (is (and (v/zero? l)
-                           (v/zero? r)))
+                (if (g/zero? z)
+                  (is (and (g/zero? l)
+                           (g/zero? r)))
                   (is (fourth-power-is-one?
                        (g/gcd (g// l z)
                               (g// r z)))))))]
@@ -364,8 +364,8 @@
                 (let [gaussian-l (c/round l)
                       gaussian-r (c/round r)
                       z (g/gcd gaussian-l gaussian-r)]
-                  (when-not (or (v/zero? gaussian-l)
-                                (v/zero? gaussian-r))
+                  (when-not (or (g/zero? gaussian-l)
+                                (g/zero? gaussian-r))
                     (is (not (neg? (g/real-part z)))
                         "real part of the GCD is always positive, unless either
                         side to gcd is 0."))

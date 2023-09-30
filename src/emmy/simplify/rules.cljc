@@ -181,30 +181,30 @@
   real part, false otherwise."
   [z]
   (and (c/complex? z)
-       (not (v/zero? z))
-       (v/zero? (g/real-part z))))
+       (not (g/zero? z))
+       (g/zero? (g/real-part z))))
 
 (defn- complex-number?
   "Returns true if `z` is a complex number with nonzero real AND imaginary parts,
   false otherwise."
   [z]
   (and (c/complex? z)
-       (not (v/zero? (g/real-part z)))
-       (not (v/zero? (g/imag-part z)))))
+       (not (g/zero? (g/real-part z)))
+       (not (g/zero? (g/imag-part z)))))
 
 (defn- imaginary-integer?
   "Returns true if `z` is an imaginary number with an integral (or VERY close to
   integral) imaginary part, false otherwise."
   [z]
   (and (imaginary-number? z)
-       (v/almost-integral?
+       (g/almost-integral?
         (g/imag-part z))))
 
 (defn not-integral? [x]
   (not (v/integral? x)))
 
 (defn even? [x]
-  (v/zero? (g/modulo x 2)))
+  (g/zero? (g/modulo x 2)))
 
 (defn odd? [x]
   (v/one? (g/modulo x 2)))
@@ -758,7 +758,7 @@
     (fn [m]
       (let [s1 (simplify (r/template m (* ??f1 ??f2)))
             s2 (simplify (r/template m (* ??f3 ??f4)))]
-        (when (v/exact-zero?
+        (when (g/exact-zero?
                (simplify (list '- s1 s2)))
           {'??s1 s1})))
     (+ (* (log (* ?x ?y)) ??s1)
@@ -1267,7 +1267,7 @@
     (letfn [(pred [m]
               (let [s1 (simplify (r/template m (* ??f1 ??f2)))
                     s2 (simplify (r/template m (* ??f3 ??f4)))]
-                (when (v/exact-zero?
+                (when (g/exact-zero?
                        (simplify (list '- s1 s2)))
                   {'?s1 s1})))]
       (rule-simplifier
@@ -1289,7 +1289,7 @@
    (flush-obvious-ones simplify)))
 
 (defn sincos-random [simplify]
-  (let [simplifies-to-zero? (comp v/zero? simplify)
+  (let [simplifies-to-zero? (comp g/numeric-zero? simplify)
         ops #{'cos 'sin}
         flip {'cos 'sin, 'sin 'cos}]
     (rule-simplifier
@@ -1352,7 +1352,7 @@
 (def exp->sincos
   (letfn [(positive? [x]
             (not (or (g/negative? x)
-                     (v/zero? x))))
+                     (g/zero? x))))
 
           (pos-pred [m]
             (let [im (g/imag-part (m '?c1))]

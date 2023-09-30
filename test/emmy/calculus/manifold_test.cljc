@@ -176,7 +176,7 @@
 
   (checking "R2-rect->polar" 100 [x (gen/fmap #(g/modulo % 1000) sg/real)
                                   y (gen/fmap #(g/modulo % 1000) sg/real)]
-            (when-not (and (v/zero? x) (v/zero? y))
+            (when-not (and (g/zero? x) (g/zero? y))
               (let [r     (g/abs (up x y))
                     theta (g/atan y x)]
                 (is (= (up r theta)

@@ -26,6 +26,7 @@
 
 ;; "Backstop" implementations that apply to anything that descends from
 ;; ::v/real.
+(defmethod g/zero? [::v/real] [a] (core/zero? a))
 (defmethod g/add [::v/real ::v/real] [a b] (#?(:clj +' :cljs core/+) a b))
 (defmethod g/mul [::v/real ::v/real] [a b] (#?(:clj *' :cljs core/*) a b))
 (defmethod g/sub [::v/real ::v/real] [a b] (#?(:clj -' :cljs core/-) a b))
@@ -69,7 +70,7 @@
 ;; ## Trig Operations
 
 (defmethod g/sinc [::v/real] [a]
-  (cond (v/zero? a)     1
+  (cond (g/zero? a)     1
         (g/infinite? a) 0
         :else (g// (g/sin a) a)))
 
@@ -178,7 +179,7 @@
   "Checked implementation of g/exact-divide general enough to use for any type
   that defines g/remainder and g/quotient."
   [a b]
-  {:pre [(v/zero? (g/remainder a b))]}
+  {:pre [(g/zero? (g/remainder a b))]}
   (g/quotient a b))
 
 (defmethod g/exact-divide [::v/integral ::v/integral] [b a]
@@ -265,7 +266,7 @@
 
      (defmethod g/div [::v/integral ::v/integral] [a b]
        (let [rem (g/remainder a b)]
-         (if (v/zero? rem)
+         (if (g/zero? rem)
            (g/quotient a b)
            (r/rationalize a b))))
 
@@ -299,7 +300,7 @@
 
      (defmethod g/div [js/BigInt js/BigInt] [a b]
        (let [rem (js-mod a b)]
-         (if (v/zero? rem)
+         (if (g/zero? rem)
            (core// a b)
            (r/rationalize a b))))
 

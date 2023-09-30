@@ -101,7 +101,7 @@
           "freeze representation isn't THAT great yet..."))
 
     (checking "zero-like" 100 [p (sg/polynomial)]
-              (is (v/zero?
+              (is (g/zero?
                    (v/zero-like p))))
 
     (testing "one"
@@ -262,9 +262,9 @@
                   "unless both sides are coeffs!")))
 
   (testing "dense make returns 0 for no entries or a zero first entry"
-    (is (v/zero? (p/make [])))
-    (is (v/zero? (p/make [0])))
-    (is (not (v/zero? (p/make [1])))))
+    (is (g/zero? (p/make [])))
+    (is (g/zero? (p/make [0])))
+    (is (not (g/zero? (p/make [1])))))
 
   (checking "dense construction round-trips with univariate->dense" 100
             [prefix (gen/vector gen/nat 1 20)
@@ -310,12 +310,12 @@
   (checking "p/make returns zero only if first entry is zero" 100
             [arity gen/nat
              x sg/number]
-            (if (v/zero? x)
-              (is (v/zero? (p/make [x])))
+            (if (g/zero? x)
+              (is (g/zero? (p/make [x])))
               (is (= x (p/make [x]))))
 
-            (if (v/zero? x)
-              (is (v/zero? (p/constant arity x)))
+            (if (g/zero? x)
+              (is (g/zero? (p/constant arity x)))
               (is (v/= x (p/constant arity x)))))
 
   (checking "terms, lead term" 100
@@ -381,10 +381,10 @@
     (is (not (p/monic? 2))))
 
   (checking "scale, scale-l" 100 [p (sg/polynomial)]
-            (is (v/zero? (p/scale-l 0 p)))
-            (is (v/zero? (p/scale-l p 0)))
-            (is (v/zero? (p/scale 0 p)))
-            (is (v/zero? (p/scale p 0))))
+            (is (g/zero? (p/scale-l 0 p)))
+            (is (g/zero? (p/scale-l p 0)))
+            (is (g/zero? (p/scale 0 p)))
+            (is (g/zero? (p/scale p 0))))
 
   (checking "map-exponents works on scalars" 100
             [c  gen/nat
@@ -457,7 +457,7 @@
   (checking "drop-leading-term" 100
             [xs (gen/vector (gen/fmap inc gen/nat) 2 20)
              c  (gen/fmap inc gen/nat)]
-            (is (v/zero? (p/drop-leading-term c))
+            (is (g/zero? (p/drop-leading-term c))
                 "dropping the leading term from a constant returns 0.")
 
             (is (= (p/make xs)
@@ -520,7 +520,7 @@
                    (g/negate (p/make l)))))
 
   (testing "add/sub unit tests"
-    (is (v/zero?
+    (is (g/zero?
          (g/add (p/make [0 0 2])
                 (p/make [0 0 -2]))))
 
@@ -536,7 +536,7 @@
            (g/add (p/make [0 1])
                   (p/make [-1]))))
 
-    (is (v/zero?
+    (is (g/zero?
          (g/sub (p/make [0 0 2])
                 (p/make [0 0 2]))))
 
@@ -580,7 +580,7 @@
             (let [p*q (g/mul p q)
                   [Q R] (p/divide p*q q)]
               (is (p/divisible? p*q q))
-              (is (v/zero? R))
+              (is (g/zero? R))
               (is (= p Q))))
 
   (testing "mul"
@@ -810,7 +810,7 @@
               [p  (sg/polynomial :arity arity)
                xs (gen/vector sg/symbol arity)]
               (is (every?
-                   v/zero?
+                   g/zero?
                    (for [idx (range (inc arity))]
                      (let [sub-xs (subvec xs 0 idx)
                            padded (into sub-xs (repeat (- arity idx) 0))]
@@ -857,13 +857,13 @@
               [term-count (gen/choose 2 10)
                factor pos
                p (gen/fmap p/make (gen/vector pos term-count))]
-              (is (v/zero?
+              (is (g/zero?
                    (g/simplify
                     (g/- (p (g/* 'x factor))
                          ((p/arg-scale p [factor]) 'x))))
                   "arg-scale")
 
-              (is (v/zero?
+              (is (g/zero?
                    (g/simplify
                     (g/- (p (g/+ 'x factor))
                          ((p/arg-shift p [factor]) 'x))))

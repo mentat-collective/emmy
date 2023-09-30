@@ -10,6 +10,7 @@
             [emmy.generators :as sg]
             [emmy.generic :as g]
             [emmy.matrix :as m]
+            [emmy.numbers] ; for def of g/zero?
             [emmy.series :as series]
             [emmy.simplify :refer [hermetic-simplify-fixture]]
             [emmy.structure :as s :refer [literal-up
@@ -20,8 +21,8 @@
 (use-fixtures :each hermetic-simplify-fixture)
 
 (deftest value-protocol-tests
-  (testing "v/zero? returns false for fns"
-    (is (not (v/zero? (af/literal-function 'f)))))
+  (testing "g/zero? returns false for fns"
+    (is (not (g/zero? (af/literal-function 'f)))))
 
   (testing "v/one? returns false for fns"
     (is (not (v/one? (af/literal-function 'f)))))
@@ -126,31 +127,31 @@
 (deftest trig-tests
   (testing "tan, sin, cos"
     (let [f (g/- g/tan (g/div g/sin g/cos))]
-      (is (v/zero?
+      (is (g/zero?
            (g/simplify (f 'x))))))
 
   (testing "cot"
     (let [f (g/- g/cot (g/invert g/tan))]
-      (is (v/zero? (g/simplify (f 'x))))))
+      (is (g/zero? (g/simplify (f 'x))))))
 
   (testing "tanh"
     (let [f (g/- (g/div g/sinh g/cosh) g/tanh)]
-      (is (v/zero?
+      (is (g/zero?
            (g/simplify (f 'x))))))
 
   (testing "sec"
     (let [f (g/- (g/invert g/cos) g/sec)]
-      (is (v/zero?
+      (is (g/zero?
            (g/simplify (f 'x))))))
 
   (testing "csc"
     (let [f (g/- (g/invert g/sin) g/csc)]
-      (is (v/zero?
+      (is (g/zero?
            (g/simplify (f 'x))))))
 
   (testing "sech"
     (let [f (g/- (g/invert g/cosh) g/sech)]
-      (is (v/zero?
+      (is (g/zero?
            (g/simplify (f 'x)))))))
 
 (defn transpose-defining-relation
@@ -182,7 +183,7 @@
           a (literal-up 'a 2)
           g (fn [w] (g/* (literal-down 'g 3) w))
           s (up 'x 'y)]
-      (is (v/zero? (transpose-defining-relation (DTf s) g a))
+      (is (g/zero? (transpose-defining-relation (DTf s) g a))
           "This function, whatever it is (see scmutils function.scm) satisfies
           the transpose defining relation.")
 

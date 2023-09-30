@@ -133,7 +133,6 @@
      m))
 
   v/Value
-  (zero? [this] (zero? this))
   (one? [this] (one? this))
   (identity? [this] (one? this))
 
@@ -493,15 +492,15 @@
   "Returns true if the quaternion `q` has zero entries for all non-real fields,
   false otherwise."
   [q]
-  (and (v/zero? (get-i q))
-       (v/zero? (get-j q))
-       (v/zero? (get-k q))))
+  (and (g/zero? (get-i q))
+       (g/zero? (get-j q))
+       (g/zero? (get-k q))))
 
 (defn zero?
   "Returns true if `q` is a quaternion with zeros in all coefficient positions,
   false otherwise."
   [q]
-  (and (real? q) (v/zero? (get-r q))))
+  (and (real? q) (g/zero? (get-r q))))
 
 (defn one?
   "Returns true if `q` is a [[real?]] quaternion with a one-like coefficient in
@@ -514,7 +513,7 @@
 
   A 'pure' quaternion is sometimes called an 'imaginary' quaternion."
   [q]
-  (v/zero? (get-r q)))
+  (g/zero? (get-r q)))
 
 (declare magnitude-sq)
 
@@ -564,8 +563,8 @@
           (sc/complex? q2)
           (and (v/= r (sc/real q2))
                (v/= i (sc/imaginary q2))
-               (v/zero? j)
-               (v/zero? k))
+               (g/zero? j)
+               (g/zero? k))
 
           (sequential? q2)
           (and (= (count q2) 4)
@@ -1069,9 +1068,9 @@
   $$"
   [q]
   (let [[r i j k] q]
-    (if (and (v/zero? j)
-             (v/zero? k))
-      (if (v/zero? i)
+    (if (and (g/zero? j)
+             (g/zero? k))
+      (if (g/zero? i)
         (make (g/log r))
         (make (g/log (g/abs [r i]))
               (g/atan i r)
@@ -1099,7 +1098,7 @@
         exp-r (g/exp r)
         v     (three-vector q)
         v-mag (g/abs v)]
-    (if (v/zero? v-mag)
+    (if (g/zero? v-mag)
       (make exp-r 0 0 0)
       (make (g/* exp-r (g/cos v-mag))
             (g/* exp-r (g/sinc v-mag) v)))))
@@ -1472,21 +1471,21 @@
                       q2 (g// q2q3 q3)]
                   (make q0 q1 q2 q3)))
 
-          (not (v/numeric-zero? q0-2s))
+          (not (g/numeric-zero? q0-2s))
           (let [q0 (g/sqrt q0-2)
                 q1 (g// q0q1 q0)
                 q2 (g// q0q2 q0)
                 q3 (g// q0q3 q0)]
             (make q0 q1 q2 q3))
 
-          (not (v/numeric-zero? q1-2s))
+          (not (g/numeric-zero? q1-2s))
           (let [q1 (g/sqrt q1-2)
                 q0 0
                 q2 (g// q1q2 q1)
                 q3 (g// q1q3 q1)]
             (make q0 q1 q2 q3))
 
-          (not (v/numeric-zero? q2-2s))
+          (not (g/numeric-zero? q2-2s))
           (let [q2 (g/sqrt q2-2)
                 q0 0
                 q1 0
@@ -1544,6 +1543,9 @@
 
 ;; ## Generic Method Installation
 ;;
+
+(defmethod g/zero? [::quaternion] [a] (zero? a))
+
 ;; ### Equality
 ;;
 ;; Because equality is a symmetric relation, these methods arrange their

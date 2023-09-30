@@ -96,8 +96,8 @@
                            (g/modulo modulus))))))
 
     (testing "zero?"
-      (is (v/zero? m0_7))
-      (is (v/zero? (v/zero-like m5_7))))
+      (is (g/zero? m0_7))
+      (is (g/zero? (v/zero-like m5_7))))
 
     (testing "one?"
       (is (v/one? m1_7))

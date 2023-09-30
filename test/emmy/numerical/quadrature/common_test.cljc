@@ -3,7 +3,7 @@
 (ns emmy.numerical.quadrature.common-test
   (:require [clojure.test :refer [is deftest testing]]
             [emmy.numerical.quadrature.common :as qc]
-            [emmy.value :as v]))
+            [emmy.util :as u]))
 
 (deftest interval-tests
   (testing "an interval is open unless it's fully closed"
@@ -50,7 +50,7 @@
              (integrate f 0 10))
           "our fake sequence converges after four steps!")
 
-      (let [tiny-r (fn [l] (+ l (* 10 v/machine-epsilon)))]
+      (let [tiny-r (fn [l] (+ l (* 10 u/machine-epsilon)))]
         (is (= {:converged? true
                 :terms-checked 1
                 :result slim-estimate}

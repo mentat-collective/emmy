@@ -6,6 +6,7 @@
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
             [emmy.generators :as sg]
+            [emmy.generic :as g]
             [emmy.util :as u]
             [emmy.value :as v])
   #?(:clj
@@ -27,9 +28,9 @@
 
 (deftest vector-value-impl
   (testing "zero?"
-    (is (v/zero? []))
-    (is (v/zero? [0 0]))
-    (is (not (v/zero? [1 2 3]))))
+    (is (g/zero? []))
+    (is (g/zero? [0 0]))
+    (is (not (g/zero? [1 2 3]))))
 
   (testing "zero-like"
     (is (= [0 0 0] (v/zero-like [1 2 3])))
@@ -57,8 +58,8 @@
 (deftest numeric-value-protocol-tests
   (checking "*-like properly coerce" 100
             [n sg/number]
-            (is (v/zero? (v/zero-like n)))
-            (is (not (v/zero? (v/one-like n))))
+            (is (g/zero? (v/zero-like n)))
+            (is (not (g/zero? (v/one-like n))))
 
             (is (v/one? (v/one-like n)))
             (is (not (v/one? (v/zero-like n))))
@@ -133,10 +134,10 @@
                       (compare l r))))))
 
 (deftest zero-tests
-  (is (v/zero? 0))
-  (is (v/zero? 0.0))
-  (is (not (v/zero? 1)))
-  (is (not (v/zero? 0.1))))
+  (is (g/zero? 0))
+  (is (g/zero? 0.0))
+  (is (not (g/zero? 1)))
+  (is (not (g/zero? 0.1))))
 
 (deftest one-tests
   (is (v/one? 1))

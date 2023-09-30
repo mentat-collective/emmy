@@ -23,6 +23,7 @@
   website](https://www.cs.dartmouth.edu/~doug/powser.html)."
   (:refer-clojure :exclude [identity])
   (:require [emmy.differential :as d]
+            [emmy.expression]  ;; for the effect of the defmethod of zero? for Literals
             [emmy.function :as f]
             [emmy.generic :as g]
             [emmy.series.impl :as i]
@@ -43,7 +44,6 @@
   (extract-tangent [s tag] (fmap #(d/extract-tangent % tag) s))
 
   v/Value
-  (zero? [_] false)
   (one? [_] false)
   (identity? [_] false)
   (zero-like [_] s-zero)
@@ -215,7 +215,6 @@
   (extract-tangent [s tag] (fmap #(d/extract-tangent % tag) s))
 
   v/Value
-  (zero? [_] false)
   (one? [_] false)
   (identity? [_] false)
   (zero-like [_] zero)
@@ -225,7 +224,7 @@
   (freeze [_]
     (let [prefix (->> (g/simplify (take 4 xs))
                       (v/freeze)
-                      (filter (complement v/zero?))
+                      (filter (complement g/zero?))
                       (map-indexed
                        (fn [n a]
                          (if (v/one? a)
@@ -715,6 +714,9 @@
 
 (doseq [[ctor kind] [[->Series ::series]
                      [->PowerSeries ::power-series]]]
+
+  (defmethod g/zero? [kind] [s] false)
+
   (defmethod g/add [kind kind] [s t]
     (ctor (i/seq:+ (seq s) (seq t)) nil))
 

@@ -47,7 +47,6 @@
 (defrecord Wrap [s]
   v/Value
   (one? [this] (= this (v/one-like this)))
-  (zero? [this] (= this (v/zero-like this)))
   (identity? [this] (= this (v/identity-like this)))
   (zero-like [_] (Wrap. "0"))
   (one-like [_] (Wrap. "1"))
@@ -55,6 +54,8 @@
   (freeze [_] (list 'wrap s))
   (exact? [_] false)
   (kind [_] ::wrap))
+
+(defmethod g/zero? [::wrap] [a] (= a (v/zero-like a)))
 
 (defmethod g/add [::wrap ::wrap] [l r]
   (->Wrap (str (:s l) "+" (:s r))))
@@ -115,14 +116,14 @@
   (checking "g/+" 100 [x gen/any-equatable]
             (is (= x (g/+ x)) "single arg should return itself, for any type.")
 
-            (is (= (if (v/numeric-zero? x) 0 x)
+            (is (= (if (g/numeric-zero? x) 0 x)
                    (g/+ x 0))
                 "adding a 0 works for any input. The first zero element gets
                 returned.")
 
             (is (= x (g/+ 0 x)) "adding a leading 0 acts as identity.")
 
-            (is (= (if (v/numeric-zero? x) 0 x)
+            (is (= (if (g/numeric-zero? x) 0 x)
                    (g/+ 0 x 0.0 0 0)) "multi-arg works as long as zeros
             appear.")))
 

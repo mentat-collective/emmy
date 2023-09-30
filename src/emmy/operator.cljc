@@ -27,11 +27,6 @@
 
 (deftype Operator [o arity name context m]
   v/Value
-  (zero? [this]
-    (if-let [z-fn (:zero? context)]
-      (z-fn this)
-      (= o v/zero-like)))
-
   ;; NOTE: `one?` is the multiplicative identity; by default, we return false
   ;; because the system doesn't currently check if the types match for
   ;; multiplicative identity. So `(* o:identity 5)` would return 5, which is
@@ -333,7 +328,7 @@
   difference of applying the supplied operators."
   [o p]
   (let [ctx (joint-context o p)]
-    (if (v/zero? p)
+    (if (g/zero? p)
       (with-context o ctx)
       (->Operator (fn [& xs]
                     (g/sub (apply o xs)
@@ -351,8 +346,8 @@
   given operators."
   [o p]
   (let [ctx (joint-context o p)]
-    (cond (v/zero? o) (with-context p ctx)
-          (v/zero? p) (with-context o ctx)
+    (cond (g/zero? o) (with-context p ctx)
+          (g/zero? p) (with-context o ctx)
           :else
           (->Operator (fn [& xs]
                         (g/add (apply o xs)
@@ -373,7 +368,7 @@
    (let [ctx (joint-context o p)]
      (cond (v/identity? o) (with-context p ctx)
            (v/identity? p) (with-context o ctx)
-           (v/zero? o)     (with-context o ctx)
+           (g/zero? o)     (with-context o ctx)
            :else
            (->Operator (f/compose o p)
                        (arity p)
@@ -478,6 +473,12 @@
                   `(~sym ~(name g))
                   (context g)
                   nil))))
+
+
+(defmethod g/zero? [::operator] [^Operator o]
+    (if-let [z-fn (:zero? (.-context o))]
+      (z-fn o)
+      (= (.-o o) v/zero-like)))
 
 (defmethod g/add [::operator ::operator] [o p] (o:+ o p))
 (defmethod g/add [::operator ::co-operator] [o f] (o+f o f))

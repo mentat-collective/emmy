@@ -25,7 +25,6 @@
             [emmy.series :as series]
             [emmy.util :as u]
             [emmy.util.stream :as us]
-            [emmy.value :as v]
             [mentat.clerk-utils :refer [->clerk ->clerk-only]]))
 
 ^{:nextjournal.clerk/visibility {:code :hide :result :hide}}
@@ -275,7 +274,7 @@
 ;; $1.0 + \epsilon$ can be distinguished."
 ;;
 ;;
-;; In the current library, `v/machine-epsilon` holds this value.
+;; In the current library, `u/machine-epsilon` holds this value.
 ;;
 ;; Our goal, then, is to see if we can figure out when the error due to roundoff
 ;; grows so large that it exceeds the tolerance we want to apply to our
@@ -330,7 +329,7 @@
 
   `initial-error` * 2^n <= `tolerance`"
   [units tolerance]
-  (let [initial-error (* v/machine-epsilon units)]
+  (let [initial-error (* u/machine-epsilon units)]
     (Math/floor
      (/ (Math/log (/ tolerance initial-error))
         (Math/log 2)))))
@@ -468,7 +467,7 @@
   "Fills in default values required by `D-numeric`. Any option not used by
   `D-numeric` gets passed on to `us/seq-limit`."
   [m]
-  (let [defaults {:tolerance v/sqrt-machine-epsilon
+  (let [defaults {:tolerance u/sqrt-machine-epsilon
                   :method    :central}
         {:keys [method] :as opts} (merge defaults m)]
     (assert (contains? valid-methods method)

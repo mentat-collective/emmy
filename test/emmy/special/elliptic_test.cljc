@@ -9,6 +9,7 @@
             [emmy.numerical.derivative :refer [D-numeric]]
             [emmy.numerical.quadrature :as q]
             [emmy.special.elliptic :as e]
+            [emmy.util :as u]
             [emmy.value :as v]
             [same.core :refer [ish? with-comparator]]))
 
@@ -17,7 +18,7 @@
 (def gen-k
   (gen/double* {:infinite? false :NaN? false
                 :min 0
-                :max (- 1 v/machine-epsilon)}))
+                :max (- 1 u/machine-epsilon)}))
 
 (def gen-phi-k
   (gen/tuple (sg/reasonable-double)

@@ -10,8 +10,8 @@
   (:require [emmy.algebra.fold :as af]
             [emmy.generic :as g]
             [emmy.polynomial.interpolate :as pi]
+            [emmy.util :as u]
             [emmy.util.stream :as us]
-            [emmy.value :as v]
             [mentat.clerk-utils :refer [->clerk-only]]))
 
 ;; ## Richardson Interpolation
@@ -78,7 +78,7 @@
 
 (->clerk-only
  (-> archimedean-pi-sequence
-     (us/seq-limit {:tolerance v/machine-epsilon})))
+     (us/seq-limit {:tolerance u/machine-epsilon})))
 
 ;; Enter Sussman: "Imagine poor Archimedes doing the arithmetic by hand: square
 ;; roots without even the benefit of our place value system! He would be
@@ -256,7 +256,7 @@
 
 (comment
   (= (-> (richardson-sequence archimedean-pi-sequence 2 2 2)
-         (us/seq-limit {:tolerance v/machine-epsilon}))
+         (us/seq-limit {:tolerance u/machine-epsilon}))
 
      {:converged? true
       :terms-checked 7

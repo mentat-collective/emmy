@@ -5,8 +5,8 @@
             [emmy.numbers]
             [emmy.polynomial.interpolate :as pi]
             [emmy.polynomial.richardson :as pr]
+            [emmy.util :as u]
             [emmy.util.stream :as us]
-            [emmy.value :as v]
             [same.core :refer [ish?]]))
 
 (deftest richardson-limit-tests
@@ -16,21 +16,21 @@
       (is (ish? {:converged? true
                  :terms-checked 26
                  :result 3.1415926535897944}
-                (us/seq-limit pi-seq {:tolerance v/machine-epsilon}))))
+                (us/seq-limit pi-seq {:tolerance u/machine-epsilon}))))
 
     (testing "with richardson, we go faster."
       (is (ish? {:converged? true
                  :terms-checked 7
                  :result 3.1415926535897936}
                 (-> (pr/richardson-sequence pi-seq 2 2 2)
-                    (us/seq-limit {:tolerance v/machine-epsilon}))))
+                    (us/seq-limit {:tolerance u/machine-epsilon}))))
 
       (is (ish? {:converged? false
                  :terms-checked 3
                  :result 3.1415903931299374}
                 (-> (take 3 pi-seq)
                     (pr/richardson-sequence 2 2 2)
-                    (us/seq-limit {:tolerance v/machine-epsilon})))
+                    (us/seq-limit {:tolerance u/machine-epsilon})))
           "richardson-sequence bails if the input sequence runs out of terms.")
 
       (is (ish? [2.8284271247461903

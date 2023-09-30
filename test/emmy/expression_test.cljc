@@ -1,7 +1,7 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
 (ns emmy.expression-test
-  (:require [clojure.test :refer [is deftest testing]]
+  (:require [clojure.test :refer [is deftest testing use-fixtures]]
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
             [emmy.abstract.number :as an]
@@ -11,12 +11,22 @@
 
 (deftest expressions
   (testing "value protocol impl"
-    (is (v/zero? (e/make-literal ::blah 0)))
+    ;; Things produced by make-literal have the `kind` supplied at creation
+    ;; time. Outside of the builtin kind(s), nothing is known about the zero-nature
+    ;; of such objects. To inherit the default test, derive from :e/numeric
+    (derive ::blah-derived ::e/numeric)
+    (is (isa? ::blah-derived ::e/numeric))
+    (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
+                 (g/zero? (e/make-literal ::blah 0))))
+    (is (g/zero? (e/make-literal ::blah-derived 0)))
+
     (is (v/one? (e/make-literal ::blah 1)))
     (is (v/identity? (e/make-literal ::blah 1)))
 
-    (is (not (v/zero? (e/make-literal ::blah 10))))
-    (is (v/zero? (v/zero-like (e/make-literal ::blah 10))))
+    (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
+                 (g/zero? (e/make-literal ::blah 10))))
+    (is (not (g/zero? (e/make-literal ::blah-derived 10))))
+    (is (g/zero? (v/zero-like (e/make-literal ::blah 10))))
 
     (is (not (v/one? (e/make-literal ::blah 10))))
     (is (v/one? (v/one-like (e/make-literal ::blah 10))))
@@ -140,10 +150,10 @@
 
     (testing "for types that don't play nice we resort to hashing."
       (is (= -1 (e/compare '(+ x y) #emmy/complex "1+2i")))
-      (is (= 1 (e/compare #emmy/complex "1+2i" '(+ x y)))))
+      (is (= 1 (e/compare #emmy/complex "1+2i" '(+ x y)))))))
 
     ;; TODO add more tests as we start to explore this function.
-))
+
 
 (deftest string-form-test
   (let [expr (g/+ 'x 'x)]

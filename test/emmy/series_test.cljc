@@ -46,7 +46,7 @@
 
   (testing "meta / with-meta work")
   (testing "one? zero? identity? always return false (for now!)"
-    (is (not (v/zero? (v/zero-like series))))
+    (is (not (g/zero? (v/zero-like series))))
     (is (not (v/one? (v/one-like series))))
     (is (not (v/identity? (v/identity-like series)))))
 
@@ -553,19 +553,19 @@
   (is (->> (g/- s/sin-series
                 (g/sqrt (g/- 1 (g/expt s/cos-series 2))))
            (take 30)
-           (every? v/zero?))
+           (every? g/zero?))
       "sin(x) = sqrt(1-cos(x)^2) to 30 terms")
 
   (is (->> (g/- s/tan-series (s/revert s/atan-series))
            (take 30)
-           (every? v/zero?))
+           (every? g/zero?))
       "tan(x) = revert(arctan(x))")
 
   (is (->> (g/- s/atan-series
                 (s/integral
                  (g/invert (s/power-series 1 0 1))))
            (take 30)
-           (every? v/zero?))
+           (every? g/zero?))
       "atan(x) = integral(1/(1+x^2))"))
 
 (deftest series-trig-tests

@@ -12,10 +12,10 @@
             [same.core :refer [ish? with-comparator]]))
 
 (deftest value-protocol-tests
-  (testing "v/zero? returns false for fns"
-    (is (not (v/zero? neg?)))
-    (is (not (v/zero? #'neg?)))
-    (is (not (v/zero? g/add))))
+  (testing "g/zero? returns false for fns"
+    (is (not (g/zero? neg?)))
+    (is (not (g/zero? #'neg?)))
+    (is (not (g/zero? g/add))))
 
   (testing "v/one? returns false for fns"
     (is (not (v/one? neg?)))
@@ -312,12 +312,12 @@
   (with-comparator (v/within 1e-10)
     (checking "tan, sin, cos" 100 [n sg/real]
               (let [f (g/- g/tan (g/div g/sin g/cos))]
-                (when-not (v/zero? n)
+                (when-not (g/zero? n)
                   (is (ish? 0 (f n))))))
 
     (checking "cot" 100 [n sg/real]
               (let [f (g/- g/cot (g/invert g/tan))]
-                (when-not (v/zero? n)
+                (when-not (g/zero? n)
                   (is (ish? 0 (f n)))))))
 
   (checking "tanh" 100 [n (sg/reasonable-double {:min -100 :max 100})]
@@ -330,7 +330,7 @@
 
   (checking "csc" 100 [n sg/real]
             (let [f (g/- (g/invert g/sin) g/csc)]
-              (when-not (v/zero? n)
+              (when-not (g/zero? n)
                 (is (ish? 0 (f n))))))
 
   (checking "sech" 100 [n sg/real]
@@ -406,13 +406,13 @@
       (is (= 20 ((g/determinant *) 4 5))))
 
     (checking "invert" 100 [n sg/real]
-              (when-not (v/zero? n)
+              (when-not (g/zero? n)
                 (is (= ((g/+ 1 g/invert) n)
                        (g/+ 1 (g/invert n))))))
 
     (checking "negative?" 100 [n sg/real]
               (is (not ((g/negative? g/abs) n)))
-              (when-not (v/zero? n)
+              (when-not (g/zero? n)
                 (is ((g/negative? (f/compose g/negate g/abs)) n))))
 
     (checking "abs" 100 [n sg/real]
@@ -421,13 +421,13 @@
 
     (checking "quotient" 100 [l sg/any-integral
                               r sg/any-integral]
-              (when-not (v/zero? r)
+              (when-not (g/zero? r)
                 (is (= ((g/+ 1 g/quotient) l r)
                        (g/+ 1 (g/quotient l r))))))
 
     (checking "exact-divide" 100 [n (gen/choose -200 200)
                                   m (gen/choose -20 20)]
-              (when-not (v/zero? m)
+              (when-not (g/zero? m)
                 (is (= n ((g/exact-divide g/* m) n m))
                     "The f position here is a function that takes 2 elements,
                   passes them to g/*, the calls exact-divide on the result and
@@ -440,13 +440,13 @@
 
     (checking "remainder" 100 [l sg/any-integral
                                r sg/any-integral]
-              (when-not (v/zero? r)
+              (when-not (g/zero? r)
                 (is (= ((g/+ 1 g/remainder) l r)
                        (g/+ 1 (g/remainder l r))))))
 
     (checking "modulo" 100 [l sg/any-integral
                             r sg/any-integral]
-              (when-not (v/zero? r)
+              (when-not (g/zero? r)
                 (is (= ((g/+ 1 g/modulo) l r)
                        (g/+ 1 (g/modulo l r))))))
 
@@ -472,7 +472,7 @@
       (checking "solve-linear, div pass through correctly" 100
                 [l sg/real
                  r sg/real]
-                (when-not (v/zero? r)
+                (when-not (g/zero? r)
                   (is (= (g// l r)
                          ((passthrough g//) l r)))
 

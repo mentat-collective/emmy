@@ -79,6 +79,7 @@
       (is (= [] (#'d/terms:* l r))))))
 
 (deftest differential-type-tests
+  (defmethod g/zero? [#?(:clj String :cljs js/string)] [_] false)
   (testing "v/numerical? special cases"
     (is (not (v/numerical? (d/from-terms {[] "face"}))))
     (is (v/numerical? (d/->Differential []))
@@ -118,14 +119,14 @@
   (testing "value protocol implementation"
     (let [zero (d/->Differential [])
           dy (d/from-terms {[] 0, [1] 1})]
-      (is (v/zero? zero)
+      (is (g/zero? zero)
           "zero? returns true for an empty term list")
 
-      (is (v/zero? (d/from-terms [(d/make-term [] 0)]))
+      (is (g/zero? (d/from-terms [(d/make-term [] 0)]))
           "zero? returns true for an explicit zero")
 
-      (is (not (v/zero? dy))
-          "the finite term is 0, but `v/zero?` fails if any perturbation is
+      (is (not (g/zero? dy))
+          "the finite term is 0, but `g/zero?` fails if any perturbation is
           non-zero.")
 
       (is (= dy 0)
@@ -144,7 +145,7 @@
         (is (not (v/identity? (d/from-terms {[] 1 [1] 1})))))
 
 (checking "*-like works" 100 [diff real-diff-gen]
-                (is (v/zero? (v/zero-like diff)))
+                (is (g/zero? (v/zero-like diff)))
                 (is (v/one? (v/one-like diff)))
                 (is (v/identity? (v/identity-like diff))))
 
@@ -367,11 +368,11 @@
         (is (d/eq (d/from-terms {[] 'k [0] 1}) (d/d:+ dx 'k))))
 
       (testing "various ways to get to zero"
-        (is (v/zero? (d/d:+ dx -dx)))
-        (is (v/zero? (d/d:+ -dx dx)))
-        (is (v/zero? (d/d:* dx 0)))
-        (is (v/zero? (d/d:* 0 dx)))
-        (is (v/zero? (g/* dx dx))))
+        (is (g/zero? (d/d:+ dx -dx)))
+        (is (g/zero? (d/d:+ -dx dx)))
+        (is (g/zero? (d/d:* dx 0)))
+        (is (g/zero? (d/d:* 0 dx)))
+        (is (g/zero? (g/* dx dx))))
 
       (testing "associative, commutative multiplication"
         (is (d/eq dxdy (d/d:* dx dy)))
@@ -380,9 +381,9 @@
         (is (d/eq dxdydz (d/d:* (d/d:* dy dz) dx))))
 
       (testing "infinitesimals go to zero when multiplied!"
-        (is (v/zero? (d/d:* dx dx))
+        (is (g/zero? (d/d:* dx dx))
             "dx^2==0")
-        (is (v/zero? (d/d:* dz (d/d:* dy dz)))
+        (is (g/zero? (d/d:* dz (d/d:* dy dz)))
             "dy*dz^2==0"))))
 
   (checking "(a/b)*b == a, (a*b)/b == a" 100

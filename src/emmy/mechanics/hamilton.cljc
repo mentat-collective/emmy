@@ -221,7 +221,7 @@
                     M (Dw-of-v z)
                     b (w-of-v z)]
                 (if (and *validate-Legendre-transform?*
-                         (v/zero?
+                         (g/zero?
                           (g/simplify
                            (g/determinant M))))
                   (throw

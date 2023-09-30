@@ -596,7 +596,7 @@
                   (let [[x y] rep
                         rsq (g/+ (g/square x)
                                  (g/square y))]
-                    (when (v/zero? rsq)
+                    (when (g/zero? rsq)
                       (u/illegal-state "PolarCylindrical singular"))
                     (-> rep
                         (assoc 0 (g/sqrt rsq))
@@ -656,7 +656,7 @@
                            (g/+ (g/square x)
                                 (g/square y)
                                 (g/square z)))]
-                    (when (v/zero? r)
+                    (when (g/zero? r)
                       (u/illegal-state "SphericalCylindrical singular"))
                     (-> rep
                         (assoc 0 r)
@@ -715,7 +715,7 @@
                                   (g/square y)
                                   (g/square z)))]
                       (when (and (v/number? r)
-                                 (v/zero? r))
+                                 (g/zero? r))
                         (throw
                          (ex-info "->SpacetimeSpherical singular: "
                                   {:point point
@@ -862,7 +862,7 @@
                   (fn []
                     (letfn [(safe-atan [y x]
                               (when (and (number? y) (number? x)
-                                         (v/zero? y) (v/zero? x))
+                                         (g/zero? y) (g/zero? x))
                                 (log/warn "Sn-coordinates singular!"))
                               (g/atan y x))]
                       (let [pt (rotate-left
@@ -1042,7 +1042,7 @@
                         final-coord (nth pt n)]
                     (when (and (v/number? final-coord)
                                (or (g/negative? final-coord)
-                                   (v/zero? final-coord)))
+                                   (g/zero? final-coord)))
                       (throw
                        (ex-info "Point not covered by S^n-gnomic coordinate patch."
                                 {:point point
@@ -1075,7 +1075,7 @@
                   (= (g/dimension coords) n)
                   (let [c0 (nth coords 0)]
                     (or (not (v/number? c0))
-                        (not (v/zero? c0))))))
+                        (not (g/zero? c0))))))
 
            (check-point [_ point]
              (my-manifold-point? point manifold))

@@ -28,10 +28,10 @@
                 (is (vector? zero-v)
                     "still a vector!")
 
-                (is (v/zero? zero-v)
+                (is (g/zero? zero-v)
                     "zero? works")
 
-                (is (every? v/zero? zero-v)
+                (is (every? g/zero? zero-v)
                     "zero-like zeros out all values.")))
 
     (checking "v/kind, one?, identity?" 100 [v (gen/vector sg/any-integral)]
@@ -70,17 +70,17 @@
       (is (seq? zeros)
           "The output is indeed a seq, not a vector.")
 
-      (is (every? v/zero? zeros)
+      (is (every? g/zero? zeros)
           "v/zero-like lazily zeroes all entries")
 
-      (is (not (v/zero? zeros))
+      (is (not (g/zero? zeros))
           "to return true, this predicate would have to realize the full
           sequence... so instead it returns false.")
 
-      (is (every? v/zero? (v/zero-like (map inc (range 10))))
+      (is (every? g/zero? (v/zero-like (map inc (range 10))))
           "works with a non-Range type")
 
-      (is (every? v/zero? (v/zero-like (list 1 2 3)))
+      (is (every? g/zero? (v/zero-like (list 1 2 3)))
           "works with lists"))))
 
 (defrecord MyRecord [])
@@ -109,7 +109,7 @@
                       (g/* x m1))
                 "mult pushes into values")
 
-            (when-not (v/zero? x)
+            (when-not (g/zero? x)
               (is (ish? (u/map-vals #(g// % x) m1)
                         (g/divide m1 x))
                   "division by scalar pushes into values"))
@@ -189,10 +189,10 @@
     (checking "v/zero-like" 100
               [m (gen/map gen/keyword sg/number)]
               (let [zero-m (v/zero-like m)]
-                (is (v/zero? zero-m)
+                (is (g/zero? zero-m)
                     "zero? works")
 
-                (is (every? v/zero? (vals zero-m))
+                (is (every? g/zero? (vals zero-m))
                     "zero-like zeros out all values.")
 
                 (is (= (u/keyset m) (u/keyset zero-m))
@@ -289,7 +289,7 @@
     (checking "v/zero-like works" 100
               [s (gen/set sg/number)]
               (let [zero-s (v/zero-like s)]
-                (is (v/zero? zero-s))))
+                (is (g/zero? zero-s))))
 
     (checking "v/kind, v/one?, v/identity?" 100 [s (gen/set sg/any-integral)]
               (is (not (v/one? s))

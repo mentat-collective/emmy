@@ -75,7 +75,6 @@
 
 (deftype Structure [orientation v m]
   v/Value
-  (zero? [_] (every? v/zero? v))
   (one? [_] false)
   (identity? [_] false)
   (zero-like [_] (Structure. orientation (v/zero-like v) m))
@@ -395,6 +394,9 @@
 (defmethod v/= [v/seqtype ::down] [_ _] false)
 (prefer-method v/= [::up ::down] [v/seqtype ::down])
 (prefer-method v/= [::down ::up] [::down v/seqtype])
+
+(defmethod g/zero? [::down] [s] (every? g/zero? s))
+(defmethod g/zero? [::up] [s] (every? g/zero? s))
 
 (defn- s:=
   "Returns true if the supplied structure `this` is equal to the argument on the

@@ -11,7 +11,6 @@
             [emmy.numsymb]
             [emmy.simplify :as s :refer [hermetic-simplify-fixture]]
             [emmy.util.stream :as us]
-            [emmy.value :as v]
             [same.core :refer [ish?]]))
 
 (use-fixtures :each hermetic-simplify-fixture)
@@ -43,7 +42,7 @@
             richardson-step (let [t**2 (g/square 2)]
                               (/ (- (* t**2 t2) t1)
                                  (- t**2 1)))]
-        (is (v/zero?
+        (is (g/zero?
              (g/simplify
               (- richardson-step
                  (simpson-step f 'a 'b))))

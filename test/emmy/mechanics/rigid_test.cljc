@@ -71,7 +71,7 @@
                  an-Euler-state)
                 (get 1)))))
 
-    (is (v/zero?
+    (is (g/zero?
          (simplify
           ;; this first is the fucked up one
           (- (-> ((rig/L-space-Euler 'A 'B 'C) an-Euler-state)

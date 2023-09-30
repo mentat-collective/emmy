@@ -293,7 +293,7 @@
 
   (checking "negating arg switches floor and ceiling, changes sign" 100
             [n sg/any-integral]
-            (is (v/zero?
+            (is (g/zero?
                  (g/+ (g/floor n)
                       (g/ceiling (g/- n))))
                 "floor(x) + ceil(-x) == 0")
@@ -349,7 +349,7 @@
   ;; TODO unit test with real side for anything that bakes in integer.
   (letfn [(nonzero [g]
             (gen/fmap (fn [x]
-                        (if (v/zero? x)
+                        (if (g/zero? x)
                           (v/one-like x)
                           x))
                       g))]
@@ -387,7 +387,7 @@
                    (g/quotient 4 1.2))))
 
     (checking "quotient, remainder with floats" 100
-              [x (gen/such-that (complement v/zero?) sg/real)]
+              [x (gen/such-that (complement g/zero?) sg/real)]
               (is (= (g/quotient x x)
                      (g/exact-divide x x))
                   "exact-divide is fine if passed identical inputs")
@@ -405,10 +405,10 @@
                   "x/-x == -1")
 
               (testing "remainder"
-                (is (v/zero? (g/remainder x x)))
-                (is (v/zero? (g/remainder x (- x))))
-                (is (v/zero? (g/remainder (- x) (- x))))
-                (is (v/zero? (g/remainder (- x) x)))))
+                (is (g/zero? (g/remainder x x)))
+                (is (g/zero? (g/remainder x (- x))))
+                (is (g/zero? (g/remainder (- x) (- x))))
+                (is (g/zero? (g/remainder (- x) x)))))
 
     (checking "x == y*quot(x,y) + rem(x,y)" 100
               [x (gen-integer 1e4)
@@ -417,7 +417,7 @@
                 (is (= x (g/+ (g/* y (g/quotient x y))
                               rem)))
 
-                (when-not (v/zero? rem)
+                (when-not (g/zero? rem)
                   (is (= (v/compare 0 x)
                          (v/compare 0 rem))
                       "`g/remainder` returns a result of either 0 or the same
@@ -430,7 +430,7 @@
                 (is (= x (g/+ (g/* y (g/floor (g// x y)))
                               mod)))
 
-                (when-not (v/zero? mod)
+                (when-not (g/zero? mod)
                   (is (= (v/compare 0 y)
                          (v/compare 0 mod))
                       "`g/modulo` returns a result of either 0 or the same sign
@@ -450,7 +450,7 @@
     (letfn [(nonzero [g]
               (gen/fmap (fn [x]
                           (let [small (g/remainder x 10000)]
-                            (if (v/zero? small) 1 small)))
+                            (if (g/zero? small) 1 small)))
                         g))]
       (checking "gcd" 100 [x (nonzero sg/small-integral)
                            y (nonzero sg/small-integral)
@@ -523,7 +523,7 @@
             (is (ish? (Math/tan n) (g/tan n))))
 
   (checking "tan" 100 [n sg/real]
-            (when-not (v/zero? (g/cos n))
+            (when-not (g/zero? (g/cos n))
               (is (ish? (g/div (g/sin n)
                                (g/cos n))
                         (g/tan n)))))
@@ -548,8 +548,8 @@
               (g/tan (g/atan 0.5 0.2)))))
 
   (checking "cot" 100 [n sg/real]
-            (when-not (or (v/zero? (g/sin n))
-                          (v/zero? (g/cos n)))
+            (when-not (or (g/zero? (g/sin n))
+                          (g/zero? (g/cos n)))
               (is (ish? (g/cot n)
                         (g/invert (g/tan n))))))
 
@@ -560,23 +560,23 @@
             (is (ish? (Math/sinh n) (g/sinh n))))
 
   (checking "tanh" 100 [n (sg/reasonable-double {:min -100 :max 100})]
-            (when-not (v/zero? (g/cosh n))
+            (when-not (g/zero? (g/cosh n))
               (is (ish? (g/tanh n)
                         (g/div (g/sinh n) (g/cosh n))))))
 
   (checking "sec" 100 [n sg/real]
-            (when-not (v/zero? (g/cosh n))
+            (when-not (g/zero? (g/cosh n))
               (is (ish? (g/sec n)
                         (g/invert (g/cos n))))))
 
   (checking "csc" 100 [n sg/real]
-            (when-not (v/zero? (g/sin n))
+            (when-not (g/zero? (g/sin n))
               (is (ish? (g/csc n)
                         (g/invert (g/sin n))))))
 
   (checking "sech" 100 [n sg/real]
             (let [cosh-n (g/cosh n)]
-              (when-not (v/zero? cosh-n)
+              (when-not (g/zero? cosh-n)
                 (is (ish? (g/sech n)
                           (g/invert cosh-n))))))
 
@@ -653,4 +653,4 @@
             (if (neg? x)
               (is (ish? Math/PI (g/angle x))
                   "the angle of a negative number is pi in the complex plane.")
-              (is (v/zero? (g/angle x))))))
+              (is (g/zero? (g/angle x))))))

@@ -7,8 +7,7 @@
             [emmy.numbers]
             [emmy.numerical.unimin.bracket :as ub]
             [emmy.numerical.unimin.golden :as ug]
-            [emmy.util :as u]
-            [emmy.value :as v])
+            [emmy.util :as u])
   #?(:clj
      (:import (org.apache.commons.math3.optim.univariate
                BrentOptimizer
@@ -187,7 +186,7 @@
                   maxiter
                   maxfun
                   callback]
-           :or {relative-threshold (g/sqrt v/machine-epsilon)
+           :or {relative-threshold (g/sqrt u/machine-epsilon)
                 absolute-threshold 1.0e-11
                 maxiter 1000
                 callback (constantly nil)}}]
@@ -291,7 +290,7 @@
                      maxiter
                      maxfun
                      callback]
-              :or {relative-threshold (g/sqrt v/machine-epsilon)
+              :or {relative-threshold (g/sqrt u/machine-epsilon)
                    absolute-threshold 1.0e-11
                    maxiter 1000
                    callback (constantly nil)}}]

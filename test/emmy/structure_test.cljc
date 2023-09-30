@@ -51,17 +51,17 @@
 
   (testing "value protocol"
     (testing "zero?"
-      (is (v/zero? (s/up)))
-      (is (v/zero? (s/down)))
-      (is (v/zero? (s/down 0)))
-      (is (v/zero? (s/up 0 0)))
-      (is (v/zero? (s/up 0)))
-      (is (v/zero? (s/down 0 0)))
-      (is (v/zero? (s/up 0 (s/down (s/up 0 0) (s/up 0 0)))))
-      (is (v/zero? (s/up 0 (u/long 0) (u/int 0)))))
+      (is (g/zero? (s/up)))
+      (is (g/zero? (s/down)))
+      (is (g/zero? (s/down 0)))
+      (is (g/zero? (s/up 0 0)))
+      (is (g/zero? (s/up 0)))
+      (is (g/zero? (s/down 0 0)))
+      (is (g/zero? (s/up 0 (s/down (s/up 0 0) (s/up 0 0)))))
+      (is (g/zero? (s/up 0 (u/long 0) (u/int 0)))))
 
     (testing "zero-like"
-      (is (v/zero? (v/zero-like (s/up 1 2 3))))
+      (is (g/zero? (v/zero-like (s/up 1 2 3))))
       (is (= (s/up 0 0 0) (v/zero-like (s/up 1 2 3))))
       (is (= (s/up) (v/zero-like (s/up))))
       (is (= (s/down 0 0 0) (v/zero-like (s/down 1 2 3))))
@@ -631,7 +631,7 @@
                     (s/unflatten (range) s)))
                 "flattening generates the replaced sequence")
 
-            (is (v/zero? (g/* s (s/transpose
+            (is (g/zero? (g/* s (s/transpose
                                  (s/unflatten (repeat 0) s))))
                 "flipping indices after replacing with all zeros creates a
                 structure that annihilates the original on multiplying."))
@@ -671,13 +671,13 @@
 
   (checking "s/compatible-zero works" 100
             [s (sg/structure sg/real)]
-            (is (v/zero? (g/* s (s/compatible-zero s))))
-            (is (v/zero? (g/* (s/compatible-zero s) s)))
+            (is (g/zero? (g/* s (s/compatible-zero s))))
+            (is (g/zero? (g/* (s/compatible-zero s) s)))
 
-            (is (v/zero? (g/* s (s/dual-zero s)))
+            (is (g/zero? (g/* s (s/dual-zero s)))
                 "dual-zero is an alias for compatible-zero.")
 
-            (is (v/zero? (g/* (s/dual-zero s) s))
+            (is (g/zero? (g/* (s/dual-zero s) s))
                 "dual-zero is an alias for compatible-zero."))
 
   (testing "compatible-shape"
@@ -716,7 +716,7 @@
             [[l inner r] (gen/let [rows (gen/choose 1 5)
                                    cols (gen/choose 1 5)]
                            (<l|:inner:|r> rows cols))]
-            (is (v/zero?
+            (is (g/zero?
                  (g/simplify
                   (g/- (g/transpose
                         (g/* l (g/* inner r)))
@@ -728,7 +728,7 @@
             [[l inner r] (gen/let [n (gen/choose 1 5)]
                            (<l|:inner:|r> n 0))]
 
-            (is (v/zero?
+            (is (g/zero?
                  (g/- (g/transpose
                        (g/* l (g/* inner r)))
                       (g/* (g/transpose r)
@@ -746,7 +746,7 @@
             [[l inner r] (gen/let [rows (gen/choose 0 5)
                                    cols (gen/choose 1 5)]
                            (<l|:inner:|r> rows cols))]
-            (is (v/zero?
+            (is (g/zero?
                  (g/simplify
                   (g/- (g/* l (g/* inner r))
                        (g/* (g/* (s/transpose-outer inner) l) r))))))
@@ -754,7 +754,7 @@
   (checking "cols=0 transpose-outer law produces incompatible sides" 100
             [[l inner r] (gen/let [rows (gen/choose 1 5)]
                            (<l|:inner:|r> rows 0))]
-            (is (v/zero?
+            (is (g/zero?
                  (g/* l (g/* inner r)))
                 "the left side is a structure of zeros")
 

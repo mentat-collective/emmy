@@ -11,7 +11,9 @@
   cljdocs](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/basics/generics)
   for a detailed discussion of how to use and extend the generic operations
   defined in [[emmy.generic]] and [[emmy.value]]."
-  (:refer-clojure :exclude [/ + - * divide infinite? abs])
+  (:refer-clojure :exclude [/ + - divide infinite? abs]
+                  :rename {zero? core-zero?
+                           * core-*})
   (:require [emmy.util :as u]
             [emmy.util.def :refer [defgeneric]]
             [emmy.value :as v])
@@ -20,8 +22,8 @@
 ;; ## Generic Numerics
 ;;
 ;; The first section introduces generic versions of
-;; Clojure's [[+]], [[-]], [[*]] and [[/]] operations. Any type that can
-;; implement all four of these operations forms a
+;; Clojure's [[zero?]], [[+]], [[-]], [[*]] and [[/]] operations. Any type that can
+;; implement all of of these operations forms a
 ;; mathematical [Field](https://en.wikipedia.org/wiki/Field_(mathematics)).
 ;;
 ;; There are, of course, other technical names for types that can only implement
@@ -49,6 +51,15 @@
 ;; each generic operation to some new type is sparse. Have a look
 ;; at [[emmy.complex]] for an example of how to do this.
 
+(defgeneric ^:no-doc zero? 1)
+
+(defn numeric-zero?
+  "Returns `true` if `x` is both a [[number?]] and [[zero?]], false otherwise."
+  [x]
+  (and (v/number? x)
+       (zero? x)))
+
+
 (defgeneric ^:no-doc add 2
   "Returns the sum of arguments `a` and `b`.
 
@@ -74,8 +85,8 @@
   ([] 0)
   ([x] x)
   ([x y]
-   (cond (v/numeric-zero? x) y
-         (v/numeric-zero? y) x
+   (cond (numeric-zero? x) y
+         (numeric-zero? y) x
          :else (add x y)))
   ([x y & more]
    (reduce + (+ x y) more)))
@@ -123,8 +134,8 @@
   ([] 0)
   ([x] (negate x))
   ([x y]
-   (cond (v/numeric-zero? y) x
-         (v/numeric-zero? x) (negate y)
+   (cond (numeric-zero? y) x
+         (numeric-zero? x) (negate y)
          :else (sub x y)))
   ([x y & more]
    (- x (apply + y more))))
@@ -144,7 +155,7 @@
 ;;;       |a b c| |0|   |0|       |0|
 ;;;       |d e f| |0| = |0|, not  |0|
 ;;;
-;;; We are less worried about the v/zero? below,
+;;; We are less worried about the zero? below,
 ;;; because any invertible matrix is square.
 
 (defn *
@@ -166,8 +177,8 @@
   ([x y]
    (let [numx? (v/numerical? x)
          numy? (v/numerical? y)]
-     (cond (and numx? (v/zero? x)) (v/zero-like y)
-           (and numy? (v/zero? y)) (v/zero-like x)
+     (cond (and numx? (zero? x)) (v/zero-like y)
+           (and numy? (zero? y)) (v/zero-like x)
            (and numx? (v/one? x)) y
            (and numy? (v/one? y)) x
            :else (mul x y))))
@@ -288,7 +299,7 @@
   {:dfdx (fn [x y]
            (mul y (expt x (sub y 1))))
    :dfdy (fn [x y]
-           (if (and (v/number? x) (v/zero? x))
+           (if (and (v/number? x) (zero? x))
              (if (v/number? y)
                (if (not (negative? y))
                  0
@@ -323,6 +334,34 @@
               (zero? e) (v/one-like e)
               :else (invert (expt' s (negate e)))))
       (u/illegal (str "No g/mul implementation registered for kind " kind)))))
+
+(def ^:no-doc relative-integer-tolerance (core-* 100 u/machine-epsilon))
+(def ^:no-doc absolute-integer-tolerance 1e-20)
+
+(defn almost-integral?
+  "Returns true if `x` is either:
+
+  - [[integral?]],
+  - a floating point number either < [[absolute-integer-tolerance]] (if near
+    zero) or within [[relative-integer-tolerance]] of the closest integer,
+
+  false otherwise."
+  [x]
+  (or (v/integral? x)
+      (and (float? x)
+           (let [x (double x)
+                 z (Math/round x)]
+             (if (zero? z)
+               (< (Math/abs x) absolute-integer-tolerance)
+               (< (Math/abs (/ (- x z) z)) relative-integer-tolerance))))))
+
+(defn exact-zero?
+  "Returns true if the supplied argument is an exact numerical zero, false
+  otherwise."
+  [n]
+  (and (v/number? n)
+       (v/exact? n)
+       (zero? n)))
 
 ;; [[expt]] can be defined (as a default) in terms of repeated multiplication,
 ;; if the exponent is a (native) integer. The native requirement is simply due
@@ -485,7 +524,7 @@
 
 (defmethod lcm :default [a b]
   (let [g (gcd a b)]
-    (if (v/zero? g)
+    (if (zero? g)
       g
       (abs
        (* (exact-divide a g) b)))))
@@ -853,13 +892,13 @@ defaults to `ln((1 + sqrt(1+x^2)) / x)`."
    - [Boost notes on [[sinc]]
      and [[sinch]]](https://www.boost.org/doc/libs/1_65_0/libs/math/doc/html/math_toolkit/sinc/sinc_overview.html)"
   {:dfdx (fn [x]
-           (if (v/zero? x)
+           (if (zero? x)
              x
              (sub (div (cos x) x)
                   (div (sin x) (square x)))))})
 
 (defmethod sinc :default [x]
-  (if (v/zero? x)
+  (if (zero? x)
     (v/one-like x)
     (div (sin x) x)))
 
@@ -889,14 +928,14 @@ defaults to `ln((1 + sqrt(1+x^2)) / x)`."
    - [Wikipedia page](https://en.wikipedia.org/wiki/Tanc_function)
    - [Mathworld page on Sinc](https://mathworld.wolfram.com/TancFunction.html)"
   {:dfdx (fn [x]
-           (if (v/zero? x)
+           (if (zero? x)
              x
              (let [sx (sec x)]
                (sub (div (* sx sx) x)
                     (div (tan x) (square x))))))})
 
 (defmethod tanc :default [x]
-  (if (v/zero? x)
+  (if (zero? x)
     (v/one-like x)
     (div (tan x) x)))
 
@@ -911,13 +950,13 @@ defaults to `ln((1 + sqrt(1+x^2)) / x)`."
    - [Wikipedia page](https://en.wikipedia.org/wiki/Sinhc_function)
    - [Mathworld page on Sinhc](https://mathworld.wolfram.com/SinhcFunction.html)"
   {:dfdx (fn [x]
-           (if (v/zero? x)
+           (if (zero? x)
              x
              (sub (div (cosh x) x)
                   (div (sinh x) (square x)))))})
 
 (defmethod sinhc :default [x]
-  (if (v/zero? x)
+  (if (zero? x)
     (v/one-like x)
     (div (sinh x) x)))
 
@@ -930,14 +969,14 @@ defaults to `ln((1 + sqrt(1+x^2)) / x)`."
    - [Wikipedia page](https://en.wikipedia.org/wiki/Tanhc_function)
    - [Mathworld page on Tanhc](https://mathworld.wolfram.com/TanhcFunction.html)"
   {:dfdx (fn [x]
-           (if (v/zero? x)
+           (if (zero? x)
              x
              (let [sx (sech x)]
                (sub (div (* sx sx) x)
                     (div (tanh x) (square x))))))})
 
 (defmethod tanhc :default [x]
-  (if (v/zero? x)
+  (if (zero? x)
     (v/one-like x)
     (div (tanh x) x)))
 

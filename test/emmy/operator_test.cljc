@@ -28,7 +28,7 @@
                (o/make-operator 'double))]
     (let [f ((v/zero-like x2) g/sin)]
       (checking " zero-like" 100 [n sg/real]
-                (is (v/zero? (f n)))))
+                (is (g/zero? (f n)))))
 
     (let [f ((v/one-like x2) g/sin)]
       (checking " one-like" 100 [n sg/real]
@@ -40,7 +40,7 @@
                 (is (= (g/sin n) (f n)))))
 
     (testing "one? zero? identity? return true appropriately"
-      (is (v/zero? (v/zero-like x2)))
+      (is (g/zero? (v/zero-like x2)))
       (is (not (v/one? (v/one-like x2))))
       (is (v/identity? (v/identity-like x2))))
 

@@ -23,18 +23,18 @@
 
     (testing "Neville and Lagrange interpolation are equivalent"
       (let [points [['x_1 'y_1] ['x_2 'y_2]]]
-        (is (v/zero?
+        (is (g/zero?
              (diff (pi/lagrange points 'x)
                    (pi/neville-recursive points 'x))))))
 
     (testing "points ordering doesn't matter for the final value. (Should test
     all permutations...)"
-      (is (v/zero?
+      (is (g/zero?
            (diff
             (pi/lagrange [['x_1 'y_1] ['x_2 'y_2] ['x_3 'y_3]] 'x)
             (pi/lagrange [['x_2 'y_2] ['x_1 'y_1] ['x_3 'y_3]] 'x))))
 
-      (is (v/zero?
+      (is (g/zero?
            (diff
             (pi/lagrange [['x_2 'y_2] ['x_1 'y_1] ['x_3 'y_3]] 'x)
             (pi/lagrange [['x_3 'y_3] ['x_2 'y_2] ['x_1 'y_1]] 'x)))))

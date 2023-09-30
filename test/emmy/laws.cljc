@@ -11,10 +11,10 @@
             [same.core :refer [ish?]]))
 
 (defn nullity [options generator type-name]
-  (checking (str type-name " v/zero? agrees with v/zero-like.")
+  (checking (str type-name " g/zero? agrees with v/zero-like.")
             options
             [a generator]
-            (is (v/zero? (v/zero-like a)))))
+            (is (g/zero? (v/zero-like a)))))
 
 (defn unity [options generator type-name]
   (checking (str type-name " v/one? agrees with v/one-like.")
@@ -77,14 +77,14 @@
             options
             [a generator]
             (is (ish? (v/zero-like a) (g/add a (g/negate a))))
-            (is (v/zero? (g/add a (g/negate a))))
+            (is (g/zero? (g/add a (g/negate a))))
             (is (ish? (v/zero-like a) (g/add (g/negate a) a)))
             (is (ish? (v/zero-like a) (g/sub a a)))))
 
 (defn multiplicative-inverse [options generator type-name]
   (checking (str type-name " has multiplicative inverses via g/div and g/invert (excluding zero.)")
             options
-            [a generator :when (not (v/zero? a))]
+            [a generator :when (not (g/zero? a))]
             (is (ish? (v/one-like a) (g/mul a (g/invert a))))
             (is (ish? (v/one-like a) (g/mul (g/invert a) a)))
             (is (ish? (v/one-like a) (g/div a a)))))
@@ -125,7 +125,7 @@
       0 + a == a + 0 == a
 
   `(v/zero-like a)` should always return this element,
-  and `(v/zero? (v/zero-like))` should always be true.`"
+  and `(g/zero? (v/zero-like))` should always be true.`"
   [opts generator type-name & {:keys [commutative?]}]
   (additive-semigroup opts generator type-name :commutative? commutative?)
   (zero-like opts generator type-name))

@@ -23,7 +23,7 @@
 (deftest vector-field-tests
   (testing "v/zero-like, v/one-like, v/identity-like"
     (let [vf (vf/literal-vector-field 'b R2-rect)]
-      (is (v/zero? (v/zero-like vf)))
+      (is (g/zero? (v/zero-like vf)))
       (is (vf/vector-field? (v/zero-like vf)))
       (is (= 'vf:zero (v/freeze
                        (v/zero-like vf))))

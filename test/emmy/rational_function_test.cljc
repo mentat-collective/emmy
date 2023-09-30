@@ -56,8 +56,8 @@
         x-1     (p/make [-1 1])
         x+1:x-1 (rf/make x+1 x-1)]
     (testing "zero?, one-like"
-      (is (v/zero? (v/zero-like x+1:x-1)))
-      (is (v/zero? (g/* x+1:x-1 (v/zero-like x+1:x-1)))))
+      (is (g/zero? (v/zero-like x+1:x-1)))
+      (is (g/zero? (g/* x+1:x-1 (v/zero-like x+1:x-1)))))
 
     (testing "one?, one-like"
       (is (v/one? (v/one-like x+1:x-1)))
@@ -250,7 +250,7 @@
                xs (gen/vector sg/symbol arity)]
               (let [rf (rf/->RationalFunction arity n 12 nil)]
                 (is (every?
-                     v/zero?
+                     g/zero?
                      (for [idx (range (inc arity))]
                        (let [sub-xs (subvec xs 0 idx)
                              padded (into sub-xs (repeat (- arity idx) 0))]
@@ -266,13 +266,13 @@
             [r (sg/rational-function)
              factor (gen/fmap inc gen/nat)]
             (let [scaled (rf/arg-scale r [factor])]
-              (is (v/zero?
+              (is (g/zero?
                    (g/simplify
                     (g/- (r (g/* 'x factor))
                          (rf/evaluate scaled ['x]))))))
 
             (let [shifted (rf/arg-shift r [factor])]
-              (is (v/zero?
+              (is (g/zero?
                    (g/simplify
                     (g/- (r (g/+ 'x factor))
                          (rf/evaluate shifted ['x])))))))

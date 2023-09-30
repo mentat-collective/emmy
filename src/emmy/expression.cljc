@@ -36,10 +36,6 @@
   (numerical? [_] (= type ::numeric))
 
   v/Value
-  (zero? [_]
-    (and (v/number? expression)
-         (v/zero? expression)))
-
   (one? [_]
     (and (v/number? expression)
          (v/one? expression)))
@@ -313,3 +309,7 @@
    (v/freeze (g/simplify expr))))
 
 (def pe print-expression)
+
+(defmethod g/zero? [::numeric] [^Literal a]
+  (let [x (.-expression a)]
+     (and (v/number? x) (g/zero? x))))

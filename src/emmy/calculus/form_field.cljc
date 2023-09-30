@@ -89,7 +89,7 @@
   "Given some form field `op`, returns a form field with the same context and
   its procedure replaced by `ff:zero`.
 
-  The returned form field responds `true` to `v/zero?`."
+  The returned form field responds `true` to `g/zero?`."
   [op]
   {:pre [(form-field? op)]}
   (o/make-operator ff:zero

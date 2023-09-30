@@ -72,7 +72,7 @@
             100
             [n sg/any-integral
              d sg/bigint
-             :when (and (not (v/zero? d))
+             :when (and (not (g/zero? d))
                         (not (v/one? d)))]
             (is (= n (g/mul d (r/rationalize n d)))
                 "multiplying by denominator recovers numerator")

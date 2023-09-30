@@ -20,7 +20,6 @@
   (numerical? [_] true)
 
   v/Value
-  (zero? [_] false)
   (one? [_] false)
   (identity? [_] false)
   (zero-like [_] 0)
@@ -211,6 +210,7 @@
 ;; whether or not they are negative, we return /something/. Maybe this is
 ;; ill-founded, but it was required for some polynomial code.
 (defmethod g/negative? [::x/numeric] [_] false)
+(defmethod g/zero? [Symbol] [_] false)
 
 (defmethod g/simplify [Symbol] [a] a)
 (defmethod g/simplify [::x/numeric] [a]

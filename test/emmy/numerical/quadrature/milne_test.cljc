@@ -10,7 +10,6 @@
             [emmy.numsymb]
             [emmy.simplify :as s :refer [hermetic-simplify-fixture]]
             [emmy.util :as u]
-            [emmy.value :as v]
             [same.core :refer [ish?]]))
 
 (use-fixtures :each hermetic-simplify-fixture)
@@ -46,7 +45,7 @@
                               (let [t**p (g/expt 2 p)]
                                 (/ (- (* t**p b) a)
                                    (- t**p 1))))]
-        (is (v/zero?
+        (is (g/zero?
              (g/simplify
               (- (richardson-step 2 m1 m2)
                  (milne-step f a b))))

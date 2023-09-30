@@ -19,12 +19,12 @@
 
 (deftest value-protocol-tests
   (testing "zero?"
-    (is (v/zero? (m/by-rows [0])))
-    (is (v/zero?
+    (is (g/zero? (m/by-rows [0])))
+    (is (g/zero?
          (m/by-rows [0 0 0]
                     [0 0 0]
                     [0 0 0])))
-    (is (not (v/zero? (m/by-rows [1 2 3])))))
+    (is (not (g/zero? (m/by-rows [1 2 3])))))
 
   (testing "zero-like"
     (is (= (m/by-rows [0 0 0])
@@ -259,7 +259,7 @@
   (checking "make-zero" 100 [m (gen/choose 0 10)
                              n (gen/choose 0 10)]
             (let [M (m/make-zero m n)]
-              (is (v/zero? M))
+              (is (g/zero? M))
               (is (= m (m/num-rows M)))
               (is (= n (m/num-cols M)))))
 
@@ -357,7 +357,7 @@
     (is (not (m/diagonal?
               (m/generate 3 3 +))))
 
-    (is (v/zero? (m/by-rows [0 0]
+    (is (g/zero? (m/by-rows [0 0]
                             [0 0])))))
 
 (deftest literal-matrix-creation
@@ -458,7 +458,7 @@
             100 [[l inner r] (gen/let [rows (gen/choose 1 5)
                                        cols (gen/choose 1 5)]
                                (<l|:inner:|r> rows cols))]
-            (is (v/zero?
+            (is (g/zero?
                  (g/- (m/s:transpose l inner r)
                       (s/transpose-outer inner)))))
 
@@ -474,9 +474,9 @@
               (if (empty? r)
                 (testing "in this case, the right side is fully collapsed and
                 empty and the left side contains a single empty structure."
-                  (do (is (v/zero? (m/s:transpose l inner r)))
+                  (do (is (g/zero? (m/s:transpose l inner r)))
                       (is (empty? (s/transpose-outer inner)))))
-                (is (v/zero?
+                (is (g/zero?
                      (g/- (m/s:transpose l inner r)
                           (s/transpose-outer inner)))
                     "left side empty generates a compatible, zero entry"))))
@@ -830,7 +830,7 @@
 (defspec a*ainv=i
   (gen/let [n (gen/choose 1 5)]
     (prop/for-all [A (sg/square-matrix n)]
-                  (or (v/zero? (g/determinant A))
+                  (or (g/zero? (g/determinant A))
                       (= (m/I n)
                          (g/* (g/invert A) A)
                          (g/* A (g/invert A)))))))
@@ -852,7 +852,7 @@
 
 (deftest naive-vs-determinant-tests
   (let [M (m/literal-matrix 'x 6)]
-    (is (v/zero?
+    (is (g/zero?
          (g/simplify
           (g/- (m/determinant M)
                (naive-determinant M))))
@@ -874,7 +874,7 @@
 
 (deftest naive-vs-invert-tests
   (let [M (m/literal-matrix 'x 4)]
-    (is (v/zero?
+    (is (g/zero?
          (g/simplify
           (g/- (m/invert M)
                (naive-invert M))))
@@ -992,7 +992,7 @@
     with the denominator." 100
               [s (sg/up1 sg/any-integral 5)
                x (gen/fmap (fn [x]
-                             (if (v/zero? x) 1 x))
+                             (if (g/zero? x) 1 x))
                            sg/any-integral)]
               (is (= s (g/* x (g// s x)))))
 
@@ -1198,7 +1198,7 @@
            (g/* d M))
         "multiplying by down directly matches conversion to matrix first.")
 
-    (is (v/zero?
+    (is (g/zero?
          (g/simplify
           (g/- (g/transpose (g/* M v))
                (g/* (g/transpose v)

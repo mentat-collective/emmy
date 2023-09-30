@@ -491,14 +491,14 @@
 
   (testing "D can handle functions of varying arities"
     (let [f100dd (fn [x n acc]
-                   (if (v/zero? n)
+                   (if (g/zero? n)
                      acc
                      (recur x (dec n) (sin (+ x acc)))))
           f100d  (fn [x] (f100dd x 100 x))
           f100e  (fn f100e
                    ([x] (f100e x 100 x))
                    ([x n acc]
-                    (if (v/zero? n)
+                    (if (g/zero? n)
                       acc
                       (recur x (dec n) (sin (+ x acc))))))
           f100ea (f/with-arity f100e [:exactly 1])

@@ -188,7 +188,6 @@
 
 (extend-protocol v/Value
   MultiFn
-  (zero? [_] false)
   (one? [_] false)
   (identity? [_] false)
   (zero-like [f] (zero-like f))
@@ -202,7 +201,6 @@
   (kind [_] ::v/function)
 
   #?(:clj AFunction :cljs function)
-  (zero? [_] false)
   (one? [_] false)
   (identity? [_] false)
   (zero-like [f] (zero-like f))
@@ -216,7 +214,6 @@
   (kind [_] ::v/function)
 
   Var
-  (zero? [_] false)
   (one? [_] false)
   (identity? [_] false)
   (zero-like [f] (zero-like f))
@@ -228,7 +225,6 @@
 
   #?@(:cljs
       [MetaFn
-       (zero? [_] false)
        (one? [_] false)
        (identity? [_] false)
        (zero-like [f] (zero-like f))
@@ -583,3 +579,7 @@
 (defunary g/magnitude)
 (defunary g/angle)
 (defunary g/conjugate)
+
+;; Generic Methods
+
+(defmethod g/zero? [::v/function] [_] false)

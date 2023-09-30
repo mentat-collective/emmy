@@ -6,8 +6,7 @@
   symmetric form](https://en.wikipedia.org/wiki/Carlson_symmetric_form), as well
   as the [Jacobi elliptic
   functions](https://en.wikipedia.org/wiki/Jacobi_elliptic_functions)."
-  (:require [emmy.util :as u]
-            [emmy.value :as v]))
+  (:require [emmy.util :as u]))
 
 ;; ## Carlson symmetric forms of elliptic integrals
 
@@ -338,7 +337,7 @@
            c        k
            d        0.0
            powers-2 1.0]
-      (if (< (Math/abs c) v/machine-epsilon)
+      (if (< (Math/abs c) u/machine-epsilon)
         (let [first-elliptic-integral (/ (/ Math/PI 2) a)]
           (continue first-elliptic-integral
                     (* first-elliptic-integral
@@ -442,7 +441,7 @@
   ([u k]
    (jacobi-elliptic-functions u k vector))
   ([u k cont]
-   (let [eps v/sqrt-machine-epsilon
+   (let [eps u/sqrt-machine-epsilon
          emc (- 1. (* k k))]
      (if (= emc 0.0)
        (let [cn (/ 1.0 (Math/cosh u))]

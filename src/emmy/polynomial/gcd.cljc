@@ -328,8 +328,8 @@
   divisor of `u` and `v` by testing for trivial cases. If no trivial case
   applies, returns `nil`."
   [u v]
-  (cond (v/zero? u) (g/abs v)
-        (v/zero? v) (g/abs u)
+  (cond (g/zero? u) (g/abs v)
+        (g/zero? v) (g/abs u)
         (p/coeff? u) (if (p/coeff? v)
                        (primitive-gcd u v)
                        (gcd-poly-number v u))
@@ -387,7 +387,7 @@
     (maybe-bail-out! "euclid inner loop")
     (or (trivial-gcd u v)
         (let [[r _] (p/pseudo-remainder u v)]
-          (if (v/zero? r)
+          (if (g/zero? r)
             (g/abs v)
             (let [[_ prim] (->content+primitive r gcd)]
               (recur v prim)))))))
@@ -532,11 +532,11 @@
   (gcd-dispatch u v))
 
 (defmethod g/gcd [::p/polynomial ::p/coeff] [u v]
-  (if (v/zero? v)
+  (if (g/zero? v)
     u
     (gcd-poly-number u v)))
 
 (defmethod g/gcd [::p/coeff ::p/polynomial] [u v]
-  (if (v/zero? u)
+  (if (g/zero? u)
     v
     (gcd-poly-number v u)))

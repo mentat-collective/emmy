@@ -25,11 +25,11 @@
     gen/symbol]))
 
 (deftest value-protocol-tests
-  (checking "v/zero? returns true for wrapped zero"
+  (checking "g/zero? returns true for wrapped zero"
             100 [n (gen/one-of [sg/real (gen/fmap v/zero-like sg/real)])]
-            (if (v/zero? n)
-              (is (v/zero? (an/literal-number n)))
-              (is (not (v/zero? (an/literal-number n))))))
+            (if (g/zero? n)
+              (is (g/zero? (an/literal-number n)))
+              (is (not (g/zero? (an/literal-number n))))))
 
   (checking "v/one? returns true for wrapped zero"
             100 [n (gen/one-of [sg/real (gen/fmap v/one-like sg/real)])]
@@ -44,7 +44,7 @@
               (is (not (v/identity? (an/literal-number n))))))
 
   (checking "v/{zero?,one?,identity?} etc match v/{zero,one,identity}-like" 100 [n gen-literal]
-            (is (v/zero? (v/zero-like n)))
+            (is (g/zero? (v/zero-like n)))
             (is (v/one? (v/one-like n)))
             (is (v/identity? (v/identity-like n))))
 
@@ -357,7 +357,7 @@
                     don't work bail out to Math/tan."))))
 
   (checking "asin" 100 [x sg/real]
-            (is (= (cond (v/zero? x) (v/zero-like x)
+            (is (= (cond (g/zero? x) (v/zero-like x)
                          (v/exact? x)   (list 'asin x)
                          :else          (g/asin x))
                    (x/expression-of
@@ -375,7 +375,7 @@
             (is (= (g/atan (an/literal-number x))
                    (g/atan (an/literal-number x) 1)))
 
-            (is (= (cond (v/zero? y) (v/zero-like y)
+            (is (= (cond (g/zero? y) (v/zero-like y)
                          (v/exact? y)   (list 'atan y)
                          :else          (g/atan y))
                    (x/expression-of
@@ -384,8 +384,8 @@
 
             (let [y-exact? (v/exact? y)
                   x-exact? (v/exact? x)
-                  y-zero?  (v/zero? y)
-                  x-zero?  (v/zero? x)
+                  y-zero?  (g/zero? y)
+                  x-zero?  (g/zero? x)
                   x-one?   (v/one? x)]
               (is (= (cond (and x-one? y-zero?)            0
                            (and x-one? y-exact?)           (list 'atan y)
@@ -403,28 +403,28 @@
                   "double arity")))
 
   (checking "cosh" 100 [x sg/real]
-            (is (= (cond (v/zero? x) 1
+            (is (= (cond (g/zero? x) 1
                          (v/exact? x)   (list 'cosh x)
                          :else          (g/cosh x))
                    (x/expression-of
                     (g/cosh (an/literal-number x))))))
 
   (checking "sinh" 100 [x sg/real]
-            (is (= (cond (v/zero? x) 0
+            (is (= (cond (g/zero? x) 0
                          (v/exact? x)   (list 'sinh x)
                          :else          (g/sinh x))
                    (x/expression-of
                     (g/sinh (an/literal-number x))))))
 
   (checking "sec" 100 [x sg/real]
-            (is (= (cond (v/zero? x) 1
+            (is (= (cond (g/zero? x) 1
                          (v/exact? x)   (list '/ 1 (list 'cos x))
                          :else          (g/sec x))
                    (x/expression-of
                     (g/sec (an/literal-number x))))))
 
   (checking "csc" 100 [x sg/real]
-            (if (v/zero? x)
+            (if (g/zero? x)
               (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
                            (g/csc (an/literal-number x))))
 
@@ -533,12 +533,12 @@
                  (apply (sym/symbolic-operator 'gcd)
                         (concat pre [1] post))))
 
-            (is (v/zero?
+            (is (g/zero?
                  (apply (sym/symbolic-operator 'lcm)
                         (concat pre [0] post)))))
 
   (let [non-one-zero (gen/fmap (fn [n]
-                                 (if (or (v/zero? n) (v/one? n))
+                                 (if (or (g/zero? n) (v/one? n))
                                    2
                                    n))
                                sg/any-integral)]
@@ -570,10 +570,10 @@
               (is (v/= sym (g/lcm sym sym))
                   "lcm(x,x)==x")
 
-              (is (v/zero? (g/lcm (v/zero-like n) sym))
+              (is (g/zero? (g/lcm (v/zero-like n) sym))
                   "lcm(x,0)==0")
 
-              (is (v/zero? (g/lcm sym (v/zero-like n)))
+              (is (g/zero? (g/lcm sym (v/zero-like n)))
                   "lcm(0,x)==0")
 
               (is (v/= sym (g/lcm (v/one-like n) sym))
@@ -693,7 +693,7 @@
 
             ;; Case of symbolic radius, angle `n`:
             (if (v/exact? n)
-              (if (v/zero? n)
+              (if (g/zero? n)
                 (is (v/= sym (g/make-polar sym n))
                     "an exact zero returns the symbolic radius.")
                 (is (= `(~'* ~sym (~'+ (~'cos ~(v/freeze n))

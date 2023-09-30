@@ -164,7 +164,7 @@
     (is (= 'x (g/* 'x 1.0)))
     (is (= 'x (g/divide 'x 1.0)))
     (is (= 'x (g/divide 'x 1)))
-    (is (v/zero? (g/divide 0 'x)))
+    (is (g/zero? (g/divide 0 'x)))
     (is (= 0 (g/* 0 'x)))
     (is (= 0 (g/* 'x 0)))
     (is (thrown? #?(:clj ArithmeticException :cljs js/Error)

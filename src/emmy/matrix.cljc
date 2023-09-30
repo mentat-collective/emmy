@@ -29,7 +29,6 @@
 
 (deftype Matrix [r c v]
   v/Value
-  (zero? [_] (every? #(every? v/zero? %) v))
   (one? [_] false)
   (identity? [m] (identity? m))
   (zero-like [this] (fmap v/zero-like this))
@@ -936,7 +935,7 @@
   "Returns the determinant of the supplied square matrix `m`.
 
   Generic operations are used, so this works on symbolic square matrices."
-  (general-determinant g/+ g/- g/* v/numeric-zero?))
+  (general-determinant g/+ g/- g/* g/numeric-zero?))
 
 (defn cofactors
   "Returns the matrix of cofactors of the supplied square matrix `m`."
@@ -980,7 +979,7 @@
 (def ^{:arglists '([A])}
   invert
   "Returns the inverse of the supplied square matrix `m`."
-  (classical-adjoint-formula g/+ g/- g/* g// v/numeric-zero?))
+  (classical-adjoint-formula g/+ g/- g/* g// g/numeric-zero?))
 
 (defn- m-div-m [m1 m2]
   (mul m1 (invert m2)))
@@ -1054,7 +1053,7 @@
                        :let [entry (core/get-in m [i j])]]
                    (if (= i j)
                      (v/one? entry)
-                     (v/zero? entry)))))))
+                     (g/zero? entry)))))))
 
 (defn make-diagonal
   "Given a single (sequential) argument `v`, returns the diagonal matrix of
@@ -1083,13 +1082,13 @@
                        j (range n)
                        :when (not= i j)
                        :let [entry (core/get-in m [i j])]]
-                   (v/zero? entry))))))
+                   (g/zero? entry))))))
 
 (defn symmetric?
   "Returns true if the supplied matrix `M` is equal to its own transpose (i.e.,
   symmetric), false otherwise."
   [M]
-  (v/zero?
+  (g/zero?
    (g/simplify
     (g/sub (transpose M) M))))
 
@@ -1097,7 +1096,7 @@
   "Returns true if the supplied matrix `M` is equal to the negation of its own
   transpose (i.e., antisymmetric), false otherwise."
   [M]
-  (v/zero?
+  (g/zero?
    (g/simplify
     (g/add (transpose M) M))))
 
@@ -1163,7 +1162,7 @@
   Returns the column matrix `x`.
 
   Unlike LU decomposition, Cramer's rule generalizes to symbolic solutions."
-  (cramers-rule g/+ g/- g/* g// v/numeric-zero?))
+  (cramers-rule g/+ g/- g/* g// g/numeric-zero?))
 
 (defn rsolve
   "Generalization of [[solve]] that can handle `up` and `down` structures, as well
@@ -1188,6 +1187,8 @@
 
 ;; ## Generic Operation Installation
 
+
+(defmethod g/zero? [::matrix] [a] (every? #(every? g/zero? %) a))
 (defmethod v/= [::matrix ::matrix] [a b] (m:= a b))
 (defmethod v/= [::square-matrix ::v/scalar] [m c] (matrix=scalar m c))
 (defmethod v/= [::v/scalar ::square-matrix] [c m] (scalar=matrix c m))

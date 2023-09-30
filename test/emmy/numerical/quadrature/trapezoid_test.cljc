@@ -9,7 +9,6 @@
             [emmy.polynomial.richardson :as pr]
             [emmy.util :as u]
             [emmy.util.stream :as us]
-            [emmy.value :as v]
             [same.core :refer [ish?]]))
 
 ;; The tests on Pi estimation come from Sussman's ["Abstraction in Numerical
@@ -72,7 +71,7 @@
               :terms-checked 9
               :result Math/PI}
              (qt/integral f 0 1 {:accelerate? true
-                                 :tolerance v/machine-epsilon}))
+                                 :tolerance u/machine-epsilon}))
             "With acceleration we hit machine epsilon in 9 iterations.")
 
         (testing "the incremental trapezoid method takes 2^n+1 evaluations"

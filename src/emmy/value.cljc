@@ -30,7 +30,6 @@
   (numerical? [_] false))
 
 (defprotocol Value
-  (^boolean zero? [this])
   (^boolean one? [this])
   (^boolean identity? [this])
   (zero-like [this])
@@ -114,12 +113,6 @@
                (instance? goog.math.Long x)
                (instance? Complex x))))
 
-(defn numeric-zero?
-  "Returns `true` if `x` is both a [[number?]] and [[zero?]], false otherwise."
-  [x]
-  (and (number? x)
-       (zero? x)))
-
 ;; `::scalar` is a thing that symbolic expressions AND actual numbers both
 ;; derive from.
 
@@ -164,7 +157,6 @@
 
 (extend-protocol Value
   #?(:clj Number :cljs number)
-  (zero? [x] (core/zero? x))
   (one? [x] (== 1 x))
   (identity? [x] (== 1 x))
   (zero-like [_] 0)
@@ -179,7 +171,6 @@
                        ::floating-point)))
 
   #?(:clj Boolean :cljs boolean)
-  (zero? [_] false)
   (one? [_] false)
   (identity? [_] false)
   (zero-like [_] 0)
@@ -191,7 +182,6 @@
 
   #?@(:clj
       [java.lang.Double
-       (zero? [x] (core/zero? x))
        (one? [x] (== 1 x))
        (identity? [x] (== 1 x))
        (zero-like [_] 0.0)
@@ -202,7 +192,6 @@
        (kind [x] (type x))
 
        java.lang.Float
-       (zero? [x] (core/zero? x))
        (one? [x] (== 1 x))
        (identity? [x] (== 1 x))
        (zero-like [_] 0.0)
@@ -213,7 +202,6 @@
        (kind [x] (type x))])
 
   nil
-  (zero? [_] true)
   (one? [_] false)
   (identity? [_] false)
   (zero-like [_] (u/unsupported "nil doesn't support zero-like."))
@@ -224,7 +212,6 @@
   (kind [_] nil)
 
   Var
-  (zero? [_] false)
   (one? [_] false)
   (identity? [_] false)
   (zero-like [v] (u/unsupported (str "zero-like: " v)))
@@ -235,7 +222,6 @@
   (kind [v] (type v))
 
   #?(:clj Object :cljs default)
-  (zero? [_] false)
   (one? [_] false)
   (identity? [_] false)
   (zero-like [o] (u/unsupported (str "zero-like: " o)))
@@ -247,13 +233,6 @@
                 (get @object-name-map o o)))
   (kind [o] (:type o (type o))))
 
-(defn exact-zero?
-  "Returns true if the supplied argument is an exact numerical zero, false
-  otherwise."
-  [n]
-  (and (number? n)
-       (exact? n)
-       (zero? n)))
 
 ;; Override equiv for numbers.
 (defmulti = argument-kind)
@@ -538,40 +517,11 @@
   [o->syms]
   (swap! object-name-map into o->syms))
 
-(def machine-epsilon
-  (loop [e 1.0]
-    (if (core/= 1.0 (+ e 1.0))
-      (* e 2.0)
-      (recur (/ e 2.0)))))
-
-(def sqrt-machine-epsilon
-  (Math/sqrt machine-epsilon))
-
 (defn within
   "Returns a function that tests whether two values are within ε of each other."
   [^double ε]
   (fn [^double x ^double y]
     (< (Math/abs (- x y)) ε)))
-
-(def ^:no-doc relative-integer-tolerance (* 100 machine-epsilon))
-(def ^:no-doc absolute-integer-tolerance 1e-20)
-
-(defn almost-integral?
-  "Returns true if `x` is either:
-
-  - [[integral?]],
-  - a floating point number either < [[absolute-integer-tolerance]] (if near
-    zero) or within [[relative-integer-tolerance]] of the closest integer,
-
-  false otherwise."
-  [x]
-  (or (integral? x)
-      (and (float? x)
-           (let [x (double x)
-                 z (Math/round x)]
-             (if (zero? z)
-               (< (Math/abs x) absolute-integer-tolerance)
-               (< (Math/abs (/ (- x z) z)) relative-integer-tolerance))))))
 
 (def twopi (* 2 Math/PI))
 

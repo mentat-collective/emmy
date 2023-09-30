@@ -7,8 +7,7 @@
   (:require [emmy.generic :as g]
             [emmy.polynomial.exponent :as xpt]
             [emmy.util :as u]
-            [emmy.util.aggregate :as ua]
-            [emmy.value :as v]))
+            [emmy.util.aggregate :as ua]))
 
 ;; ## Flat Polynomial Form
 ;;
@@ -88,7 +87,7 @@
 (defn constant->terms
   "Given some constant coefficient `coef`, returns a constant polynomial."
   [coef]
-  (if (v/zero? coef)
+  (if (g/zero? coef)
     empty-terms
     [(make-term xpt/empty coef)]))
 
@@ -107,7 +106,7 @@
   ```"
   [coefs]
   (let [->term (fn [i coef]
-                 (when-not (v/zero? coef)
+                 (when-not (g/zero? coef)
                    (let [expts (if (zero? i)
                                  xpt/empty
                                  (xpt/make 0 i))]
@@ -151,7 +150,7 @@
      (->> (for [[expts terms] (group-by exponents expts->coef)
                 :let [coef-sum (transduce
                                 (map coefficient) g/+ terms)]
-                :when (not (v/zero? coef-sum))
+                :when (not (g/zero? coef-sum))
                 :let [expts (cond (vector? expts) (xpt/dense->exponents expts)
                                   (sorted? expts) expts
                                   (map? expts) (into xpt/empty expts)
@@ -176,14 +175,14 @@
   (into empty-terms
         (for [[expts c] terms
               :let [f-c (f c)]
-              :when (not (v/zero? f-c))]
+              :when (not (g/zero? f-c))]
           (make-term expts f-c))))
 
 (def ^{:arglists '([u v])}
   add
   "Returns the sum of polynomials `u` and `v`. Coefficients paired with matching
   exponents are combined with [[emmy.generic/add]]."
-  (ua/merge-fn #'*monomial-order* g/add v/zero? make-term))
+  (ua/merge-fn #'*monomial-order* g/add g/zero? make-term))
 
 (defn sub
   "Returns the difference of polynomials `u` and `v`.

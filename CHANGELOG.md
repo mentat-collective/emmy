@@ -2,6 +2,27 @@
 
 ## [unreleased]
 
+- #XXX
+
+  - Retires the Value protocol in favor of MultiFns in the generic scope.
+    Doing this carefully, by revoking the exisiting implementation and
+    then restoring it step by step, revealed some interesting corner cases:
+
+      - `(zero? [0])` but `(not (zero? (lazy-seq [0])))`
+      - `(not (zero? (series 0)))`
+
+  - Changed behavior:
+
+    - Objects produced by `make-literal`
+
+      In the protocol regime, the implementation of `zero?` was dispatched via the
+      Literal class; with the MultiFn, it is dispatched by the `kind`, which
+      is supplied by the creator. The protocol dispatch effectively used
+      `numeric-zero?`. That behavior is replicated for the kind
+      `:emmy.expression/numeric`; if you create literals of a different kind,
+      you can inherit this behavior using `derive` or supply a `defmethod`
+      yourself.
+
 - #145 (thank you to @mhuebert for amazing work here!!):
 
   - Adds `emmy.util/sci-macro` for defining macros meant to be exposed via SCI,
@@ -1868,7 +1889,7 @@ On to the detailed notes!
     - new functions: `basis-components->vector-field`,
       `vector-field->basis-components`
 
-    - vector fields now implement `v/zero?` and `v/zero-like` by returning
+    - vector fields now implement `g/zero?` and `v/zero-like` by returning
       proper vector fields.
 
   - form fields, in `sicmutils.calculus.vector-field`:
@@ -1879,7 +1900,7 @@ On to the detailed notes!
 
     - `Alt`, `alt-wedge` provide alternate wedge product definitions
 
-    - form fields now implement `v/zero?` and `v/zero-like` by returning
+    - form fields now implement `g/zero?` and `v/zero-like` by returning
       proper form fields that retain their rank.
 
     - form fields now correctly multiply via `*` by using
@@ -1939,7 +1960,7 @@ On to the detailed notes!
     - `rotate-{x,y,z}-tuple` are now aliased into `sicmutils.env`.
 
   - `Operator` instances now ignore the right operator in operator-operator
-    addition if the left operator passes a `v/zero?` test. Contexts are still
+    addition if the left operator passes a `g/zero?` test. Contexts are still
     appropriately merged.
 
   - in `sicmutils.simplify.rules`, the `sqrt-contract` ruleset now takes a
@@ -2858,7 +2879,7 @@ On to the detailed release notes:
 
 ## 0.14.0
 
-- After the work below, `v/nullity?` renamed to `v/zero?`, and `v/unity?`
+- After the work below, `v/nullity?` renamed to `g/zero?`, and `v/unity?`
   renamed to `v/one?`
   ([#180](https://github.com/mentat-collective/sicmutils/pull/180)). This
   affects the names listed in the CHANGELOG entries below.

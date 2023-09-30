@@ -9,7 +9,6 @@
             [emmy.util :as u]
             [emmy.util.aggregate :as ua]
             [emmy.util.stream :as us]
-            [emmy.value :as v]
             [same.core :refer [ish?]]))
 
 (deftest windowed-sum-tests
@@ -119,7 +118,7 @@
           :result 2}
          (qr/left-integral
           g/sin 0 Math/PI {:accelerate? true
-                           :tolerance v/machine-epsilon}))
+                           :tolerance u/machine-epsilon}))
         "left-integral converges for sin over 0 => pi.")
 
     (is (ish?
@@ -136,7 +135,7 @@
           :result 2}
          (qr/right-integral
           g/sin 0 Math/PI {:accelerate? true
-                           :tolerance v/machine-epsilon}))
+                           :tolerance u/machine-epsilon}))
         "right-integral converges for sin over 0 => pi.")
 
     (is (ish?
@@ -165,7 +164,7 @@
          (qr/lower-integral
           g/sin 0 Math/PI {:accelerate? true
                            :minterms 3
-                           :tolerance v/machine-epsilon}))
+                           :tolerance u/machine-epsilon}))
         "lower-integral converges for sin over 0 => pi when you force it to
         consider more than 3 terms."))
 
@@ -176,5 +175,5 @@
           :result 2}
          (qr/upper-integral
           g/sin 0 Math/PI {:accelerate? true
-                           :tolerance v/machine-epsilon}))
+                           :tolerance u/machine-epsilon}))
         "upper-integral converges (at machine epsilon!)")))

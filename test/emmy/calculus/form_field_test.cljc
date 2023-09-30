@@ -74,7 +74,7 @@
 (deftest form-field-tests
   (testing "v/zero-like"
     (let [oneform-field (ff/literal-oneform-field 'b R2-rect)]
-      (is (v/zero? (v/zero-like oneform-field)))
+      (is (g/zero? (v/zero-like oneform-field)))
       (is (ff/form-field?
            (v/zero-like oneform-field)))
       (is (= 'ff:zero (v/freeze

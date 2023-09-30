@@ -79,7 +79,7 @@
   (cond (zero? n) 1
         (neg? n)
         (let [denom (rising-factorial (g/add x 1) (g/- n))]
-          (if (v/zero? denom)
+          (if (g/zero? denom)
             ##Inf
             (g/invert denom)))
 
@@ -100,7 +100,7 @@
   (cond (zero? n) 1
         (neg? n)
         (let [denom (rising-factorial (inc x) (- n))]
-          (if (v/zero? denom)
+          (if (g/zero? denom)
             ##Inf
             (g// 1 denom)))
 
@@ -131,7 +131,7 @@
   (cond (zero? n) 1
         (neg? n)
         (let [denom (falling-factorial (g/sub x 1) (g/- n))]
-          (if (v/zero? denom)
+          (if (g/zero? denom)
             ##Inf
             (g/invert denom)))
 
@@ -146,7 +146,7 @@
   (cond (zero? n) 1
         (neg? n)
         (let [denom (falling-factorial (dec x) (- n))]
-          (if (v/zero? denom)
+          (if (g/zero? denom)
             ##Inf
             (g// 1 denom)))
 

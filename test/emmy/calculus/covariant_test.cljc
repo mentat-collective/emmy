@@ -378,7 +378,7 @@
         Y (vf/literal-vector-field 'Y S2-spherical)
         m ((point S2-spherical) (up 'theta 'phi))]
 
-    (is (v/zero?
+    (is (g/zero?
          (simplify
           (((((cov/covariant-derivative C) V) g) X Y) m)))))
 
