@@ -38,12 +38,12 @@
 
   (testing "one? vs identity?"
     (let [I10 (m/I 10)]
-      (is (not (v/one? I10))
+      (is (not (g/one? I10))
           "one? implies that multiplying by this acts as identity, which is only
           true for matrices of the correct shape (not for scalars!) so one? will
           always return false for a matrix.")
 
-      (is (v/identity? I10)
+      (is (g/identity? I10)
           "identity? exists to check for an identity matrix.")))
 
   (testing "one-like"
@@ -277,17 +277,17 @@
               (is (= vs (m/diagonal M)))
               (is (= vs (m/diagonal M)))))
 
-  (checking "make-diagonal, v/identity? v/one?" 100
+  (checking "make-diagonal, g/identity? g/one?" 100
             [v (gen/vector (gen/return 1) 1 20)]
             (let [M (m/make-diagonal v)]
-              (is (v/identity? M))
-              (is (not (v/identity? (g/* 2 M))))
+              (is (g/identity? M))
+              (is (not (g/identity? (g/* 2 M))))
 
-              (is (not (v/one? M))
+              (is (not (g/one? M))
                   "matrices don't act as one; they need to maintain their
                   structure when multiplied by constants.")
 
-              (is (not (v/one? (g/* 2 M))))))
+              (is (not (g/one? (g/* 2 M))))))
 
   (let [M (m/by-rows (list 1 2 3)
                      (list 4 5 6))

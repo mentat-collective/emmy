@@ -57,7 +57,7 @@
 
 #?(:cljs
    (defn- promote [x]
-     (if (v/one? (denominator x))
+     (if (g/one? (denominator x))
        (numerator x)
        x)))
 
@@ -69,7 +69,7 @@
               (Fraction. x))
       :clj (core/rationalize x)))
   ([n d]
-   #?(:cljs (if (v/one? d)
+   #?(:cljs (if (g/one? d)
               n
               (promote (Fraction. n d)))
       :clj (core/rationalize (/ n d)))))
@@ -123,7 +123,7 @@
      (identity-like [_] 1)
      (freeze [x] (let [n (numerator x)
                        d (denominator x)]
-                   (if (v/one? d)
+                   (if (g/one? d)
                      n
                      `(~'/ ~n ~d))))
      (exact? [_] true)
@@ -145,7 +145,7 @@
        (identity-like [_] 1)
        (freeze [x] (let [n (numerator x)
                          d (denominator x)]
-                     (if (v/one? d)
+                     (if (g/one? d)
                        (v/freeze n)
                        `(~'/
                          ~(v/freeze n)
@@ -157,7 +157,7 @@
        (-equiv [this other]
          (cond (ratio? other) (.equals this other)
                (v/integral? other)
-               (and (v/one? (denominator this))
+               (and (g/one? (denominator this))
                     (v/= (numerator this) other))
 
                ;; Enabling this would work, but would take us away from
@@ -194,7 +194,7 @@
        (-pr-writer [x writer opts]
          (let [n (numerator x)
                d (denominator x)]
-           (if (v/one? d)
+           (if (g/one? d)
              (-pr-writer n writer opts)
              (write-all writer "#emmy/ratio \""
                         (str n) "/" (str d)
@@ -284,7 +284,7 @@
      ;; Only integral ratios let us stay exact. If a ratio appears in the
      ;; exponent, convert the base to a number and call g/expt again.
      (defmethod g/expt [Fraction Fraction] [a b]
-       (if (v/one? (denominator b))
+       (if (g/one? (denominator b))
          (promote (.pow ^js a (numerator b)))
          (g/expt (.valueOf a)
                  (.valueOf b))))

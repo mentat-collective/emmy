@@ -152,7 +152,7 @@
 
   (testing "value protocol"
     (testing "zero?"
-      (is (q/zero? q/ZERO))
+      (is (g/zero? q/ZERO))
       (is (g/zero? (q/make 0 0 0 0)))
       (is (not (g/zero? (q/make 1 0 0 0)))))
 
@@ -164,17 +164,17 @@
                         "empty also returns the zero"))))
 
     (testing "one?"
-      (is (q/one? q/ONE))
-      (is (v/identity? q/ONE)))
+      (is (g/one? q/ONE))
+      (is (g/identity? q/ONE)))
 
     (checking "one-like, identity-like" 100 [x (sg/quaternion)]
-              (if (v/one? x)
+              (if (g/one? x)
                 (is (= x (q/make 1 0 0 0)))
-                (is (v/one? (v/one-like x))))
+                (is (g/one? (v/one-like x))))
 
-              (if (v/identity? x)
+              (if (g/identity? x)
                 (is (= x (q/make 1 0 0 0)))
-                (is (v/identity? (v/identity-like x)))))
+                (is (g/identity? (v/identity-like x)))))
 
     (testing "exact?"
       (is (v/exact? (q/make 1 2 3 4)))
@@ -544,7 +544,7 @@
                   normal (q/normalize x)]
               (is (ish? normal (q/normalize normal)))
               (if (g/zero? m)
-                (is (q/zero? x)
+                (is (g/zero? x)
                     "can't normalize if the quaternion is zero.")
 
                 (is (q/unit? normal :epsilon 1e-8)
@@ -589,12 +589,12 @@
   (testing "commutator"
     (let [p (q/make 'r1 'i1 'j1 'k1)
           q (q/make 'r2 'i2 'j2 'k2)]
-      (is (q/zero?
+      (is (g/zero?
            (g/simplify
             (q/commutator p p)))
           "the commutator of a vector with itself is zero")
 
-      (is (q/zero?
+      (is (g/zero?
            (g/simplify
             (g/- (q/commutator p q)
                  (g/cross-product  (g/* 2 p) q))))
@@ -723,7 +723,7 @@
                             (q/expt x 2))
                       "q*q == q^2, expt impl matches manual exponentiation")
 
-                  (is (q/one? (g/expt x q/ZERO))
+                  (is (g/one? (g/expt x q/ZERO))
                       "x to the quaternion 0 power == 1")
 
                   (is (ish? x (g/expt x q/ONE))

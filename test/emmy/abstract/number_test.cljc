@@ -31,22 +31,22 @@
               (is (g/zero? (an/literal-number n)))
               (is (not (g/zero? (an/literal-number n))))))
 
-  (checking "v/one? returns true for wrapped zero"
+  (checking "g/one? returns true for wrapped zero"
             100 [n (gen/one-of [sg/real (gen/fmap v/one-like sg/real)])]
-            (if (v/one? n)
-              (is (v/one? (an/literal-number n)))
-              (is (not (v/one? (an/literal-number n))))))
+            (if (g/one? n)
+              (is (g/one? (an/literal-number n)))
+              (is (not (g/one? (an/literal-number n))))))
 
-  (checking "v/identity? returns true for wrapped zero"
+  (checking "g/identity? returns true for wrapped zero"
             100 [n (gen/one-of [sg/real (gen/fmap v/identity-like sg/real)])]
-            (if (v/identity? n)
-              (is (v/identity? (an/literal-number n)))
-              (is (not (v/identity? (an/literal-number n))))))
+            (if (g/identity? n)
+              (is (g/identity? (an/literal-number n)))
+              (is (not (g/identity? (an/literal-number n))))))
 
   (checking "v/{zero?,one?,identity?} etc match v/{zero,one,identity}-like" 100 [n gen-literal]
             (is (g/zero? (v/zero-like n)))
-            (is (v/one? (v/one-like n)))
-            (is (v/identity? (v/identity-like n))))
+            (is (g/one? (v/one-like n)))
+            (is (g/identity? (v/identity-like n))))
 
   (checking "v/numerical? returns true for all literal-number instances" 100 [n gen-literal]
             (is (v/numerical? n)))
@@ -364,7 +364,7 @@
                     (g/asin (an/literal-number x))))))
 
   (checking "acos" 100 [x sg/real]
-            (is (= (cond (v/one? x) (v/zero-like x)
+            (is (= (cond (g/one? x) (v/zero-like x)
                          (v/exact? x) (list 'acos x)
                          :else        (g/acos x))
                    (x/expression-of
@@ -386,7 +386,7 @@
                   x-exact? (v/exact? x)
                   y-zero?  (g/zero? y)
                   x-zero?  (g/zero? x)
-                  x-one?   (v/one? x)]
+                  x-one?   (g/one? x)]
               (is (= (cond (and x-one? y-zero?)            0
                            (and x-one? y-exact?)           (list 'atan y)
                            x-one?                          (g/atan y)
@@ -529,7 +529,7 @@
   (checking "gcd, lcm annihilation" 100
             [pre (gen/vector gen/symbol)
              post (gen/vector gen/symbol)]
-            (is (v/one?
+            (is (g/one?
                  (apply (sym/symbolic-operator 'gcd)
                         (concat pre [1] post))))
 
@@ -538,7 +538,7 @@
                         (concat pre [0] post)))))
 
   (let [non-one-zero (gen/fmap (fn [n]
-                                 (if (or (g/zero? n) (v/one? n))
+                                 (if (or (g/zero? n) (g/one? n))
                                    2
                                    n))
                                sg/any-integral)]
@@ -556,10 +556,10 @@
               (is (v/= sym (g/gcd sym (v/zero-like n)))
                   "gcd(0,x)==x")
 
-              (is (v/one? (g/gcd (v/one-like n) sym))
+              (is (g/one? (g/gcd (v/one-like n) sym))
                   "gcd(1,x)==1")
 
-              (is (v/one? (g/gcd sym (v/one-like n)))
+              (is (g/one? (g/gcd sym (v/one-like n)))
                   "gcd(x,1)==1"))
 
     (checking "symbolic lcm" 100 [sym gen/symbol

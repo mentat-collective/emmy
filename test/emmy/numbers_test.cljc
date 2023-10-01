@@ -596,7 +596,7 @@
 
     (checking "atanh" 100
               [n (sg/reasonable-double {:min -10 :max 10})]
-              (when-not (v/one? (g/abs n))
+              (when-not (g/one? (g/abs n))
                 (is (ish? n (g/tanh (g/atanh n))))))))
 
 (deftest complex-constructor-tests

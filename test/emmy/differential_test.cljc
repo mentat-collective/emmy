@@ -133,21 +133,21 @@
           "subtly, `dy` IS in fact equal to zero; this can be used for control
       flow.")
 
-      (testing "v/one? only responds true to a one primal if all tangents are zero."
-        (is (v/one? (d/from-terms {[] 1})))
-        (is (v/one? (d/from-terms {[] 1 [1] 0})))
-        (is (not (v/one? (d/from-terms {[] 1 [1] 1})))))
+      (testing "g/one? only responds true to a one primal if all tangents are zero."
+        (is (g/one? (d/from-terms {[] 1})))
+        (is (g/one? (d/from-terms {[] 1 [1] 0})))
+        (is (not (g/one? (d/from-terms {[] 1 [1] 1})))))
 
-      (testing "v/identity? only responds true to an `identity` primal if all
+      (testing "g/identity? only responds true to an `identity` primal if all
       tangents are zero."
-        (is (v/identity? (d/from-terms {[] 1})))
-        (is (v/identity? (d/from-terms {[] 1 [1] 0})))
-        (is (not (v/identity? (d/from-terms {[] 1 [1] 1})))))
+        (is (g/identity? (d/from-terms {[] 1})))
+        (is (g/identity? (d/from-terms {[] 1 [1] 0})))
+        (is (not (g/identity? (d/from-terms {[] 1 [1] 1})))))
 
 (checking "*-like works" 100 [diff real-diff-gen]
                 (is (g/zero? (v/zero-like diff)))
-                (is (v/one? (v/one-like diff)))
-                (is (v/identity? (v/identity-like diff))))
+                (is (g/one? (v/one-like diff)))
+                (is (g/identity? (v/identity-like diff))))
 
       (testing "equality, comparison"
         (checking "g/negative?, g/infinite?" 100 [x sg/real]
@@ -550,7 +550,7 @@
                 (do (is (zero? ((derivative g/floor) x)))
                     (is (zero? ((derivative g/ceiling) x)))
                     (is (zero? ((derivative g/integer-part) x)))
-                    (is (v/one? ((derivative g/fractional-part) x)))))))
+                    (is (g/one? ((derivative g/fractional-part) x)))))))
 
   (testing "lift-n"
     (let [*   (d/lift-n g/* (fn [_] 1) (fn [_ y] y) (fn [x _] x))

@@ -24,8 +24,8 @@
   (testing "g/zero? returns false for fns"
     (is (not (g/zero? (af/literal-function 'f)))))
 
-  (testing "v/one? returns false for fns"
-    (is (not (v/one? (af/literal-function 'f)))))
+  (testing "g/one? returns false for fns"
+    (is (not (g/one? (af/literal-function 'f)))))
 
   (testing "v/numerical? returns false for fns"
     (is (not (v/numerical? (af/literal-function 'f)))))

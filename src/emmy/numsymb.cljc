@@ -72,7 +72,7 @@
   (cond (and (v/number? a) (v/number? b)) (f a b)
         (= a b) 0
         (g/zero? a) 0
-        (v/one? b) a
+        (g/one? b) a
         :else (list sym a b)))
 
 ;; these are without constructor simplifications!
@@ -102,11 +102,11 @@
 (defn- mul [a b]
   (cond (and (v/number? a) (v/number? b)) (g/mul a b)
         (v/number? a) (cond (g/zero? a) a
-                            (v/one? a) b
+                            (g/one? a) b
                             (product? b) `(~'* ~a ~@(operands b))
                             :else `(~'* ~a ~b))
         (v/number? b) (cond (g/zero? b) b
-                            (v/one? b) a
+                            (g/one? b) a
                             (product? a) `(~'* ~@(operands a) ~b)
                             :else `(~'* ~a ~b))
         (product? a) (cond (product? b) `(~'* ~@(operands a) ~@(operands b))
@@ -118,7 +118,7 @@
   (cond (and (v/number? a) (v/number? b)) (g/div a b)
         (v/number? a) (if (g/zero? a) a `(~'/ ~a ~b))
         (v/number? b) (cond (g/zero? b) (u/arithmetic-ex "division by zero")
-                            (v/one? b) a
+                            (g/one? b) a
                             :else `(~'/ ~a ~b))
         :else `(~'/ ~a ~b)))
 
@@ -274,7 +274,7 @@
   (if (v/number? x)
     (if-not (v/exact? x)
       (g/acos x)
-      (if (v/one? x)
+      (if (g/one? x)
         0
         (list 'acos x)))
     (list 'acos x)))
@@ -289,7 +289,7 @@
          (list 'atan y)))
      (list 'atan y)))
   ([y x]
-   (cond (v/one? x) (atan y)
+   (cond (g/one? x) (atan y)
 
          (g/exact-zero? y)
          (if (v/number? x)
@@ -358,10 +358,10 @@
 (defn- gcd [a b]
   (cond (and (v/number? a) (v/number? b)) (g/gcd a b)
         (v/number? a) (cond (g/zero? a) b
-                            (v/one? a) 1
+                            (g/one? a) 1
                             :else (list 'gcd a b))
         (v/number? b) (cond (g/zero? b) a
-                            (v/one? b) 1
+                            (g/one? b) 1
                             :else (list 'gcd a b))
         (= a b) a
         :else (list 'gcd a b)))
@@ -369,10 +369,10 @@
 (defn- lcm [a b]
   (cond (and (v/number? a) (v/number? b)) (g/lcm a b)
         (v/number? a) (cond (g/zero? a) 0
-                            (v/one? a) b
+                            (g/one? a) b
                             :else (list 'lcm a b))
         (v/number? b) (cond (g/zero? b) 0
-                            (v/one? b) a
+                            (g/one? b) a
                             :else (list 'lcm a b))
         (= a b) a
         :else (list 'lcm a b)))
@@ -397,10 +397,10 @@
   evaluates symbolically or numerically."
   [b e]
   (cond (and (v/number? b) (v/number? e)) (g/expt b e)
-        (v/number? b) (cond (v/one? b) 1
+        (v/number? b) (cond (g/one? b) 1
                             :else `(~'expt ~b ~e))
         (v/number? e) (cond (g/zero? e) 1
-                            (v/one? e) b
+                            (g/one? e) b
                             (and (integer? e) (even? e) (sqrt? b))
                             (expt (first (operands b)) (quot e 2))
                             (and (expt? b)
@@ -585,7 +585,7 @@
 
 (defn- sym:one? [x]
   (if (v/number? x)
-    (v/one? x)
+    (g/one? x)
     (list '= 1 x)))
 
 ;; ## Table

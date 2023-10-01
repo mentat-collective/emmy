@@ -60,11 +60,11 @@
       (is (g/zero? (g/* x+1:x-1 (v/zero-like x+1:x-1)))))
 
     (testing "one?, one-like"
-      (is (v/one? (v/one-like x+1:x-1)))
+      (is (g/one? (v/one-like x+1:x-1)))
       (is (= x+1:x-1 (g/* x+1:x-1 (v/one-like x+1:x-1)))))
 
     (testing "identity?, identity-like"
-      (is (v/identity? (v/identity-like x+1:x-1)))
+      (is (g/identity? (v/identity-like x+1:x-1)))
       (is (= (g/* (p/make [0 1]) x+1:x-1)
              (g/* x+1:x-1 (v/identity-like x+1:x-1)))
           "identity is `x`, multiplying should be equivalent to multiplying by

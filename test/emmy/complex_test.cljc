@@ -75,14 +75,14 @@
                 (v/one-like c/ZERO)
                 (c/complex 1.0 0.0)
                 (c/complex 1.0 -0.0)]]
-      (is (every? v/one? ones)
+      (is (every? g/one? ones)
           "-0 in imaginary does not affect one?")
 
-      (is (every? v/identity? ones)
+      (is (every? g/identity? ones)
           "-0 in imaginary does not affect identity?"))
 
-    (is (not (v/one? (c/complex 2))))
-    (is (not (v/one? (c/complex 0.0))))
+    (is (not (g/one? (c/complex 2))))
+    (is (not (g/one? (c/complex 0.0))))
 
     (is (= 10.0 (v/freeze (c/complex 10)))
         "If the imaginary piece is 0, freeze will return only the real part.")

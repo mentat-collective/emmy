@@ -138,10 +138,6 @@
   (numerical? [_] true)
 
   v/Value
-  (one? [c]
-    (and (v/one? (real c))
-         (zero? (imaginary c))))
-  (identity? [c] (v/one? c))
   (zero-like [_] ZERO)
   (one-like [_] ONE)
   (identity-like [_] ONE)
@@ -237,6 +233,9 @@
 (defmethod g/zero? [::complex] [c] #?(:clj (and (zero? (real c))
                                                 (zero? (imaginary c)))
                                       :cljs (.isZero ^js c)))
+(defmethod g/one? [::complex] [c] (and (g/one? (real c))
+                                       (zero? (imaginary c))))
+(defmethod g/identity? [::complex] [c] (g/one? c))
 (defmethod g/gcd [::complex ::complex] [a b] (gcd a b))
 (defmethod g/gcd [::complex ::v/real] [a b] (gcd a b))
 (defmethod g/gcd [::v/real ::complex] [a b] (gcd a b))

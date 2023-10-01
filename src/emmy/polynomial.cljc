@@ -1,8 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
 ^#:nextjournal.clerk
-{:toc true
- :visibility :hide-ns}
+  {:toc true
+   :visibility :hide-ns}
 (ns emmy.polynomial
   (:refer-clojure :exclude [extend divide identity abs])
   (:require [clojure.set :as set]
@@ -136,19 +136,6 @@
     (map-coefficients #(sd/extract-tangent % tag) this))
 
   v/Value
-  (one? [_]
-    (and (= (count terms) 1)
-         (let [[term] terms]
-           (and (i/constant-term? term)
-                (v/one? (i/coefficient term))))))
-
-  (identity? [_]
-    (and (v/one? arity)
-         (= (count terms) 1)
-         (let [[term] terms]
-           (and (= {0 1} (i/exponents term))
-                (v/one? (i/coefficient term))))))
-
   (zero-like [_]
     (if-let [term (nth terms 0)]
       (v/zero-like (i/coefficient term))
@@ -160,7 +147,7 @@
       1))
 
   (identity-like [_]
-    (assert (v/one? arity)
+    (assert (g/one? arity)
             "identity-like unsupported on multivariate monomials!")
     (let [one (if-let [term (nth terms 0)]
                 (v/one-like (i/coefficient term))
@@ -744,9 +731,9 @@
   [p]
   (if (polynomial? p)
     (and (= 1 (arity p))
-         (v/one?
+         (g/one?
           (leading-coefficient p)))
-    (v/one? p)))
+    (g/one? p)))
 
 (defn univariate?
   "Returns true if `p` is a [[Polynomial]] of arity 1, false otherwise."
@@ -942,7 +929,7 @@
   ([p]
    (normalize p (leading-coefficient p)))
   ([p c]
-   (cond (v/one? c) p
+   (cond (g/one? c) p
          (g/zero? c) (u/arithmetic-ex
                       (str "Divide by zero: " p c))
          (polynomial? c) (evenly-divide p c)
@@ -1102,7 +1089,7 @@
       (neg? n)
       (u/illegal (str "No inverse -- FPF:EXPT:" p n))
 
-      (v/one? p)  p
+      (g/one? p)  p
       (g/zero? p) (if (g/zero? n)
                     (u/arithmetic-ex "poly 0^0")
                     p)
@@ -1123,7 +1110,7 @@
   (cond (g/zero? v)
         (u/illegal "internal polynomial division by zero")
 
-        (or (g/zero? u) (v/one? v))
+        (or (g/zero? u) (g/one? v))
         [u 0]
 
         :else
@@ -1153,7 +1140,7 @@
   Throws an exception if the division leaves a remainder. Else, returns the
   quotient."
   [u v]
-  (if (v/one? v)
+  (if (g/one? v)
     u
     (let [[q r] (divide u v)]
       (when-not (g/zero? r)
@@ -1716,7 +1703,24 @@
 ;; NOTE: What about `g/modulo`? Does that belong for [[Polynomial]] instances?
 ;; How does it differ from `g/remainder`?
 
-(defmethod g/zero? [::polynomial] [a] (empty? (bare-terms a)))
+(defmethod g/zero? [::polynomial] [^Polynomial a] (empty? (.-terms a)))
+
+(defmethod g/one? [::polynomial] [^Polynomial a]
+  (let [terms (.-terms a)]
+    (and (= (count terms) 1)
+         (let [[term] terms]
+           (and (i/constant-term? term)
+                (g/one? (i/coefficient term)))))))
+
+(defmethod g/identity? [::polynomial] [^Polynomial a]
+  (let [terms (.-terms a)
+        arity (.-arity a)]
+    (and (g/one? arity)
+         (= (count terms) 1)
+         (let [[term] terms]
+           (and (= {0 1} (i/exponents term))
+                (g/one? (i/coefficient term)))))))
+
 (defmethod g/negative? [::polynomial] [a] (negative? a))
 (defmethod g/abs [::polynomial] [a] (abs a))
 (defmethod g/negate [::polynomial] [a] (negate a))

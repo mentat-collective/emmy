@@ -2879,7 +2879,7 @@ On to the detailed release notes:
 
 ## 0.14.0
 
-- After the work below, `v/nullity?` renamed to `g/zero?`, and `v/unity?`
+- After the work below, `v/nullity?` renamed to `v/zero?`, and `v/unity?`
   renamed to `v/one?`
   ([#180](https://github.com/mentat-collective/sicmutils/pull/180)). This
   affects the names listed in the CHANGELOG entries below.
@@ -3100,8 +3100,8 @@ On to the detailed release notes:
   - `m/identity-like` returns an identity matrix (given a square matrix) with
     entries of identical type, but set appropriately to zero or one. This is
     installed as `v/one-like` and `v/identity-like`.
-  - `v/identity?` now returns true for identity matrices, false otherwise.
-    `v/one?` returns `false` for identity matrices! If it didn't, `(* 2 (I 10))`
+  - `g/identity?` now returns true for identity matrices, false otherwise.
+    `g/one?` returns `false` for identity matrices! If it didn't, `(* 2 (I 10))`
     would return `2`, since `one?` signals multiplicative identity.
 
 - `sicmutils.structure/up` and `sicmutils.structure/down` now have analogous

@@ -27,6 +27,9 @@
 ;; "Backstop" implementations that apply to anything that descends from
 ;; ::v/real.
 (defmethod g/zero? [::v/real] [a] (core/zero? a))
+(defmethod g/one? [::v/real] [a] (== 1 a))
+(defmethod g/identity? [::v/real] [a] (== 1 a))
+
 (defmethod g/add [::v/real ::v/real] [a b] (#?(:clj +' :cljs core/+) a b))
 (defmethod g/mul [::v/real ::v/real] [a b] (#?(:clj *' :cljs core/*) a b))
 (defmethod g/sub [::v/real ::v/real] [a b] (#?(:clj -' :cljs core/-) a b))
@@ -161,8 +164,8 @@
   [b a]
   (cond (v/= a b)            (v/one-like a)
         (v/= a (g/negate b)) (g/negate (v/one-like a))
-        (v/one? a)            b
-        (v/one? (g/negate a)) (g/negate b)
+        (g/one? a)            b
+        (g/one? (g/negate a)) (g/negate b)
         :else nil))
 
 (defmethod g/exact-divide [::v/scalar ::v/real] [b a]
@@ -271,7 +274,7 @@
            (r/rationalize a b))))
 
      (defmethod g/invert [::v/integral] [a]
-       (if (v/one? a)
+       (if (g/one? a)
          a
          (r/rationalize 1 a)))))
 

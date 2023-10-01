@@ -29,8 +29,6 @@
 
 (deftype Matrix [r c v]
   v/Value
-  (one? [_] false)
-  (identity? [m] (identity? m))
   (zero-like [this] (fmap v/zero-like this))
   (one-like [this] (identity-like this))
   (identity-like [this] (identity-like this))
@@ -1052,7 +1050,7 @@
                        j (range n)
                        :let [entry (core/get-in m [i j])]]
                    (if (= i j)
-                     (v/one? entry)
+                     (g/one? entry)
                      (g/zero? entry)))))))
 
 (defn make-diagonal
@@ -1189,6 +1187,9 @@
 
 
 (defmethod g/zero? [::matrix] [a] (every? #(every? g/zero? %) a))
+(defmethod g/one? [::matrix] [_] false)
+(defmethod g/identity? [::matrix] [m] (identity? m))
+
 (defmethod v/= [::matrix ::matrix] [a b] (m:= a b))
 (defmethod v/= [::square-matrix ::v/scalar] [m c] (matrix=scalar m c))
 (defmethod v/= [::v/scalar ::square-matrix] [c m] (scalar=matrix c m))

@@ -17,17 +17,17 @@
     (is (not (g/zero? #'neg?)))
     (is (not (g/zero? g/add))))
 
-  (testing "v/one? returns false for fns"
-    (is (not (v/one? neg?)))
-    (is (not (v/one? #'neg?)))
-    (is (not (v/one? g/add)))
-    (is (not (v/one? identity))))
+  (testing "g/one? returns false for fns"
+    (is (not (g/one? neg?)))
+    (is (not (g/one? #'neg?)))
+    (is (not (g/one? g/add)))
+    (is (not (g/one? identity))))
 
-  (testing "v/identity? returns false for fns"
-    (is (not (v/identity? neg?)))
-    (is (not (v/identity? #'neg?)))
-    (is (not (v/identity? g/add)))
-    (is (not (v/identity? identity))
+  (testing "g/identity? returns false for fns"
+    (is (not (g/identity? neg?)))
+    (is (not (g/identity? #'neg?)))
+    (is (not (g/identity? g/add)))
+    (is (not (g/identity? identity))
         "We go conservative and say that EVEN the actual identity function is not identity."))
 
   (testing "v/numerical? returns false for fns"
@@ -358,7 +358,7 @@
 
     (checking "atanh" 100
               [n (sg/reasonable-double {:min -10 :max 10})]
-              (when-not (v/one? (g/abs n))
+              (when-not (g/one? (g/abs n))
                 (let [f (f/compose g/tanh g/atanh)]
                   (is (ish? n (f n))))))))
 

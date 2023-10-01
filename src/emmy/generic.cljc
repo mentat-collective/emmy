@@ -14,7 +14,8 @@
   (:refer-clojure :exclude [/ + - divide infinite? abs]
                   :rename {zero? core-zero?
                            * core-*})
-  (:require [emmy.util :as u]
+  (:require [emmy.generic :as g]
+            [emmy.util :as u]
             [emmy.util.def :refer [defgeneric]]
             [emmy.value :as v])
   #?(:clj (:import (clojure.lang Keyword))))
@@ -52,6 +53,8 @@
 ;; at [[emmy.complex]] for an example of how to do this.
 
 (defgeneric ^:no-doc zero? 1)
+(defgeneric ^:no-doc one? 1)
+(defgeneric ^:no-doc identity? 1)
 
 (defn numeric-zero?
   "Returns `true` if `x` is both a [[number?]] and [[zero?]], false otherwise."
@@ -179,8 +182,8 @@
          numy? (v/numerical? y)]
      (cond (and numx? (zero? x)) (v/zero-like y)
            (and numy? (zero? y)) (v/zero-like x)
-           (and numx? (v/one? x)) y
-           (and numy? (v/one? y)) x
+           (and numx? (g/one? x)) y
+           (and numy? (g/one? y)) x
            :else (mul x y))))
   ([x y & more]
    (reduce * (* x y) more)))
@@ -241,7 +244,7 @@
   ([] 1)
   ([x] (invert x))
   ([x y]
-   (if (and (v/number? y) (v/one? y))
+   (if (and (v/number? y) (g/one? y))
      x
      (div x y)))
   ([x y & more]

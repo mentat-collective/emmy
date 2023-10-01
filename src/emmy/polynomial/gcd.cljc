@@ -227,7 +227,7 @@
             primitive (p/map-coefficients (fn [_] 1) p)]
         [content primitive])
       (let [content   (apply gcd coeffs)
-            primitive (if (v/one? content)
+            primitive (if (g/one? content)
                         p
                         (p/map-coefficients
                          #(g/exact-divide % content) p))]
@@ -296,10 +296,10 @@
   reached.
 
   NOTE: This is only appropriate if you don't expect rational coefficients; the
-  GCD of 1 and a rational number IS that other number, so the `v/one?` guard is
+  GCD of 1 and a rational number IS that other number, so the `g/one?` guard is
   not appropriate."
   [binary-gcd]
-  (ua/monoid binary-gcd 0 v/one?))
+  (ua/monoid binary-gcd 0 g/one?))
 
 (def ^:no-doc primitive-gcd
   (->gcd (fn [l r]
@@ -516,7 +516,7 @@
   If a non-[[p/Polynomial]] is supplied, returns 1."
   [p]
   (if (p/polynomial? p)
-    (transduce (halt-when v/one?)
+    (transduce (halt-when g/one?)
                gcd
                (p/partial-derivatives p))
     1))

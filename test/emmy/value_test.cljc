@@ -61,10 +61,10 @@
             (is (g/zero? (v/zero-like n)))
             (is (not (g/zero? (v/one-like n))))
 
-            (is (v/one? (v/one-like n)))
-            (is (not (v/one? (v/zero-like n))))
+            (is (g/one? (v/one-like n)))
+            (is (not (g/one? (v/zero-like n))))
 
-            (is (v/identity? (v/identity-like n))))
+            (is (g/identity? (v/identity-like n))))
 
   (let [n 50]
     (checking "all numbers act as hashmap keys" 100
@@ -140,10 +140,10 @@
   (is (not (g/zero? 0.1))))
 
 (deftest one-tests
-  (is (v/one? 1))
-  (is (v/one? 1.0))
-  (is (not (v/one? 0)))
-  (is (not (v/one? 0.0))))
+  (is (g/one? 1))
+  (is (g/one? 1.0))
+  (is (not (g/one? 0)))
+  (is (not (g/one? 0.0))))
 
 (deftest kinds
   (is (= #?(:clj Long :cljs ::v/native-integral) (v/kind 1)))

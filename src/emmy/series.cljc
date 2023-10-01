@@ -44,8 +44,6 @@
   (extract-tangent [s tag] (fmap #(d/extract-tangent % tag) s))
 
   v/Value
-  (one? [_] false)
-  (identity? [_] false)
   (zero-like [_] s-zero)
   (one-like [_] s-one)
 
@@ -215,8 +213,6 @@
   (extract-tangent [s tag] (fmap #(d/extract-tangent % tag) s))
 
   v/Value
-  (one? [_] false)
-  (identity? [_] false)
   (zero-like [_] zero)
   (one-like [_] one)
   (identity-like [_] identity)
@@ -227,7 +223,7 @@
                       (filter (complement g/zero?))
                       (map-indexed
                        (fn [n a]
-                         (if (v/one? a)
+                         (if (g/one? a)
                            `(~'expt ~'_ ~n)
                            `(~'* ~a (~'expt ~'_ ~n))))))]
       `(~'+ ~@prefix ~'...)))
@@ -715,7 +711,9 @@
 (doseq [[ctor kind] [[->Series ::series]
                      [->PowerSeries ::power-series]]]
 
-  (defmethod g/zero? [kind] [s] false)
+  (defmethod g/zero? [kind] [_] false)
+  (defmethod g/one? [kind] [_] false)
+  (defmethod g/identity? [kind] [_] false)
 
   (defmethod g/add [kind kind] [s t]
     (ctor (i/seq:+ (seq s) (seq t)) nil))

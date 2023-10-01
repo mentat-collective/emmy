@@ -30,8 +30,6 @@
   (numerical? [_] false))
 
 (defprotocol Value
-  (^boolean one? [this])
-  (^boolean identity? [this])
   (zero-like [this])
   (one-like [this])
   (identity-like [this])

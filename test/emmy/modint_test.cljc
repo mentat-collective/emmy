@@ -100,12 +100,12 @@
       (is (g/zero? (v/zero-like m5_7))))
 
     (testing "one?"
-      (is (v/one? m1_7))
-      (is (v/one? (v/one-like m5_7))))
+      (is (g/one? m1_7))
+      (is (g/one? (v/one-like m5_7))))
 
     (testing "identity?"
-      (is (v/identity? m1_7))
-      (is (v/identity? (v/identity-like m5_7))))
+      (is (g/identity? m1_7))
+      (is (g/identity? (v/identity-like m5_7))))
 
     (testing "compatibility"
       (is 4 (g/integer-part m4_7))

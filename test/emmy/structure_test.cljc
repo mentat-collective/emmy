@@ -74,12 +74,12 @@
     (testing "one-like"
       (let [one (v/one-like (s/up 1 2 3))]
         (is (= 1 one))
-        (is (v/one? one))))
+        (is (g/one? one))))
 
     (testing "identity-like"
       (let [id (v/identity-like (s/up 1 2 3))]
         (is (= 1 id))
-        (is (v/identity? id))))
+        (is (g/identity? id))))
 
     (testing "exact?"
       (is (v/exact? (s/up 1 2 3 4)))

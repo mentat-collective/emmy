@@ -6,6 +6,7 @@
   (:require [clojure.walk :as w]
             [emmy.expression :as x]
             [emmy.expression.analyze :as a]
+            [emmy.generic :as g]
             [emmy.numsymb :as sym]
             [emmy.pattern.rule :as r :refer [=> rule-simplifier]]
             [emmy.polynomial :as poly]
@@ -34,7 +35,7 @@
            tracker []
            old-s p
            old-m 1]
-      (if (v/one? m)
+      (if (g/one? m)
         (answer tracker h)
         (let [gg (gcd-Dp h)
               new-s (poly/evenly-divide h (gcd h gg))

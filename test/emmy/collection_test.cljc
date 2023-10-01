@@ -35,10 +35,10 @@
                     "zero-like zeros out all values.")))
 
     (checking "v/kind, one?, identity?" 100 [v (gen/vector sg/any-integral)]
-              (is (not (v/one? v))
+              (is (not (g/one? v))
                   "no vector is a multiplicative identity.")
 
-              (is (not (v/identity? v))
+              (is (not (g/identity? v))
                   "no vector is a multiplicative identity!")
 
               (is (= (v/kind v) (type v))
@@ -199,10 +199,10 @@
                     "The keyset is identical after zeroing.")))
 
     (checking "v/kind, one?, identity?" 100 [m (gen/map gen/keyword sg/any-integral)]
-              (is (not (v/one? m))
+              (is (not (g/one? m))
                   "no map is a multiplicative identity.")
 
-              (is (not (v/identity? m))
+              (is (not (g/identity? m))
                   "no map is a multiplicative identity.")
 
               (is (isa? (v/kind m) ::collection/map)
@@ -291,11 +291,11 @@
               (let [zero-s (v/zero-like s)]
                 (is (g/zero? zero-s))))
 
-    (checking "v/kind, v/one?, v/identity?" 100 [s (gen/set sg/any-integral)]
-              (is (not (v/one? s))
+    (checking "v/kind, g/one?, g/identity?" 100 [s (gen/set sg/any-integral)]
+              (is (not (g/one? s))
                   "no map is a multiplicative identity.")
 
-              (is (not (v/identity? s))
+              (is (not (g/identity? s))
                   "no map is a multiplicative identity.")
 
               (is (isa? (v/kind s) ::collection/set)

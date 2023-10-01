@@ -17,10 +17,10 @@
             (is (g/zero? (v/zero-like a)))))
 
 (defn unity [options generator type-name]
-  (checking (str type-name " v/one? agrees with v/one-like.")
+  (checking (str type-name " g/one? agrees with v/one-like.")
             options
             [a generator]
-            (is (v/one? (v/one-like a)))))
+            (is (g/one? (v/one-like a)))))
 
 (defn zero-like [options generator type-name]
   (nullity options generator type-name)
@@ -154,7 +154,7 @@
       0 * a == a * 0 == a
 
   `(v/one-like a)` should always return this element,
-  and `(v/one? (v/one-like))` should always be true.`"
+  and `(g/one? (v/one-like))` should always be true.`"
   [opts generator type-name & {:keys [commutative?]}]
   (multiplicative-semigroup opts generator type-name  :commutative? commutative?)
   (one-like opts generator type-name))

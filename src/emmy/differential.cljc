@@ -615,8 +615,6 @@
              terms)))
 
   v/Value
-  (one? [this] (one? this))
-  (identity? [this] (one? this))
   (zero-like [_] 0)
   (one-like [_] 1)
   (identity-like [_] 1)
@@ -985,14 +983,14 @@
 ;; whenever a non-[[Differential]] `x` would return true. To make this work,
 ;; these operations look only at the [[finite-part]].
 ;;
-;; HOWEVER! [[v/one?]] and [[g/zero?]] are examples of Emmy functions that
+;; HOWEVER! [[g/one?]] and [[g/zero?]] are examples of Emmy functions that
 ;; are used to skip operations that we _want_ to happen, like multiplication.
 ;;
-;; `(g/* x y)` will return `y` if `(v/one? x)` is true... but to propagate the
+;; `(g/* x y)` will return `y` if `(g/one? x)` is true... but to propagate the
 ;; derivative through we need this multiplication to occur. The compromise is:
 ;;
-;; - [[v/one?]] and [[g/zero?]] return true only when ALL [[tangent-part]]s are
-;;   zero and the [[finite-part]] is either [[v/one?]] or [[g/zero?]]
+;; - [[g/one?]] and [[g/zero?]] return true only when ALL [[tangent-part]]s are
+;;   zero and the [[finite-part]] is either [[g/one?]] or [[g/zero?]]
 ;;   respectively
 ;; - [[eq]] and [[compare-full]] similarly looks at every component in
 ;;   the [[Differential]] supplied to both sides
@@ -1001,7 +999,7 @@
 ;;
 ;; - [[equiv]] and [[compare]] only examine the [[finite-part]] of either side.
 
-(defn one?
+(defn- one?
   "Returns true if the supplied instance has a [[finite-part]] that responds true
   to [[emmy.value/one?]], and zero coefficients on any of its tangent
   components; false otherwise.
@@ -1012,7 +1010,7 @@
   the [[finite-part]] and ignore the values of the tangent parts."
   [dx]
   (let [[p t] (primal-tangent-pair dx)]
-    (and (v/one? p)
+    (and (g/one? p)
          (g/zero? t))))
 
 (defn eq
@@ -1198,6 +1196,8 @@
   (map-coefficients g/simplify d))
 (defmethod g/zero? [::differential] [d]
   (every? (comp g/zero? coefficient) (bare-terms d)))
+(defmethod g/one? [::differential] [d] (one? d))
+(defmethod g/identity? [::differential] [d] (one? d))
 
 (defn- defunary
   "Given:

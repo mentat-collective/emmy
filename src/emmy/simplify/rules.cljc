@@ -207,7 +207,7 @@
   (g/zero? (g/modulo x 2)))
 
 (defn odd? [x]
-  (v/one? (g/modulo x 2)))
+  (g/one? (g/modulo x 2)))
 
 (defn- even-integer? [x]
   (and (v/integral? x)
@@ -888,7 +888,7 @@
                       (v/number? xs))
                (sym:atan ys xs)
                (let [s (simplify (list 'gcd ys xs))]
-                 (when-not (v/one? s)
+                 (when-not (g/one? s)
                    (and (ul/assume!
                          (list 'positive? s)
                          'aggressive-atan-2)
@@ -1238,7 +1238,7 @@
 (def split-high-degree-sincos
   (letfn [(remaining [{n '?n :as m}]
             (let [n-2 (g/- n 2)]
-              (if (v/one? n-2)
+              (if (g/one? n-2)
                 (r/template m (?op ?x))
                 (r/template
                  m (expt (?op ?x) ~n-2)))))]

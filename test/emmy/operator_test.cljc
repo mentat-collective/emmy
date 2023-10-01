@@ -41,8 +41,8 @@
 
     (testing "one? zero? identity? return true appropriately"
       (is (g/zero? (v/zero-like x2)))
-      (is (not (v/one? (v/one-like x2))))
-      (is (v/identity? (v/identity-like x2))))
+      (is (not (g/one? (v/one-like x2))))
+      (is (g/identity? (v/identity-like x2))))
 
     (testing "v/numerical?"
       (is (not (v/numerical? x2))))

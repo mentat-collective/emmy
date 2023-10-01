@@ -39,8 +39,6 @@
 
 (extend-type #?(:clj IPersistentVector :cljs PersistentVector)
   v/Value
-  (one? [_] false)
-  (identity? [_] false)
   (zero-like [v] (mapv v/zero-like v))
   (one-like [_] 1)
   (identity-like [_] 1)
@@ -78,10 +76,11 @@
 (doseq [klass #?(:clj [ISeq]
                  :cljs [Cons IndexedSeq LazySeq List Range IntegerRange])]
  (defmethod g/zero? [klass] [_] false)
+ (defmethod g/one? [klass] [_] false)
+ (defmethod g/identity? [klass] [_] false)
+
  (extend-type #?(:clj ISeq :cljs klass)
    v/Value
-   (one? [_] false)
-   (identity? [_] false)
    (zero-like [xs] (map v/zero-like xs))
    (one-like [xs] (u/unsupported (str "one-like: " xs)))
    (identity-like [xs] (u/unsupported (str "identity-like: " xs)))
@@ -167,12 +166,13 @@
 
 (doseq [klass [PersistentHashMap PersistentArrayMap PersistentTreeMap]]
   (defmethod g/zero? [klass] [m] (every? g/zero? (vals m)))
+  (defmethod g/one? [klass] [_] false)
+  (defmethod g/identity? [klass] [_] false)
+
   #?(:clj
      (extend klass
        v/Value
-       {:one? (fn [_] false)
-        :identity? (fn [_] false)
-        :zero-like (fn [m] (u/map-vals v/zero-like m))
+       {:zero-like (fn [m] (u/map-vals v/zero-like m))
         :one-like (fn [m] (u/unsupported (str "one-like: " m)))
         :identity-like (fn [m] (u/unsupported (str "identity-like: " m)))
         :exact? (fn [m] (every? v/exact? (vals m)))
@@ -198,7 +198,6 @@
      :cljs
      (extend-type klass
        v/Value
-       (one? [_] false)
        (identity? [_] false)
        (zero-like [m] (u/map-vals v/zero-like m))
        (one-like [m] (u/unsupported (str "one-like: " m)))
@@ -235,12 +234,12 @@
 
 (doseq [klass [PersistentHashSet PersistentTreeSet]]
   (defmethod g/zero? [klass] [s] (empty? s))
+  (defmethod g/one? [klass] [_] false)
+  (defmethod g/identity? [klass] [_] false)
   #?(:clj
      (extend klass
        v/Value
-       {:one? (fn [_] false)
-        :identity? (fn [_] false)
-        :zero-like (fn [_] #{})
+       {:zero-like (fn [_] #{})
         :one-like (fn [s] (u/unsupported (str "one-like: " s)))
         :identity-like (fn [s] (u/unsupported (str "identity-like: " s)))
         :exact? (fn [_] false)
@@ -253,7 +252,6 @@
      :cljs
      (extend-type klass
        v/Value
-       (one? [_] false)
        (identity? [_] false)
        (zero-like [_] #{})
        (one-like [s] (u/unsupported (str "one-like: " s)))

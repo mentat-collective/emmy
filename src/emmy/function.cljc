@@ -188,8 +188,6 @@
 
 (extend-protocol v/Value
   MultiFn
-  (one? [_] false)
-  (identity? [_] false)
   (zero-like [f] (zero-like f))
   (one-like [f] (one-like f))
   (identity-like [f] (identity-like f))
@@ -201,8 +199,6 @@
   (kind [_] ::v/function)
 
   #?(:clj AFunction :cljs function)
-  (one? [_] false)
-  (identity? [_] false)
   (zero-like [f] (zero-like f))
   (one-like [f] (one-like f))
   (identity-like [f] (identity-like f))
@@ -214,8 +210,6 @@
   (kind [_] ::v/function)
 
   Var
-  (one? [_] false)
-  (identity? [_] false)
   (zero-like [f] (zero-like f))
   (one-like [f] (one-like f))
   (identity-like [f] (identity-like f))
@@ -225,8 +219,6 @@
 
   #?@(:cljs
       [MetaFn
-       (one? [_] false)
-       (identity? [_] false)
        (zero-like [f] (zero-like f))
        (one-like [f] (one-like f))
        (identity-like [f] (identity-like f))
@@ -583,3 +575,5 @@
 ;; Generic Methods
 
 (defmethod g/zero? [::v/function] [_] false)
+(defmethod g/one? [::v/function] [_] false)
+(defmethod g/identity? [::v/function] [_] false)

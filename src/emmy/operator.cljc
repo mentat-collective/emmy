@@ -32,16 +32,6 @@
   ;; multiplicative identity. So `(* o:identity 5)` would return 5, which is
   ;; incorrect. (We should get back a new operator that carries the scale-by-5
   ;; along until the final function resolves.)
-  (one? [this]
-    (if-let [one-fn (:one? context)]
-      (one-fn this)
-      false))
-
-  (identity? [this]
-    (if-let [id-fn (:identity? context)]
-      (id-fn this)
-      (= o core/identity)))
-
   (zero-like [this]
     (if-let [z-fn (:zero-like context)]
       (z-fn this)
@@ -225,7 +215,7 @@
   (make-operator
    (f/get (procedure o) k)
    `(~'compose (~'component ~k)
-     ~(name o))))
+               ~(name o))))
 
 (def identity
   "Identity operator. Returns its argument unchanged."
@@ -281,7 +271,7 @@
   (let [h (f/coerce-to-fn f [:exactly 1])]
     (->Operator (fn [g] (op (f/compose h g) (o g)))
                 (arity o)
-	              `(~sym ~(v/freeze f) ~(name o))
+                `(~sym ~(v/freeze f) ~(name o))
                 (context o)
                 nil)))
 
@@ -306,7 +296,7 @@
   (let [h (f/coerce-to-fn f [:exactly 1])]
     (->Operator (fn [g] (op (o g) (f/compose h g)))
                 (arity o)
-	              `(~sym ~(name o) ~(v/freeze f))
+                `(~sym ~(name o) ~(v/freeze f))
                 (context o)
                 nil)))
 
@@ -320,7 +310,7 @@
                 (g/negate (apply o fs)))
               (arity o)
               (list '- (name o))
-	            (context o)
+              (context o)
               (meta o)))
 
 (defn- o:-
@@ -366,8 +356,8 @@
   ([o] o)
   ([o p]
    (let [ctx (joint-context o p)]
-     (cond (v/identity? o) (with-context p ctx)
-           (v/identity? p) (with-context o ctx)
+     (cond (g/identity? o) (with-context p ctx)
+           (g/identity? p) (with-context o ctx)
            (g/zero? o)     (with-context o ctx)
            :else
            (->Operator (f/compose o p)
@@ -405,7 +395,7 @@
   (->Operator (fn [& gs]
                 (g/mul (g/invert n) (apply o gs)))
               (arity o)
-	            `(~'/ ~(name o) ~n)
+              `(~'/ ~(name o) ~n)
               (context o)
               (meta o)))
 
@@ -474,11 +464,20 @@
                   (context g)
                   nil))))
 
-
 (defmethod g/zero? [::operator] [^Operator o]
-    (if-let [z-fn (:zero? (.-context o))]
-      (z-fn o)
-      (= (.-o o) v/zero-like)))
+  (if-let [z-fn (:zero? (.-context o))]
+    (z-fn o)
+    (= (.-o o) v/zero-like)))
+
+(defmethod g/one? [::operator] [^Operator o]
+  (if-let [one-fn (:one? (.-context o))]
+    (one-fn o)
+    false))
+
+(defmethod g/identity? [::operator] [^Operator o]
+  (if-let [id-fn (:identity? (.-context o))]
+    (id-fn o)
+    (= (.-o o) core/identity)))
 
 (defmethod g/add [::operator ::operator] [o p] (o:+ o p))
 (defmethod g/add [::operator ::co-operator] [o f] (o+f o f))

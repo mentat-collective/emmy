@@ -105,18 +105,18 @@
                    (v/zero-like p))))
 
     (testing "one"
-      (is (not (v/one? (p/make []))))
-      (is (v/one? (p/make [1])))
-      (is (v/one? (p/make 2 {[0 0] 1})))
-      (is (v/one? (p/make 3 {[0 0 0] 1})))
-      (is (not (v/one? (p/make 3 {[0 0 0] 1 [0 0 1] 2}))))
-      (is (not (v/one? (p/make [1.1]))))
-      (is (v/one? (p/make [1.0])))
-      (is (v/one? (p/make [(p/make [1])])))
-      (is (not (v/one? (p/make [(p/make [2])])))))
+      (is (not (g/one? (p/make []))))
+      (is (g/one? (p/make [1])))
+      (is (g/one? (p/make 2 {[0 0] 1})))
+      (is (g/one? (p/make 3 {[0 0 0] 1})))
+      (is (not (g/one? (p/make 3 {[0 0 0] 1 [0 0 1] 2}))))
+      (is (not (g/one? (p/make [1.1]))))
+      (is (g/one? (p/make [1.0])))
+      (is (g/one? (p/make [(p/make [1])])))
+      (is (not (g/one? (p/make [(p/make [2])])))))
 
     (checking "one-like" 100 [p (sg/polynomial)]
-              (is (v/one?
+              (is (g/one?
                    (v/one-like p))))
 
     (testing "one-like unit tests"
@@ -140,17 +140,17 @@
 
     (checking "identity-like (only on monomials)" 100
               [p (sg/polynomial :arity 1)]
-              (is (v/identity?
+              (is (g/identity?
                    (v/identity-like p))))
 
     (testing "identity unit tests"
-      (is (v/identity? (p/make [0 1])))
-      (is (not (v/identity? (p/make []))))
-      (is (not (v/identity? (p/make [0]))))
+      (is (g/identity? (p/make [0 1])))
+      (is (not (g/identity? (p/make []))))
+      (is (not (g/identity? (p/make [0]))))
 
       (testing "identity? only returns true for monomials."
-        (is (v/identity? (p/identity 1)))
-        (is (not (v/identity? (p/identity 2 1))))))
+        (is (g/identity? (p/identity 1)))
+        (is (not (g/identity? (p/identity 2 1))))))
 
     (testing "identity-like unit tests"
       (is (= (p/make [0 1])

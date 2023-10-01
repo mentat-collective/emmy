@@ -211,6 +211,8 @@
 ;; ill-founded, but it was required for some polynomial code.
 (defmethod g/negative? [::x/numeric] [_] false)
 (defmethod g/zero? [Symbol] [_] false)
+(defmethod g/one? [Symbol] [_] false)
+(defmethod g/identity? [Symbol] [_] false)
 
 (defmethod g/simplify [Symbol] [a] a)
 (defmethod g/simplify [::x/numeric] [a]

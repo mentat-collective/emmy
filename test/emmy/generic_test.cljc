@@ -46,8 +46,6 @@
 
 (defrecord Wrap [s]
   v/Value
-  (one? [this] (= this (v/one-like this)))
-  (identity? [this] (= this (v/identity-like this)))
   (zero-like [_] (Wrap. "0"))
   (one-like [_] (Wrap. "1"))
   (identity-like [_] (Wrap. "1"))
@@ -56,6 +54,8 @@
   (kind [_] ::wrap))
 
 (defmethod g/zero? [::wrap] [a] (= a (v/zero-like a)))
+(defmethod g/one? [::wrap] [a] (= a (v/one-like a)))
+(defmethod g/identity? [::wrap] [a] (= a (v/identity-like a)))
 
 (defmethod g/add [::wrap ::wrap] [l r]
   (->Wrap (str (:s l) "+" (:s r))))
@@ -137,7 +137,7 @@
   (is (= 1 (g/*)) "No args returns the multiplicative identity.")
   (checking "g/*" 100 [x gen/any-equatable]
             (is (v/= x (g/* x)) "single arg returns itself.")
-            (is (v/= (if (v/one? x) 1 x)
+            (is (v/= (if (and (v/numerical? x) (g/one? x)) 1 x)
                      (g/* x 1)) "First unity gets returned.")
             (is (v/= x (g/* 1 x)) "Anything times a 1 returns itself.")))
 

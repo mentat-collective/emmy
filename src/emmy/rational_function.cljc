@@ -44,9 +44,6 @@
   (denominator [_] v)
 
   v/Value
-  (one? [_] (and (v/one? u) (v/one? v)))
-  (identity? [_] (and (v/identity? u) (v/one? v)))
-
   (zero-like [_] (v/zero-like u))
   (one-like [_] (v/one-like u))
   (identity-like [_]
@@ -283,7 +280,7 @@
   to [[polynomial/terms->polynomial]]"
   [arity u v]
   (cond (g/zero? u) 0
-        (v/one? v)  u
+        (g/one? v)  u
 
         (or (p/polynomial? u)
             (p/polynomial? v))
@@ -336,12 +333,12 @@
                          (p/leading-coefficient v)))
                  factor
                  (g/negate factor))
-        [u' v'] (if (v/one? factor)
+        [u' v'] (if (g/one? factor)
                   [u v]
                   [(g/mul factor u)
                    (g/mul factor v)])
         g (g/gcd u' v')
-        [u'' v''] (if (v/one? g)
+        [u'' v''] (if (g/one? g)
                     [u' v']
                     [(p/evenly-divide u' g)
                      (p/evenly-divide v' g)])]
@@ -393,7 +390,7 @@
         u-d  (r/denominator u)
         v-n  (r/numerator v)
         v-d  (r/denominator v)
-        [n d] (if (and (v/one? u-d) (v/one? v-d))
+        [n d] (if (and (g/one? u-d) (g/one? v-d))
                 [(poly-op u-n v-n) 1]
                 (uv-op u-n u-d v-n v-d))]
     (make-reduced a n d)))
@@ -420,7 +417,7 @@
             (if (g/zero? n)
               [0 1]
               (let [g (g/gcd d n)]
-                (if (v/one? g)
+                (if (g/one? g)
                   [n d]
                   [(p/evenly-divide n g)
                    (p/evenly-divide d g)]))))]
@@ -429,7 +426,7 @@
       (let [n (p/add u v)]
         (divide-through n u'))
       (let [g (g/gcd u' v')]
-        (if (v/one? g)
+        (if (g/one? g)
           ;; Denominators are relatively prime:
           (divide-through
            (p/add (p/mul u v')
@@ -527,8 +524,8 @@
   [r s]
   (cond (g/zero? r) r
         (g/zero? s) s
-        (v/one? r) s
-        (v/one? s) r
+        (g/one? r) s
+        (g/one? s) r
         :else (binary-combine r s p/mul uv:*)))
 
 (defn square
@@ -845,6 +842,8 @@
 (defbinary g/gcd gcd)
 
 (defmethod g/zero? [::rational-function] [^RationalFunction a] (g/zero? (.-u a)))
+(defmethod g/one? [::rational-function] [^RationalFunction a] (and (g/one? (.-u a)) (g/one? (.-v a))))
+(defmethod g/identity? [::rational-function] [^RationalFunction a] (and (g/identity? (.-u a)) (g/one? (.-v a))))
 (defmethod g/negative? [::rational-function] [a] (negative? a))
 (defmethod g/abs [::rational-function] [a] (abs a))
 (defmethod g/negate [::rational-function] [a] (negate a))

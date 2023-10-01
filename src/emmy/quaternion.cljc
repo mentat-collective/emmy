@@ -133,9 +133,6 @@
      m))
 
   v/Value
-  (one? [this] (one? this))
-  (identity? [this] (one? this))
-
   (zero-like [_]
     (Quaternion. (v/zero-like r) 0 0 0 m))
   (one-like [_]
@@ -496,17 +493,17 @@
        (g/zero? (get-j q))
        (g/zero? (get-k q))))
 
-(defn zero?
+(defn- zero?
   "Returns true if `q` is a quaternion with zeros in all coefficient positions,
   false otherwise."
   [q]
   (and (real? q) (g/zero? (get-r q))))
 
-(defn one?
+(defn- one?
   "Returns true if `q` is a [[real?]] quaternion with a one-like coefficient in
   the real position, false otherwise."
   [q]
-  (and (real? q) (v/one? (get-r q))))
+  (and (real? q) (g/one? (get-r q))))
 
 (defn pure?
   "Returns true if the quaternion `q` has a zero real entry, false otherwise.
@@ -529,7 +526,7 @@
    (let [mag-sq (magnitude-sq q)]
      (if epsilon
        ((v/within epsilon) 1 (g/sqrt mag-sq))
-       (v/one? mag-sq)))))
+       (g/one? mag-sq)))))
 
 (defn eq
   "Returns true if the supplied quaternion `q1` is equal to the value `q2`. The
@@ -1545,6 +1542,8 @@
 ;;
 
 (defmethod g/zero? [::quaternion] [a] (zero? a))
+(defmethod g/one? [::quaternion] [a] (one? a))
+(defmethod g/identity? [::quaternion] [a] (one? a))
 
 ;; ### Equality
 ;;

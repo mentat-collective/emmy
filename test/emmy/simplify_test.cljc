@@ -171,9 +171,9 @@
                  (g/divide 'x 0))))
 
   (testing "symbolic moves"
-    (is (v/one? (g/expt 'x 0)))
+    (is (g/one? (g/expt 'x 0)))
     (is (= 'x (g/gcd 'x 'x)))
-    (is (v/one? (g/expt 1 'x)))
+    (is (g/one? (g/expt 1 'x)))
     (is (= (g/negate 'x) (g/- 0 'x)))))
 
 (deftest matrix-tests

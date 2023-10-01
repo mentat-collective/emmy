@@ -1,7 +1,7 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
 (ns emmy.expression-test
-  (:require [clojure.test :refer [is deftest testing use-fixtures]]
+  (:require [clojure.test :refer [is deftest testing]]
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
             [emmy.abstract.number :as an]
@@ -19,20 +19,23 @@
     (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
                  (g/zero? (e/make-literal ::blah 0))))
     (is (g/zero? (e/make-literal ::blah-derived 0)))
+    (is (g/one? (e/make-literal ::blah-derived 1)))
+    (is (g/identity? (e/make-literal ::blah-derived 1)))
 
-    (is (v/one? (e/make-literal ::blah 1)))
-    (is (v/identity? (e/make-literal ::blah 1)))
-
+    (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
+                 (g/one? (e/make-literal ::blah 1))))
+    (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
+                 (g/identity? (e/make-literal ::blah 1))))
     (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
                  (g/zero? (e/make-literal ::blah 10))))
     (is (not (g/zero? (e/make-literal ::blah-derived 10))))
     (is (g/zero? (v/zero-like (e/make-literal ::blah 10))))
 
-    (is (not (v/one? (e/make-literal ::blah 10))))
-    (is (v/one? (v/one-like (e/make-literal ::blah 10))))
+    (is (not (g/one? (e/make-literal ::blah-derived 10))))
+    (is (g/one? (v/one-like (e/make-literal ::blah 10))))
 
-    (is (not (v/identity? (e/make-literal ::blah 10))))
-    (is (v/identity? (v/identity-like (e/make-literal ::blah 10))))
+    (is (not (g/identity? (e/make-literal ::blah-derived 10))))
+    (is (g/identity? (v/identity-like (e/make-literal ::blah 10))))
 
     (is (not (v/exact? (e/make-literal ::blah 10.5))))
     (is (v/exact? (e/make-literal ::blah 10)))

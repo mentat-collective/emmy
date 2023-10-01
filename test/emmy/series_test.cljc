@@ -47,8 +47,8 @@
   (testing "meta / with-meta work")
   (testing "one? zero? identity? always return false (for now!)"
     (is (not (g/zero? (v/zero-like series))))
-    (is (not (v/one? (v/one-like series))))
-    (is (not (v/identity? (v/identity-like series)))))
+    (is (not (g/one? (v/one-like series))))
+    (is (not (g/identity? (v/identity-like series)))))
 
   (checking "f/arity" 100 [v (sg/power-series sg/real)]
             (is (= [:exactly 1]

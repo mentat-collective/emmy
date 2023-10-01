@@ -75,8 +75,6 @@
 
 (deftype Structure [orientation v m]
   v/Value
-  (one? [_] false)
-  (identity? [_] false)
   (zero-like [_] (Structure. orientation (v/zero-like v) m))
   (one-like [_] 1)
   (identity-like [_] 1)
@@ -397,6 +395,10 @@
 
 (defmethod g/zero? [::down] [s] (every? g/zero? s))
 (defmethod g/zero? [::up] [s] (every? g/zero? s))
+(defmethod g/one? [::down] [_] false)
+(defmethod g/one? [::up] [_] false)
+(defmethod g/identity? [::down] [_] false)
+(defmethod g/identity? [::up] [_] false)
 
 (defn- s:=
   "Returns true if the supplied structure `this` is equal to the argument on the
@@ -959,7 +961,7 @@
   "Raise the structure `s` to the nth power."
   [s n]
   (let [one (v/one-like n)]
-    (cond (v/one? n) s
+    (cond (g/one? n) s
           (> n one) (g/* s (g/expt s (g/- n one)))
           :else (u/arithmetic-ex (str "Cannot: " `(expt ~s ~n))))))
 
