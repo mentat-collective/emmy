@@ -138,9 +138,6 @@
   (numerical? [_] true)
 
   v/Value
-  (zero-like [_] ZERO)
-  (one-like [_] ONE)
-  (identity-like [_] ONE)
   (freeze [c] (let [re (real c)
                     im (imaginary c)]
                 (if (g/zero? im)
@@ -236,6 +233,10 @@
 (defmethod g/one? [::complex] [c] (and (g/one? (real c))
                                        (zero? (imaginary c))))
 (defmethod g/identity? [::complex] [c] (g/one? c))
+(defmethod g/zero-like [::complex] [_] ZERO)
+(defmethod g/one-like [::complex] [_] ONE)
+(defmethod g/identity-like [::complex] [_] ONE)
+
 (defmethod g/gcd [::complex ::complex] [a b] (gcd a b))
 (defmethod g/gcd [::complex ::v/real] [a b] (gcd a b))
 (defmethod g/gcd [::v/real ::complex] [a b] (gcd a b))

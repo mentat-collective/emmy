@@ -56,17 +56,17 @@
         x-1     (p/make [-1 1])
         x+1:x-1 (rf/make x+1 x-1)]
     (testing "zero?, one-like"
-      (is (g/zero? (v/zero-like x+1:x-1)))
-      (is (g/zero? (g/* x+1:x-1 (v/zero-like x+1:x-1)))))
+      (is (g/zero? (g/zero-like x+1:x-1)))
+      (is (g/zero? (g/* x+1:x-1 (g/zero-like x+1:x-1)))))
 
     (testing "one?, one-like"
-      (is (g/one? (v/one-like x+1:x-1)))
-      (is (= x+1:x-1 (g/* x+1:x-1 (v/one-like x+1:x-1)))))
+      (is (g/one? (g/one-like x+1:x-1)))
+      (is (= x+1:x-1 (g/* x+1:x-1 (g/one-like x+1:x-1)))))
 
     (testing "identity?, identity-like"
-      (is (g/identity? (v/identity-like x+1:x-1)))
+      (is (g/identity? (g/identity-like x+1:x-1)))
       (is (= (g/* (p/make [0 1]) x+1:x-1)
-             (g/* x+1:x-1 (v/identity-like x+1:x-1)))
+             (g/* x+1:x-1 (g/identity-like x+1:x-1)))
           "identity is `x`, multiplying should be equivalent to multiplying by
           x."))
 

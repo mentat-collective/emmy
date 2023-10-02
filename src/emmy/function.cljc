@@ -141,12 +141,12 @@
 
 (defn- zero-like [f]
   (-> (fn [& args]
-        (v/zero-like (apply f args)))
+        (g/zero-like (apply f args)))
       (with-arity (arity f) {:from :zero-like})))
 
 (defn- one-like [f]
   (-> (fn [& args]
-        (v/one-like (apply f args)))
+        (g/one-like (apply f args)))
       (with-arity (arity f) {:from :one-like})))
 
 (def I
@@ -188,9 +188,6 @@
 
 (extend-protocol v/Value
   MultiFn
-  (zero-like [f] (zero-like f))
-  (one-like [f] (one-like f))
-  (identity-like [f] (identity-like f))
   (exact? [f] (compose v/exact? f))
   (freeze [f]
     (if-let [m (get-method f [Keyword])]
@@ -199,9 +196,6 @@
   (kind [_] ::v/function)
 
   #?(:clj AFunction :cljs function)
-  (zero-like [f] (zero-like f))
-  (one-like [f] (one-like f))
-  (identity-like [f] (identity-like f))
   (exact? [f] (compose v/exact? f))
   (freeze [f] (core/get
                @v/object-name-map
@@ -210,9 +204,6 @@
   (kind [_] ::v/function)
 
   Var
-  (zero-like [f] (zero-like f))
-  (one-like [f] (one-like f))
-  (identity-like [f] (identity-like f))
   (exact? [f] (compose v/exact? f))
   (freeze [f] (core/get @v/object-name-map @f f))
   (kind [_] ::v/function)
@@ -577,3 +568,6 @@
 (defmethod g/zero? [::v/function] [_] false)
 (defmethod g/one? [::v/function] [_] false)
 (defmethod g/identity? [::v/function] [_] false)
+(defmethod g/zero-like [::v/function] [f] (zero-like f))
+(defmethod g/one-like [::v/function] [f] (one-like f))
+(defmethod g/identity-like [::v/function] [f] (identity-like f))

@@ -1,8 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
 ^#:nextjournal.clerk
-{:toc true
- :visibility :hide-ns}
+  {:toc true
+   :visibility :hide-ns}
 (ns emmy.differential
   "This namespace contains an implementation of [[Differential]], a generalized
   dual number type that forms the basis for the forward-mode automatic
@@ -358,7 +358,7 @@
   #?(:clj Object :cljs default)
   (perturbed? [_] false)
   (replace-tag [this _ _] this)
-  (extract-tangent [this _] (v/zero-like this)))
+  (extract-tangent [this _] (g/zero-like this)))
 
 ;; ## Differential Implementation
 ;;
@@ -523,13 +523,13 @@
     (let [t (nth terms i nil)]
       (if (nil? t)
         acc
-	      (let [[tags1 coeff1] t]
-	        (if (empty? (uv/intersection tags tags1))
-		        (recur (conj acc (make-term
-		                          (uv/union tags tags1)
-		                          (g/* coeff coeff1)))
-		               (inc i))
-		        (recur acc (inc i))))))))
+        (let [[tags1 coeff1] t]
+          (if (empty? (uv/intersection tags tags1))
+            (recur (conj acc (make-term
+                              (uv/union tags tags1)
+                              (g/* coeff coeff1)))
+                   (inc i))
+            (recur acc (inc i))))))))
 
 (defn terms:*
   "Returns a vector of non-zero [[Differential]] terms that represent the product
@@ -543,7 +543,7 @@
               (if (nil? x)
                 []
                 (terms:+ (t*ts x ylist)
-	                       (call (inc i))))))]
+                         (call (inc i))))))]
     (call 0)))
 
 ;; ## Differential Type Implementation
@@ -615,9 +615,6 @@
              terms)))
 
   v/Value
-  (zero-like [_] 0)
-  (one-like [_] 1)
-  (identity-like [_] 1)
   (freeze [_]
     (letfn [(freeze-term [term]
               (make-term (tags term)
@@ -1192,13 +1189,6 @@
 ;; Any function built out of these components will work with
 ;; the [[emmy.calculus.derivative/D]] operator.
 
-(defmethod g/simplify [::differential] [d]
-  (map-coefficients g/simplify d))
-(defmethod g/zero? [::differential] [d]
-  (every? (comp g/zero? coefficient) (bare-terms d)))
-(defmethod g/one? [::differential] [d] (one? d))
-(defmethod g/identity? [::differential] [d] (one? d))
-
 (defn- defunary
   "Given:
 
@@ -1326,3 +1316,13 @@
 (defunary g/sinhc (lift-1 g/sinhc))
 (defunary g/tanc (lift-1 g/tanc))
 (defunary g/tanhc (lift-1 g/tanhc))
+
+;; Non-differentiable generic operations
+
+(defmethod g/simplify [::differential] [d] (map-coefficients g/simplify d))
+(defmethod g/zero? [::differential] [d] (every? (comp g/zero? coefficient) (bare-terms d)))
+(defmethod g/one? [::differential] [d] (one? d))
+(defmethod g/identity? [::differential] [d] (one? d))
+(defmethod g/zero-like [::differential] [_] 0)
+(defmethod g/one-like [::differential] [_] 1)
+(defmethod g/identity-like [::differential] [_] 1)

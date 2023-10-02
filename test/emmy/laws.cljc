@@ -7,36 +7,35 @@
   (:require [clojure.test :refer [is]]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
             [emmy.generic :as g]
-            [emmy.value :as v]
             [same.core :refer [ish?]]))
 
 (defn nullity [options generator type-name]
-  (checking (str type-name " g/zero? agrees with v/zero-like.")
+  (checking (str type-name " g/zero? agrees with g/zero-like.")
             options
             [a generator]
-            (is (g/zero? (v/zero-like a)))))
+            (is (g/zero? (g/zero-like a)))))
 
 (defn unity [options generator type-name]
-  (checking (str type-name " g/one? agrees with v/one-like.")
+  (checking (str type-name " g/one? agrees with g/one-like.")
             options
             [a generator]
-            (is (g/one? (v/one-like a)))))
+            (is (g/one? (g/one-like a)))))
 
 (defn zero-like [options generator type-name]
   (nullity options generator type-name)
   (checking (str type-name " has a valid zero-like implementation.")
             options
             [a generator]
-            (is (ish? a (g/add a (v/zero-like a))))
-            (is (ish? a (g/add (v/zero-like a) a)))))
+            (is (ish? a (g/add a (g/zero-like a))))
+            (is (ish? a (g/add (g/zero-like a) a)))))
 
 (defn one-like [options generator type-name]
   (unity options generator type-name)
   (checking (str type-name " has a valid one-like implementation.")
             options
             [a generator]
-            (is (ish? a (g/mul a (v/one-like a))))
-            (is (ish? a (g/mul (v/one-like a) a)))))
+            (is (ish? a (g/mul a (g/one-like a))))
+            (is (ish? a (g/mul (g/one-like a) a)))))
 
 (defn associative-add [options generator type-name]
   (checking (str type-name " implements associative g/add.")
@@ -76,18 +75,18 @@
   (checking (str type-name " has additive inverses via g/negate and g/sub")
             options
             [a generator]
-            (is (ish? (v/zero-like a) (g/add a (g/negate a))))
+            (is (ish? (g/zero-like a) (g/add a (g/negate a))))
             (is (g/zero? (g/add a (g/negate a))))
-            (is (ish? (v/zero-like a) (g/add (g/negate a) a)))
-            (is (ish? (v/zero-like a) (g/sub a a)))))
+            (is (ish? (g/zero-like a) (g/add (g/negate a) a)))
+            (is (ish? (g/zero-like a) (g/sub a a)))))
 
 (defn multiplicative-inverse [options generator type-name]
   (checking (str type-name " has multiplicative inverses via g/div and g/invert (excluding zero.)")
             options
             [a generator :when (not (g/zero? a))]
-            (is (ish? (v/one-like a) (g/mul a (g/invert a))))
-            (is (ish? (v/one-like a) (g/mul (g/invert a) a)))
-            (is (ish? (v/one-like a) (g/div a a)))))
+            (is (ish? (g/one-like a) (g/mul a (g/invert a))))
+            (is (ish? (g/one-like a) (g/mul (g/invert a) a)))
+            (is (ish? (g/one-like a) (g/div a a)))))
 
 (defn mul-distributes-over-add [options generator type-name]
   (checking (str type-name " g/mul distributes over g/add, left and right")
@@ -124,8 +123,8 @@
 
       0 + a == a + 0 == a
 
-  `(v/zero-like a)` should always return this element,
-  and `(g/zero? (v/zero-like))` should always be true.`"
+  `(g/zero-like a)` should always return this element,
+  and `(g/zero? (g/zero-like))` should always be true.`"
   [opts generator type-name & {:keys [commutative?]}]
   (additive-semigroup opts generator type-name :commutative? commutative?)
   (zero-like opts generator type-name))
@@ -153,8 +152,8 @@
 
       0 * a == a * 0 == a
 
-  `(v/one-like a)` should always return this element,
-  and `(g/one? (v/one-like))` should always be true.`"
+  `(g/one-like a)` should always return this element,
+  and `(g/one? (g/one-like))` should always be true.`"
   [opts generator type-name & {:keys [commutative?]}]
   (multiplicative-semigroup opts generator type-name  :commutative? commutative?)
   (one-like opts generator type-name))

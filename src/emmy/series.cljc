@@ -44,13 +44,6 @@
   (extract-tangent [s tag] (fmap #(d/extract-tangent % tag) s))
 
   v/Value
-  (zero-like [_] s-zero)
-  (one-like [_] s-one)
-
-  ;; This is suspect, since [[Series]], unlike [[PowerSeries]], are general
-  ;; infinite sequences and not necessarily interpreted as polynomials. This
-  ;; decision follows `scmutils` convention.
-  (identity-like [_] s-identity)
   (exact? [_] false)
   (freeze [_]
     (let [prefix (v/freeze
@@ -213,9 +206,6 @@
   (extract-tangent [s tag] (fmap #(d/extract-tangent % tag) s))
 
   v/Value
-  (zero-like [_] zero)
-  (one-like [_] one)
-  (identity-like [_] identity)
   (exact? [_] false)
   (freeze [_]
     (let [prefix (->> (g/simplify (take 4 xs))
@@ -436,7 +426,7 @@
 (defn- power-series-value
   "Evaluates the power series, and converts it back down to a normal series."
   [f x]
-  (let [one    (v/one-like x)
+  (let [one    (g/one-like x)
         powers (iterate #(g/* x %) one)]
     (map g/* f powers)))
 
@@ -538,7 +528,7 @@
   [s n]
   (if (<= n 1)
     s
-    (let [zero  (v/zero-like (first s))
+    (let [zero  (g/zero-like (first s))
           zeros (repeat (dec n) zero)]
       ((-make s)
        (->> (map cons s (repeat zeros))
@@ -883,3 +873,13 @@
                    (.-m s))
     (u/illegal
      (str "Cannot yet take partial derivatives of a power series: " s selectors))))
+
+(defmethod g/zero-like [::power-series] [_] zero)
+(defmethod g/one-like [::power-series] [_] one)
+(defmethod g/identity-like [::power-series] [_] identity)
+(defmethod g/zero-like [::series] [_] s-zero)
+(defmethod g/one-like [::series] [_] s-one)
+;; This is suspect, since [[Series]], unlike [[PowerSeries]], are general
+;; infinite sequences and not necessarily interpreted as polynomials. This
+;; decision follows `scmutils` convention.
+(defmethod g/identity-like [::series] [_] s-identity)

@@ -37,17 +37,24 @@
     (is (not (v/numerical? identity))))
 
   (checking "zero-like, one-like returns 0, 1 for fns, vars" 100
-            [f (gen/elements [g/negative? g/abs g/sin g/cos
-                              #'g/negative? #'g/abs #'g/sin #'g/cos])
+            [f (gen/elements [g/abs g/sin g/cos
+                              #'g/abs #'g/sin #'g/cos])
              n sg/real]
-            (is (== 0 ((v/zero-like f) n)))
-            (is (== 1 ((v/one-like f) n))))
+            (is (== 0 ((g/zero-like f) n)))
+            (is (== 1 ((g/one-like f) n))))
+
+  (checking "zero-like, one-like returns false, true for boolean-valued fns, vars" 100
+            [f (gen/elements [g/negative? g/zero? g/one?
+                              #'g/negative? #'g/zero? #'g/one?])
+             n sg/real]
+            (is (= false ((g/zero-like f) n)))
+            (is (= true ((g/one-like f) n))))
 
   (checking "identity-like returns the identity fn" 100
             [f (gen/elements [g/negative? g/abs g/sin g/cos
                               #'g/negative? #'g/abs #'g/sin #'g/cos])
              n sg/real]
-            (is (= n ((v/identity-like f) n))))
+            (is (= n ((g/identity-like f) n))))
 
   (checking "exact? mirrors input" 100 [n sg/real]
             (if (v/exact? n)

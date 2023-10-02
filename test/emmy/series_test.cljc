@@ -29,26 +29,26 @@
 
   (testing "zero-like"
     (is (= (take 10 s/zero)
-           (take 10 (g/* series (v/zero-like series))))))
+           (take 10 (g/* series (g/zero-like series))))))
 
   (testing "one-like"
     (is (= (take 10 series)
-           (take 10 (g/* series (v/one-like series))))))
+           (take 10 (g/* series (g/one-like series))))))
 
   (testing "identity-like"
     (let [id (if (s/power-series? series)
                (s/power-series* [0 1])
                (s/series* [0 1]))]
       (is (= (take 10 (g/* id series))
-             (take 10 (g/* series (v/identity-like series))))
+             (take 10 (g/* series (g/identity-like series))))
           "the identity-series is an identity on APPLICATION, not for
         multiplication with other series.")))
 
   (testing "meta / with-meta work")
   (testing "one? zero? identity? always return false (for now!)"
-    (is (not (g/zero? (v/zero-like series))))
-    (is (not (g/one? (v/one-like series))))
-    (is (not (g/identity? (v/identity-like series)))))
+    (is (not (g/zero? (g/zero-like series))))
+    (is (not (g/one? (g/one-like series))))
+    (is (not (g/identity? (g/identity-like series)))))
 
   (checking "f/arity" 100 [v (sg/power-series sg/real)]
             (is (= [:exactly 1]
@@ -83,7 +83,7 @@
     (check-series (s/series 1 2 3 4)))
 
   (checking "identity-like power-series application" 100 [n sg/real]
-            (is (= n (-> ((v/identity-like s/sin-series) n)
+            (is (= n (-> ((g/identity-like s/sin-series) n)
                          (s/sum 50)))
                 "evaluating the identity series at `n` will return a series that sums to `n`.")))
 

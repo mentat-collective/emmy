@@ -28,12 +28,12 @@
 
   (testing "zero-like"
     (is (= (m/by-rows [0 0 0])
-           (v/zero-like (m/by-rows [1 2 3]))))
+           (g/zero-like (m/by-rows [1 2 3]))))
     (is (= (m/by-rows [0])
-           (v/zero-like (m/by-rows [1]))))
+           (g/zero-like (m/by-rows [1]))))
 
     (is (= (m/by-rows [0.0] [0.0])
-           (v/zero-like (m/by-rows [1.5] [2.5])))
+           (g/zero-like (m/by-rows [1.5] [2.5])))
         "zero-like preserves types"))
 
   (testing "one? vs identity?"
@@ -48,18 +48,18 @@
 
   (testing "one-like"
     (is (= (m/I 3)
-           (v/one-like
+           (g/one-like
             (m/by-rows [1 2 3] [4 5 6] [7 8 9]))))
     (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
-                 (v/one-like (m/by-rows [1 2 3 4])))
+                 (g/one-like (m/by-rows [1 2 3 4])))
         "one-like is only supported on square matrices."))
 
   (testing "identity-like"
     (is (= (m/I 3)
-           (v/identity-like
+           (g/identity-like
             (m/by-rows [1 2 3] [4 5 6] [7 8 9]))))
     (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
-                 (v/identity-like (m/by-rows [1 2 3 4])))
+                 (g/identity-like (m/by-rows [1 2 3 4])))
         "identity-like is only supported on square matrices."))
 
   (testing "numerical? returns false, always"
@@ -177,15 +177,15 @@
              (M 2)))
 
       (is (= (m/I 2)
-             ((v/identity-like M) 2))
+             ((g/identity-like M) 2))
           "identity-like on a matrix of functions returns a new matrix of fns.")
 
       (is (= (m/I 2)
-             ((v/one-like M) 2))
+             ((g/one-like M) 2))
           "one-like on a matrix of functions returns a new matrix of fns.")
 
       (is (= (m/make-zero 2)
-             ((v/zero-like M) 2))
+             ((g/zero-like M) 2))
           "one-like on a matrix of functions returns a new matrix of fns.")))
 
   (checking "by-rows == (comp transpose by-cols), vice versas" 100
@@ -301,9 +301,9 @@
              [4 5 6])
            (v/freeze M)))
     (is (= (m/by-rows [1 4] [2 5] [3 6]) (g/transpose M)))
-    (is (= (m/by-rows [0 0 0] [0 0 0]) (v/zero-like M)))
-    (is (= (m/by-rows [1 0 0] [0 1 0] [0 0 1]) (v/one-like A)))
-    (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error) (v/one-like M)))
+    (is (= (m/by-rows [0 0 0] [0 0 0]) (g/zero-like M)))
+    (is (= (m/by-rows [1 0 0] [0 1 0] [0 0 1]) (g/one-like A)))
+    (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error) (g/one-like M)))
     (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error) (m/by-rows [1 2 3] [4 5])))
     (is (thrown? #?(:clj AssertionError :cljs js/Error) (m/by-rows)))
     (is (= 5 (m/get-in M [1 1])))

@@ -413,8 +413,8 @@
 
 (defn T-func [s]
   (up 1
-      (v/zero-like (l/coordinates s))
-      (v/zero-like (momenta s))))
+      (g/zero-like (l/coordinates s))
+      (g/zero-like (momenta s))))
 
 (defn canonical-H? [C H]
   (- (f/compose (D-phase-space H) C)

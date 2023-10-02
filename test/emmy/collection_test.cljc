@@ -22,9 +22,9 @@
               (is (= [:between 1 2] (f/arity v))
                   "vectors respond to f/arity correctly"))
 
-    (checking "v/zero-like" 100
+    (checking "g/zero-like" 100
               [v (gen/vector sg/number)]
-              (let [zero-v (v/zero-like v)]
+              (let [zero-v (g/zero-like v)]
                 (is (vector? zero-v)
                     "still a vector!")
 
@@ -44,12 +44,12 @@
               (is (= (v/kind v) (type v))
                   "Kind reflects type back out."))
 
-    (testing "v/one-like, v/identity-like return 1, the multiplicative identity for vectors"
-      (is (= 1 (v/one-like [1 2 3])))
-      (is (= 1 (v/identity-like [1 2 3])))
+    (testing "g/one-like, g/identity-like return 1, the multiplicative identity for vectors"
+      (is (= 1 (g/one-like [1 2 3])))
+      (is (= 1 (g/identity-like [1 2 3])))
 
-      (is (thrown? #?(:clj UnsupportedOperationException :cljs js/Error)
-                   (v/identity-like {:k "v"}))))
+      (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
+                   (g/identity-like {:k "v"}))))
 
     (checking "v/exact?" 100
               [v (gen/vector sg/any-integral)]
@@ -66,21 +66,21 @@
 
 (deftest sequence-tests
   (testing "sequence protocol impls"
-    (let [zeros (v/zero-like (range 10))]
+    (let [zeros (g/zero-like (range 10))]
       (is (seq? zeros)
           "The output is indeed a seq, not a vector.")
 
       (is (every? g/zero? zeros)
-          "v/zero-like lazily zeroes all entries")
+          "g/zero-like lazily zeroes all entries")
 
       (is (not (g/zero? zeros))
           "to return true, this predicate would have to realize the full
           sequence... so instead it returns false.")
 
-      (is (every? g/zero? (v/zero-like (map inc (range 10))))
+      (is (every? g/zero? (g/zero-like (map inc (range 10))))
           "works with a non-Range type")
 
-      (is (every? g/zero? (v/zero-like (list 1 2 3)))
+      (is (every? g/zero? (g/zero-like (list 1 2 3)))
           "works with lists"))))
 
 (defrecord MyRecord [])
@@ -135,7 +135,7 @@
             (is (= m (g/make-polar m {}))
                 "make-polar with no angles is identity.")
 
-            (is (ish? (v/zero-like m)
+            (is (ish? (g/zero-like m)
                       (g/make-polar {} m))
                 "if all angles comes from m, but every radius is 0, then the
                 resulting entries will be zero.")
@@ -143,7 +143,7 @@
             (is (= m (g/real-part m))
                 "real-part on all real is id.")
 
-            (is (ish? (v/zero-like m)
+            (is (ish? (g/zero-like m)
                       (g/imag-part m))
                 "imag-part on all real is zeor-like.")
 
@@ -186,9 +186,9 @@
               (is (= [:between 1 2] (f/arity m))
                   "maps respond to f/arity correctly"))
 
-    (checking "v/zero-like" 100
+    (checking "g/zero-like" 100
               [m (gen/map gen/keyword sg/number)]
-              (let [zero-m (v/zero-like m)]
+              (let [zero-m (g/zero-like m)]
                 (is (g/zero? zero-m)
                     "zero? works")
 
@@ -209,12 +209,12 @@
                   "All maps inherit from this new keyword.
                    TODO should this in value, with ::v/function and friends?"))
 
-    (testing "v/one-like, v/identity-like throw"
-      (is (thrown? #?(:clj UnsupportedOperationException :cljs js/Error)
-                   (v/one-like {:k "v"})))
+    (testing "g/one-like, g/identity-like throw"
+      (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
+                   (g/one-like {:k "v"})))
 
-      (is (thrown? #?(:clj UnsupportedOperationException :cljs js/Error)
-                   (v/identity-like {:k "v"}))))
+      (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
+                   (g/identity-like {:k "v"}))))
 
     (checking "v/exact?" 100
               [m (gen/map gen/keyword sg/any-integral)]
@@ -286,9 +286,9 @@
               (is (= [:between 1 2] (f/arity s))
                   "sets respond to f/arity correctly"))
 
-    (checking "v/zero-like works" 100
+    (checking "g/zero-like works" 100
               [s (gen/set sg/number)]
-              (let [zero-s (v/zero-like s)]
+              (let [zero-s (g/zero-like s)]
                 (is (g/zero? zero-s))))
 
     (checking "v/kind, g/one?, g/identity?" 100 [s (gen/set sg/any-integral)]
@@ -301,12 +301,12 @@
               (is (isa? (v/kind s) ::collection/set)
                   "All sets inherit from this new keyword."))
 
-    (testing "v/one-like, v/identity-like throw"
-      (is (thrown? #?(:clj UnsupportedOperationException :cljs js/Error)
-                   (v/one-like #{"v"})))
+    (testing "g/one-like, g/identity-like throw"
+      (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
+                   (g/one-like #{"v"})))
 
-      (is (thrown? #?(:clj UnsupportedOperationException :cljs js/Error)
-                   (v/identity-like #{"V"}))))
+      (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
+                   (g/identity-like #{"V"}))))
 
     (checking "v/exact?" 100
               [m (gen/set sg/any-integral)]

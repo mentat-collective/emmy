@@ -24,11 +24,26 @@
               (java.math BigInteger)
               (org.apache.commons.math3.util ArithmeticUtils))))
 
+(def ^:private boolean-type #?(:clj Boolean :cljs boolean))
+(defmethod g/zero? [boolean-type] [b] (not b))
+(defmethod g/one? [boolean-type] [b] b)
+(defmethod g/identity? [boolean-type] [b] b)
+(defmethod g/zero-like [boolean-type] [_] false)
+(defmethod g/one-like [boolean-type] [_] true)
+(defmethod g/identity-like [boolean-type] [_] true)
+
+(defmethod g/zero-like [::v/floating-point] [_] 0.0)
+(defmethod g/one-like [::v/floating-point] [_] 1.0)
+(defmethod g/identity-like [::v/floating-point] [_] 1.0)
+
 ;; "Backstop" implementations that apply to anything that descends from
 ;; ::v/real.
 (defmethod g/zero? [::v/real] [a] (core/zero? a))
 (defmethod g/one? [::v/real] [a] (== 1 a))
 (defmethod g/identity? [::v/real] [a] (== 1 a))
+(defmethod g/zero-like [::v/real] [_] 0)
+(defmethod g/one-like [::v/real] [_] 1)
+(defmethod g/identity-like [::v/real] [_] 1)
 
 (defmethod g/add [::v/real ::v/real] [a b] (#?(:clj +' :cljs core/+) a b))
 (defmethod g/mul [::v/real ::v/real] [a b] (#?(:clj *' :cljs core/*) a b))
@@ -66,7 +81,7 @@
 (defmethod g/angle [::v/real] [a]
   (if (neg? a)
     Math/PI
-    (v/zero-like a)))
+    (g/zero-like a)))
 
 (defmethod g/conjugate [::v/real] [a] a)
 
@@ -162,8 +177,8 @@
   returns 1 or -1 respectively. If `a` is 1 or -1, returns `b` or `-b`
   respectively. Else, returns nil."
   [b a]
-  (cond (v/= a b)            (v/one-like a)
-        (v/= a (g/negate b)) (g/negate (v/one-like a))
+  (cond (v/= a b)            (g/one-like a)
+        (v/= a (g/negate b)) (g/negate (g/one-like a))
         (g/one? a)            b
         (g/one? (g/negate a)) (g/negate b)
         :else nil))

@@ -28,7 +28,7 @@
 (defn nonzero [gen]
   (gen/fmap (fn [x]
               (if (= x 0)
-                (v/one-like x)
+                (g/one-like x)
                 x))
             gen))
 
@@ -145,9 +145,9 @@
         (is (not (g/identity? (d/from-terms {[] 1 [1] 1})))))
 
 (checking "*-like works" 100 [diff real-diff-gen]
-                (is (g/zero? (v/zero-like diff)))
-                (is (g/one? (v/one-like diff)))
-                (is (g/identity? (v/identity-like diff))))
+                (is (g/zero? (g/zero-like diff)))
+                (is (g/one? (g/one-like diff)))
+                (is (g/identity? (g/identity-like diff))))
 
       (testing "equality, comparison"
         (checking "g/negative?, g/infinite?" 100 [x sg/real]

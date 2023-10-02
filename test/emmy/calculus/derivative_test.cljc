@@ -363,8 +363,8 @@
              (simplify ((D g) 'x 'y)))))
 
     (testing "D of zero-like"
-      (is (= 0 ((v/zero-like f) 'x)))
-      (is (= 0 ((D (v/zero-like f)) 'x))))))
+      (is (= 0 ((g/zero-like f) 'x)))
+      (is (= 0 ((D (g/zero-like f)) 'x))))))
 
 (deftest complex-derivatives
   (let [f (fn [z] (* c/I (sin (* c/I z))))]
@@ -713,7 +713,7 @@
            (* (/ 7 256) (expt dx 5)))
          (simplify
           (take 6 ((d/taylor-series
-                    (fn [x] (g/sqrt (+ (v/one-like x) x)))
+                    (fn [x] (g/sqrt (+ (g/one-like x) x)))
                     0) 'dx))))))
 
 (deftest derivative-of-matrix

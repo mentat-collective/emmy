@@ -61,23 +61,23 @@
       (is (g/zero? (s/up 0 (u/long 0) (u/int 0)))))
 
     (testing "zero-like"
-      (is (g/zero? (v/zero-like (s/up 1 2 3))))
-      (is (= (s/up 0 0 0) (v/zero-like (s/up 1 2 3))))
-      (is (= (s/up) (v/zero-like (s/up))))
-      (is (= (s/down 0 0 0) (v/zero-like (s/down 1 2 3))))
-      (is (= (s/down) (v/zero-like (s/down))))
+      (is (g/zero? (g/zero-like (s/up 1 2 3))))
+      (is (= (s/up 0 0 0) (g/zero-like (s/up 1 2 3))))
+      (is (= (s/up) (g/zero-like (s/up))))
+      (is (= (s/down 0 0 0) (g/zero-like (s/down 1 2 3))))
+      (is (= (s/down) (g/zero-like (s/down))))
       (is (= (s/up 0 (s/down (s/up 0 0) (s/up 0 0)))
-             (v/zero-like (s/up 1 (s/down (s/up 2 3) (s/up 4 5))))))
+             (g/zero-like (s/up 1 (s/down (s/up 2 3) (s/up 4 5))))))
       (is (= (s/up (u/long 0) (u/int 0) 0)
-             (v/zero-like (s/up (u/long 1) (u/int 2) 3)))))
+             (g/zero-like (s/up (u/long 1) (u/int 2) 3)))))
 
     (testing "one-like"
-      (let [one (v/one-like (s/up 1 2 3))]
+      (let [one (g/one-like (s/up 1 2 3))]
         (is (= 1 one))
         (is (g/one? one))))
 
     (testing "identity-like"
-      (let [id (v/identity-like (s/up 1 2 3))]
+      (let [id (g/identity-like (s/up 1 2 3))]
         (is (= 1 id))
         (is (g/identity? id))))
 
@@ -853,8 +853,8 @@
                    (sg/structure1 2))]
             (let [I (s/up (s/up 1 0)
                           (s/up 0 1))]
-              (is (= (s/up (s/up s (v/zero-like s))
-                           (s/up (v/zero-like s) s))
+              (is (= (s/up (s/up s (g/zero-like s))
+                           (s/up (g/zero-like s) s))
                      (g/outer-product s I)))))
 
   (checking "inner, dot, outer with fns" 100

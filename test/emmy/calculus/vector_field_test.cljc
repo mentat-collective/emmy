@@ -21,17 +21,17 @@
   (comp v/freeze g/simplify))
 
 (deftest vector-field-tests
-  (testing "v/zero-like, v/one-like, v/identity-like"
+  (testing "g/zero-like, g/one-like, g/identity-like"
     (let [vf (vf/literal-vector-field 'b R2-rect)]
-      (is (g/zero? (v/zero-like vf)))
-      (is (vf/vector-field? (v/zero-like vf)))
+      (is (g/zero? (g/zero-like vf)))
+      (is (vf/vector-field? (g/zero-like vf)))
       (is (= 'vf:zero (v/freeze
-                       (v/zero-like vf))))
+                       (g/zero-like vf))))
 
       (testing "the returned identity keeps its context and `::vf/vector-field`
        status."
-        (is (vf/vector-field? (v/one-like vf)))
-        (is (vf/vector-field? (v/identity-like vf))))))
+        (is (vf/vector-field? (g/one-like vf)))
+        (is (vf/vector-field? (g/identity-like vf))))))
 
   (testing "with-coordinate-prototype"
     (let [A R2-rect

@@ -9,33 +9,38 @@
             [emmy.generic :as g]
             [emmy.value :as v]))
 
+(defmacro unimplemented?
+  [form]
+  `(is (~'thrown-with-msg?
+        #?(:clj IllegalArgumentException :cljs js/Error)
+        #"No method in multimethod"
+        ~form)))
+
 (deftest expressions
   (testing "value protocol impl"
     ;; Things produced by make-literal have the `kind` supplied at creation
     ;; time. Outside of the builtin kind(s), nothing is known about the zero-nature
-    ;; of such objects. To inherit the default test, derive from :e/numeric
+    ;; (etc.) of such objects. To inherit the default behavior, derive from :e/numeric
     (derive ::blah-derived ::e/numeric)
     (is (isa? ::blah-derived ::e/numeric))
-    (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
-                 (g/zero? (e/make-literal ::blah 0))))
+    (unimplemented? (g/zero? (e/make-literal ::blah 0)))
     (is (g/zero? (e/make-literal ::blah-derived 0)))
     (is (g/one? (e/make-literal ::blah-derived 1)))
     (is (g/identity? (e/make-literal ::blah-derived 1)))
 
-    (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
-                 (g/one? (e/make-literal ::blah 1))))
-    (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
-                 (g/identity? (e/make-literal ::blah 1))))
-    (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
-                 (g/zero? (e/make-literal ::blah 10))))
+    (unimplemented? (g/one? (e/make-literal ::blah 1)))
+    (unimplemented? (g/identity? (e/make-literal ::blah 1)))
+    (unimplemented? (g/zero? (e/make-literal ::blah 10)))
     (is (not (g/zero? (e/make-literal ::blah-derived 10))))
-    (is (g/zero? (v/zero-like (e/make-literal ::blah 10))))
+    (is (g/zero? (g/zero-like (e/make-literal ::blah-derived 10))))
 
     (is (not (g/one? (e/make-literal ::blah-derived 10))))
-    (is (g/one? (v/one-like (e/make-literal ::blah 10))))
+    (is (g/one? (g/one-like (e/make-literal ::blah-derived 10))))
+    (unimplemented? (g/one-like (e/make-literal ::blah 10)))
 
     (is (not (g/identity? (e/make-literal ::blah-derived 10))))
-    (is (g/identity? (v/identity-like (e/make-literal ::blah 10))))
+    (is (g/identity? (g/identity-like (e/make-literal ::blah-derived 10))))
+    (unimplemented? (g/identity-like (e/make-literal ::blah 10)))
 
     (is (not (v/exact? (e/make-literal ::blah 10.5))))
     (is (v/exact? (e/make-literal ::blah 10)))

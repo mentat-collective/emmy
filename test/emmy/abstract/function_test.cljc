@@ -33,15 +33,15 @@
   (let [f (af/literal-function 'f)]
     (checking "zero-like, one-like passes through for literal fns"
               100 [n sg/real]
-              (is (v/= (v/zero-like n)
-                       ((v/zero-like f) n)))
-              (is (v/= (v/one-like n)
-                       ((v/one-like f) n)))))
+              (is (v/= (g/zero-like n)
+                       ((g/zero-like f) n)))
+              (is (v/= (g/one-like n)
+                       ((g/one-like f) n)))))
 
   (let [f (af/literal-function 'f)]
     (checking "identity-like returns the identity fn"
               100 [n sg/real]
-              (is (= n ((v/identity-like f) n)))))
+              (is (= n ((g/identity-like f) n)))))
 
   (checking "exact? mirrors input" 100 [n gen/symbol]
             (let [f (v/exact? (af/literal-function 'f))]
@@ -228,7 +228,7 @@
 
       (is (= '(down (up 0 0) (up 0 0))
              (v/freeze
-              (g/simplify ((v/zero-like q) 't)))))))
+              (g/simplify ((g/zero-like q) 't)))))))
 
   (testing "R^n -> structured range"
     (let [h (af/literal-function 'h [0 1] 0)]

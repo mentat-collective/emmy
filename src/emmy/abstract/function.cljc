@@ -66,11 +66,6 @@
 
 (deftype Function [f-name arity domain range]
   v/Value
-  (zero-like [_] (fn [& _] (v/zero-like range)))
-  (one-like [_] (fn [& _] (v/one-like range)))
-  (identity-like [_]
-    (let [meta {:arity arity :from :identity-like}]
-      (with-meta identity meta)))
   (exact? [f] (f/compose v/exact? f))
   (freeze [_] (v/freeze f-name))
   (kind [_] ::function)
@@ -308,3 +303,9 @@
               (f/arity f)
               (domain-types f)
               (range-type f)))
+
+(defmethod g/zero-like [::function] [^Function a] (fn [& _] (g/zero-like (.-range a))))
+(defmethod g/one-like [::function] [^Function a] (fn [& _] (g/one-like (.-range a))))
+(defmethod g/identity-like [::function] [^Function a]
+  (let [meta {:arity (.-arity a) :from :identity-like}]
+    (with-meta identity meta)))

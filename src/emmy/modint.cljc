@@ -17,9 +17,6 @@
 
 (deftype ModInt [i m]
   v/Value
-  (zero-like [_] (ModInt. (v/zero-like i) m))
-  (one-like [_] (ModInt. (v/one-like i) m))
-  (identity-like [_] (ModInt. (v/one-like i) m))
   (freeze [_] (list 'modint i m))
   (exact? [_] true)
   (kind [_] ::modint)
@@ -159,6 +156,10 @@
 (defmethod g/zero? [::modint] [^ModInt a] (g/zero? (.-i a)))
 (defmethod g/one? [::modint] [^ModInt a] (g/one? (.-i a)) )
 (defmethod g/identity? [::modint] [^ModInt a] (g/one? (.-i a)) )
+(defmethod g/zero-like [::modint] [^ModInt a] (ModInt. (g/zero-like (.-i a)) (.-m a)))
+(defmethod g/one-like [::modint] [^ModInt a] (ModInt. (g/one-like (.-i a)) (.-m a)))
+(defmethod g/identity-like [::modint] [^ModInt a] (ModInt. (g/one-like (.-i a)) (.-m a)))
+
 (defmethod g/integer-part [::modint] [^ModInt a] (.-i a))
 (defmethod g/fractional-part [::modint] [_] 0)
 (defmethod g/floor [::modint] [a] a)

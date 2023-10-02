@@ -97,15 +97,15 @@
 
     (testing "zero?"
       (is (g/zero? m0_7))
-      (is (g/zero? (v/zero-like m5_7))))
+      (is (g/zero? (g/zero-like m5_7))))
 
     (testing "one?"
       (is (g/one? m1_7))
-      (is (g/one? (v/one-like m5_7))))
+      (is (g/one? (g/one-like m5_7))))
 
     (testing "identity?"
       (is (g/identity? m1_7))
-      (is (g/identity? (v/identity-like m5_7))))
+      (is (g/identity? (g/identity-like m5_7))))
 
     (testing "compatibility"
       (is 4 (g/integer-part m4_7))

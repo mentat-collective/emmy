@@ -36,9 +36,6 @@
   (numerical? [_] (= type ::numeric))
 
   v/Value
-  (zero-like [_] 0)
-  (one-like [_] 1)
-  (identity-like [_] 1)
   (exact? [_]
     (and (v/number? expression)
          (v/exact? expression)))
@@ -311,3 +308,6 @@
     (and (v/number? x) (g/one? x))))
 
 (defmethod g/identity? [::numeric] [^Literal a] (g/one? a))
+(defmethod g/zero-like [::numeric] [_] 0)
+(defmethod g/one-like [::numeric] [_] 1)
+(defmethod g/identity-like [::numeric] [_] 1)

@@ -33,13 +33,13 @@
     (is (not (g/zero? [1 2 3]))))
 
   (testing "zero-like"
-    (is (= [0 0 0] (v/zero-like [1 2 3])))
-    (is (= [] (v/zero-like [])))
-    (is (= [0 [0 0] [0 0]] (v/zero-like [1 [2 3] [4 5]])))
+    (is (= [0 0 0] (g/zero-like [1 2 3])))
+    (is (= [] (g/zero-like [])))
+    (is (= [0 [0 0] [0 0]] (g/zero-like [1 [2 3] [4 5]])))
     (is (= [(u/long 0) (u/int 0) 0]
-           (v/zero-like [(u/long 1) (u/int 2) 3]))))
+           (g/zero-like [(u/long 1) (u/int 2) 3]))))
 
-  (is (= 1 (v/one-like [1 2 3]))
+  (is (= 1 (g/one-like [1 2 3]))
       "1 is the multiplicative identity for vector spaces.")
 
   (testing "exact?"
@@ -58,13 +58,13 @@
 (deftest numeric-value-protocol-tests
   (checking "*-like properly coerce" 100
             [n sg/number]
-            (is (g/zero? (v/zero-like n)))
-            (is (not (g/zero? (v/one-like n))))
+            (is (g/zero? (g/zero-like n)))
+            (is (not (g/zero? (g/one-like n))))
 
-            (is (g/one? (v/one-like n)))
-            (is (not (g/one? (v/zero-like n))))
+            (is (g/one? (g/one-like n)))
+            (is (not (g/one? (g/zero-like n))))
 
-            (is (g/identity? (v/identity-like n))))
+            (is (g/identity? (g/identity-like n))))
 
   (let [n 50]
     (checking "all numbers act as hashmap keys" 100
@@ -80,12 +80,12 @@
                     "Any numeric key works in a hash-map and round-trips."))))
 
   (testing "zero-like sticks with precision"
-    (is (= 0 (v/zero-like 2)))
-    (is (= 0.0 (v/zero-like 3.14))))
+    (is (= 0 (g/zero-like 2)))
+    (is (= 0.0 (g/zero-like 3.14))))
 
   (testing "one-like sticks with precision"
-    (is (= 1 (v/one-like 1)))
-    (is (= 1.0 (v/one-like 1.2))))
+    (is (= 1 (g/one-like 1)))
+    (is (= 1.0 (g/one-like 1.2))))
 
   (checking "on non-rational reals, v/freeze is identity" 100
             [n (gen/one-of [sg/any-integral (sg/reasonable-double)])]

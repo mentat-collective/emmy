@@ -59,20 +59,20 @@
           (c/complex 0.0 -0.0)
           (c/complex -0.0 0.0)
           (c/complex 0.0 0.0)
-          (v/zero-like c/ONE)
-          (v/zero-like (c/complex 100))
+          (g/zero-like c/ONE)
+          (g/zero-like (c/complex 100))
           c/ZERO
           #emmy/complex "0"])
         "negative zero doesn't affect zero")
 
     (is (not (g/zero? c/ONE)))
     (is (not (g/zero? (c/complex 1.0))))
-    (is (= c/ZERO (v/zero-like (c/complex 2))))
-    (is (= c/ZERO (v/zero-like #emmy/complex "0 + 3.14i")))
+    (is (= c/ZERO (g/zero-like (c/complex 2))))
+    (is (= c/ZERO (g/zero-like #emmy/complex "0 + 3.14i")))
 
     (let [ones [c/ONE
                 (c/complex 1.0)
-                (v/one-like c/ZERO)
+                (g/one-like c/ZERO)
                 (c/complex 1.0 0.0)
                 (c/complex 1.0 -0.0)]]
       (is (every? g/one? ones)

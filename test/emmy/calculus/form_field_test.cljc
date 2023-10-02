@@ -72,13 +72,13 @@
         (is (= 0 (simplify ((residual vr vr) mp))))))))
 
 (deftest form-field-tests
-  (testing "v/zero-like"
+  (testing "g/zero-like"
     (let [oneform-field (ff/literal-oneform-field 'b R2-rect)]
-      (is (g/zero? (v/zero-like oneform-field)))
+      (is (g/zero? (g/zero-like oneform-field)))
       (is (ff/form-field?
-           (v/zero-like oneform-field)))
+           (g/zero-like oneform-field)))
       (is (= 'ff:zero (v/freeze
-                       (v/zero-like oneform-field))))))
+                       (g/zero-like oneform-field))))))
 
   (testing "oneform-field->components"
     (let-coordinates [[x y] R2-rect]

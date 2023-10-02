@@ -159,7 +159,7 @@
     (checking "zero-like" 100 [x (sg/quaternion)]
               (if (g/zero? x)
                 (is (= x (q/make 0 0 0 0)))
-                (do (is (g/zero? (v/zero-like x)))
+                (do (is (g/zero? (g/zero-like x)))
                     (is (g/zero? (empty x))
                         "empty also returns the zero"))))
 
@@ -170,11 +170,11 @@
     (checking "one-like, identity-like" 100 [x (sg/quaternion)]
               (if (g/one? x)
                 (is (= x (q/make 1 0 0 0)))
-                (is (g/one? (v/one-like x))))
+                (is (g/one? (g/one-like x))))
 
               (if (g/identity? x)
                 (is (= x (q/make 1 0 0 0)))
-                (is (g/identity? (v/identity-like x)))))
+                (is (g/identity? (g/identity-like x)))))
 
     (testing "exact?"
       (is (v/exact? (q/make 1 2 3 4)))
@@ -531,13 +531,13 @@
                        (g/dot-product x-complex x))
                   "quaternion dots with complex")
 
-              (is (= (g/dot-product x x-complex)
-                     (g/dot-product x-complex x-complex))
+              (is (== (g/dot-product x x-complex)
+                      (g/dot-product x-complex x-complex))
                   "quaternion dots with complex")
 
-              (is (= (g/dot-product x x-real)
-                     (g/dot-product x-real x)
-                     (g/dot-product x-real x-real))
+              (is (== (g/dot-product x x-real)
+                      (g/dot-product x-real x)
+                      (g/dot-product x-real x-real))
                   "quaternion dots with real"))
 
             (let [m      (q/magnitude x)

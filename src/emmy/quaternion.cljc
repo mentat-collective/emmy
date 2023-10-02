@@ -1,8 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
 ^#:nextjournal.clerk
-{:toc true
- :visibility :hide-ns}
+  {:toc true
+   :visibility :hide-ns}
 (ns emmy.quaternion
   "This namespace provides a number of functions and constructors for working
   with [[Quaternion]] instances in Clojure and ClojureScript, and
@@ -133,13 +133,6 @@
      m))
 
   v/Value
-  (zero-like [_]
-    (Quaternion. (v/zero-like r) 0 0 0 m))
-  (one-like [_]
-    (Quaternion. (v/one-like r) 0 0 0 m))
-  (identity-like [_]
-    (Quaternion. (v/one-like r) 0 0 0 m))
-
   (exact? [_]
     (and (v/exact? r)
          (v/exact? i)
@@ -1544,6 +1537,12 @@
 (defmethod g/zero? [::quaternion] [a] (zero? a))
 (defmethod g/one? [::quaternion] [a] (one? a))
 (defmethod g/identity? [::quaternion] [a] (one? a))
+(defmethod g/zero-like [::quaternion] [^Quaternion a]
+  (Quaternion. (g/zero-like (.-r a)) 0 0 0 (.-m a)))
+(defmethod g/one-like [::quaternion] [^Quaternion a]
+  (Quaternion. (g/one-like (.-r a)) 0 0 0 (.-m a)))
+(defmethod g/identity-like [::quaternion] [^Quaternion a]
+  (Quaternion. (g/one-like (.-r a)) 0 0 0 (.-m a)))
 
 ;; ### Equality
 ;;

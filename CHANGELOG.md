@@ -23,6 +23,12 @@
       you can inherit this behavior using `derive` or supply a `defmethod`
       yourself.
 
+    - We now prefer to let Clojure internals report an exception whenever
+      an unimplemented multifn in what was formerly the emmy.value/Value
+      protocol instead of defining a method that throws. The exception thrown
+      in such cases therefore changes from UnsupportedOperationException to
+      IllegalArgumentException.
+
 - #145 (thank you to @mhuebert for amazing work here!!):
 
   - Adds `emmy.util/sci-macro` for defining macros meant to be exposed via SCI,

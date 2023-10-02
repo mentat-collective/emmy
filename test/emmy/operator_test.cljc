@@ -26,23 +26,23 @@
 (deftest value-protocol-tests
   (let [x2 (-> (fn [f] (fn [x] (* 2 (f x))))
                (o/make-operator 'double))]
-    (let [f ((v/zero-like x2) g/sin)]
+    (let [f ((g/zero-like x2) g/sin)]
       (checking " zero-like" 100 [n sg/real]
                 (is (g/zero? (f n)))))
 
-    (let [f ((v/one-like x2) g/sin)]
+    (let [f ((g/one-like x2) g/sin)]
       (checking " one-like" 100 [n sg/real]
                 (is (= (g/sin n) (f n))
                     "operator one-like is identity")))
 
-    (let [f ((v/identity-like x2) g/sin)]
+    (let [f ((g/identity-like x2) g/sin)]
       (checking " identity-like" 100 [n sg/real]
                 (is (= (g/sin n) (f n)))))
 
     (testing "one? zero? identity? return true appropriately"
-      (is (g/zero? (v/zero-like x2)))
-      (is (not (g/one? (v/one-like x2))))
-      (is (g/identity? (v/identity-like x2))))
+      (is (g/zero? (g/zero-like x2)))
+      (is (not (g/one? (g/one-like x2))))
+      (is (g/identity? (g/identity-like x2))))
 
     (testing "v/numerical?"
       (is (not (v/numerical? x2))))
@@ -386,16 +386,16 @@
         "* ignores identity")
 
     (is (= (o/procedure D)
-           (o/procedure (+ D (v/zero-like D)))
-           (o/procedure (+ (v/zero-like D) D)))
+           (o/procedure (+ D (g/zero-like D)))
+           (o/procedure (+ (g/zero-like D) D)))
         "+ ignores zeros")
 
     (is (= (o/procedure D)
-           (o/procedure (- D (v/zero-like D))))
+           (o/procedure (- D (g/zero-like D))))
         "- ignores zeros on right")
 
     (is (not= (o/procedure D)
-              (o/procedure (- (v/zero-like D) D)))
+              (o/procedure (- (g/zero-like D) D)))
         "- does NOT ignore zero on left")))
 
     ;;; more testing to come as we implement multivariate literal functions that

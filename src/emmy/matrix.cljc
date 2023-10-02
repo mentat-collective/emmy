@@ -29,10 +29,6 @@
 
 (deftype Matrix [r c v]
   v/Value
-  (zero-like [this] (fmap v/zero-like this))
-  (one-like [this] (identity-like this))
-  (identity-like [this] (identity-like this))
-
   (freeze [_] (if (= c 1)
                 `(~'column-matrix ~@(map (comp v/freeze first) v))
                 `(~'matrix-by-rows ~@(map #(mapv v/freeze %) v))))
@@ -65,7 +61,7 @@
        (seq [_] (seq v))
        (valAt [_ key] (get v key))
        (valAt [_ key default] (get v key default))
-       (empty [this] (fmap v/zero-like this))
+       (empty [this] (fmap g/zero-like this))
        (equiv [this that] (m:= this that))
 
        IFn
@@ -126,7 +122,7 @@
                               "\"]"))
 
        IEmptyableCollection
-       (-empty [this] (v/zero-like this))
+       (-empty [this] (g/zero-like this))
 
        ISequential
 
@@ -1035,8 +1031,8 @@
     (u/illegal "identity-like on non-square")
     (fmap-indexed (fn [elem i j]
                     (if (= i j)
-                      (v/one-like elem)
-                      (v/zero-like elem)))
+                      (g/one-like elem)
+                      (g/zero-like elem)))
                   M)))
 
 (defn identity?
@@ -1189,6 +1185,9 @@
 (defmethod g/zero? [::matrix] [a] (every? #(every? g/zero? %) a))
 (defmethod g/one? [::matrix] [_] false)
 (defmethod g/identity? [::matrix] [m] (identity? m))
+(defmethod g/zero-like [::matrix] [m] (fmap g/zero-like m))
+(defmethod g/one-like [::matrix] [m] (identity-like m))
+(defmethod g/identity-like [::matrix] [m] (identity-like m))
 
 (defmethod v/= [::matrix ::matrix] [a b] (m:= a b))
 (defmethod v/= [::square-matrix ::v/scalar] [m c] (matrix=scalar m c))

@@ -55,6 +55,9 @@
 (defgeneric ^:no-doc zero? 1)
 (defgeneric ^:no-doc one? 1)
 (defgeneric ^:no-doc identity? 1)
+(defgeneric ^:no-doc zero-like 1)
+(defgeneric ^:no-doc one-like 1)
+(defgeneric ^:no-doc identity-like 1)
 
 (defn numeric-zero?
   "Returns `true` if `x` is both a [[number?]] and [[zero?]], false otherwise."
@@ -97,7 +100,7 @@
 (defgeneric negate 1
   "Returns the negation of `a`.
 
-  Equivalent to `(- (v/zero-like a) a)`."
+  Equivalent to `(- (g/zero-like a) a)`."
   {:name '-
    :dfdx (fn [_] -1)})
 
@@ -180,8 +183,8 @@
   ([x y]
    (let [numx? (v/numerical? x)
          numy? (v/numerical? y)]
-     (cond (and numx? (zero? x)) (v/zero-like y)
-           (and numy? (zero? y)) (v/zero-like x)
+     (cond (and numx? (zero? x)) (g/zero-like y)
+           (and numy? (zero? y)) (g/zero-like x)
            (and numx? (g/one? x)) y
            (and numy? (g/one? y)) x
            :else (mul x y))))
@@ -325,7 +328,7 @@
     (if-let [mul' (get-method mul [kind kind])]
       (letfn [(expt' [base pow]
                 (loop [n pow
-                       y (v/one-like base)
+                       y (g/one-like base)
                        z base]
                   (let [t (even? n)
                         n (quot n 2)]
@@ -334,7 +337,7 @@
                       (zero? n) (mul' z y)
                       :else (recur n (mul' z y) (mul' z z))))))]
         (cond (pos? e)  (expt' s e)
-              (zero? e) (v/one-like e)
+              (zero? e) (g/one-like e)
               :else (invert (expt' s (negate e)))))
       (u/illegal (str "No g/mul implementation registered for kind " kind)))))
 
@@ -399,12 +402,12 @@
 ;; ## More Generics
 
 (defgeneric negative? 1
-  "Returns true if the argument `a` is less than `(v/zero-like a)`,
+  "Returns true if the argument `a` is less than `(g/zero-like a)`,
   false otherwise. The default implementation depends on a proper Comparable
   implementation on the type.`")
 
 (defmethod negative? :default [a]
-  (< a (v/zero-like a)))
+  (< a (g/zero-like a)))
 
 (defgeneric infinite? 1
   "Returns true if `a` is either numerically infinite (i.e., equal to `##Inf`) or
@@ -902,7 +905,7 @@ defaults to `ln((1 + sqrt(1+x^2)) / x)`."
 
 (defmethod sinc :default [x]
   (if (zero? x)
-    (v/one-like x)
+    (g/one-like x)
     (div (sin x) x)))
 
 ;; > NOTE that we don't define `cosc`. [This StackExchange
@@ -939,7 +942,7 @@ defaults to `ln((1 + sqrt(1+x^2)) / x)`."
 
 (defmethod tanc :default [x]
   (if (zero? x)
-    (v/one-like x)
+    (g/one-like x)
     (div (tan x) x)))
 
 ;; ### Hyperbolic Variants
@@ -960,7 +963,7 @@ defaults to `ln((1 + sqrt(1+x^2)) / x)`."
 
 (defmethod sinhc :default [x]
   (if (zero? x)
-    (v/one-like x)
+    (g/one-like x)
     (div (sinh x) x)))
 
 (defgeneric tanhc 1
@@ -980,7 +983,7 @@ defaults to `ln((1 + sqrt(1+x^2)) / x)`."
 
 (defmethod tanhc :default [x]
   (if (zero? x)
-    (v/one-like x)
+    (g/one-like x)
     (div (tanh x) x)))
 
 ;; ## Complex Operators

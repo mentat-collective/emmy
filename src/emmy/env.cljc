@@ -330,7 +330,8 @@
   partial-derivative Lie-derivative
   solve-linear solve-linear-left solve-linear-right
   simplify
-  zero? one? identity?]
+  zero? one? identity?
+  zero-like one-like identity-like]
  [emmy.structure
   compatible-shape
   compatible-zero dual-zero
@@ -583,5 +584,4 @@
  [emmy.special.elliptic elliptic-f]
  [emmy.special.factorial factorial]
  [emmy.value = compare exact?
-  zero-like one-like identity-like
   numerical? freeze kind kind-predicate])

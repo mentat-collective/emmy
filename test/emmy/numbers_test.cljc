@@ -111,7 +111,7 @@
     (is (= (c/complex 0 9) (g/sqrt -81))))
 
   (testing "sqrt of one preserves type"
-    (is (v/one-like (g/sqrt c/ONE)))
+    (is (g/one-like (g/sqrt c/ONE)))
     (is (c/complex? (g/sqrt c/ONE))))
 
   (checking "transpose, determinant, trace act as id" 100 [x sg/real]
@@ -209,7 +209,7 @@
     (is (= (c/complex 0 9) (g/sqrt -81))))
 
   (testing "sqrt of one preserves type"
-    (is (v/one-like (g/sqrt c/ONE)))
+    (is (g/one-like (g/sqrt c/ONE)))
     (is (c/complex? (g/sqrt c/ONE))))
 
   (testing "log"
@@ -350,7 +350,7 @@
   (letfn [(nonzero [g]
             (gen/fmap (fn [x]
                         (if (g/zero? x)
-                          (v/one-like x)
+                          (g/one-like x)
                           x))
                       g))]
     (checking "mod, rem identity" 100

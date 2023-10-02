@@ -102,7 +102,7 @@
 
     (checking "zero-like" 100 [p (sg/polynomial)]
               (is (g/zero?
-                   (v/zero-like p))))
+                   (g/zero-like p))))
 
     (testing "one"
       (is (not (g/one? (p/make []))))
@@ -117,31 +117,31 @@
 
     (checking "one-like" 100 [p (sg/polynomial)]
               (is (g/one?
-                   (v/one-like p))))
+                   (g/one-like p))))
 
     (testing "one-like unit tests"
       (is (= (p/constant 1 1)
-             (v/one-like (p/make [1 2 3]))))
+             (g/one-like (p/make [1 2 3]))))
 
       (is (= (p/constant 2 1)
-             (v/one-like
+             (g/one-like
               (p/make 2 {[1 0] 1
                          [2 1] 3}))))
 
       (is (= (p/constant 3 1)
-             (v/one-like
+             (g/one-like
               (p/make 3 {[1 2 1] 4
                          [0 1 0] 5}))))
 
       (is (= (p/make 2 {[0 0] 1})
-             (v/one-like (p/make 2 [])))
+             (g/one-like (p/make 2 [])))
           "If we can't deduce the unit element from the zero polynomial over an
           unknown ring, assume it's 1"))
 
     (checking "identity-like (only on monomials)" 100
               [p (sg/polynomial :arity 1)]
               (is (g/identity?
-                   (v/identity-like p))))
+                   (g/identity-like p))))
 
     (testing "identity unit tests"
       (is (g/identity? (p/make [0 1])))
@@ -154,13 +154,13 @@
 
     (testing "identity-like unit tests"
       (is (= (p/make [0 1])
-             (v/identity-like (p/make [0 0 0 1]))))
+             (g/identity-like (p/make [0 0 0 1]))))
 
       (is (= (p/make [0 1])
-             (v/identity-like (p/make [1 2 3]))))
+             (g/identity-like (p/make [1 2 3]))))
 
       (is (thrown? #?(:clj AssertionError :cljs js/Error)
-                   (v/identity-like (p/constant 10 1)))
+                   (g/identity-like (p/constant 10 1)))
           "identity-like is only supported on monomials."))))
 
 (deftest constructor-accessor-tests

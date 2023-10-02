@@ -30,9 +30,6 @@
   (numerical? [_] false))
 
 (defprotocol Value
-  (zero-like [this])
-  (one-like [this])
-  (identity-like [this])
   (^boolean exact? [this] "Entries that are exact are available for `gcd`, among
   other operations.")
   (freeze [this]
@@ -169,11 +166,6 @@
                        ::floating-point)))
 
   #?(:clj Boolean :cljs boolean)
-  (one? [_] false)
-  (identity? [_] false)
-  (zero-like [_] 0)
-  (one-like [_] 1)
-  (identity-like [_] 1)
   (freeze [x] x)
   (exact? [_] false)
   (kind [x] (type x))

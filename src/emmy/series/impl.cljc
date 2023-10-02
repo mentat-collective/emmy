@@ -10,7 +10,6 @@
             [emmy.numbers]
             [emmy.special.factorial :as sf]
             [emmy.util :as u]
-            [emmy.value :as v]
             [mentat.clerk-utils :refer [->clerk-only]]))
 
 ;; # Power Series
@@ -42,7 +41,7 @@
 ;; A 'series' is an infinite sequence of numbers, represented by Clojure's lazy
 ;; sequence. First, a function `->series` that takes some existing sequence,
 ;; finite or infinite, and coerces it to an infinite seq by concatenating it
-;; with an infinite sequence of zeros. (We use `v/zero-like` so that everything
+;; with an infinite sequence of zeros. (We use `g/zero-like` so that everything
 ;; plays nicely with generic arithmetic.)
 
 (defn ->series
@@ -50,7 +49,7 @@
   remainder of the series will be filled with the zero-value
   corresponding to the first of the given values."
   [xs]
-  (lazy-cat xs (repeat (v/zero-like (first xs)))))
+  (lazy-cat xs (repeat (g/zero-like (first xs)))))
 
 ;; This works as expected:
 

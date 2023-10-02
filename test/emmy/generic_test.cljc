@@ -46,16 +46,16 @@
 
 (defrecord Wrap [s]
   v/Value
-  (zero-like [_] (Wrap. "0"))
-  (one-like [_] (Wrap. "1"))
-  (identity-like [_] (Wrap. "1"))
   (freeze [_] (list 'wrap s))
   (exact? [_] false)
   (kind [_] ::wrap))
 
-(defmethod g/zero? [::wrap] [a] (= a (v/zero-like a)))
-(defmethod g/one? [::wrap] [a] (= a (v/one-like a)))
-(defmethod g/identity? [::wrap] [a] (= a (v/identity-like a)))
+(defmethod g/zero? [::wrap] [a] (= a (g/zero-like a)))
+(defmethod g/one? [::wrap] [a] (= a (g/one-like a)))
+(defmethod g/identity? [::wrap] [a] (= a (g/identity-like a)))
+(defmethod g/zero-like [::wrap] [_] (Wrap. "0"))
+(defmethod g/one-like [::wrap] [_] (Wrap. "1"))
+(defmethod g/identity-like [::wrap] [_] (Wrap. "1"))
 
 (defmethod g/add [::wrap ::wrap] [l r]
   (->Wrap (str (:s l) "+" (:s r))))

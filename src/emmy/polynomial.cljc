@@ -136,25 +136,6 @@
     (map-coefficients #(sd/extract-tangent % tag) this))
 
   v/Value
-  (zero-like [_]
-    (if-let [term (nth terms 0)]
-      (v/zero-like (i/coefficient term))
-      0))
-
-  (one-like [_]
-    (if-let [term (nth terms 0)]
-      (v/one-like (i/coefficient term))
-      1))
-
-  (identity-like [_]
-    (assert (g/one? arity)
-            "identity-like unsupported on multivariate monomials!")
-    (let [one (if-let [term (nth terms 0)]
-                (v/one-like (i/coefficient term))
-                1)
-          term (i/make-term (xpt/make 0 1) one)]
-      (Polynomial. 1 [term] m)))
-
   (exact? [_] false)
   (freeze [_] `(~'polynomial ~arity ~terms))
   (kind [_] ::polynomial)
@@ -1720,6 +1701,25 @@
          (let [[term] terms]
            (and (= {0 1} (i/exponents term))
                 (g/one? (i/coefficient term)))))))
+
+(defmethod g/zero-like [::polynomial] [^Polynomial a]
+  (if-let [term (nth (.-terms a) 0)]
+    (g/zero-like (i/coefficient term))
+    0))
+
+(defmethod g/one-like [::polynomial] [^Polynomial a]
+  (if-let [term (nth (.-terms a) 0)]
+    (g/one-like (i/coefficient term))
+    1))
+
+(defmethod g/identity-like [::polynomial] [^Polynomial a]
+  (assert (g/one? (.-arity a))
+          "identity-like unsupported on multivariate monomials!")
+  (let [one (if-let [term (nth (.-terms a) 0)]
+              (g/one-like (i/coefficient term))
+              1)
+        term (i/make-term (xpt/make 0 1) one)]
+    (Polynomial. 1 [term] (.-m a))))
 
 (defmethod g/negative? [::polynomial] [a] (negative? a))
 (defmethod g/abs [::polynomial] [a] (abs a))

@@ -26,27 +26,27 @@
 
 (deftest value-protocol-tests
   (checking "g/zero? returns true for wrapped zero"
-            100 [n (gen/one-of [sg/real (gen/fmap v/zero-like sg/real)])]
+            100 [n (gen/one-of [sg/real (gen/fmap g/zero-like sg/real)])]
             (if (g/zero? n)
               (is (g/zero? (an/literal-number n)))
               (is (not (g/zero? (an/literal-number n))))))
 
   (checking "g/one? returns true for wrapped zero"
-            100 [n (gen/one-of [sg/real (gen/fmap v/one-like sg/real)])]
+            100 [n (gen/one-of [sg/real (gen/fmap g/one-like sg/real)])]
             (if (g/one? n)
               (is (g/one? (an/literal-number n)))
               (is (not (g/one? (an/literal-number n))))))
 
   (checking "g/identity? returns true for wrapped zero"
-            100 [n (gen/one-of [sg/real (gen/fmap v/identity-like sg/real)])]
+            100 [n (gen/one-of [sg/real (gen/fmap g/identity-like sg/real)])]
             (if (g/identity? n)
               (is (g/identity? (an/literal-number n)))
               (is (not (g/identity? (an/literal-number n))))))
 
   (checking "v/{zero?,one?,identity?} etc match v/{zero,one,identity}-like" 100 [n gen-literal]
-            (is (g/zero? (v/zero-like n)))
-            (is (g/one? (v/one-like n)))
-            (is (g/identity? (v/identity-like n))))
+            (is (g/zero? (g/zero-like n)))
+            (is (g/one? (g/one-like n)))
+            (is (g/identity? (g/identity-like n))))
 
   (checking "v/numerical? returns true for all literal-number instances" 100 [n gen-literal]
             (is (v/numerical? n)))
@@ -357,14 +357,14 @@
                     don't work bail out to Math/tan."))))
 
   (checking "asin" 100 [x sg/real]
-            (is (= (cond (g/zero? x) (v/zero-like x)
+            (is (= (cond (g/zero? x) (g/zero-like x)
                          (v/exact? x)   (list 'asin x)
                          :else          (g/asin x))
                    (x/expression-of
                     (g/asin (an/literal-number x))))))
 
   (checking "acos" 100 [x sg/real]
-            (is (= (cond (g/one? x) (v/zero-like x)
+            (is (= (cond (g/one? x) (g/zero-like x)
                          (v/exact? x) (list 'acos x)
                          :else        (g/acos x))
                    (x/expression-of
@@ -375,7 +375,7 @@
             (is (= (g/atan (an/literal-number x))
                    (g/atan (an/literal-number x) 1)))
 
-            (is (= (cond (g/zero? y) (v/zero-like y)
+            (is (= (cond (g/zero? y) (g/zero-like y)
                          (v/exact? y)   (list 'atan y)
                          :else          (g/atan y))
                    (x/expression-of
@@ -550,16 +550,16 @@
               (is (v/= sym (g/gcd sym sym))
                   "gcd(x,x)==x")
 
-              (is (v/= sym (g/gcd (v/zero-like n) sym))
+              (is (v/= sym (g/gcd (g/zero-like n) sym))
                   "gcd(x,0)==x")
 
-              (is (v/= sym (g/gcd sym (v/zero-like n)))
+              (is (v/= sym (g/gcd sym (g/zero-like n)))
                   "gcd(0,x)==x")
 
-              (is (g/one? (g/gcd (v/one-like n) sym))
+              (is (g/one? (g/gcd (g/one-like n) sym))
                   "gcd(1,x)==1")
 
-              (is (g/one? (g/gcd sym (v/one-like n)))
+              (is (g/one? (g/gcd sym (g/one-like n)))
                   "gcd(x,1)==1"))
 
     (checking "symbolic lcm" 100 [sym gen/symbol
@@ -570,16 +570,16 @@
               (is (v/= sym (g/lcm sym sym))
                   "lcm(x,x)==x")
 
-              (is (g/zero? (g/lcm (v/zero-like n) sym))
+              (is (g/zero? (g/lcm (g/zero-like n) sym))
                   "lcm(x,0)==0")
 
-              (is (g/zero? (g/lcm sym (v/zero-like n)))
+              (is (g/zero? (g/lcm sym (g/zero-like n)))
                   "lcm(0,x)==0")
 
-              (is (v/= sym (g/lcm (v/one-like n) sym))
+              (is (v/= sym (g/lcm (g/one-like n) sym))
                   "lcm(1,x)==x")
 
-              (is (v/= sym (g/lcm sym (v/one-like n)))
+              (is (v/= sym (g/lcm sym (g/one-like n)))
                   "lcm(x,1)==x")))
 
   (testing "/ with symbols"

@@ -27,26 +27,6 @@
 
 (deftype Operator [o arity name context m]
   v/Value
-  ;; NOTE: `one?` is the multiplicative identity; by default, we return false
-  ;; because the system doesn't currently check if the types match for
-  ;; multiplicative identity. So `(* o:identity 5)` would return 5, which is
-  ;; incorrect. (We should get back a new operator that carries the scale-by-5
-  ;; along until the final function resolves.)
-  (zero-like [this]
-    (if-let [z-fn (:zero-like context)]
-      (z-fn this)
-      (Operator. v/zero-like arity 'zero context m)))
-
-  (one-like [this]
-    (if-let [one-fn (:one-like context)]
-      (one-fn this)
-      (Operator. core/identity arity 'identity context m)))
-
-  (identity-like [this]
-    (if-let [id-fn (:identity-like context)]
-      (id-fn this)
-      (Operator. core/identity arity 'identity context m)))
-
   (freeze [_]
     (simplify-operator-name
      (v/freeze name)))
@@ -467,8 +447,13 @@
 (defmethod g/zero? [::operator] [^Operator o]
   (if-let [z-fn (:zero? (.-context o))]
     (z-fn o)
-    (= (.-o o) v/zero-like)))
+    (= (.-o o) g/zero-like)))
 
+;; NOTE: `one?` is the multiplicative identity; by default, we return false
+;; because the system doesn't currently check if the types match for
+;; multiplicative identity. So `(* o:identity 5)` would return 5, which is
+;; incorrect. (We should get back a new operator that carries the scale-by-5
+;; along until the final function resolves.)
 (defmethod g/one? [::operator] [^Operator o]
   (if-let [one-fn (:one? (.-context o))]
     (one-fn o)
@@ -478,6 +463,23 @@
   (if-let [id-fn (:identity? (.-context o))]
     (id-fn o)
     (= (.-o o) core/identity)))
+
+(defmethod g/zero-like [::operator] [^Operator o]
+    (if-let [z-fn (:zero-like (.-context o))]
+      (z-fn o)
+      (Operator. g/zero-like (.-arity o) 'zero (.-context o) (.-m o))))
+
+(defmethod g/one-like [::operator] [^Operator o]
+    (if-let [one-fn (:one-like (.-context o))]
+      (one-fn o)
+      (Operator. core/identity (.-arity o) 'identity (.-context o) (.-m o))))
+
+(defmethod g/identity-like [::operator] [^Operator o]
+    (if-let [id-fn (:identity-like (.-context o))]
+      (id-fn o)
+      (Operator. core/identity (.-arity o) 'identity (.-context o) (.-m o))))
+
+
 
 (defmethod g/add [::operator ::operator] [o p] (o:+ o p))
 (defmethod g/add [::operator ::co-operator] [o f] (o+f o f))

@@ -32,6 +32,8 @@
 
 (defmethod g/simplify [PersistentVector] [v]
   (mapv g/simplify v))
+(defmethod g/zero-like [PersistentVector] [v]
+  (mapv g/zero-like v))
 
 #?(:clj
    (defmethod g/simplify [clojure.lang.APersistentVector$SubVector] [v]
@@ -39,9 +41,6 @@
 
 (extend-type #?(:clj IPersistentVector :cljs PersistentVector)
   v/Value
-  (zero-like [v] (mapv v/zero-like v))
-  (one-like [_] 1)
-  (identity-like [_] 1)
   (exact? [v] (every? v/exact? v))
   (freeze [v] `(~'up ~@(map v/freeze v)))
   (kind [v] (type v))
@@ -70,28 +69,24 @@
 
 (defmethod g/simplify [v/seqtype] [a]
   (map g/simplify a))
-()
 
-#_{:clj-kondo/ignore [:redundant-do]}
 (doseq [klass #?(:clj [ISeq]
                  :cljs [Cons IndexedSeq LazySeq List Range IntegerRange])]
- (defmethod g/zero? [klass] [_] false)
- (defmethod g/one? [klass] [_] false)
- (defmethod g/identity? [klass] [_] false)
+  (defmethod g/zero? [klass] [_] false)
+  (defmethod g/one? [klass] [_] false)
+  (defmethod g/identity? [klass] [_] false)
+  (defmethod g/zero-like [klass] [xs] (map g/zero-like xs))
 
- (extend-type #?(:clj ISeq :cljs klass)
-   v/Value
-   (zero-like [xs] (map v/zero-like xs))
-   (one-like [xs] (u/unsupported (str "one-like: " xs)))
-   (identity-like [xs] (u/unsupported (str "identity-like: " xs)))
-   (exact? [_] false)
-   (freeze [xs] (map v/freeze xs))
-   (kind [xs] (type xs))
+  (extend-type #?(:clj ISeq :cljs klass)
+    v/Value
+    (exact? [_] false)
+    (freeze [xs] (map v/freeze xs))
+    (kind [xs] (type xs))
 
-   d/IPerturbed
-   (perturbed? [_] false)
-   (replace-tag [xs old new] (map #(d/replace-tag % old new) xs))
-   (extract-tangent [xs tag] (map #(d/extract-tangent % tag) xs))))
+    d/IPerturbed
+    (perturbed? [_] false)
+    (replace-tag [xs old new] (map #(d/replace-tag % old new) xs))
+    (extract-tangent [xs tag] (map #(d/extract-tangent % tag) xs))))
 
 ;; ## Maps
 ;;
@@ -168,18 +163,16 @@
   (defmethod g/zero? [klass] [m] (every? g/zero? (vals m)))
   (defmethod g/one? [klass] [_] false)
   (defmethod g/identity? [klass] [_] false)
+  (defmethod g/zero-like [klass] [m] (u/map-vals g/zero-like m))
 
   #?(:clj
      (extend klass
        v/Value
-       {:zero-like (fn [m] (u/map-vals v/zero-like m))
-        :one-like (fn [m] (u/unsupported (str "one-like: " m)))
-        :identity-like (fn [m] (u/unsupported (str "identity-like: " m)))
-        :exact? (fn [m] (every? v/exact? (vals m)))
+       {:exact? (fn [m] (every? v/exact? (vals m)))
         :freeze (fn [m] (u/map-vals v/freeze m))
         :kind (fn [m] (if (sorted? m)
-                       (type m)
-                       (:type m (type m))))}
+                        (type m)
+                        (:type m (type m))))}
 
        f/IArity
        {:arity (fn [_] [:between 1 2])}
@@ -198,10 +191,6 @@
      :cljs
      (extend-type klass
        v/Value
-       (identity? [_] false)
-       (zero-like [m] (u/map-vals v/zero-like m))
-       (one-like [m] (u/unsupported (str "one-like: " m)))
-       (identity-like [m] (u/unsupported (str "identity-like: " m)))
        (exact? [m] (every? v/exact? (vals m)))
        (freeze [m] (u/map-vals v/freeze m))
        (kind [m] (if (sorted? m)
@@ -236,13 +225,12 @@
   (defmethod g/zero? [klass] [s] (empty? s))
   (defmethod g/one? [klass] [_] false)
   (defmethod g/identity? [klass] [_] false)
+  (defmethod g/zero-like [klass] [_] #{})
+
   #?(:clj
      (extend klass
        v/Value
-       {:zero-like (fn [_] #{})
-        :one-like (fn [s] (u/unsupported (str "one-like: " s)))
-        :identity-like (fn [s] (u/unsupported (str "identity-like: " s)))
-        :exact? (fn [_] false)
+       {:exact? (fn [_] false)
         :freeze (fn [s] (u/unsupported (str "freeze: " s)))
         :kind type}
 
@@ -252,10 +240,6 @@
      :cljs
      (extend-type klass
        v/Value
-       (identity? [_] false)
-       (zero-like [_] #{})
-       (one-like [s] (u/unsupported (str "one-like: " s)))
-       (identity-like [s] (u/unsupported (str "identity-like: " s)))
        (exact? [_] false)
        (freeze [s] (u/unsupported (str "freeze: " s)))
        (kind [s] (type s))

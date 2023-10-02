@@ -44,13 +44,6 @@
   (denominator [_] v)
 
   v/Value
-  (zero-like [_] (v/zero-like u))
-  (one-like [_] (v/one-like u))
-  (identity-like [_]
-    (RationalFunction. arity
-                       (v/identity-like u)
-                       (v/one-like v)
-                       m))
   (exact? [_] false)
   (freeze [_] (list '/ (v/freeze u) (v/freeze v)))
   (kind [_] ::rational-function)
@@ -844,6 +837,14 @@
 (defmethod g/zero? [::rational-function] [^RationalFunction a] (g/zero? (.-u a)))
 (defmethod g/one? [::rational-function] [^RationalFunction a] (and (g/one? (.-u a)) (g/one? (.-v a))))
 (defmethod g/identity? [::rational-function] [^RationalFunction a] (and (g/identity? (.-u a)) (g/one? (.-v a))))
+(defmethod g/zero-like [::rational-function] [^RationalFunction a] (g/zero-like (.-u a)))
+(defmethod g/one-like [::rational-function] [^RationalFunction a] (g/one-like (.-u a)))
+(defmethod g/identity-like [::rational-function] [^RationalFunction a]
+  (RationalFunction. (.-arity a)
+                     (g/identity-like (.-u a))
+                     (g/one-like (.-v a))
+                     (.-m a)))
+
 (defmethod g/negative? [::rational-function] [a] (negative? a))
 (defmethod g/abs [::rational-function] [a] (abs a))
 (defmethod g/negate [::rational-function] [a] (negate a))
