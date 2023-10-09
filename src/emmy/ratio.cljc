@@ -130,19 +130,12 @@
      (kind [_] Ratio))
 
    :cljs
-   (let [ZERO (Fraction. 0)
-         ONE  (Fraction. 1)]
+   (do
      (extend-type Fraction
        v/Numerical
        (numerical? [_] true)
 
        v/Value
-       (zero? [c] (.equals c ZERO))
-       (one? [c] (.equals c ONE))
-       (identity? [c] (.equals c ONE))
-       (zero-like [_] 0)
-       (one-like [_] 1)
-       (identity-like [_] 1)
        (freeze [x] (let [n (numerator x)
                          d (denominator x)]
                      (if (g/one? d)
@@ -229,7 +222,8 @@
        (defmethod op [::v/integral Ratio] [a b] (f a b))))
 
    :cljs
-   (do
+   (let [ZERO (Fraction. 0)
+         ONE  (Fraction. 1)]
      (defn- pow [r m]
        (let [n (numerator r)
              d (denominator r)]
@@ -254,6 +248,13 @@
 
      (defmethod g/exact-divide [Fraction Fraction] [a b]
        (promote (.div ^js a b)))
+
+     (defmethod g/zero? [Fraction] [^Fraction c] (.equals c ZERO))
+     (defmethod g/one? [Fraction] [^Fraction c] (.equals c ONE))
+     (defmethod g/identity? [Fraction] [^Fraction c] (.equals c ONE))
+     (defmethod g/zero-like [Fraction] [_] 0)
+     (defmethod g/one-like [Fraction] [_] 1)
+     (defmethod g/identity-like [Fraction] [_] 1)
 
      (defmethod g/negate [Fraction] [a] (promote (.neg ^js a)))
      (defmethod g/negative? [Fraction] [a] (neg? (obj/get a "s")))

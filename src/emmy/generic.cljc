@@ -11,11 +11,8 @@
   cljdocs](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/basics/generics)
   for a detailed discussion of how to use and extend the generic operations
   defined in [[emmy.generic]] and [[emmy.value]]."
-  (:refer-clojure :exclude [/ + - divide infinite? abs]
-                  :rename {zero? core-zero?
-                           * core-*})
-  (:require [emmy.generic :as g]
-            [emmy.util :as u]
+  (:refer-clojure :exclude [/ + - * divide infinite? abs zero?])
+  (:require [emmy.util :as u]
             [emmy.util.def :refer [defgeneric]]
             [emmy.value :as v])
   #?(:clj (:import (clojure.lang Keyword))))
@@ -183,10 +180,10 @@
   ([x y]
    (let [numx? (v/numerical? x)
          numy? (v/numerical? y)]
-     (cond (and numx? (zero? x)) (g/zero-like y)
-           (and numy? (zero? y)) (g/zero-like x)
-           (and numx? (g/one? x)) y
-           (and numy? (g/one? y)) x
+     (cond (and numx? (zero? x)) (zero-like y)
+           (and numy? (zero? y)) (zero-like x)
+           (and numx? (one? x)) y
+           (and numy? (one? y)) x
            :else (mul x y))))
   ([x y & more]
    (reduce * (* x y) more)))
@@ -247,7 +244,7 @@
   ([] 1)
   ([x] (invert x))
   ([x y]
-   (if (and (v/number? y) (g/one? y))
+   (if (and (v/number? y) (one? y))
      x
      (div x y)))
   ([x y & more]
@@ -328,7 +325,7 @@
     (if-let [mul' (get-method mul [kind kind])]
       (letfn [(expt' [base pow]
                 (loop [n pow
-                       y (g/one-like base)
+                       y (one-like base)
                        z base]
                   (let [t (even? n)
                         n (quot n 2)]
@@ -337,11 +334,11 @@
                       (zero? n) (mul' z y)
                       :else (recur n (mul' z y) (mul' z z))))))]
         (cond (pos? e)  (expt' s e)
-              (zero? e) (g/one-like e)
+              (zero? e) (one-like e)
               :else (invert (expt' s (negate e)))))
       (u/illegal (str "No g/mul implementation registered for kind " kind)))))
 
-(def ^:no-doc relative-integer-tolerance (core-* 100 u/machine-epsilon))
+(def ^:no-doc relative-integer-tolerance (clojure.core/* 100 u/machine-epsilon))
 (def ^:no-doc absolute-integer-tolerance 1e-20)
 
 (defn almost-integral?
@@ -407,7 +404,7 @@
   implementation on the type.`")
 
 (defmethod negative? :default [a]
-  (< a (g/zero-like a)))
+  (< a (zero-like a)))
 
 (defgeneric infinite? 1
   "Returns true if `a` is either numerically infinite (i.e., equal to `##Inf`) or
@@ -905,7 +902,7 @@ defaults to `ln((1 + sqrt(1+x^2)) / x)`."
 
 (defmethod sinc :default [x]
   (if (zero? x)
-    (g/one-like x)
+    (one-like x)
     (div (sin x) x)))
 
 ;; > NOTE that we don't define `cosc`. [This StackExchange
@@ -942,7 +939,7 @@ defaults to `ln((1 + sqrt(1+x^2)) / x)`."
 
 (defmethod tanc :default [x]
   (if (zero? x)
-    (g/one-like x)
+    (one-like x)
     (div (tan x) x)))
 
 ;; ### Hyperbolic Variants
@@ -963,7 +960,7 @@ defaults to `ln((1 + sqrt(1+x^2)) / x)`."
 
 (defmethod sinhc :default [x]
   (if (zero? x)
-    (g/one-like x)
+    (one-like x)
     (div (sinh x) x)))
 
 (defgeneric tanhc 1
@@ -983,7 +980,7 @@ defaults to `ln((1 + sqrt(1+x^2)) / x)`."
 
 (defmethod tanhc :default [x]
   (if (zero? x)
-    (g/one-like x)
+    (one-like x)
     (div (tanh x) x)))
 
 ;; ## Complex Operators

@@ -24,7 +24,7 @@
               (java.math BigInteger)
               (org.apache.commons.math3.util ArithmeticUtils))))
 
-(def ^:private boolean-type #?(:clj Boolean :cljs boolean))
+(def ^:private boolean-type #?(:clj Boolean :cljs js/Boolean))
 (defmethod g/zero? [boolean-type] [b] (not b))
 (defmethod g/one? [boolean-type] [b] b)
 (defmethod g/identity? [boolean-type] [b] b)
@@ -297,8 +297,9 @@
 ;; don't respond true to number? These each require their own block of method
 ;; implementations.
 #?(:cljs
-   (do
-     ;; native BigInt type in JS.
+   ;; native BigInt type in JS.
+   (let [big-zero (js/BigInt 0)
+         big-one (js/BigInt 1)]
      (defmethod g/add [js/BigInt js/BigInt] [a b] (core/+ a b))
      (defmethod g/mul [js/BigInt js/BigInt] [a b] (core/* a b))
      (defmethod g/modulo [js/BigInt js/BigInt] [a b] (g/modulo-default a b))
@@ -309,6 +310,13 @@
        (if (g/negative? b)
          (g/invert (js* "~{} ** ~{}" a (core/- b)))
          (js* "~{} ** ~{}" a b)))
+
+     (defmethod g/zero? [js/BigInt] [a] (coercive-= big-zero a))
+     (defmethod g/one? [js/BigInt] [a] (coercive-= big-one a))
+     (defmethod g/identity? [js/BigInt] [a] (coercive-= big-one a))
+     (defmethod g/zero-like [js/BigInt] [] big-zero)
+     (defmethod g/one-like [js/BigInt] [] big-one)
+     (defmethod g/identity-like [js/BigInt] [] big-one)
 
      (defmethod g/abs [js/BigInt] [a] (if (neg? a) (core/- a) a))
      (defmethod g/quotient [js/BigInt js/BigInt] [a b] (core// a b))
@@ -353,7 +361,21 @@
      (defmethod g/atan [::v/real js/BigInt] [l r] (g/atan l (js/Number r)))
      (defmethod g/atan [js/BigInt js/BigInt] [l r] (g/atan (js/Number l) (js/Number r)))
 
+     ;; Google Closure library's Integer:
+     (defmethod g/zero? [Integer] [^Integer x] (.isZero x))
+     (defmethod g/one? [Integer] [x] (core/= (.-ONE goog.math.Integer) x))
+     (defmethod g/identity? [Integer] [x] (core/= (.-ONE goog.math.Integer) x))
+     (defmethod g/zero-like [Integer] [_] (.-ZERO goog.math.Integer))
+     (defmethod g/one-like [Integer] [_] (.-ONE goog.math.Integer))
+     (defmethod g/identity-like [Integer] [_] (.-ONE goog.math.Integer))
+
      ;; Google Closure library's 64-bit Long:
+     (defmethod g/zero? [Long] [^Long x] (.isZero x))
+     (defmethod g/one? [Long] [x] (core/= (Long/getOne) x))
+     (defmethod g/identity? [Long] [x] (core/= (Long/getOne) x))
+     (defmethod g/zero-like [Long] [_] (Long/getZero))
+     (defmethod g/one-like [Long] [_] (Long/getOne))
+     (defmethod g/identity-like [Long] [_] (Long/getOne))
      (defmethod g/add [Long Long] [a b] (.add a b))
      (defmethod g/mul [Long Long] [a b] (.multiply a b))
      (defmethod g/sub [Long Long] [^Long a ^Long b] (.subtract a b))

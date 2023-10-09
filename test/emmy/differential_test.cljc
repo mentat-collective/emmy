@@ -79,7 +79,7 @@
       (is (= [] (#'d/terms:* l r))))))
 
 (deftest differential-type-tests
-  (defmethod g/zero? [#?(:clj String :cljs js/string)] [_] false)
+  (defmethod g/zero? [#?(:clj String :cljs js/String)] [_] false)
   (testing "v/numerical? special cases"
     (is (not (v/numerical? (d/from-terms {[] "face"}))))
     (is (v/numerical? (d/->Differential []))

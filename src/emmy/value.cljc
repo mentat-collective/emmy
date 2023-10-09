@@ -152,11 +152,6 @@
 
 (extend-protocol Value
   #?(:clj Number :cljs number)
-  (one? [x] (== 1 x))
-  (identity? [x] (== 1 x))
-  (zero-like [_] 0)
-  (one-like [_] 1)
-  (identity-like [_] 1)
   (freeze [x] x)
   (exact? [x] #?(:clj  (or (integer? x) (ratio? x))
                  :cljs (integer? x)))
@@ -172,51 +167,26 @@
 
   #?@(:clj
       [java.lang.Double
-       (one? [x] (== 1 x))
-       (identity? [x] (== 1 x))
-       (zero-like [_] 0.0)
-       (one-like [_] 1.0)
-       (identity-like [_] 1.0)
        (freeze [x] x)
        (exact? [_] false)
        (kind [x] (type x))
 
        java.lang.Float
-       (one? [x] (== 1 x))
-       (identity? [x] (== 1 x))
-       (zero-like [_] 0.0)
-       (one-like [_] 1.0)
-       (identity-like [_] 1.0)
        (freeze [x] x)
        (exact? [_] false)
        (kind [x] (type x))])
 
   nil
-  (one? [_] false)
-  (identity? [_] false)
-  (zero-like [_] (u/unsupported "nil doesn't support zero-like."))
-  (one-like [_] (u/unsupported "nil doesn't support one-like."))
-  (identity-like [_] (u/unsupported "nil doesn't support identity-like."))
   (freeze [_] nil)
   (exact? [_] false)
   (kind [_] nil)
 
   Var
-  (one? [_] false)
-  (identity? [_] false)
-  (zero-like [v] (u/unsupported (str "zero-like: " v)))
-  (one-like [v] (u/unsupported (str "one-like: " v)))
-  (identity-like [v] (u/unsupported (str "identity-like: " v)))
   (freeze [v] (:name (meta v)))
   (exact? [_] false)
   (kind [v] (type v))
 
   #?(:clj Object :cljs default)
-  (one? [_] false)
-  (identity? [_] false)
-  (zero-like [o] (u/unsupported (str "zero-like: " o)))
-  (one-like [o] (u/unsupported (str "one-like: " o)))
-  (identity-like [o] (u/unsupported (str "identity-like: " o)))
   (exact? [_] false)
   (freeze [o] (if (sequential? o)
                 (map freeze o)
@@ -356,9 +326,7 @@
 
 #?(:cljs
    ;; ClojureScript-specific implementations of Value.
-   (let [big-zero (js/BigInt 0)
-         big-one (js/BigInt 1)]
-
+   (do
      (extend-protocol Numerical
        js/BigInt
        (numerical? [_] true)
@@ -371,12 +339,6 @@
 
      (extend-protocol Value
        js/BigInt
-       (zero? [x] (coercive-= big-zero x))
-       (one? [x] (coercive-= big-one x))
-       (identity? [x] (coercive-= big-one x))
-       (zero-like [_] big-zero)
-       (one-like [_] big-one)
-       (identity-like [_] big-one)
        (freeze [x]
          ;; Bigint freezes into a non-bigint if it can be represented as a
          ;; number; otherwise, it turns into its own literal.
@@ -387,23 +349,11 @@
        (kind [_] js/BigInt)
 
        goog.math.Integer
-       (zero? [x] (.isZero x))
-       (one? [x] (core/= (.-ONE goog.math.Integer) x))
-       (identity? [x] (core/= (.-ONE goog.math.Integer) x))
-       (zero-like [_] (.-ZERO goog.math.Integer))
-       (one-like [_] (.-ONE goog.math.Integer))
-       (identity-like [_] (.-ONE goog.math.Integer))
        (freeze [x] x)
        (exact? [_] true)
        (kind [_] goog.math.Integer)
 
        goog.math.Long
-       (zero? [x] (.isZero x))
-       (one? [x] (core/= (goog.math.Long/getOne) x))
-       (identity? [x] (core/= (goog.math.Long/getOne) x))
-       (zero-like [_] (goog.math.Long/getZero))
-       (one-like [_] (goog.math.Long/getOne))
-       (identity-like [_] (goog.math.Long/getOne))
        (freeze [x] x)
        (exact? [_] true)
        (kind [_] goog.math.Long))))

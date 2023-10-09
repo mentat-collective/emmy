@@ -210,9 +210,6 @@
 
   #?@(:cljs
       [MetaFn
-       (zero-like [f] (zero-like f))
-       (one-like [f] (one-like f))
-       (identity-like [f] (identity-like f))
        (exact? [f] (compose v/exact? f))
        (freeze [f] (core/get
                     @v/object-name-map f (:name (.-meta f) f)))

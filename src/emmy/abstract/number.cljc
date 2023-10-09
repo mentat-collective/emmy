@@ -20,11 +20,6 @@
   (numerical? [_] true)
 
   v/Value
-  (one? [_] false)
-  (identity? [_] false)
-  (zero-like [_] 0)
-  (one-like [_] 1)
-  (identity-like [_] 1)
   (exact? [_] false)
   (freeze [o] o)
   (kind [_] Symbol))
