@@ -75,7 +75,7 @@
   same structure as the input. Doing this will rob an expression of useful
   information for further computation; so this is intended to be done just
   before simplification and printing, to simplify those processes.")
-(defmethod freeze [#?(:clj String :cljs js/string)] [s] s)
+(defmethod freeze [#?(:clj String :cljs js/String)] [s] s)
 (defmethod freeze [nil] [_] nil)
 
 (defn numeric-zero?

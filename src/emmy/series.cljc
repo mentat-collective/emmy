@@ -879,7 +879,7 @@
                                `(~'expt ~'_ ~n)
                                `(~'* ~a (~'expt ~'_ ~n))))))]
           `(~'+ ~@prefix ~'...)))
-(defmethod g/freeze [::series] [s]
+(defmethod g/freeze [::series] [^Series s]
         (let [prefix (g/freeze
                       (g/simplify (take 4 (.-xs s))))]
           `(~'+ ~@prefix ~'...)))

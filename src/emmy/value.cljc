@@ -145,7 +145,7 @@
 (extend-protocol Value
   #?(:clj Number :cljs number)
   (kind [x] #?(:clj (type x)
-               :cljs (if (exact? x)
+               :cljs (if (. js/Number isInteger x)
                        ::native-integral
                        ::floating-point)))
 
@@ -163,7 +163,6 @@
   (kind [_] nil)
 
   Var
-  (freeze [v] (:name (meta v)))
   (kind [v] (type v))
 
   #?(:clj Object :cljs default)
@@ -315,23 +314,12 @@
 
      (extend-protocol Value
        js/BigInt
-       (freeze [x]
-         ;; Bigint freezes into a non-bigint if it can be represented as a
-         ;; number; otherwise, it turns into its own literal.
-         (if (<= x (.-MAX_SAFE_INTEGER js/Number))
-           (js/Number x)
-           x))
-       (exact? [_] true)
        (kind [_] js/BigInt)
 
        goog.math.Integer
-       (freeze [x] x)
-       (exact? [_] true)
        (kind [_] goog.math.Integer)
 
        goog.math.Long
-       (freeze [x] x)
-       (exact? [_] true)
        (kind [_] goog.math.Long))))
 
 #?(:cljs

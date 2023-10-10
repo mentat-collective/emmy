@@ -364,6 +364,13 @@
      (defmethod g/atan [js/BigInt ::v/real] [l r] (g/atan (js/Number l) r))
      (defmethod g/atan [::v/real js/BigInt] [l r] (g/atan l (js/Number r)))
      (defmethod g/atan [js/BigInt js/BigInt] [l r] (g/atan (js/Number l) (js/Number r)))
+     (defmethod g/exact? [js/BigInt] [_] true)
+     (defmethod g/freeze [js/BigInt] [x]
+       ;; Bigint freezes into a non-bigint if it can be represented as a
+       ;; number; otherwise, it turns into its own literal.
+       (if (<= x (.-MAX_SAFE_INTEGER js/Number))
+         (js/Number x)
+         x))
 
      ;; Google Closure library's Integer:
      (defmethod g/zero? [Integer] [^Integer x] (.isZero x))
@@ -373,6 +380,7 @@
      (defmethod g/one-like [Integer] [_] (.-ONE goog.math.Integer))
      (defmethod g/identity-like [Integer] [_] (.-ONE goog.math.Integer))
      (defmethod g/exact? [Integer] [_] true)
+     (defmethod g/freeze [Integer] [x] x)
 
      ;; Google Closure library's 64-bit Long:
      (defmethod g/zero? [Long] [^Long x] (.isZero x))
@@ -382,6 +390,7 @@
      (defmethod g/one-like [Long] [_] (Long/getOne))
      (defmethod g/identity-like [Long] [_] (Long/getOne))
      (defmethod g/exact? [Long] [_] true)
+     (defmethod g/freeze [Long] [x] x)
      (defmethod g/add [Long Long] [a b] (.add a b))
      (defmethod g/mul [Long Long] [a b] (.multiply a b))
      (defmethod g/sub [Long Long] [^Long a ^Long b] (.subtract a b))

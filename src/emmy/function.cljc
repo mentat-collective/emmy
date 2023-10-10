@@ -196,11 +196,8 @@
   Var
   (kind [_] ::v/function)
 
-  #?@(:cljs
-      [MetaFn
-       (freeze [f] (core/get
-                    @v/object-name-map f (:name (.-meta f) f)))
-       (kind [_] ::v/function)]))
+  #?@(:cljs [MetaFn
+             (kind [_] ::v/function)]))
 
 ;; we record arities as a vector with an initial keyword:
 ;;   [:exactly m]
@@ -556,24 +553,22 @@
 (defmethod g/one-like [::v/function] [f] (one-like f))
 (defmethod g/identity-like [::v/function] [f] (identity-like f))
 (defmethod g/exact? [::v/function] [f] (compose g/exact? f))
-#?(:clj
-   (defmethod g/freeze [::v/function] [f]
-     #_(println "freezing" f (type f) (v/kind f)
-              "multifn?" (instance? MultiFn f)
-              "afunction?" (instance? AFunction f)
-              "var?" (var? f)
-              "meta" (meta f))
-     (core/get @v/object-name-map f
-               (cond
-                 (instance? MultiFn f)
-                 (if-let [m (get-method f [Keyword])]
-                   (m :name)
-                   f)
 
-                 (instance? AFunction f)
-                 (:name (meta f) f)
+(defmethod g/freeze [::v/function] [f]
+  (core/get @v/object-name-map f
+            (cond
+              (instance? MultiFn f)
+              (if-let [m (get-method f [Keyword])]
+                (m :name)
+                f)
 
-                 (var? f)
-                 (g/freeze @f)
+              #?@(:clj [(instance? AFunction f)
+                        (:name (meta f) f)]
 
-                 :else f))))
+                  :cljs [(instance? MetaFn f)
+                         (:name (.-meta f) f)])
+
+              (var? f)
+              (g/freeze @f)
+
+              :else f)))

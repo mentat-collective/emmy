@@ -20,8 +20,6 @@
   (numerical? [_] true)
 
   v/Value
-  (exact? [_] false)
-  (freeze [o] o)
   (kind [_] Symbol))
 
 (defn literal-number
