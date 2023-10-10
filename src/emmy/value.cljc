@@ -145,7 +145,8 @@
 (extend-protocol Value
   #?(:clj Number :cljs number)
   (kind [x] #?(:clj (type x)
-               :cljs (if (. js/Number isInteger x)
+               :cljs (if (and (. js/Number isInteger x)
+                              (< (Math/abs x) (.-MAX_SAFE_INTEGER js/Number)))
                        ::native-integral
                        ::floating-point)))
 
@@ -245,7 +246,7 @@
 
      IPrintWithWriter
      (-pr-writer [x writer _]
-       (let [rep (if (<= x (.-MAX_SAFE_INTEGER js/Number))
+       (let [rep (if (< (if (< x 0) (- x) x) (.-MAX_SAFE_INTEGER js/Number))
                    (str x)
                    (str "\"" x "\""))]
          (write-all writer "#emmy/bigint " rep)))))

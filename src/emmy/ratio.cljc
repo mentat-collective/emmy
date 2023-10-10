@@ -111,7 +111,6 @@
 
 #?(:clj
    (do
-
      (defmethod g/exact? [Ratio] [_] true)
      (defmethod g/freeze [Ratio] [x]
        (let [n (numerator x)

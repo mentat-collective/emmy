@@ -368,7 +368,7 @@
      (defmethod g/freeze [js/BigInt] [x]
        ;; Bigint freezes into a non-bigint if it can be represented as a
        ;; number; otherwise, it turns into its own literal.
-       (if (<= x (.-MAX_SAFE_INTEGER js/Number))
+       (if (< (g/abs x) (.-MAX_SAFE_INTEGER js/Number))
          (js/Number x)
          x))
 

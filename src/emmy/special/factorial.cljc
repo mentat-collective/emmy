@@ -33,7 +33,7 @@
     #?(:clj
        (apply *' elems)
        :cljs
-       (if (<= n 20)
+       (if (< n 19)
          (apply * elems)
          (transduce (map u/bigint) g/* elems)))))
 
