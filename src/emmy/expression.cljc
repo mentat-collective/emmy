@@ -35,7 +35,7 @@
   v/Numerical
   (numerical? [_] (= type ::numeric))
 
-  v/Value
+  v/IKind
   (kind [_] type)
 
   Object

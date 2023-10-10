@@ -186,7 +186,7 @@
           (apply f (map g/* xs factors)))
         (with-arity (arity f)))))
 
-(extend-protocol v/Value
+(extend-protocol v/IKind
   MultiFn
   (kind [_] ::v/function)
 

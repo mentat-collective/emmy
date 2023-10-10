@@ -65,7 +65,7 @@
    (sicm-set->exemplar range)])
 
 (deftype Function [f-name arity domain range]
-  v/Value
+  v/IKind
   (kind [_] ::function)
 
   f/IArity

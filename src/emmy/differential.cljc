@@ -615,7 +615,7 @@
                    [])))
              terms)))
 
-  v/Value
+  v/IKind
   (kind [_] ::differential)
 
   Object

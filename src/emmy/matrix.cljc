@@ -28,7 +28,7 @@
 (derive ::matrix ::f/cofunction)
 
 (deftype Matrix [r c v]
-  v/Value
+  v/IKind
   (kind [_] (cond (= r c) ::square-matrix
                   (= r 1) ::row-matrix
                   (= c 1) ::column-matrix

@@ -45,7 +45,7 @@
 ;; Install methods on a new, custom defrecord to test default implementations.
 
 (defrecord Wrap [s]
-  v/Value
+  v/IKind
   (kind [_] ::wrap))
 
 (defmethod g/zero? [::wrap] [a] (= a (g/zero-like a)))

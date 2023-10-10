@@ -42,7 +42,7 @@
      (mapv g/simplify v)))
 
 (extend-type #?(:clj IPersistentVector :cljs PersistentVector)
-  v/Value
+  v/IKind
   (kind [v] (type v))
 
   ;; Another difference from [[emmy.structure/Structure]] is that a
@@ -80,7 +80,7 @@
   (defmethod g/freeze [klass] [xs] (map g/freeze xs))
 
   (extend-type #?(:clj ISeq :cljs klass)
-    v/Value
+    v/IKind
     (kind [xs] (type xs))
 
     d/IPerturbed
@@ -169,7 +169,7 @@
 
   #?(:clj
      (extend klass
-       v/Value
+       v/IKind
        {:kind (fn [m] (if (sorted? m)
                         (type m)
                         (:type m (type m))))}
@@ -190,7 +190,7 @@
 
      :cljs
      (extend-type klass
-       v/Value
+       v/IKind
        (kind [m] (if (sorted? m)
                    (type m)
                    (:type m (type m))))
@@ -228,7 +228,7 @@
 
   #?(:clj
      (extend klass
-       v/Value
+       v/IKind
        {:kind type}
 
        f/IArity
@@ -236,7 +236,7 @@
 
      :cljs
      (extend-type klass
-       v/Value
+       v/IKind
        (kind [s] (type s))
 
        f/IArity

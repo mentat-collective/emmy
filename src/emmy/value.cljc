@@ -29,7 +29,7 @@
   #?(:clj Object :cljs default)
   (numerical? [_] false))
 
-(defprotocol Value
+(defprotocol IKind
   (kind [this]))
 
 (defn argument-kind [& args]
@@ -142,7 +142,7 @@
        java.lang.Float
        (numerical? [_] true)]))
 
-(extend-protocol Value
+(extend-protocol IKind
   #?(:clj Number :cljs number)
   (kind [x] #?(:clj (type x)
                :cljs (if (and (. js/Number isInteger x)
@@ -313,7 +313,7 @@
        goog.math.Long
        (numerical? [_] true))
 
-     (extend-protocol Value
+     (extend-protocol IKind
        js/BigInt
        (kind [_] js/BigInt)
 

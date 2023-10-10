@@ -74,7 +74,7 @@
 (declare s:= mapr)
 
 (deftype Structure [orientation v m]
-  v/Value
+  v/IKind
   (kind [_] orientation)
 
   f/IArity

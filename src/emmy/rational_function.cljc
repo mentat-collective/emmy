@@ -43,7 +43,7 @@
   (numerator [_] u)
   (denominator [_] v)
 
-  v/Value
+  v/IKind
   (kind [_] ::rational-function)
 
   #?@(:clj

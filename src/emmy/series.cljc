@@ -43,7 +43,7 @@
   (replace-tag [s old new] (fmap #(d/replace-tag % old new) s))
   (extract-tangent [s tag] (fmap #(d/extract-tangent % tag) s))
 
-  v/Value
+  v/IKind
   (kind [_] ::series)
 
   Object
@@ -200,7 +200,7 @@
   (replace-tag [s old new] (fmap #(d/replace-tag % old new) s))
   (extract-tangent [s tag] (fmap #(d/extract-tangent % tag) s))
 
-  v/Value
+  v/IKind
   (kind [_] ::power-series)
 
   Object

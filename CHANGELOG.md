@@ -11,6 +11,10 @@
       - `(zero? [0])` but `(not (zero? (lazy-seq [0])))`
       - `(not (zero? (series 0)))`
 
+    The only remaining element of the Value protocol was the `kind` function,
+    used to classify arguments for multi-dispatch. The protocol has therefore
+    been renamed IKind.
+
   - Changed behavior:
 
     - Objects produced by `make-literal`
@@ -24,10 +28,15 @@
       yourself.
 
     - We now prefer to let Clojure internals report an exception whenever
-      an unimplemented multifn in what was formerly the emmy.value/Value
+      an unimplemented MultiFn in what was formerly the emmy.value/Value
       protocol instead of defining a method that throws. The exception thrown
       in such cases therefore changes from UnsupportedOperationException to
       IllegalArgumentException.
+
+    - For this reason we have avoided defining `:default` handlers for
+      generic MultiFns, despite the fact that defaults are certainly
+      convenient in some cases (like `false` for `exact?` and having
+      the default case for `freeze` pass through).
 
 - #145 (thank you to @mhuebert for amazing work here!!):
 

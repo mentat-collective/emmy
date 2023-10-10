@@ -132,7 +132,7 @@
      (d/extract-tangent k tag)
      m))
 
-  v/Value
+  v/IKind
   (kind [_] ::quaternion)
 
   #?@(:clj

@@ -135,7 +135,7 @@
   (extract-tangent [this tag]
     (map-coefficients #(sd/extract-tangent % tag) this))
 
-  v/Value
+  v/IKind
   (kind [_] ::polynomial)
 
   #?@(:clj

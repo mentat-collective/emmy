@@ -26,7 +26,7 @@
 (declare op:get)
 
 (deftype Operator [o arity name context m]
-  v/Value
+  v/IKind
   (kind [_] (:subtype context))
 
   f/IArity

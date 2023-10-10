@@ -122,7 +122,7 @@
        v/Numerical
        (numerical? [_] true)
 
-       v/Value
+       v/IKind
        (kind [_] Ratio)))
 
    :cljs
@@ -140,7 +140,7 @@
        v/Numerical
        (numerical? [_] true)
 
-       v/Value
+       v/IKind
        (kind [_] Fraction)
 
        IEquiv

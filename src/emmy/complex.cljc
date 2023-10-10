@@ -137,7 +137,7 @@
   v/Numerical
   (numerical? [_] true)
 
-  v/Value
+  v/IKind
   (kind [_] ::complex))
 
 ;; ## Gaussian Integers

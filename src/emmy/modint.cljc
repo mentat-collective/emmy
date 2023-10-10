@@ -16,7 +16,7 @@
 (declare mod:=)
 
 (deftype ModInt [i m]
-  v/Value
+  v/IKind
   (kind [_] ::modint)
 
   #?@(:clj
