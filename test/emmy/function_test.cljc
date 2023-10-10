@@ -57,26 +57,26 @@
             (is (= n ((g/identity-like f) n))))
 
   (checking "exact? mirrors input" 100 [n sg/real]
-            (if (v/exact? n)
-              (is ((v/exact? identity) n))
-              (is (not ((v/exact? identity) n)))))
+            (if (g/exact? n)
+              (is ((g/exact? identity) n))
+              (is (not ((g/exact? identity) n)))))
 
-  (testing "v/freeze"
+  (testing "g/freeze"
     (is (= ['+ '- '* '/ 'modulo 'quotient 'remainder
             'negative? '< '<= '> '>= '=
             'partial-derivative]
-           (map v/freeze [+ - * / mod quot rem
+           (map g/freeze [+ - * / mod quot rem
                           neg? < <= > >= =
                           g/partial-derivative]))
         "Certain functions freeze to symbols")
 
-    (is (= (map v/freeze [g/+ g/- g/* g//
+    (is (= (map g/freeze [g/+ g/- g/* g//
                           g/modulo g/quotient g/remainder g/negative?])
-           (map v/freeze [+ - * / mod quot rem neg?]))
+           (map g/freeze [+ - * / mod quot rem neg?]))
         "These freeze to the same symbols as their generic counterparts.")
 
     (let [f (fn [x] (* x x))]
-      (is (= f (v/freeze f))
+      (is (= f (g/freeze f))
           "Unknown functions freeze to themselves")))
 
   (testing "v/kind returns ::v/function"

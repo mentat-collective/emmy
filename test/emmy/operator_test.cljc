@@ -47,8 +47,8 @@
     (testing "v/numerical?"
       (is (not (v/numerical? x2))))
 
-    (testing "v/freeze"
-      (is (= 'double (v/freeze x2))))
+    (testing "g/freeze"
+      (is (= 'double (g/freeze x2))))
 
     (testing "v/kind"
       (is (= ::o/operator (v/kind x2))))
@@ -72,56 +72,56 @@
 (deftest simplifier-tests
   (testing "identity gets stripped from products"
     (is (= 'D
-           (v/freeze (g/* D o/identity))
-           (v/freeze (g/* o/identity D)))))
+           (g/freeze (g/* D o/identity))
+           (g/freeze (g/* o/identity D)))))
 
   (testing "identity does NOT get stripped from sums"
     (is (= '(+ identity D)
-           (v/freeze
+           (g/freeze
             (g/+ o/identity D))))
 
     (is (= '(+ D identity)
-           (v/freeze
+           (g/freeze
             (g/+ D o/identity)))))
 
   (let [x2 (-> (fn [f] (fn [x] (* 2 (f x))))
                (o/make-operator 'double))]
     (is (= '(+ D (* D double (expt D 2)))
-           (v/freeze
+           (g/freeze
             (g/+ D (g/* D x2 o/identity D D))))
         "operators next to each other are gathered into exponents, and `identity`
       gets removed (since it's the multiplicative identity)")
 
     (is (= '(expt D 2)
-           (v/freeze (g/* D D))))
+           (g/freeze (g/* D D))))
 
     (is (= '(* D double D)
-           (v/freeze (g/* (* D x2) D)))
+           (g/freeze (g/* (* D x2) D)))
         "multiplication is commutative but NOT associative, so we gather these
        together."))
 
   (testing "internal multiplication on both sides"
     (is (= '(expt D 6)
-           (v/freeze (g/* (g/* D D D) (g/* D D D)))
-           (v/freeze (g/* (g/* D (g/expt D 2) D) (g/* D D)))
-           (v/freeze (g/* (g/* (g/expt D 2) D) (g/* D D D)))
-           (v/freeze (g/* (g/* D D D) (g/* D (g/expt D 2))))
-           (v/freeze (g/* (g/* D D D) (g/* (g/expt D 2) D)))
-           (v/freeze (g/* (g/* D D D) (g/* D (g/expt D 2))))
-           (v/freeze (g/* (g/* D D D) (g/* (g/expt D 2) D))))))
+           (g/freeze (g/* (g/* D D D) (g/* D D D)))
+           (g/freeze (g/* (g/* D (g/expt D 2) D) (g/* D D)))
+           (g/freeze (g/* (g/* (g/expt D 2) D) (g/* D D D)))
+           (g/freeze (g/* (g/* D D D) (g/* D (g/expt D 2))))
+           (g/freeze (g/* (g/* D D D) (g/* (g/expt D 2) D)))
+           (g/freeze (g/* (g/* D D D) (g/* D (g/expt D 2))))
+           (g/freeze (g/* (g/* D D D) (g/* (g/expt D 2) D))))))
 
   (testing "internal multiplication on right"
     (is (= '(expt D 4)
-           (v/freeze (g/* D (g/* D D D)))
-           (v/freeze (g/* (g/expt D 2) (g/* D D)))
-           (v/freeze (g/* D (g/* D (g/expt D 2))))
-           (v/freeze (g/* D (g/* (g/expt D 2) D)))
-           (v/freeze (g/* D (g/* D (g/expt D 2))))
-           (v/freeze (g/* D (g/* (g/expt D 2) D))))))
+           (g/freeze (g/* D (g/* D D D)))
+           (g/freeze (g/* (g/expt D 2) (g/* D D)))
+           (g/freeze (g/* D (g/* D (g/expt D 2))))
+           (g/freeze (g/* D (g/* (g/expt D 2) D)))
+           (g/freeze (g/* D (g/* D (g/expt D 2))))
+           (g/freeze (g/* D (g/* (g/expt D 2) D))))))
 
   (testing "sums collapse too via the associative rule"
     (is (= '(+ D (partial 1) (expt D 3))
-           (v/freeze
+           (g/freeze
             (g/+ D (g/+ (partial 1) (g/* D (g/expt D 2)))))))))
 
 (deftest custom-getter-tests
@@ -135,7 +135,7 @@
 
   (testing "get names"
     (is (= '(compose (component x) identity)
-           (v/freeze (get o/identity 'x)))
+           (g/freeze (get o/identity 'x)))
         "The name of the operator returned by `get` reflects the (sort of
         awkward) composition that `get` induces."))
 
@@ -242,14 +242,14 @@
                (* -1 ((D f) x) ((D g) (+ (f x) ((D f) x))))
                (((expt D 2) f) x)
                (((expt D 3) f) x))
-           (v/freeze
+           (g/freeze
             (g/simplify
              ((D ((* (- D g) (+ D I)) f)) 'x))))))
 
   (testing "that basic arithmetic operations work on multivariate literal functions"
     (is (= '(down (* 2 (((partial 0) ff) x y))
                   (* 2 (((partial 1) ff) x y)))
-           (v/freeze
+           (g/freeze
             (g/simplify
              (((+ D D) ff) 'x 'y)))))
 
@@ -283,7 +283,7 @@
              (* (/ 1 6) (expt ε 3) (((expt D 3) f) t))
              (* (/ 1 24) (expt ε 4) (((expt D 4) f) t))
              (* (/ 1 120) (expt ε 5) (((expt D 5) f) t)))
-           (v/freeze
+           (g/freeze
             (g/simplify (take 6 (seq (((g/exp (* 'ε D)) (f/literal-function 'f)) 't)))))))
 
     (is (ish? '(0
@@ -298,7 +298,7 @@
                 (* (/ 1 362880) (expt ε 9))
                 0
                 (* (/ -1 39916800) (expt ε 11)))
-              (v/freeze
+              (g/freeze
                (g/simplify (take 12 (seq (((g/exp (* 'ε D)) g/sin) 0)))))))
 
     (is (ish? '(1
@@ -313,7 +313,7 @@
                 0
                 (* (/ -1 3628800) (expt ε 10))
                 0)
-              (v/freeze
+              (g/freeze
                (g/simplify (take 12 (seq (((g/exp (* 'ε D)) g/cos) 0)))))))
 
     (is (= '(1
@@ -322,7 +322,7 @@
              (* (/ 1 16) (expt ε 3))
              (* (/ -5 128) (expt ε 4))
              (* (/ 7 256) (expt ε 5)))
-           (v/freeze
+           (g/freeze
             (g/simplify (take 6 (seq (((g/exp (* 'ε D)) #(g/sqrt (+ % 1))) 0)))))))
 
     (is (= '(+
@@ -333,7 +333,7 @@
              (* (/ 29 90) (expt n 3) (expt ε 7))
              (* (/ -7 20) (expt n 2) (expt ε 7))
              (* (/ 1 7) n (expt ε 7)))
-           (v/freeze
+           (g/freeze
             (g/simplify (nth (seq (((g/exp (* 'ε D)) #(g/expt (+ 1 %) 'n)) 0)) 7))))))
 
   (testing "mixed types don't combine"

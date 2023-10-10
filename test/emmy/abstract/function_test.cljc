@@ -44,13 +44,13 @@
               (is (= n ((g/identity-like f) n)))))
 
   (checking "exact? mirrors input" 100 [n gen/symbol]
-            (let [f (v/exact? (af/literal-function 'f))]
+            (let [f (g/exact? (af/literal-function 'f))]
               (is (not (f n)))))
 
-  (checking "v/freeze" 100 [fsym gen/symbol
+  (checking "g/freeze" 100 [fsym gen/symbol
                             n sg/real]
-            (is (= (list fsym (v/freeze n))
-                   (v/freeze ((af/literal-function fsym) n)))))
+            (is (= (list fsym (g/freeze n))
+                   (g/freeze ((af/literal-function fsym) n)))))
 
   (testing "v/kind returns ::v/function"
     (let [kind (v/kind (af/literal-function 'f))]
@@ -66,11 +66,11 @@
           xyt2  (g/square xyt)
           Uxyt2 (U xyt2)]
       (is (= '(up x y)
-             (v/freeze
+             (g/freeze
               (g/simplify xy))))
 
       (is (= '(up (x t) (y t))
-             (v/freeze
+             (g/freeze
               (g/simplify xyt))))
 
       (is (= '(+ (expt (x t) 2) (expt (y t) 2)) (g/simplify xyt2)))
@@ -80,7 +80,7 @@
     (is (= '(matrix-by-rows
              [(f x) (g x)]
              [(h x) (k x)])
-           (v/freeze
+           (g/freeze
             (g/simplify
              ((m/by-rows (map af/literal-function '[f g])
                          (map af/literal-function '[h k])) 'x)))))
@@ -89,7 +89,7 @@
       (is (= '(matrix-by-rows
                [(f x y) (g x y)]
                [(h x y) (k x y)])
-             (v/freeze
+             (g/freeze
               (g/simplify
                ((m/by-rows [(R2f 'f) (R2f 'g)]
                            [(R2f 'h) (R2f 'k)]) 'x 'y))))))))
@@ -212,22 +212,22 @@
           k (af/literal-function 'k 0 (up 0 (up 0 0) (down 0 0)))
           q (af/literal-function 'q 0 (down (up 0 1) (up 2 3)))]
       (is (= '(up (h↑0 t) (h↑1 t) (h↑2 t))
-             (v/freeze
+             (g/freeze
               (g/simplify (h 't)))))
 
       (is (= '(up (k↑0 t)
                   (up (k↑1↑0 t) (k↑1↑1 t))
                   (down (k↑2_0 t) (k↑2_1 t)))
-             (v/freeze
+             (g/freeze
               (g/simplify (k 't)))))
 
       (is (= '(down (up (q_0↑0 t) (q_0↑1 t))
                     (up (q_1↑0 t) (q_1↑1 t)))
-             (v/freeze
+             (g/freeze
               (g/simplify (q 't)))))
 
       (is (= '(down (up 0 0) (up 0 0))
-             (v/freeze
+             (g/freeze
               (g/simplify ((g/zero-like q) 't)))))))
 
   (testing "R^n -> structured range"
@@ -235,13 +235,13 @@
       (is (= '(h x y) (g/simplify (h 'x 'y)))))
     (let [m (af/literal-function 'm [0 1] (up 1 2 3))]
       (is (= '(up (m↑0 x y) (m↑1 x y) (m↑2 x y))
-             (v/freeze
+             (g/freeze
               (g/simplify (m 'x 'y))))))
 
     (let [z (af/literal-function 'm [0 1] (up (down 1 2) (down 3 4)))]
       (is (= '(up (down (m↑0_0 x y) (m↑0_1 x y))
                   (down (m↑1_0 x y) (m↑1_1 x y)))
-             (v/freeze
+             (g/freeze
               (g/simplify (z 'x 'y))))))
 
     (let [g (af/literal-function 'm [0 1 2] (down (down 1 2 3)
@@ -251,7 +251,7 @@
                (down (m_0_0 x y z) (m_0_1 x y z) (m_0_2 x y z))
                (down (m_1_0 x y z) (m_1_1 x y z) (m_1_2 x y z))
                (down (m_2_0 x y z) (m_2_1 x y z) (m_2_2 x y z)))
-             (v/freeze
+             (g/freeze
               (g/simplify (g 'x 'y 'z)))))))
 
   (testing "R -> Rⁿ"

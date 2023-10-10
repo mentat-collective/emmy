@@ -138,13 +138,6 @@
   (numerical? [_] true)
 
   v/Value
-  (freeze [c] (let [re (real c)
-                    im (imaginary c)]
-                (if (g/zero? im)
-                  re
-                  (list 'complex re im))))
-  (exact? [c] (and (v/exact? (real c))
-                   (v/exact? (imaginary c))))
   (kind [_] ::complex))
 
 ;; ## Gaussian Integers
@@ -236,7 +229,15 @@
 (defmethod g/zero-like [::complex] [_] ZERO)
 (defmethod g/one-like [::complex] [_] ONE)
 (defmethod g/identity-like [::complex] [_] ONE)
-
+(defmethod g/freeze [::complex] [c]
+  (let [re (real c)
+        im (imaginary c)]
+    (if (g/zero? im)
+      re
+      (list 'complex re im))))
+(defmethod g/exact? [::complex] [c]
+  (and (g/exact? (real c))
+       (g/exact? (imaginary c))))
 (defmethod g/gcd [::complex ::complex] [a b] (gcd a b))
 (defmethod g/gcd [::complex ::v/real] [a b] (gcd a b))
 (defmethod g/gcd [::v/real ::complex] [a b] (gcd a b))

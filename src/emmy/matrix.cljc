@@ -29,10 +29,6 @@
 
 (deftype Matrix [r c v]
   v/Value
-  (freeze [_] (if (= c 1)
-                `(~'column-matrix ~@(map (comp v/freeze first) v))
-                `(~'matrix-by-rows ~@(map #(mapv v/freeze %) v))))
-  (exact? [_] (every? #(every? v/exact? %) v))
   (kind [_] (cond (= r c) ::square-matrix
                   (= r 1) ::row-matrix
                   (= c 1) ::column-matrix
@@ -965,10 +961,10 @@
           (->Matrix 1 1 [[(div (core/get-in A [0 0]))]])
           (let* [d  (det A)
                  -d (sub d)]
-            (generate dim dim
-                      (fn [i j]
-                        (let [denom (if (even? (+ i j)) d -d)]
-                          (div (det (without A j i)) denom))))))))))
+                (generate dim dim
+                          (fn [i j]
+                            (let [denom (if (even? (+ i j)) d -d)]
+                              (div (det (without A j i)) denom))))))))))
 
 (def ^{:arglists '([A])}
   invert
@@ -1188,6 +1184,11 @@
 (defmethod g/zero-like [::matrix] [m] (fmap g/zero-like m))
 (defmethod g/one-like [::matrix] [m] (identity-like m))
 (defmethod g/identity-like [::matrix] [m] (identity-like m))
+(defmethod g/freeze [::matrix] [^Matrix m]
+  (if (= (.-c m) 1)
+    `(~'column-matrix ~@(map (comp g/freeze first) (.-v m)))
+    `(~'matrix-by-rows ~@(map #(mapv g/freeze %) (.-v m)))))
+(defmethod g/exact? [::matrix] [^Matrix m] (every? #(every? g/exact? %) (.-v m)))
 
 (defmethod v/= [::matrix ::matrix] [a b] (m:= a b))
 (defmethod v/= [::square-matrix ::v/scalar] [m c] (matrix=scalar m c))

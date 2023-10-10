@@ -7,13 +7,12 @@
             [emmy.generic :as g :refer [+ - * / square]]
             [emmy.mechanics.routhian :as rn]
             [emmy.simplify :refer [hermetic-simplify-fixture]]
-            [emmy.structure :as s :refer [up down]]
-            [emmy.value :as v]))
+            [emmy.structure :as s :refer [up down]]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 
 (def simplify
-  (comp v/freeze g/simplify))
+  (comp g/freeze g/simplify))
 
 (defn Lag [mx kx my ky]
   (fn [[_ [x y] [vx vy]]]

@@ -6,8 +6,7 @@
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
             [emmy.abstract.number :as an]
             [emmy.expression :as e]
-            [emmy.generic :as g]
-            [emmy.value :as v]))
+            [emmy.generic :as g]))
 
 (defn- unimplemented?
   "Returns true if applying method to value results in an exception
@@ -45,12 +44,13 @@
     (is (g/identity? (g/identity-like (e/make-literal ::blah-derived 10))))
     (is (unimplemented? g/identity-like (e/make-literal ::blah 10)))
 
-    (is (not (v/exact? (e/make-literal ::blah 10.5))))
-    (is (v/exact? (e/make-literal ::blah 10)))
+    (is (unimplemented? g/exact? (e/make-literal ::blah 10)))
+    (is (not (g/exact? (e/make-literal ::blah-derived 10.5))))
+    (is (g/exact? (e/make-literal ::blah-derived 10)))
 
     (is (= '(sin 1 2 3)
-           (v/freeze
-            (e/literal-apply ::blah 'sin [1 2 3]))))
+           (g/freeze
+            (e/literal-apply ::blah-derived 'sin [1 2 3]))))
 
     (is (e/literal?
          (e/literal-apply ::blah 'sin [1 2 3])))

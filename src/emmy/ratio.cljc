@@ -110,40 +110,38 @@
         :else (u/illegal (str "Invalid ratio: " x))))
 
 #?(:clj
-   (extend-type Ratio
-     v/Numerical
-     (numerical? [_] true)
+   (do
 
-     v/Value
-     (zero? [c] (zero? c))
-     (one? [c] (= 1 c))
-     (identity? [c] (= 1 c))
-     (zero-like [_] 0)
-     (one-like [_] 1)
-     (identity-like [_] 1)
-     (freeze [x] (let [n (numerator x)
-                       d (denominator x)]
-                   (if (g/one? d)
-                     n
-                     `(~'/ ~n ~d))))
-     (exact? [_] true)
-     (kind [_] Ratio))
+     (defmethod g/exact? [Ratio] [_] true)
+     (defmethod g/freeze [Ratio] [x]
+       (let [n (numerator x)
+             d (denominator x)]
+         (if (g/one? d)
+           n
+           `(~'/ ~n ~d))))
+     (extend-type Ratio
+       v/Numerical
+       (numerical? [_] true)
+
+       v/Value
+       (kind [_] Ratio)))
 
    :cljs
    (do
+     (defmethod g/exact? [Fraction] [_] true)
+     (defmethod g/freeze [Fraction] [x]
+       (let [n (numerator x)
+             d (denominator x)]
+         (if (g/one? d)
+           (g/freeze n)
+           `(~'/
+             ~(g/freeze n)
+             ~(g/freeze d)))))
      (extend-type Fraction
        v/Numerical
        (numerical? [_] true)
 
        v/Value
-       (freeze [x] (let [n (numerator x)
-                         d (denominator x)]
-                     (if (g/one? d)
-                       (v/freeze n)
-                       `(~'/
-                         ~(v/freeze n)
-                         ~(v/freeze d)))))
-       (exact? [_] true)
        (kind [_] Fraction)
 
        IEquiv
@@ -177,7 +175,7 @@
 
        Object
        (toString [r]
-         (let [x (v/freeze r)]
+         (let [x (g/freeze r)]
            (if (number? x)
              x
              (let [[_ n d] x]

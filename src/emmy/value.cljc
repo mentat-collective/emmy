@@ -11,12 +11,12 @@
   (:refer-clojure :exclude [zero? number? = compare])
   (:require #?@(:cljs [["complex.js" :as Complex]
                        ["fraction.js/bigfraction.js" :as Fraction]
+                       [emmy.util :as u]
                        [goog.array :as garray]
                        [goog.object :as gobject]
                        [goog.math.Long]
                        [goog.math.Integer]])
-            [clojure.core :as core]
-            [emmy.util :as u])
+            [clojure.core :as core])
   #?(:clj
      (:import
       (clojure.lang BigInt Sequential Var)
@@ -30,14 +30,6 @@
   (numerical? [_] false))
 
 (defprotocol Value
-  (^boolean exact? [this] "Entries that are exact are available for `gcd`, among
-  other operations.")
-  (freeze [this]
-    "Freezing an expression means removing wrappers and other metadata from
-  subexpressions, so that the result is basically a pure S-expression with the
-  same structure as the input. Doing this will rob an expression of useful
-  information for further computation; so this is intended to be done just
-  before simplification and printing, to simplify those processes.")
   (kind [this]))
 
 (defn argument-kind [& args]
@@ -152,45 +144,29 @@
 
 (extend-protocol Value
   #?(:clj Number :cljs number)
-  (freeze [x] x)
-  (exact? [x] #?(:clj  (or (integer? x) (ratio? x))
-                 :cljs (integer? x)))
   (kind [x] #?(:clj (type x)
                :cljs (if (exact? x)
                        ::native-integral
                        ::floating-point)))
 
   #?(:clj Boolean :cljs boolean)
-  (freeze [x] x)
-  (exact? [_] false)
   (kind [x] (type x))
 
   #?@(:clj
       [java.lang.Double
-       (freeze [x] x)
-       (exact? [_] false)
        (kind [x] (type x))
 
        java.lang.Float
-       (freeze [x] x)
-       (exact? [_] false)
        (kind [x] (type x))])
 
   nil
-  (freeze [_] nil)
-  (exact? [_] false)
   (kind [_] nil)
 
   Var
   (freeze [v] (:name (meta v)))
-  (exact? [_] false)
   (kind [v] (type v))
 
   #?(:clj Object :cljs default)
-  (exact? [_] false)
-  (freeze [o] (if (sequential? o)
-                (map freeze o)
-                (get @object-name-map o o)))
   (kind [o] (:type o (type o))))
 
 

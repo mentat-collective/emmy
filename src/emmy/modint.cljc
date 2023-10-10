@@ -17,8 +17,6 @@
 
 (deftype ModInt [i m]
   v/Value
-  (freeze [_] (list 'modint i m))
-  (exact? [_] true)
   (kind [_] ::modint)
 
   #?@(:clj
@@ -134,7 +132,7 @@
   [& modints]
   (let [prod  (transduce (map modulus) g/* modints)
         xform (map (fn [mi]
-		                 (let [i (residue mi)
+                     (let [i (residue mi)
                            m (modulus mi)
                            c (g/quotient prod m)]
                        (g/* i c (residue (invert c m))))))]
@@ -154,11 +152,13 @@
 (defmethod v/= [::modint ::v/number] [l r] (mod:= l r))
 
 (defmethod g/zero? [::modint] [^ModInt a] (g/zero? (.-i a)))
-(defmethod g/one? [::modint] [^ModInt a] (g/one? (.-i a)) )
-(defmethod g/identity? [::modint] [^ModInt a] (g/one? (.-i a)) )
+(defmethod g/one? [::modint] [^ModInt a] (g/one? (.-i a)))
+(defmethod g/identity? [::modint] [^ModInt a] (g/one? (.-i a)))
 (defmethod g/zero-like [::modint] [^ModInt a] (ModInt. (g/zero-like (.-i a)) (.-m a)))
 (defmethod g/one-like [::modint] [^ModInt a] (ModInt. (g/one-like (.-i a)) (.-m a)))
 (defmethod g/identity-like [::modint] [^ModInt a] (ModInt. (g/one-like (.-i a)) (.-m a)))
+(defmethod g/freeze [::modint] [^ModInt a] (list 'modint (.-i a) (.-m a)))
+(defmethod g/exact? [::modint] [_] true)
 
 (defmethod g/integer-part [::modint] [^ModInt a] (.-i a))
 (defmethod g/fractional-part [::modint] [_] 0)

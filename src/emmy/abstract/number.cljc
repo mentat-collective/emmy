@@ -208,6 +208,8 @@
 (defmethod g/zero? [Symbol] [_] false)
 (defmethod g/one? [Symbol] [_] false)
 (defmethod g/identity? [Symbol] [_] false)
+(defmethod g/freeze [Symbol] [s] s)
+(defmethod g/exact? [Symbol] [_] false)
 
 (defmethod g/simplify [Symbol] [a] a)
 (defmethod g/simplify [::x/numeric] [a]

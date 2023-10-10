@@ -11,9 +11,9 @@
             [emmy.calculus.manifold :as m]
             [emmy.calculus.vector-field :as vf]
             [emmy.function :as f]
+            [emmy.generic :as g]
             [emmy.structure :as s]
-            [emmy.util :as u]
-            [emmy.value :as v]))
+            [emmy.util :as u]))
 
 ;; ## Maps between Manifolds
 ;;
@@ -49,8 +49,8 @@
     (let [v-on-M (fn [g-on-M]
                    (v-on-N
                     (f/compose g-on-M mu:N->M)))
-          name `((~'d ~(v/freeze mu:N->M))
-                 ~(v/freeze v-on-N))]
+          name `((~'d ~(g/freeze mu:N->M))
+                 ~(g/freeze v-on-N))]
       (vf/procedure->vector-field v-on-M name))))
 
 (def differential
@@ -69,8 +69,8 @@
     (let [op (fn [f]
                (f/compose (v-on-N (f/compose f mu:N->M))
                           mu-inverse:M->N))
-          name `((~'pushforward ~(v/freeze mu:N->M))
-                 ~(v/freeze v-on-N))]
+          name `((~'pushforward ~(g/freeze mu:N->M))
+                 ~(g/freeze v-on-N))]
       (vf/procedure->vector-field op name))))
 
 (defn literal-manifold-map
@@ -95,8 +95,8 @@
     (let [op (fn [f-on-M]
                (f/compose (v-on-M f-on-M)
                           mu:N->M))
-          name `((~'vector-field->vector-field-over-map ~(v/freeze mu:N->M))
-                 ~(v/freeze v-on-M))]
+          name `((~'vector-field->vector-field-over-map ~(g/freeze mu:N->M))
+                 ~(g/freeze v-on-M))]
       (vf/procedure->vector-field op name))))
 
 ;; A form field can also be transported across a map.  Given a form
@@ -113,7 +113,7 @@
                  (fn [_]
                    ((V-over-mu f) n)))
                `(~'make-fake-vector-field
-                 ~(v/freeze V-over-mu))))
+                 ~(g/freeze V-over-mu))))
             (op [& vectors-over-map]
               (assert (= (count vectors-over-map)
                          (ff/get-rank w-on-M)))
@@ -124,8 +124,8 @@
                              vectors-over-map))
                  (mu:N->M n))))]
       (let [rank (ff/get-rank w-on-M)
-            name `((~'form-field->form-field-over-map ~(v/freeze mu:N->M))
-                   ~(v/freeze w-on-M))]
+            name `((~'form-field->form-field-over-map ~(g/freeze mu:N->M))
+                   ~(g/freeze w-on-M))]
         (ff/procedure->nform-field op rank name)))))
 
 (defn basis->basis-over-map
@@ -150,8 +150,8 @@
                    (apply ((form-field->form-field-over-map mu:N->M) omega-on-M)
                           (map (differential mu:N->M)
                                vectors-on-N)))
-              name `((~'pullback ~(v/freeze mu:N->M))
-                     ~(v/freeze omega-on-M))]
+              name `((~'pullback ~(g/freeze mu:N->M))
+                     ~(g/freeze omega-on-M))]
           (ff/procedure->nform-field op k name))))))
 
 (defn pullback-vector-field

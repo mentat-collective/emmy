@@ -8,8 +8,7 @@
             [emmy.pattern.rule :as pr :refer [rule-simplifier template]]
             [emmy.ratio]
             [emmy.simplify :as s]
-            [emmy.simplify.rules :as r]
-            [emmy.value :as v]))
+            [emmy.simplify.rules :as r]))
 
 (deftest algebraic-tests
   (testing "unary elimination"
@@ -254,7 +253,7 @@
     (is (= '(+ (* (/ 1 3) a)
                (* (/ 1 3) b)
                (* (/ 1 3) c))
-           (v/freeze
+           (g/freeze
             (d '(/ (+ a b c) 3)))))))
 
 (deftest triginv-tests
@@ -264,15 +263,15 @@
              (triginv '(atan y x))))
 
       (is (= '(/ pi 4)
-             (v/freeze
+             (g/freeze
               (triginv '(atan 1 1)))))
 
       (is (= '(/ pi 4)
-             (v/freeze
+             (g/freeze
               (triginv '(atan x x)))))
 
       (is (= '(- (/ (* 3 pi) 4))
-             (v/freeze
+             (g/freeze
               (triginv '(atan -1 -1)))))
 
       (is (= '(atan -1)

@@ -8,13 +8,12 @@
             [emmy.generic :as g :refer [+ - * /]]
             [emmy.simplify :refer [hermetic-simplify-fixture]]
             [emmy.sr.frames :as sf]
-            [emmy.structure :as s :refer [up]]
-            [emmy.value :as v]))
+            [emmy.structure :as s :refer [up]]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 
 (def simplify
-  (comp v/freeze g/simplify))
+  (comp g/freeze g/simplify))
 
 (deftest sr-frames-tests
   (testing "Velocity addition formula"

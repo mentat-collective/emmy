@@ -22,7 +22,7 @@
 ;; This comes from `Lie.scm`.
 
 (defn- vector-field-Lie-derivative [X]
-  (let [freeze-X (v/freeze X)
+  (let [freeze-X (g/freeze X)
         op-name `(~'Lie-derivative ~freeze-X)]
     (-> (fn rec [Y]
           (cond (f/function? Y)      (X Y)
@@ -42,7 +42,7 @@
                                      (let [xs (update vectors i (g/Lie-derivative X))]
                                        (apply Y xs)))
                                    0 k))))
-                      name `((~'Lie-derivative ~freeze-X) ~(v/freeze Y))]
+                      name `((~'Lie-derivative ~freeze-X) ~(g/freeze Y))]
                   (ff/procedure->nform-field op k name))
 
                 (s/structure? Y)
@@ -105,7 +105,7 @@
   (-> (fn [F]
         (g/* (D F) R))
       (o/make-operator
-       (list 'Lie-D (v/freeze R)))))
+       (list 'Lie-D (g/freeze R)))))
 
 ;; ## Interior Product, from interior-product.scm
 
@@ -121,8 +121,8 @@
          (assert (= (dec p) (count vectors)))
          (apply alpha X vectors))
        (dec p)
-       `((~'interior-product ~(v/freeze X))
-         ~(v/freeze alpha))))))
+       `((~'interior-product ~(g/freeze X))
+         ~(g/freeze alpha))))))
 
 ;; ## Covariant Derivative, from covariant-derivative.scm
 
@@ -227,8 +227,8 @@
             (vf/procedure->vector-field
              (fn the-derivative [f]
                (g/* (vector-basis f) deriv-components))
-             `((~'nabla ~(v/freeze V))
-               ~(v/freeze U)))))))))
+             `((~'nabla ~(g/freeze V))
+               ~(g/freeze U)))))))))
 
 (defn- covariant-derivative-form [Cartan]
   (fn [V]
@@ -244,8 +244,8 @@
                            (let [xs (update vectors i nabla_V)]
                              (apply tau xs)))
                          0 k))))
-            name `((~'nabla ~(v/freeze V))
-                   ~(v/freeze tau))]
+            name `((~'nabla ~(g/freeze V))
+                   ~(g/freeze tau))]
         (ff/procedure->nform-field op k name)))))
 
 (defn- covariant-derivative-argument-types
@@ -367,9 +367,9 @@
                      :else
                      (u/unsupported
                       (str "Can't do this kind of covariant derivative yet "
-                           (v/freeze X) " @ " (v/freeze V)))))
+                           (g/freeze X) " @ " (g/freeze V)))))
           name `(~'nabla
-                 ~(v/freeze X))]
+                 ~(g/freeze X))]
       (o/make-operator op name))))
 
 (defn covariant-derivative

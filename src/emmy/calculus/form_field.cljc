@@ -23,8 +23,7 @@
             [emmy.structure :as s]
             [emmy.util :as u]
             [emmy.util.aggregate :as ua]
-            [emmy.util.permute :as permute]
-            [emmy.value :as v]))
+            [emmy.util.permute :as permute]))
 
 ;; ## Form fields
 ;;
@@ -189,7 +188,7 @@
   function on the manifold."
   ([components coordinate-system]
    (let [name `(~'oneform-field
-                ~(v/freeze components))]
+                ~(g/freeze components))]
      (components->oneform-field
       components coordinate-system name)))
   ([components coordinate-system name]
@@ -355,7 +354,7 @@
                        {:pre [(vf/vector-field? vf)]}
                        (fn [m] ((vf f) m)))
                      vf-structure))
-        name `(~'d ~(v/freeze f))]
+        name `(~'d ~(g/freeze f))]
     (procedure->oneform-field op name)))
 
 (def differential-of-function
@@ -401,8 +400,8 @@
                                   (permute/permutation-sequence args)
                                   (cycle [1 -1])))))
              name `(~'wedge
-                    ~(v/freeze form1)
-                    ~(v/freeze form2))]
+                    ~(g/freeze form1)
+                    ~(g/freeze form2))]
          (procedure->nform-field w n name))))))
 
 (defn wedge
@@ -446,7 +445,7 @@
                            (permute/permutation-sequence args)
                            (cycle [1 -1])))))]
         (procedure->nform-field
-         alternation n `(~'Alt ~(v/freeze form)))))))
+         alternation n `(~'Alt ~(g/freeze form)))))))
 
 (defn- tensor-product2
   ([t1] t1)
@@ -464,8 +463,8 @@
                          (apply t2 a2))))]
          (procedure->nform-field
           tp n `(~'tensor-product
-                 ~(v/freeze t1)
-                 ~(v/freeze t2))))))))
+                 ~(g/freeze t1)
+                 ~(g/freeze t2))))))))
 
 (defn- w2
   ([form1] form1)
@@ -562,7 +561,7 @@
                              0 (inc k))
                             0))))]
         (procedure->nform-field
-         k+1form (inc k) `(~'d ~(v/freeze kform)))))))
+         k+1form (inc k) `(~'d ~(g/freeze kform)))))))
 
 (def exterior-derivative
   (o/make-operator

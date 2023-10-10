@@ -69,10 +69,10 @@
     (is (not (v/numerical? (m/by-rows [0 1 (g// 3 2)])))))
 
   (testing "exact?"
-    (is (v/exact? (m/by-rows [1] [2])))
-    (is (not (v/exact? (m/by-rows [1.2] [3] [4]))))
-    (is (not (v/exact? (m/by-rows [0] [0] [0.00001]))))
-    (is (v/exact? (m/by-rows [0 1 (g// 3 2)]))))
+    (is (g/exact? (m/by-rows [1] [2])))
+    (is (not (g/exact? (m/by-rows [1.2] [3] [4]))))
+    (is (not (g/exact? (m/by-rows [0] [0] [0.00001]))))
+    (is (g/exact? (m/by-rows [0 1 (g// 3 2)]))))
 
   (testing "kind"
     (is (= ::m/row-matrix (v/kind (m/by-rows [1 2]))))
@@ -299,7 +299,7 @@
     (is (= '(matrix-by-rows
              [1 2 3]
              [4 5 6])
-           (v/freeze M)))
+           (g/freeze M)))
     (is (= (m/by-rows [1 4] [2 5] [3 6]) (g/transpose M)))
     (is (= (m/by-rows [0 0 0] [0 0 0]) (g/zero-like M)))
     (is (= (m/by-rows [1 0 0] [0 1 0] [0 0 1]) (g/one-like A)))

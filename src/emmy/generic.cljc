@@ -49,19 +49,40 @@
 ;; each generic operation to some new type is sparse. Have a look
 ;; at [[emmy.complex]] for an example of how to do this.
 
-(defgeneric ^:no-doc zero? 1)
-(defgeneric ^:no-doc one? 1)
-(defgeneric ^:no-doc identity? 1)
-(defgeneric ^:no-doc zero-like 1)
-(defgeneric ^:no-doc one-like 1)
-(defgeneric ^:no-doc identity-like 1)
+(defgeneric zero? 1
+  "Is true if `x` is an additive identity.")
+(defgeneric one? 1
+  "Is true if `x` is a multiplicative identity.")
+(defgeneric identity? 1
+  "Like `one?`, but this is true of square identity matrices as well.
+  No matrix is considered `one?` because its function as a multiplicative
+  identity depends on the shape of the other multiplicand.")
+(defgeneric zero-like 1
+  "In general, this procedure returns the additive identity of the type of its
+  argument, if it exists. For numbers this is 0.")
+(defgeneric one-like 1
+  "In general, this procedure returns the multiplicative identity of the type of
+  its argument, if it exists. For numbers this is 1.")
+(defgeneric identity-like 1
+  "Like `one-like` but works for square matrices.")
+
+(defgeneric exact? 1
+  "Entries that are exact are available for `gcd`, among other operations.")
+
+(defgeneric freeze 1
+  "Freezing an expression means removing wrappers and other metadata from
+  subexpressions, so that the result is basically a pure S-expression with the
+  same structure as the input. Doing this will rob an expression of useful
+  information for further computation; so this is intended to be done just
+  before simplification and printing, to simplify those processes.")
+(defmethod freeze [#?(:clj String :cljs js/string)] [s] s)
+(defmethod freeze [nil] [_] nil)
 
 (defn numeric-zero?
   "Returns `true` if `x` is both a [[number?]] and [[zero?]], false otherwise."
   [x]
   (and (v/number? x)
        (zero? x)))
-
 
 (defgeneric ^:no-doc add 2
   "Returns the sum of arguments `a` and `b`.
@@ -255,7 +276,7 @@
   /)
 
 (defgeneric exact-divide 2
-  "Similar to the binary case of [[/]], but throws if `(v/exact? <result>)`
+  "Similar to the binary case of [[/]], but throws if `(g/exact? <result>)`
   returns false.")
 
 ;; ### Exponentiation, Log, Roots
@@ -363,7 +384,7 @@
   otherwise."
   [n]
   (and (v/number? n)
-       (v/exact? n)
+       (exact? n)
        (zero? n)))
 
 ;; [[expt]] can be defined (as a default) in terms of repeated multiplication,
@@ -1065,7 +1086,7 @@ defaults to `ln((1 + sqrt(1+x^2)) / x)`."
 
 ;; This call registers a symbol for any non-multimethod we care about. These
 ;; will be returned instead of the actual function body when the user
-;; calls `(v/freeze fn)`, for example.
+;; calls `(g/freeze fn)`, for example.
 
 (v/add-object-symbols!
  {+ '+

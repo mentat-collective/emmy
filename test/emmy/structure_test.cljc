@@ -82,10 +82,10 @@
         (is (g/identity? id))))
 
     (testing "exact?"
-      (is (v/exact? (s/up 1 2 3 4)))
-      (is (not (v/exact? (s/up 1.2 3 4))))
-      (is (v/exact? (s/up 0 1 #emmy/ratio 3/2)))
-      (is (not (v/exact? (s/up 0 0 0.00001)))))
+      (is (g/exact? (s/up 1 2 3 4)))
+      (is (not (g/exact? (s/up 1.2 3 4))))
+      (is (g/exact? (s/up 0 1 #emmy/ratio 3/2)))
+      (is (not (g/exact? (s/up 0 0 0.00001)))))
 
     (testing "numerical?"
       (checking "no structure is numerical." 100
@@ -93,7 +93,7 @@
                 (is (not (v/numerical? s)))))
 
     (testing "freeze"
-      (is (= '(up 1 2 3) (v/freeze (s/up 1 2 3)))))
+      (is (= '(up 1 2 3) (g/freeze (s/up 1 2 3)))))
 
     (testing "kind"
       (is (= ::s/up (v/kind (s/up 1 2))))
@@ -477,7 +477,7 @@
     (is (= '(+ (* x↑0 x_0)
                (* x↑1 x_1)
                (* x↑2 x_2))
-           (v/freeze
+           (g/freeze
             (g/* (s/literal-up 'x 3)
                  (s/literal-down 'x 3))))
         "It can be convenient to generate symbolic structures if you don't care
@@ -991,20 +991,20 @@
 
   (testing "<structure> * <operator> pushes operator multiplication into the
   structure (unlike <structure> * <function>!)"
-    (is (= (v/freeze
+    (is (= (g/freeze
             (s/up (s/down (* 1 o/identity)
                           (* 2 o/identity))
                   (s/down (* 4 o/identity)
                           (* 5 o/identity))))
-           (v/freeze
+           (g/freeze
             (* (s/up (s/down 1 2)
                      (s/down 4 5))
                o/identity))))
 
-    (is (= (v/freeze
+    (is (= (g/freeze
             (s/up (s/down (* o/identity 1)
                           (* o/identity 2))))
-           (v/freeze
+           (g/freeze
             (* o/identity
                (s/up (s/down 1 2)))))
         "operator*structure is not commutative."))

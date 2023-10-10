@@ -188,29 +188,16 @@
 
 (extend-protocol v/Value
   MultiFn
-  (exact? [f] (compose v/exact? f))
-  (freeze [f]
-    (if-let [m (get-method f [Keyword])]
-      (m :name)
-      (core/get @v/object-name-map f f)))
   (kind [_] ::v/function)
 
   #?(:clj AFunction :cljs function)
-  (exact? [f] (compose v/exact? f))
-  (freeze [f] (core/get
-               @v/object-name-map
-               f #?(:clj (:name (meta f) f)
-                    :cljs f)))
   (kind [_] ::v/function)
 
   Var
-  (exact? [f] (compose v/exact? f))
-  (freeze [f] (core/get @v/object-name-map @f f))
   (kind [_] ::v/function)
 
   #?@(:cljs
       [MetaFn
-       (exact? [f] (compose v/exact? f))
        (freeze [f] (core/get
                     @v/object-name-map f (:name (.-meta f) f)))
        (kind [_] ::v/function)]))
@@ -568,3 +555,25 @@
 (defmethod g/zero-like [::v/function] [f] (zero-like f))
 (defmethod g/one-like [::v/function] [f] (one-like f))
 (defmethod g/identity-like [::v/function] [f] (identity-like f))
+(defmethod g/exact? [::v/function] [f] (compose g/exact? f))
+#?(:clj
+   (defmethod g/freeze [::v/function] [f]
+     #_(println "freezing" f (type f) (v/kind f)
+              "multifn?" (instance? MultiFn f)
+              "afunction?" (instance? AFunction f)
+              "var?" (var? f)
+              "meta" (meta f))
+     (core/get @v/object-name-map f
+               (cond
+                 (instance? MultiFn f)
+                 (if-let [m (get-method f [Keyword])]
+                   (m :name)
+                   f)
+
+                 (instance? AFunction f)
+                 (:name (meta f) f)
+
+                 (var? f)
+                 (g/freeze @f)
+
+                 :else f))))

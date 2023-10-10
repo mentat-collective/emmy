@@ -15,16 +15,16 @@
             [same.core :refer [ish?]]))
 
 (deftest ratio-value-implementation
-  (testing "v/freeze"
-    (is (= '(/ 1 2) (v/freeze #emmy/ratio 1/2)))
-    (is (= 2 (v/freeze #emmy/ratio 10/5))
+  (testing "g/freeze"
+    (is (= '(/ 1 2) (g/freeze #emmy/ratio 1/2)))
+    (is (= 2 (g/freeze #emmy/ratio 10/5))
         "Numbers pass through")
-    (is (= 2 (v/freeze #emmy/ratio "10/5"))))
+    (is (= 2 (g/freeze #emmy/ratio "10/5"))))
 
-  (checking "v/exact? is always true for ratios, v/kind works"
+  (checking "g/exact? is always true for ratios, v/kind works"
             100
             [r sg/big-ratio]
-            (is (v/exact? r))
+            (is (g/exact? r))
             (let [k (v/kind r)]
               (is (or (= k r/ratiotype)
                       (= k u/biginttype))

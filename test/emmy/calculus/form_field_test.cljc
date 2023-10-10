@@ -11,13 +11,12 @@
             [emmy.expression :as x]
             [emmy.generic :as g :refer [+ - *]]
             [emmy.simplify :refer [hermetic-simplify-fixture]]
-            [emmy.structure :refer [up down]]
-            [emmy.value :as v]))
+            [emmy.structure :refer [up down]]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 
 (def simplify
-  (comp v/freeze g/simplify))
+  (comp g/freeze g/simplify))
 
 (deftest manifold-tests
   (testing "first block of test material from manifold.scm"
@@ -77,7 +76,7 @@
       (is (g/zero? (g/zero-like oneform-field)))
       (is (ff/form-field?
            (g/zero-like oneform-field)))
-      (is (= 'ff:zero (v/freeze
+      (is (= 'ff:zero (g/freeze
                        (g/zero-like oneform-field))))))
 
   (testing "oneform-field->components"
@@ -89,7 +88,7 @@
 
         (is (= '(down (f_0 (up x0 y0))
                       (f_1 (up x0 y0)))
-               (v/freeze
+               (g/freeze
                 ((ff/oneform-field->components f R2-rect)
                  (up 'x0 'y0))))
             "retrieve the components"))))
@@ -276,7 +275,7 @@
         (is (= '(+ (* (w_0 (up x0 y0 z0)) (X↑0 (up x0 y0 z0)))
                    (* (w_1 (up x0 y0 z0)) (X↑1 (up x0 y0 z0)))
                    (* (w_2 (up x0 y0 z0)) (X↑2 (up x0 y0 z0))))
-               (v/freeze ((w X) R3-point))))
+               (g/freeze ((w X) R3-point))))
 
         ;; A few theorems
 

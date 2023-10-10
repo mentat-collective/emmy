@@ -46,8 +46,6 @@
 
 (defrecord Wrap [s]
   v/Value
-  (freeze [_] (list 'wrap s))
-  (exact? [_] false)
   (kind [_] ::wrap))
 
 (defmethod g/zero? [::wrap] [a] (= a (g/zero-like a)))
@@ -56,6 +54,7 @@
 (defmethod g/zero-like [::wrap] [_] (Wrap. "0"))
 (defmethod g/one-like [::wrap] [_] (Wrap. "1"))
 (defmethod g/identity-like [::wrap] [_] (Wrap. "1"))
+(defmethod g/freeze [::wrap] [^Wrap a] (list 'wrap (.-s a)))
 
 (defmethod g/add [::wrap ::wrap] [l r]
   (->Wrap (str (:s l) "+" (:s r))))
@@ -95,13 +94,13 @@
 
 (deftest generic-freeze-behavior
   (testing "freeze should return symbols"
-    (is (= 'abs (v/freeze g/abs))
+    (is (= 'abs (g/freeze g/abs))
         "fn where we don't override the name.")
 
     (is (= ['+ '- '- '* '/ '/]
-           (map v/freeze [g/add g/sub g/negate g/mul g/div g/invert])
-           (map v/freeze [g/+ g/- g/- g/* g// g/divide]))
-        "v/freeze returns symbols for our generic multimethods. The hidden g/add
+           (map g/freeze [g/add g/sub g/negate g/mul g/div g/invert])
+           (map g/freeze [g/+ g/- g/- g/* g// g/divide]))
+        "g/freeze returns symbols for our generic multimethods. The hidden g/add
         etc return proper higher-level symbols.")))
 
 (deftest type-assigner

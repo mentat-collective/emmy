@@ -136,8 +136,6 @@
     (map-coefficients #(sd/extract-tangent % tag) this))
 
   v/Value
-  (exact? [_] false)
-  (freeze [_] `(~'polynomial ~arity ~terms))
   (kind [_] ::polynomial)
 
   #?@(:clj
@@ -1721,6 +1719,8 @@
         term (i/make-term (xpt/make 0 1) one)]
     (Polynomial. 1 [term] (.-m a))))
 
+(defmethod g/freeze [::polynomial] [^Polynomial a] `(~'polynomial ~(.-arity a) ~(.-terms a)))
+(defmethod g/exact? [::polynomial] [_] false)
 (defmethod g/negative? [::polynomial] [a] (negative? a))
 (defmethod g/abs [::polynomial] [a] (abs a))
 (defmethod g/negate [::polynomial] [a] (negate a))

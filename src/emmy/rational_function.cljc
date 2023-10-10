@@ -44,8 +44,6 @@
   (denominator [_] v)
 
   v/Value
-  (exact? [_] false)
-  (freeze [_] (list '/ (v/freeze u) (v/freeze v)))
   (kind [_] ::rational-function)
 
   #?@(:clj
@@ -844,6 +842,7 @@
                      (g/identity-like (.-u a))
                      (g/one-like (.-v a))
                      (.-m a)))
+(defmethod g/freeze [::rational-function] [^RationalFunction a] (list '/ (g/freeze (.-u a)) (g/freeze (.-v a))))
 
 (defmethod g/negative? [::rational-function] [a] (negative? a))
 (defmethod g/abs [::rational-function] [a] (abs a))

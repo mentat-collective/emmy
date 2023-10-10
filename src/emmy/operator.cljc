@@ -27,10 +27,6 @@
 
 (deftype Operator [o arity name context m]
   v/Value
-  (freeze [_]
-    (simplify-operator-name
-     (v/freeze name)))
-
   (kind [_] (:subtype context))
 
   f/IArity
@@ -51,7 +47,7 @@
 
   Object
   (toString [o]
-    (let [n (v/freeze o)]
+    (let [n (g/freeze o)]
       (str (if (seqable? n)
              (seq n)
              n))))
@@ -251,7 +247,7 @@
   (let [h (f/coerce-to-fn f [:exactly 1])]
     (->Operator (fn [g] (op (f/compose h g) (o g)))
                 (arity o)
-                `(~sym ~(v/freeze f) ~(name o))
+                `(~sym ~(g/freeze f) ~(name o))
                 (context o)
                 nil)))
 
@@ -276,7 +272,7 @@
   (let [h (f/coerce-to-fn f [:exactly 1])]
     (->Operator (fn [g] (op (o g) (f/compose h g)))
                 (arity o)
-                `(~sym ~(name o) ~(v/freeze f))
+                `(~sym ~(name o) ~(g/freeze f))
                 (context o)
                 nil)))
 
@@ -353,7 +349,7 @@
   (->Operator (fn [& gs]
                 (g/mul f (apply o gs)))
               (arity o)
-              `(~'* ~(v/freeze f) ~(name o))
+              `(~'* ~(g/freeze f) ~(name o))
               (context o)
               (meta o)))
 
@@ -364,7 +360,7 @@
   (->Operator (fn [& gs]
                 (apply o (map (fn [g] (g/mul f g)) gs)))
               (arity o)
-              `(~'* ~(name o) ~(v/freeze f))
+              `(~'* ~(name o) ~(g/freeze f))
               (context o)
               (meta o)))
 
@@ -465,21 +461,23 @@
     (= (.-o o) core/identity)))
 
 (defmethod g/zero-like [::operator] [^Operator o]
-    (if-let [z-fn (:zero-like (.-context o))]
-      (z-fn o)
-      (Operator. g/zero-like (.-arity o) 'zero (.-context o) (.-m o))))
+  (if-let [z-fn (:zero-like (.-context o))]
+    (z-fn o)
+    (Operator. g/zero-like (.-arity o) 'zero (.-context o) (.-m o))))
 
 (defmethod g/one-like [::operator] [^Operator o]
-    (if-let [one-fn (:one-like (.-context o))]
-      (one-fn o)
-      (Operator. core/identity (.-arity o) 'identity (.-context o) (.-m o))))
+  (if-let [one-fn (:one-like (.-context o))]
+    (one-fn o)
+    (Operator. core/identity (.-arity o) 'identity (.-context o) (.-m o))))
 
 (defmethod g/identity-like [::operator] [^Operator o]
-    (if-let [id-fn (:identity-like (.-context o))]
-      (id-fn o)
-      (Operator. core/identity (.-arity o) 'identity (.-context o) (.-m o))))
+  (if-let [id-fn (:identity-like (.-context o))]
+    (id-fn o)
+    (Operator. core/identity (.-arity o) 'identity (.-context o) (.-m o))))
 
-
+(defmethod g/freeze [::operator] [^Operator o]
+        (simplify-operator-name
+         (g/freeze (.-name o))))
 
 (defmethod g/add [::operator ::operator] [o p] (o:+ o p))
 (defmethod g/add [::operator ::co-operator] [o f] (o+f o f))

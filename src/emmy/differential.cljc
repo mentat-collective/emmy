@@ -13,6 +13,7 @@
   (:refer-clojure :exclude [compare])
   (:require [clojure.core :as core]
             [clojure.string :refer [join]]
+            [emmy.function]  ;; for the side effect of making kind: MultiFn -> ::v/function
             [emmy.generic :as g]
             [emmy.util :as u]
             [emmy.util.aggregate :as ua]
@@ -615,13 +616,6 @@
              terms)))
 
   v/Value
-  (freeze [_]
-    (letfn [(freeze-term [term]
-              (make-term (tags term)
-                         (v/freeze (coefficient term))))]
-      `[~'Differential
-        ~@(mapv freeze-term terms)]))
-  (exact? [_] false)
   (kind [_] ::differential)
 
   Object
@@ -1255,8 +1249,8 @@
       (func x))))
 
 (defn- discont-at-integers [f dfdx]
-  (let [f (lift-1 f (fn [_] dfdx))
-        name (v/freeze f)]
+  (let [name (g/freeze f)
+        f (lift-1 f (fn [_] dfdx))]
     (fn [x]
       (if (v/integral? (finite-term x))
         (u/illegal
@@ -1326,3 +1320,9 @@
 (defmethod g/zero-like [::differential] [_] 0)
 (defmethod g/one-like [::differential] [_] 1)
 (defmethod g/identity-like [::differential] [_] 1)
+(defmethod g/freeze [::differential] [d]
+  (letfn [(freeze-term [term]
+            (make-term (tags term)
+                       (g/freeze (coefficient term))))]
+    `[~'Differential
+      ~@(mapv freeze-term (bare-terms d))]))

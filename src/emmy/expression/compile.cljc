@@ -621,7 +621,7 @@
              code          (-> (if simplify?
                                  (g/simplify h)
                                  h)
-                               (v/freeze)
+                               (g/freeze)
                                (wrap :calling-convention calling-convention
                                      :params (when generic-params? params)
                                      :state-model generic-state)

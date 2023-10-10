@@ -133,17 +133,6 @@
      m))
 
   v/Value
-  (exact? [_]
-    (and (v/exact? r)
-         (v/exact? i)
-         (v/exact? j)
-         (v/exact? k)))
-  (freeze [_]
-    (list 'quaternion
-          (v/freeze r)
-          (v/freeze i)
-          (v/freeze j)
-          (v/freeze k)))
   (kind [_] ::quaternion)
 
   #?@(:clj
@@ -1543,6 +1532,17 @@
   (Quaternion. (g/one-like (.-r a)) 0 0 0 (.-m a)))
 (defmethod g/identity-like [::quaternion] [^Quaternion a]
   (Quaternion. (g/one-like (.-r a)) 0 0 0 (.-m a)))
+(defmethod g/exact? [::quaternion] [^Quaternion a]
+        (and (g/exact? (.-r a))
+             (g/exact? (.-i a))
+             (g/exact? (.-j a))
+             (g/exact? (.-k a))))
+(defmethod g/freeze [::quaternion] [^Quaternion a]
+        (list 'quaternion
+              (g/freeze (.-r a))
+              (g/freeze (.-i a))
+              (g/freeze (.-j a))
+              (g/freeze (.-k a))))
 
 ;; ### Equality
 ;;

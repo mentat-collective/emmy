@@ -1,8 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
 ^#:nextjournal.clerk
-{:toc true
- :visibility :hide-ns}
+  {:toc true
+   :visibility :hide-ns}
 (ns emmy.abstract.function
   "Implementation of a [[literal-function]] constructor. Literal functions can be
   applied to structures and numeric inputs, and differentiated.
@@ -66,8 +66,6 @@
 
 (deftype Function [f-name arity domain range]
   v/Value
-  (exact? [f] (f/compose v/exact? f))
-  (freeze [_] (v/freeze f-name))
   (kind [_] ::function)
 
   f/IArity
@@ -222,9 +220,9 @@
           litfns)))
 
 (u/sci-macro with-literal-functions [litfns & body]
-  (let [pairs    (binding-pairs litfns)
-        bindings (into [] cat pairs)]
-    `(let ~bindings ~@body)))
+             (let [pairs    (binding-pairs litfns)
+                   bindings (into [] cat pairs)]
+               `(let ~bindings ~@body)))
 
 ;; ## Differentiation of literal functions
 
@@ -291,7 +289,7 @@
   (check-argument-type f xs (domain-types f) [0])
   (if (some d/perturbed? xs)
     (literal-derivative f xs)
-    (an/literal-number `(~(name f) ~@(map v/freeze xs)))))
+    (an/literal-number `(~(name f) ~@(map g/freeze xs)))))
 
 ;; ## Specific Generics
 ;;
@@ -309,3 +307,5 @@
 (defmethod g/identity-like [::function] [^Function a]
   (let [meta {:arity (.-arity a) :from :identity-like}]
     (with-meta identity meta)))
+(defmethod g/exact? [::function] [a] (f/compose g/exact? a))
+(defmethod g/freeze [::function] [^Function a] (g/freeze (.-f-name a)))

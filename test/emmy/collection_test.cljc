@@ -51,18 +51,18 @@
       (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
                    (g/identity-like {:k "v"}))))
 
-    (checking "v/exact?" 100
+    (checking "g/exact?" 100
               [v (gen/vector sg/any-integral)]
-              (is (v/exact? v)
+              (is (g/exact? v)
                   "all integral values == exact vector")
 
-              (is (not (v/exact? (conj v 1.5)))
+              (is (not (g/exact? (conj v 1.5)))
                   "conj-ing an inexact value removes the exact? designation"))
 
-    (testing "v/freeze"
+    (testing "g/freeze"
       (is (= '(up (/ 1 2))
-             (v/freeze [#emmy/ratio 1/2]))
-          "v/freeze freezes entries"))))
+             (g/freeze [#emmy/ratio 1/2]))
+          "g/freeze freezes entries"))))
 
 (deftest sequence-tests
   (testing "sequence protocol impls"
@@ -216,18 +216,18 @@
       (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
                    (g/identity-like {:k "v"}))))
 
-    (checking "v/exact?" 100
+    (checking "g/exact?" 100
               [m (gen/map gen/keyword sg/any-integral)]
-              (is (v/exact? m)
+              (is (g/exact? m)
                   "all integral values == exact map")
 
-              (is (not (v/exact? (assoc m :key 1.5)))
+              (is (not (g/exact? (assoc m :key 1.5)))
                   "adding an inexact key removes the exact? designation"))
 
-    (testing "v/freeze"
+    (testing "g/freeze"
       (is (= {:ratio '(/ 1 2)}
-             (v/freeze {:ratio #emmy/ratio 1/2}))
-          "v/freeze freezes values"))
+             (g/freeze {:ratio #emmy/ratio 1/2}))
+          "g/freeze freezes values"))
 
     (testing "v/= on collections"
       #?(:cljs
@@ -308,12 +308,15 @@
       (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
                    (g/identity-like #{"V"}))))
 
-    (checking "v/exact?" 100
-              [m (gen/set sg/any-integral)]
-              (is (not (v/exact? m))
-                  "sets aren't exact."))
+    (checking "g/exact?" 100
+              [s (gen/set sg/any-integral)]
+              (is (g/exact? s)
+                  "all integral values == exact map")
 
-    (testing "v/freeze currently throws, since we don't have a way of rendering
+              (is (not (g/exact? (conj s 1.5)))
+                  "adding an inexact key removes the exact? designation"))
+
+    (testing "g/freeze currently throws, since we don't have a way of rendering
     it or simplifying."
-      (is (thrown? #?(:clj UnsupportedOperationException :cljs js/Error)
-                   (v/freeze #{"v"}))))))
+      (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
+                   (g/freeze #{"v"}))))))

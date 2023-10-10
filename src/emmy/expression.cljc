@@ -36,10 +36,6 @@
   (numerical? [_] (= type ::numeric))
 
   v/Value
-  (exact? [_]
-    (and (v/number? expression)
-         (v/exact? expression)))
-  (freeze [_] (v/freeze expression))
   (kind [_] type)
 
   Object
@@ -291,11 +287,11 @@
   expression `expr`."
   [expr]
   (pr-str
-   (v/freeze (g/simplify expr))))
+   (g/freeze (g/simplify expr))))
 
 (defn print-expression [expr]
   (pp/pprint
-   (v/freeze (g/simplify expr))))
+   (g/freeze (g/simplify expr))))
 
 (def pe print-expression)
 
@@ -311,3 +307,7 @@
 (defmethod g/zero-like [::numeric] [_] 0)
 (defmethod g/one-like [::numeric] [_] 1)
 (defmethod g/identity-like [::numeric] [_] 1)
+(defmethod g/exact? [::numeric] [^Literal a]
+  (let [x (.-expression a)]
+    (and (v/number? x) (g/exact? x))))
+(defmethod g/freeze [::numeric] [^Literal a] (g/freeze (.-expression a)))

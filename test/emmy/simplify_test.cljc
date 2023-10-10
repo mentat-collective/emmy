@@ -62,7 +62,7 @@
   (is (= '(* x y z) (simplify-expression '(* 1 x y z))))
   (is (= '(+ x y) (simplify-expression '(/ (* 2 (+ x y)) 2))))
   (is (= '(+ (* (/ 1 2) x) (* (/ 1 2) y))
-         (v/freeze
+         (g/freeze
           (simplify-expression '(/ (+ x y) 2))))))
 
 (deftest structures
@@ -183,7 +183,7 @@
       (is (= '(matrix-by-rows
                [(+ (* a e) (* b g)) (+ (* a f) (* b h))]
                [(+ (* c e) (* d g)) (+ (* c f) (* d h))])
-             (v/freeze
+             (g/freeze
               (g/simplify (g/* M S)))))))
 
   (testing "div"
@@ -192,7 +192,7 @@
       (is (= '(up
                (/ (+ (* -1 b y) (* d x)) (+ (* a d) (* -1 b c)))
                (/ (+ (* a y) (* -1 c x)) (+ (* a d) (* -1 b c))))
-             (v/freeze
+             (g/freeze
               (g/simplify
                (g/divide u M)))))))
 

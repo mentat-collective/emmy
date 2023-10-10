@@ -1,8 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
 ^#:nextjournal.clerk
-{:toc true
- :visibility :hide-ns}
+  {:toc true
+   :visibility :hide-ns}
 (ns emmy.collection
   "This namespace contains implementations of various Emmy protocols for
   native Clojure collections."
@@ -26,7 +26,7 @@
 ;; ## Vector Implementations
 ;;
 ;; Vectors are implicitly treated as [[emmy.structure/Structure]] instances
-;; with an `up` orientation, and implement [[v/freeze]] identically. They can
+;; with an `up` orientation, and implement [[g/freeze]] identically. They can
 ;; act as `zero?`, but they can't act as `one?` or `identity?`; those are
 ;; reserved for instances that have no effect on multiplication.
 
@@ -34,6 +34,8 @@
   (mapv g/simplify v))
 (defmethod g/zero-like [PersistentVector] [v]
   (mapv g/zero-like v))
+(defmethod g/exact? [PersistentVector] [v] (every? g/exact? v))
+(defmethod g/freeze [PersistentVector] [v] `(~'up ~@(map g/freeze v)))
 
 #?(:clj
    (defmethod g/simplify [clojure.lang.APersistentVector$SubVector] [v]
@@ -41,8 +43,6 @@
 
 (extend-type #?(:clj IPersistentVector :cljs PersistentVector)
   v/Value
-  (exact? [v] (every? v/exact? v))
-  (freeze [v] `(~'up ~@(map v/freeze v)))
   (kind [v] (type v))
 
   ;; Another difference from [[emmy.structure/Structure]] is that a
@@ -76,11 +76,11 @@
   (defmethod g/one? [klass] [_] false)
   (defmethod g/identity? [klass] [_] false)
   (defmethod g/zero-like [klass] [xs] (map g/zero-like xs))
+  (defmethod g/exact? [klass] [xs] (every? g/exact? xs))
+  (defmethod g/freeze [klass] [xs] (map g/freeze xs))
 
   (extend-type #?(:clj ISeq :cljs klass)
     v/Value
-    (exact? [_] false)
-    (freeze [xs] (map v/freeze xs))
     (kind [xs] (type xs))
 
     d/IPerturbed
@@ -122,9 +122,9 @@
 
 (defn- combine [f m1 m2 l-default]
   (letfn [(merge-entry [m e]
-			      (let [k (key e)
+            (let [k (key e)
                   v (val e)]
-			        (assoc m k (f (get m k l-default) v))))]
+              (assoc m k (f (get m k l-default) v))))]
     (reduce merge-entry m1 (seq m2))))
 
 (defmethod g/make-rectangular [::map ::map] [m1 m2]
@@ -164,13 +164,13 @@
   (defmethod g/one? [klass] [_] false)
   (defmethod g/identity? [klass] [_] false)
   (defmethod g/zero-like [klass] [m] (u/map-vals g/zero-like m))
+  (defmethod g/exact? [klass] [m] (every? g/exact? (vals m)))
+  (defmethod g/freeze [klass] [m] (u/map-vals g/freeze m))
 
   #?(:clj
      (extend klass
        v/Value
-       {:exact? (fn [m] (every? v/exact? (vals m)))
-        :freeze (fn [m] (u/map-vals v/freeze m))
-        :kind (fn [m] (if (sorted? m)
+       {:kind (fn [m] (if (sorted? m)
                         (type m)
                         (:type m (type m))))}
 
@@ -191,8 +191,6 @@
      :cljs
      (extend-type klass
        v/Value
-       (exact? [m] (every? v/exact? (vals m)))
-       (freeze [m] (u/map-vals v/freeze m))
        (kind [m] (if (sorted? m)
                    (type m)
                    (:type m (type m))))
@@ -226,13 +224,12 @@
   (defmethod g/one? [klass] [_] false)
   (defmethod g/identity? [klass] [_] false)
   (defmethod g/zero-like [klass] [_] #{})
+  (defmethod g/exact? [klass] [s] (every? g/exact? s))
 
   #?(:clj
      (extend klass
        v/Value
-       {:exact? (fn [_] false)
-        :freeze (fn [s] (u/unsupported (str "freeze: " s)))
-        :kind type}
+       {:kind type}
 
        f/IArity
        {:arity (fn [_] [:between 1 2])})
@@ -240,8 +237,6 @@
      :cljs
      (extend-type klass
        v/Value
-       (exact? [_] false)
-       (freeze [s] (u/unsupported (str "freeze: " s)))
        (kind [s] (type s))
 
        f/IArity

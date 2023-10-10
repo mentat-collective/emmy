@@ -44,6 +44,9 @@
 (defmethod g/zero-like [::v/real] [_] 0)
 (defmethod g/one-like [::v/real] [_] 1)
 (defmethod g/identity-like [::v/real] [_] 1)
+(defmethod g/exact? [::v/integral] [_] true)
+(defmethod g/exact? [::v/floating-point] [_] false)
+(defmethod g/freeze [::v/real] [a] a)
 
 (defmethod g/add [::v/real ::v/real] [a b] (#?(:clj +' :cljs core/+) a b))
 (defmethod g/mul [::v/real ::v/real] [a b] (#?(:clj *' :cljs core/*) a b))
@@ -314,9 +317,10 @@
      (defmethod g/zero? [js/BigInt] [a] (coercive-= big-zero a))
      (defmethod g/one? [js/BigInt] [a] (coercive-= big-one a))
      (defmethod g/identity? [js/BigInt] [a] (coercive-= big-one a))
-     (defmethod g/zero-like [js/BigInt] [] big-zero)
-     (defmethod g/one-like [js/BigInt] [] big-one)
-     (defmethod g/identity-like [js/BigInt] [] big-one)
+     (defmethod g/zero-like [js/BigInt] [_] big-zero)
+     (defmethod g/one-like [js/BigInt] [_] big-one)
+     (defmethod g/identity-like [js/BigInt] [_] big-one)
+     (defmethod g/exact? [js/BigInt] [_] true)
 
      (defmethod g/abs [js/BigInt] [a] (if (neg? a) (core/- a) a))
      (defmethod g/quotient [js/BigInt js/BigInt] [a b] (core// a b))
@@ -368,6 +372,7 @@
      (defmethod g/zero-like [Integer] [_] (.-ZERO goog.math.Integer))
      (defmethod g/one-like [Integer] [_] (.-ONE goog.math.Integer))
      (defmethod g/identity-like [Integer] [_] (.-ONE goog.math.Integer))
+     (defmethod g/exact? [Integer] [_] true)
 
      ;; Google Closure library's 64-bit Long:
      (defmethod g/zero? [Long] [^Long x] (.isZero x))
@@ -376,6 +381,7 @@
      (defmethod g/zero-like [Long] [_] (Long/getZero))
      (defmethod g/one-like [Long] [_] (Long/getOne))
      (defmethod g/identity-like [Long] [_] (Long/getOne))
+     (defmethod g/exact? [Long] [_] true)
      (defmethod g/add [Long Long] [a b] (.add a b))
      (defmethod g/mul [Long Long] [a b] (.multiply a b))
      (defmethod g/sub [Long Long] [^Long a ^Long b] (.subtract a b))

@@ -8,8 +8,8 @@
             [emmy.examples.double-pendulum :as double]
             [emmy.expression.analyze :as a]
             [emmy.expression.compile :as c]
-            [emmy.simplify :refer [hermetic-simplify-fixture]]
-            [emmy.value :as v]))
+            [emmy.generic :as g]
+            [emmy.simplify :refer [hermetic-simplify-fixture]]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 
@@ -21,7 +21,7 @@
     (is (= '(+ (* -1 g l1 m1 (cos θ))
                (* -1 g l1 m2 (cos θ))
                (* -1 g l2 m2 (cos φ)))
-           (v/freeze
+           (g/freeze
             (e/simplify (V state)))))
 
     (is (= '(+ (* l1 l2 m2 θdot φdot (cos (+ θ (* -1 φ))))
@@ -29,7 +29,7 @@
                (* (/ 1 2) (expt l1 2) m1 (expt θdot 2))
                (* (/ 1 2) (expt l1 2) m2 (expt θdot 2))
                (* (/ 1 2) (expt l2 2) m2 (expt φdot 2)))
-           (v/freeze
+           (g/freeze
             (e/simplify (T state)))))
     (is (= '(+ (* l1 l2 m2 θdot φdot (cos (+ θ (* -1 φ))))
                (* (/ 1 2) (expt l1 2) m1 (expt θdot 2))
@@ -38,7 +38,7 @@
                (* g l1 m1 (cos θ))
                (* g l1 m2 (cos θ))
                (* g l2 m2 (cos φ)))
-           (v/freeze
+           (g/freeze
             (e/simplify (L state)))))
 
     (e/with-literal-functions [θ φ]
@@ -53,7 +53,7 @@
                   (* l1 l2 m2 (cos (+ (θ t) (* -1 (φ t)))) (((expt D 2) θ) t))
                   (* g l2 m2 (sin (φ t)))
                   (* (expt l2 2) m2 (((expt D 2) φ) t))))
-             (v/freeze
+             (g/freeze
               (e/simplify (((e/Lagrange-equations
                              (double/L 'm1 'm2 'l1 'l2 'g))
                             (up θ φ))

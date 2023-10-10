@@ -256,8 +256,8 @@
 	                    (components point)))))
         name `(~'+ ~@(map (fn [component basis-element]
 		                        `(~'*
-                              ~(v/freeze component)
-		                          ~(v/freeze basis-element)))
+                              ~(g/freeze component)
+		                          ~(g/freeze basis-element)))
 	                        (flatten components)
 	                        (flatten vector-basis)))]
     (procedure->vector-field op name)))

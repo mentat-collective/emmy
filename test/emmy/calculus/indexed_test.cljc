@@ -12,13 +12,12 @@
             [emmy.function :as f]
             [emmy.generic :as g :refer [+ *]]
             [emmy.simplify :refer [hermetic-simplify-fixture]]
-            [emmy.structure :as s :refer [up]]
-            [emmy.value :as v]))
+            [emmy.structure :as s :refer [up]]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 
 (def simplify
-  (comp v/freeze g/simplify))
+  (comp g/freeze g/simplify))
 
 (deftest indexed-tests
   (let-coordinates [[x y] m/R2-rect]
@@ -36,7 +35,7 @@
       (is (= '(+ (* c (v1↑1 (up x y)) (w2_1 (up x y)) (w1_1 (up x y)))
                  (* b (v1↑1 (up x y)) (w2_0 (up x y)) (w1_1 (up x y)))
                  (* a (v1↑0 (up x y)) (w2_1 (up x y)) (w1_0 (up x y))))
-             (v/freeze
+             (g/freeze
               (((ci/indexed->typed
                  (ci/typed->indexed T (b/coordinate-system->basis R2-rect))
                  (b/coordinate-system->basis R2-rect))

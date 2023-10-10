@@ -3,8 +3,7 @@
 (ns emmy.series.impl-test
   (:require [clojure.test :refer [is deftest testing]]
             [emmy.generic :as g]
-            [emmy.series.impl :as i]
-            [emmy.value :as v]))
+            [emmy.series.impl :as i]))
 
 (deftest sequence-series-tests
   (testing "make a sequence"
@@ -162,7 +161,7 @@
              (/ 1 5040)
              (/ 1 40320)
              (/ 1 362880))
-           (v/freeze (take 10 i/expx)))))
+           (g/freeze (take 10 i/expx)))))
 
   (testing "sine expansion"
     (is (= '(0
@@ -175,7 +174,7 @@
              (/ -1 5040)
              0
              (/ 1 362880))
-           (v/freeze (take 10 i/sinx)))))
+           (g/freeze (take 10 i/sinx)))))
 
   (testing "cosine expansion"
     (is (= '(1
@@ -188,7 +187,7 @@
              0
              (/ 1 40320)
              0)
-           (v/freeze (take 10 i/cosx)))))
+           (g/freeze (take 10 i/cosx)))))
 
   (testing "catalan numbers"
     (is (= [1 1 2 5 14 42 132 429 1430 4862]

@@ -12,13 +12,12 @@
             [emmy.function :refer [compose]]
             [emmy.generic :as g :refer [+ * /]]
             [emmy.simplify :as s :refer [hermetic-simplify-fixture]]
-            [emmy.structure :refer [up]]
-            [emmy.value :as v]))
+            [emmy.structure :refer [up]]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 
 (def simplify
-  (comp v/freeze g/simplify))
+  (comp g/freeze g/simplify))
 
 (deftest smoke
   (let-coordinates [[x y]     R2-rect

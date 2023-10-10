@@ -8,13 +8,12 @@
             [emmy.matrix :as matrix]
             [emmy.mechanics.rotation :as r]
             [emmy.simplify :refer [hermetic-simplify-fixture]]
-            [emmy.structure :refer [up]]
-            [emmy.value :as v]))
+            [emmy.structure :refer [up]]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 
 (def simplify
-  (comp v/freeze g/simplify))
+  (comp g/freeze g/simplify))
 
 (deftest rotation-tests
   (let [P (up 'x 'y 'z)]

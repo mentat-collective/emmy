@@ -75,8 +75,6 @@
 
 (deftype Structure [orientation v m]
   v/Value
-  (exact? [_] (every? v/exact? v))
-  (freeze [_] `(~(orientation orientation->symbol) ~@(map v/freeze v)))
   (kind [_] orientation)
 
   f/IArity
@@ -396,7 +394,9 @@
   (defmethod g/identity? [kind] [_] false)
   (defmethod g/zero-like [kind] [^Structure s] (Structure. (.-orientation s) (g/zero-like (.-v s)) (.-m s)))
   (defmethod g/one-like [kind] [_] 1)
-  (defmethod g/identity-like [kind] [_] 1))
+  (defmethod g/identity-like [kind] [_] 1)
+  (defmethod g/exact? [kind] [^Structure s] (every? g/exact? (.-v s)))
+  (defmethod g/freeze [kind] [^Structure s] `(~((.-orientation s) orientation->symbol) ~@(map g/freeze (.-v s)))))
 
 (defn- s:=
   "Returns true if the supplied structure `this` is equal to the argument on the

@@ -14,13 +14,12 @@
             [emmy.function :refer [compose]]
             [emmy.generic :as g :refer [+ * /]]
             [emmy.simplify :refer [hermetic-simplify-fixture]]
-            [emmy.structure :as s :refer [up down]]
-            [emmy.value :as v]))
+            [emmy.structure :as s :refer [up down]]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 
 (def simplify
-  (comp v/freeze g/simplify))
+  (comp g/freeze g/simplify))
 
 (deftest basic-tests
   (testing "Christoffel round-trip"
@@ -336,33 +335,33 @@
                                  (/ -1 r)
                                  (/ (* -1 (cos theta)) (* r (sin theta)))
                                  0)))
-                     (v/freeze foo)))
+                     (g/freeze foo)))
 
               ;; Check answers from MTW p.213
               ;; t r theta phi
               ;; 0 1 2     3
               (is (= '(/ (cos theta) (* r (sin theta)))
-                     (v/freeze
+                     (g/freeze
                       (get-in foo [3 2 3]))))
 
               (is (= '(/ (* -1 (cos theta)) (* r (sin theta)))
-                     (v/freeze
+                     (g/freeze
                       (get-in foo [3 3 2]))))
 
               (is (= '(/ 1 r)
-                     (v/freeze
+                     (g/freeze
                       (get-in foo [2 1 2]))))
 
               (is (= '(/ 1 r)
-                     (v/freeze
+                     (g/freeze
                       (get-in foo [3 1 3]))))
 
               (is (= '(/ -1 r)
-                     (v/freeze
+                     (g/freeze
                       (get-in foo [2 2 1]))))
 
               (is (= '(/ -1 r)
-                     (v/freeze
+                     (g/freeze
                       (get-in foo [3 3 1]))))))
 
           ;; TODO: This one takes quite a while, so we only install this test

@@ -15,13 +15,12 @@
             [emmy.matrix :as matrix]
             [emmy.simplify :refer [hermetic-simplify-fixture]]
             [emmy.structure :as s :refer [up]]
-            [emmy.util.aggregate :as ua]
-            [emmy.value :as v]))
+            [emmy.util.aggregate :as ua]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 
 (def simplify
-  (comp v/freeze g/simplify))
+  (comp g/freeze g/simplify))
 
 (deftest metric-tests
   (testing "Example: natural metric on a sphere of radius R"

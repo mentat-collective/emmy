@@ -20,7 +20,7 @@
 (use-fixtures :each hermetic-simplify-fixture)
 
 (def simplify
-  (comp v/freeze e/simplify))
+  (comp g/freeze e/simplify))
 
 (defn F->directional-derivative
   [F]

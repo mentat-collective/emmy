@@ -11,8 +11,8 @@
                                     square exp
                                     point chart
                                     define-coordinates]]
-            [emmy.simplify :refer [hermetic-simplify-fixture]]
-            [emmy.value :as v]))
+            [emmy.generic :as g]
+            [emmy.simplify :refer [hermetic-simplify-fixture]]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 
@@ -96,7 +96,7 @@
         omega2 (e/literal-oneform-field 'a R2-rect)
         circular (- (* x d:dy) (* y d:dx))]
     (is (= '(oneform-field (down a_0 a_1))
-           (v/freeze omega))
+           (g/freeze omega))
         "TODO - why does this freeze into this form?")
 
     (testing "page 35, with and without literal-oneform-field shorthand"

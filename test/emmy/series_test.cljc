@@ -24,8 +24,8 @@
   (testing "v/numerical?"
     (is (not (v/numerical? series))))
 
-  (testing "v/exact?"
-    (is (not (v/exact? series))))
+  (testing "g/exact?"
+    (is (not (g/exact? series))))
 
   (testing "zero-like"
     (is (= (take 10 s/zero)
@@ -278,7 +278,7 @@
                  (+ (* 3 (expt x 2)) (* 4 x) 3)
                  (+ (* 4 (expt x 3)) (* 6 (expt x 2)) (* 6 x) 4)
                  (+ (* 5 (expt x 4)) (* 8 (expt x 3)) (* 9 (expt x 2)) (* 8 x) 5))
-               (v/freeze
+               (g/freeze
                 (g/simplify
                  (take 6 (nats*index-series 'x))))))))))
 
@@ -302,7 +302,7 @@
       (let [ps (s/->function
                 (s/series 1 2 3))]
         (is (= '(1 (* 2 x) (* 3 x x) 0 0)
-               (v/freeze (take 5 (ps 'x))))
+               (g/freeze (take 5 (ps 'x))))
             "->function converts a series to a power series."))
 
       (testing "function->"
@@ -314,7 +314,7 @@
                (-> ((s/function-> g/sin) 'x)
                    (s/sum 10)
                    (g/simplify)
-                   (v/freeze)))
+                   (g/freeze)))
             "power series expansion of g/sin around 0, evaluated at 'x")
 
         (is (= '(+ (* (/ 1 6) (expt dx 3) (exp a))
@@ -324,7 +324,7 @@
                (-> ((s/function-> g/exp 'a) 'dx)
                    (s/sum 3)
                    (g/simplify)
-                   (v/freeze)))
+                   (g/freeze)))
             "power series expansion of g/exp around 'a, evaluated at 'dx")
 
         (is (= '(/ (+
@@ -343,7 +343,7 @@
                (-> ((s/function-> g/atan 'a 'b) ['da 'db])
                    (s/sum 2)
                    (g/simplify)
-                   (v/freeze)))
+                   (g/freeze)))
             "power series expansion of g/atan around 'a and 'b, evaluated
             at (the vector value) ['da 'db]. Shows that function-> can handle
             multiple arguments without a structural wrapping.")
@@ -505,7 +505,7 @@
              (/ 1 5040)
              (/ 1 40320)
              (/ 1 362880))
-           (v/freeze (take 10 s/exp-series)))))
+           (g/freeze (take 10 s/exp-series)))))
 
   (testing "sine expansion"
     (is (= '(0
@@ -518,7 +518,7 @@
              (/ -1 5040)
              0
              (/ 1 362880))
-           (v/freeze (take 10 s/sin-series)))))
+           (g/freeze (take 10 s/sin-series)))))
 
   (testing "cosine expansion"
     (is (= '(1
@@ -531,7 +531,7 @@
              0
              (/ 1 40320)
              0)
-           (v/freeze (take 10 s/cos-series)))))
+           (g/freeze (take 10 s/cos-series)))))
 
   (testing "catalan numbers"
     (is (= [1 1 2 5 14 42 132 429 1430 4862]

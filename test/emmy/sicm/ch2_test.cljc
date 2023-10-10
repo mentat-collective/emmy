@@ -5,6 +5,7 @@
   (:require [clojure.test :refer [is deftest use-fixtures]]
             [emmy.env :as e :refer [- / zero? ref partial simplify
                                     compose up]]
+            [emmy.generic :as g]
             [emmy.mechanics.rigid :as r]
             [emmy.mechanics.rotation :refer [Euler->M]]
             [emmy.polynomial.gcd :as pg]
@@ -117,5 +118,5 @@
              (* C φdot ψdot (cos θ))
              (* (/ 1 2) A (expt θdot 2))
              (* (/ 1 2) C (expt ψdot 2)))
-         (v/freeze
+         (g/freeze
           (simplify ((r/T-rigid-body 'A 'A 'C) Euler-state))))))

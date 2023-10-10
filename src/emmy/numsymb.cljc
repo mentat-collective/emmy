@@ -58,9 +58,9 @@
     (fn [s]
       (if (v/number? s)
         (let [q (f s)]
-          (if-not (v/exact? s)
+          (if-not (g/exact? s)
             q
-            (if (v/exact? q)
+            (if (g/exact? q)
               q
               (process s))))
         (process s)))))
@@ -195,7 +195,7 @@
   If it's not possible to do this (if the expression is symbolic, say), returns
   a symbolic form."
   [x]
-  (cond (v/number? x) (if (v/exact? x)
+  (cond (v/number? x) (if (g/exact? x)
                         (if (g/zero? x) 0 (list 'sin x))
                         (cond (n:zero-mod-pi? x) 0
                               (n:pi-over-2-mod-2pi? x) 1
@@ -212,7 +212,7 @@
   If it's not possible to do this (if the expression is symbolic, say), returns
   a symbolic form."
   [x]
-  (cond (v/number? x) (if (v/exact? x)
+  (cond (v/number? x) (if (g/exact? x)
                         (if (g/zero? x) 1 (list 'cos x))
                         (cond (n:pi-over-2-mod-pi? x) 0
                               (n:zero-mod-2pi? x) 1
@@ -229,7 +229,7 @@
   If it's not possible to do this (if the expression is symbolic, say), returns
   a symbolic form."
   [x]
-  (cond (v/number? x) (if (v/exact? x)
+  (cond (v/number? x) (if (g/exact? x)
                         (if (g/zero? x) 0 (list 'tan x))
                         (cond (n:zero-mod-pi? x) 0
                               (n:pi-over-4-mod-pi? x) 1
@@ -245,7 +245,7 @@
 
 (defn- csc [x]
   (if (v/number? x)
-    (if-not (v/exact? x)
+    (if-not (g/exact? x)
       (g/csc x)
       (if (g/zero? x)
         (u/illegal (str "Zero argument -- g/csc" x))
@@ -254,7 +254,7 @@
 
 (defn- sec [x]
   (if (v/number? x)
-    (if-not (v/exact? x)
+    (if-not (g/exact? x)
       (g/sec x)
       (if (g/zero? x)
         1
@@ -263,7 +263,7 @@
 
 (defn- asin [x]
   (if (v/number? x)
-    (if-not (v/exact? x)
+    (if-not (g/exact? x)
       (g/asin x)
       (if (g/zero? x)
         0
@@ -272,7 +272,7 @@
 
 (defn- acos [x]
   (if (v/number? x)
-    (if-not (v/exact? x)
+    (if-not (g/exact? x)
       (g/acos x)
       (if (g/one? x)
         0
@@ -282,7 +282,7 @@
 (defn- atan
   ([y]
    (if (v/number? y)
-     (if-not (v/exact? y)
+     (if-not (g/exact? y)
        (g/atan y)
        (if (g/zero? y)
          0
@@ -307,15 +307,15 @@
 
          (and (v/number? x)
               (v/number? y)
-              (or (not (v/exact? x))
-                  (not (v/exact? y))))
+              (or (not (g/exact? x))
+                  (not (g/exact? y))))
          (g/atan y x)
 
          :else (list 'atan y x))))
 
 (defn- cosh [x]
   (if (v/number? x)
-    (if-not (v/exact? x)
+    (if-not (g/exact? x)
       (g/cosh x)
       (if (g/zero? x)
         1
@@ -324,7 +324,7 @@
 
 (defn- sinh [x]
   (if (v/number? x)
-    (if-not (v/exact? x)
+    (if-not (g/exact? x)
       (g/sinh x)
       (if (g/zero? x)
         0

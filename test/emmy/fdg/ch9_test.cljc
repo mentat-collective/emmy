@@ -11,13 +11,13 @@
                                     point
                                     R2-rect R3-rect
                                     define-coordinates]]
-            [emmy.simplify :refer [hermetic-simplify-fixture]]
-            [emmy.value :as v]))
+            [emmy.generic :as g]
+            [emmy.simplify :refer [hermetic-simplify-fixture]]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 
 (def simplify
-  (comp v/freeze e/simplify))
+  (comp g/freeze e/simplify))
 
 (define-coordinates [theta phi] e/S2-spherical)
 (define-coordinates [t x y z] e/spacetime-rect)

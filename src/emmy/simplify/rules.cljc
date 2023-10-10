@@ -1070,7 +1070,7 @@
 (def expand-multiangle
   (letfn [(exact-integer>3? [x]
             (and (v/integral? x)
-                 (v/exact? x)
+                 (g/exact? x)
                  (> x 3)))]
     (rule-simplifier
      (ruleset
@@ -1159,7 +1159,7 @@
 (def contract-expt-trig
   (letfn [(exact-integer>1? [x]
             (and (v/integral? x)
-                 (v/exact? x)
+                 (g/exact? x)
                  (> x 1)))]
     (rule-simplifier
      (ruleset
@@ -1438,7 +1438,7 @@
 (def exp-expand
   (let [exact-integer? (fn [x]
                          (and (v/integral? x)
-                              (v/exact? x)))]
+                              (g/exact? x)))]
     (rule-simplifier
      (ruleset
       (exp (- ?x1)) => (/ 1 (exp ?x1))

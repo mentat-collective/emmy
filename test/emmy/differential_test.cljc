@@ -235,13 +235,13 @@
             (is (= '[Differential
                      [[]  (expt x 4)]
                      [[0] (* 2 (expt x 2) 2 x)]]
-                   (v/freeze not-simple))
+                   (g/freeze not-simple))
                 "A frozen differential freezes each entry")
 
             (is (= '[Differential
                      [[]  (expt x 4)]
                      [[0] (* 4 (expt x 3))]]
-                   (v/freeze
+                   (g/freeze
                     (g/simplify not-simple)))
                 "simplify simplifies each tangent term")
 

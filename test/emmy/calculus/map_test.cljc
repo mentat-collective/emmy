@@ -14,11 +14,10 @@
             [emmy.expression :as x]
             [emmy.function :as f]
             [emmy.generic :as g :refer [+ - *]]
-            [emmy.structure :refer [up down]]
-            [emmy.value :as v]))
+            [emmy.structure :refer [up down]]))
 
 (def simplify
-  (comp v/freeze g/simplify))
+  (comp g/freeze g/simplify))
 
 (deftest map-tests
   (testing "the basics: explanation of the connection between the basis forms
@@ -177,12 +176,12 @@ and the differentials of coordinate functions."
 
         (testing "pullback"
           (is (= '(f (up (θ t) (φ t)))
-                 (v/freeze
+                 (g/freeze
                   (((m/pullback μ) f)
                    ((man/point R1-rect) 't)))))
 
           (is (= '((D θ) t)
-                 (v/freeze
+                 (g/freeze
                   ((((m/pullback μ) dθ) d:dt)
                    ((man/point R1-rect) 't)))))
 
@@ -203,22 +202,22 @@ and the differentials of coordinate functions."
               (man/chart R3-rect))
           R3-rect-point ((man/point R3-rect) (up 'x 'y 'z))]
       (is (= '(((partial 0) mu↑theta) (up x y z))
-             (v/freeze
+             (g/freeze
               ((((m/pullback mu) dtheta) d:dx)
                R3-rect-point))))
 
       (is (= '(((partial 1) mu↑theta) (up x y z))
-             (v/freeze
+             (g/freeze
               ((((m/pullback mu) dtheta) d:dy)
                R3-rect-point))))
 
       (is (= '(((partial 0) mu↑r) (up x y z))
-             (v/freeze
+             (g/freeze
               ((((m/pullback mu) dr) d:dx)
                R3-rect-point))))
 
       (is (= '(((partial 1) mu↑r) (up x y z))
-             (v/freeze
+             (g/freeze
               ((((m/pullback mu) dr) d:dy)
                R3-rect-point))))
 
@@ -282,7 +281,7 @@ and the differentials of coordinate functions."
         ;; first pullback a function
         (let [f (f/compose (af/literal-function 'f R3-rect->R)
 	                         R3-rect-chi)]
-          (is (= 0 (v/freeze
+          (is (= 0 (g/freeze
                     (((- ((m/pullback mu) (ff/d f))
                          (ff/d ((m/pullback mu) f)))
                       X2)
@@ -292,7 +291,7 @@ and the differentials of coordinate functions."
         (is (= '(up (mu↑x (up u0 v0))
                     (mu↑y (up u0 v0))
                     (mu↑z (up u0 v0)))
-               (v/freeze
+               (g/freeze
                 (R3-rect-chi (mu m2)))))
 
         (let [present (fn [expr]

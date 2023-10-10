@@ -42,7 +42,7 @@
                   (sqrt (+ (expt x 2) (expt y 2))))
                (/ (+ (* x (v↑1 (up x y))) (* -1 y (v↑0 (up x y))))
                   (+ (expt x 2) (expt y 2))))
-             (v/freeze
+             (g/freeze
               (g/simplify
                (vjp ((m/point m/R2-rect) (up 'x 'y)))))))))
 

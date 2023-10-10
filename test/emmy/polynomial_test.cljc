@@ -62,7 +62,7 @@
               [p (sg/polynomial)]
               (is (p/polynomial? p))
               (is (not (p/coeff? p)))
-              (is (not (v/exact? p)))
+              (is (not (g/exact? p)))
               (is (= ::p/polynomial (v/kind p))
                   "kind works"))
 
@@ -96,7 +96,7 @@
           "term limitation in printing")
 
       (is (= '(polynomial 1 [[{} 1] [{0 1} 2] [{0 2} 3]])
-             (v/freeze
+             (g/freeze
               (p/make [1 2 3])))
           "freeze representation isn't THAT great yet..."))
 
@@ -303,7 +303,7 @@
                (* (/ 1 2) (expt x 2))
                x
                1)
-           (v/freeze
+           (g/freeze
             (g/simplify
              ((p/from-power-series ss/exp-series 4) 'x))))))
 
@@ -476,7 +476,7 @@
            (+ (expt x 5) (* 10 (expt x 4)) (* 25 (expt x 3)) (* 15 (expt x 2)) x)]
          (map #(-> (p/touchard %)
                    (p/->expression ['x])
-                   (v/freeze))
+                   (g/freeze))
               (range -1 6)))
       "Touchard matches examples from https://mathworld.wolfram.com/BellPolynomial.html"))
 
@@ -908,13 +908,13 @@
         U (p/make 2 [[[1 1] 3] [[2 2] 4] [[0 0] 5] [[0 3] 7] [[4 0] -2]])]
     (testing "univariate and multivariate polynomials work with D operator"
       (is (= '(+ (* 12 (expt x 2)) (* 6 x) 2)
-             (v/freeze
+             (g/freeze
               (g/simplify
                ((D V) 'x)))))
 
       (is (= '(down (+ (* -8 (expt x 3)) (* 8 x (expt y 2)) (* 3 y))
                     (+ (* 8 (expt x 2) y) (* 21 (expt y 2)) (* 3 x)))
-             (v/freeze
+             (g/freeze
               (g/simplify
                ((D U) 'x 'y))))))
 

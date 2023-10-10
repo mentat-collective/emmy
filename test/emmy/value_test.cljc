@@ -43,14 +43,14 @@
       "1 is the multiplicative identity for vector spaces.")
 
   (testing "exact?"
-    (is (v/exact? [1 2 3 4]))
-    (is (not (v/exact? [1.2 3 4])))
-    (is (v/exact? [0 1 #emmy/ratio 3/2]))
-    (is (not (v/exact? [0 0 0.00001]))))
+    (is (g/exact? [1 2 3 4]))
+    (is (not (g/exact? [1.2 3 4])))
+    (is (g/exact? [0 1 #emmy/ratio 3/2]))
+    (is (not (g/exact? [0 0 0.00001]))))
 
   (testing "freeze"
     (is (= '(up 1 2 3)
-           (v/freeze [1 2 3]))))
+           (g/freeze [1 2 3]))))
 
   (testing "kind"
     (is (= PersistentVector (v/kind [1 2])))))
@@ -87,9 +87,9 @@
     (is (= 1 (g/one-like 1)))
     (is (= 1.0 (g/one-like 1.2))))
 
-  (checking "on non-rational reals, v/freeze is identity" 100
+  (checking "on non-rational reals, g/freeze is identity" 100
             [n (gen/one-of [sg/any-integral (sg/reasonable-double)])]
-            (is (= n (v/freeze n))))
+            (is (= n (g/freeze n))))
 
   (checking "all numbers are numerical" 100
             [n sg/number]
@@ -99,8 +99,8 @@
       "Symbols are abstract numerical things.")
 
   (is (isa? (v/kind 10) ::v/real))
-  (is (v/exact? 10))
-  (is (not (v/exact? 10.1))))
+  (is (g/exact? 10))
+  (is (not (g/exact? 10.1))))
 
 (deftest numeric-comparison-tests
   (checking "v/compare matches <, >, = behavior for reals" 100
@@ -151,13 +151,13 @@
   (is (= PersistentVector (v/kind [1 2]))))
 
 (deftest exactness
-  (is (v/exact? 1))
-  (is (v/exact? 4N))
-  (is (not (v/exact? 1.1)))
-  (is (not (v/exact? :a)))
-  (is (not (v/exact? "a")))
-  (is (v/exact? #emmy/ratio 3/2))
-  (is (v/exact? (u/biginteger 111))))
+  (is (g/exact? 1))
+  (is (g/exact? 4N))
+  (is (not (g/exact? 1.1)))
+  (is (not (g/exact? :a)))
+  (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error) (g/exact? "a")))
+  (is (g/exact? #emmy/ratio 3/2))
+  (is (g/exact? (u/biginteger 111))))
 
 (deftest argument-kinds
   (let [L #?(:clj Long :cljs ::v/native-integral)

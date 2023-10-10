@@ -75,7 +75,7 @@
   ([opts]
    (->> (reasonable-double opts)
         (gen/fmap (fn [x]
-                    (if (v/exact? x)
+                    (if (g/exact? x)
                       (+ x 0.5)
                       x))))))
 

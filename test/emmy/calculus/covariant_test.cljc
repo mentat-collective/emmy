@@ -24,13 +24,12 @@
             [emmy.mechanics.lagrange :as ml]
             [emmy.polynomial.gcd :as pg]
             [emmy.simplify :refer [hermetic-simplify-fixture]]
-            [emmy.structure :as s :refer [up down]]
-            [emmy.value :as v]))
+            [emmy.structure :as s :refer [up down]]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 
 (def simplify
-  (comp v/freeze g/simplify))
+  (comp g/freeze g/simplify))
 
 (deftest Lie-derivative-tests
   (testing "Lie derivative."
@@ -388,7 +387,7 @@
                           (up (G↑0_10 p) (G↑1_10 p)))
                     (down (up (G↑0_01 p) (G↑1_01 p))
                           (up (G↑0_11 p) (G↑1_11 p))))
-             (v/freeze
+             (g/freeze
               (present
                (G R2-rect-point)))))
 
@@ -399,7 +398,7 @@
                      (+ (* (G↑1_00 p) (X↑0 p)) (* (G↑1_01 p) (X↑1 p))))
                  (up (+ (* (G↑0_10 p) (X↑0 p)) (* (G↑0_11 p) (X↑1 p)))
                      (+ (* (G↑1_10 p) (X↑0 p)) (* (G↑1_11 p) (X↑1 p)))))
-               (v/freeze
+               (g/freeze
                 (present
                  (((cov/Cartan->forms CF) (vf/literal-vector-field 'X R2-rect))
                   R2-rect-point)))))
@@ -409,7 +408,7 @@
                        (up (G↑0_10 p) (G↑1_10 p)))
                  (down (up (G↑0_01 p) (G↑1_01 p))
                        (up (G↑0_11 p) (G↑1_11 p))))
-               (v/freeze
+               (g/freeze
                 (present
                  ((cov/Christoffel->symbols
                    (cov/Cartan->Christoffel (cov/Christoffel->Cartan CG)))
@@ -487,7 +486,7 @@
                (* (((partial 0) F) p) (X↑1 p) (((partial 1) V↑0) p))
                (* (X↑0 p) (((partial 1) F) p) (((partial 0) V↑1) p))
                (* (X↑1 p) (((partial 1) F) p) (((partial 1) V↑1) p)))
-           (v/freeze
+           (g/freeze
             (present
              (((((cov/covariant-derivative CF) X) V)
                (man/literal-manifold-function 'F R2-rect))
@@ -515,7 +514,7 @@
           J (- (* x d:dy) (* y d:dx))
           f (man/literal-scalar-field 'f R2-rect)]
       (is (= '(((partial 1) f) (up x0 y0))
-             (v/freeze
+             (g/freeze
               (simplify
                (((((cov/covariant-derivative rect-Cartan)
                    d:dx)
@@ -524,7 +523,7 @@
                 m2)))))
 
       (is (= '(((partial 1) f) (up x0 y0))
-             (v/freeze
+             (g/freeze
               (simplify
                (((((cov/covariant-derivative polar-Cartan)
                    d:dx)
@@ -584,7 +583,7 @@
                         (* (cos (alpha tau)) (w1 tau) ((D alpha) tau))
                         (* (sin (alpha tau)) ((D w1) tau)))
                      (sin (alpha tau))))
-             (v/freeze
+             (g/freeze
               (simplify
                (s/mapr
                 (fn [omega]
@@ -601,7 +600,7 @@
                     (/ (+ (* 2 (cos (alpha t)) ((D beta) t) ((D alpha) t))
                           (* (sin (alpha t)) (((expt D 2) beta) t)))
                        (sin (alpha t))))
-               (v/freeze
+               (g/freeze
                 (simplify
                  (s/mapr
                   (fn [omega]
@@ -642,7 +641,7 @@
                        (* (u0 t) ((D beta) t) (G↑1_01 (up (alpha t) (beta t))))
                        (* (u1 t) ((D beta) t) (G↑1_11 (up (alpha t) (beta t))))
                        ((D u1) t)))
-               (v/freeze
+               (g/freeze
                 (simplify
                  (s/mapr
                   (fn [omega]
@@ -663,7 +662,7 @@
                        (* ((D alpha) t) ((D beta) t) (G↑1_01 (up (alpha t) (beta t))))
                        (* (expt ((D beta) t) 2) (G↑1_11 (up (alpha t) (beta t))))
                        (((expt D 2) beta) t)))
-               (v/freeze
+               (g/freeze
                 (simplify
                  (s/mapr
                   (fn [omega]
@@ -705,7 +704,7 @@
                           (* (sin (mu-theta tau))
                              (((expt D 2) mu-phi) tau)))
                        (sin (mu-theta tau))))
-               (v/freeze
+               (g/freeze
                 (simplify
                  (s/mapr
                   (fn [w]
@@ -751,7 +750,7 @@
                   (((expt D 2) theta) t))
                (+ (* 2 (cos (theta t)) ((D theta) t) (sin (theta t)) ((D phi) t))
                   (* (expt (sin (theta t)) 2) (((expt D 2) phi) t))))
-             (v/freeze
+             (g/freeze
               (simplify
                (((ml/Lagrange-equations Lsphere)
                  (up (af/literal-function 'theta)
@@ -765,21 +764,21 @@
               R3-cyl-point ((point R3-cyl) (up 'r0 'theta0 'z0))
               mpr (chart R3-rect)]
           (is (= '(up 0 0 0)
-                 (v/freeze
+                 (g/freeze
                   (simplify
                    (((* d:dr d:dr) mpr) R3-rect-point)))))
           ;; So \Gamma↑r_{rr} = 0, \Gamma↑\theta_{rr} = 0
           (is (= '(up (/ (* -1 y0) (sqrt (+ (expt x0 2) (expt y0 2))))
                       (/ x0 (sqrt (+ (expt x0 2) (expt y0 2))))
                       0)
-                 (v/freeze
+                 (g/freeze
                   (simplify
                    (((* d:dtheta d:dr) mpr) R3-rect-point)))))
 
           ;; by hand = -sint d:dx + cost d:dy = 1/r d:dtheta
           ;; Indeed.
           (is (= '(up (* -1 (sin theta0)) (cos theta0) 0)
-                 (v/freeze
+                 (g/freeze
                   (simplify
                    (((* d:dtheta d:dr) mpr) R3-cyl-point)))))
 
@@ -788,13 +787,13 @@
           (is  (= '(up (/ (* -1 y0) (sqrt (+ (expt x0 2) (expt y0 2))))
                        (/ x0 (sqrt (+ (expt x0 2) (expt y0 2))))
                        0)
-                  (v/freeze
+                  (g/freeze
                    (simplify
                     (((* d:dr d:dtheta) mpr) R3-rect-point)))))
 
           ;; by hand = -sint d:dx + cost d:dy = 1/r d:dtheta
           (is  (= '(up (* -1 (sin theta0)) (cos theta0) 0)
-                  (v/freeze
+                  (g/freeze
                    (simplify
                     (((* d:dr d:dtheta) mpr) R3-cyl-point)))))
 
@@ -806,7 +805,7 @@
           ;; by hand = -r cost d:dx - r sint d:dy = -r d:dr
 
           (is (= '(up (* -1 r0 (cos theta0)) (* -1 r0 (sin theta0)) 0)
-                 (v/freeze
+                 (g/freeze
                   (simplify
                    (((* d:dtheta d:dtheta) mpr) R3-cyl-point)))))
           ;; So \Gammar_{\theta \theta} = -r, \Gamma\theta_{\theta \theta} = 0
@@ -931,7 +930,7 @@
               (* ((D gamma↑0) t) ((D gamma↑1) t) (G_01↑1 (up (gamma↑0 t) (gamma↑1 t))))
               (* (expt ((D gamma↑1) t) 2) (G_11↑1 (up (gamma↑0 t) (gamma↑1 t))))
               (((expt D 2) gamma↑1) t)))
-         (v/freeze
+         (g/freeze
           (simplify
            (((cov/geodesic-equation the-real-line R2-rect (conn/literal-Cartan 'G R2-rect))
              (cm/literal-manifold-map 'gamma the-real-line R2-rect))
@@ -939,7 +938,7 @@
 
   (let [C (conn/literal-Cartan 'G R2-rect)]
     (is (= '(up 0 0)
-           (v/freeze
+           (g/freeze
             (simplify
              (- (((cov/geodesic-equation the-real-line R2-rect C)
                   (cm/literal-manifold-map 'gamma the-real-line R2-rect))
@@ -979,7 +978,7 @@
                      (* (cos (alpha t)) (u↑1 t) ((D alpha) t))
                      (* (sin (alpha t)) ((D u↑1) t)))
                   (sin (alpha t))))
-             (v/freeze
+             (g/freeze
               (simplify
                ((((cov/parallel-transport-equation
                    the-real-line S2-spherical sphere-Cartan)

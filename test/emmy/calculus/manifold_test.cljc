@@ -14,13 +14,12 @@
             [emmy.simplify :refer [hermetic-simplify-fixture]]
             [emmy.structure :refer [up]]
             [emmy.util :as u]
-            [emmy.value :as v]
             [same.core :refer [ish?]]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 
 (def s-freeze
-  (comp v/freeze g/simplify))
+  (comp g/freeze g/simplify))
 
 (defn rt
   "Round trip the supplied coordinates through the supplied `coordinate-system`."

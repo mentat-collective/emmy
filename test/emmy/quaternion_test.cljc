@@ -177,10 +177,10 @@
                 (is (g/identity? (g/identity-like x)))))
 
     (testing "exact?"
-      (is (v/exact? (q/make 1 2 3 4)))
-      (is (not (v/exact? (q/make 1.2 3 4 5))))
-      (is (v/exact? (q/make 1 2 3 #emmy/ratio 3/2)))
-      (is (not (v/exact? (q/make 0 0 0 0.00001)))))
+      (is (g/exact? (q/make 1 2 3 4)))
+      (is (not (g/exact? (q/make 1.2 3 4 5))))
+      (is (g/exact? (q/make 1 2 3 #emmy/ratio 3/2)))
+      (is (not (g/exact? (q/make 0 0 0 0.00001)))))
 
     (testing "numerical?"
       (is (not (v/numerical? (s/up 1 2 3 4)))
@@ -188,7 +188,7 @@
 
     (testing "freeze"
       (is (= '(quaternion (/ 1 2) 2 3 x)
-             (v/freeze (q/make #emmy/ratio 1/2
+             (g/freeze (q/make #emmy/ratio 1/2
                                2 3 'x)))))
 
     (checking "kind" 100 [x (sg/quaternion)]
@@ -671,14 +671,14 @@
 
     (testing "q/log unit tests"
       (is (= '(quaternion (log y) (* (/ 1 2) pi) 0 0)
-             (v/freeze
+             (g/freeze
               (g/simplify
                (q/log (q/make 0 'y 0 0)))))
           "this test failed before a fix in `emmy.numsymb` forced atan to
         return an exact value of `pi/2` instead of a floating point number.")
 
       (is (= '(quaternion (log y) 0 0 0)
-             (v/freeze
+             (g/freeze
               (g/simplify
                (q/log (q/make 'y 0 0 0)))))
           "note that symbolic log on a real quaternion generates a symbolic real
@@ -865,7 +865,7 @@
               (up x y (sqrt (+ (* -1 (expt x 2))
                                (* -1 (expt y 2))
                                1))))
-         (v/freeze
+         (g/freeze
           (g/simplify
            (q/->angle-axis
             (q/from-angle-axis

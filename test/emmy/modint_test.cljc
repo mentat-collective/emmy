@@ -23,7 +23,7 @@
 
   (testing "value implementation"
     (is (= '(modint 1 2)
-           (v/freeze (m/make 1 2)))))
+           (g/freeze (m/make 1 2)))))
 
   (checking "v/= can handle non-modint instances" 100
             [m (sg/modint)

@@ -5,19 +5,19 @@
   (:require [clojure.test :refer [is deftest testing use-fixtures]]
             [emmy.calculus.curvature-test :refer [S2-Christoffel]]
             [emmy.env :as e :refer [+ - * / sin zero?
-                                         D partial
-                                         up
-                                         point chart
-                                         R2-rect R2-polar
-                                         define-coordinates]]
+                                    D partial
+                                    up
+                                    point chart
+                                    R2-rect R2-polar
+                                    define-coordinates]]
+            [emmy.generic :as g]
             [emmy.operator :as o]
-            [emmy.simplify :refer [hermetic-simplify-fixture]]
-            [emmy.value :as v]))
+            [emmy.simplify :refer [hermetic-simplify-fixture]]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 
 (def simplify
-  (comp v/freeze e/simplify))
+  (comp g/freeze e/simplify))
 
 (define-coordinates [theta phi] e/S2-spherical)
 
@@ -171,7 +171,7 @@
                   (fn [_ theta Delta-phi]
                     (* R (sin theta) Delta-phi)))]
           (is (= '(* Delta-phi R (cos theta0))
-                 (v/freeze
+                 (g/freeze
                   (((partial 1) (delta 'R)) 'phi0 'theta0 'Delta-phi))))
 
           (let [phi-hat (* (/ 1 (sin theta)) d:dphi)]

@@ -70,10 +70,10 @@
           "identity is `x`, multiplying should be equivalent to multiplying by
           x."))
 
-    (testing "v/freeze"
+    (testing "g/freeze"
       (is (= '(/ (polynomial 1 [[{} 1] [{0 1} 1]])
                  (polynomial 1 [[{} -1] [{0 1} 1]]))
-             (v/freeze x+1:x-1))))
+             (g/freeze x+1:x-1))))
 
     (testing "v/numerical?"
       (is (not (v/numerical? x+1:x-1))))
@@ -336,7 +336,7 @@
     (is (= 3 (rf-simp '(gcd 9 (* x 6 y)))))
     (is (= '(* 7 y) (rf-simp '(gcd (* 14 x y) (* 21 y z)))))
     (is (= '(* (/ 1 6) y)
-           (v/freeze
+           (g/freeze
             (rf-simp
              '(gcd (* (/ 5 2) x y) (* (/ 7 3) y z)))))
         "Can handle rational gcd!"))
@@ -358,7 +358,7 @@
         x-1     (p/make [-1 1])
         x+1:x-1 (rf/make x+1 x-1)]
     (is (= '(/ -2 (+ (expt x 2) (* -2 x) 1))
-           (v/freeze
+           (g/freeze
             (g/simplify
              ((D x+1:x-1) 'x)))))
 

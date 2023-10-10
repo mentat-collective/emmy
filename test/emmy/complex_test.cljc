@@ -84,21 +84,21 @@
     (is (not (g/one? (c/complex 2))))
     (is (not (g/one? (c/complex 0.0))))
 
-    (is (= 10.0 (v/freeze (c/complex 10)))
+    (is (= 10.0 (g/freeze (c/complex 10)))
         "If the imaginary piece is 0, freeze will return only the real part.")
     (is (v/numerical? (c/complex 10)))
 
     (testing "exact?"
-      (is (not (v/exact? (c/complex 0 10.1))))
+      (is (not (g/exact? (c/complex 0 10.1))))
 
       ;; cljs is able to maintain exact numbers here.
       #?@(:clj
-          [(is (not (v/exact? (c/complex 10))))
-           (is (not (v/exact? (c/complex 10 12))))]
+          [(is (not (g/exact? (c/complex 10))))
+           (is (not (g/exact? (c/complex 10 12))))]
 
           :cljs
-          [(is (v/exact? (c/complex 10)))
-           (is (v/exact? (c/complex 10 12)))]))))
+          [(is (g/exact? (c/complex 10)))
+           (is (g/exact? (c/complex 10 12)))]))))
 
 (let [pi Math/PI]
   (deftest complex-numbers

@@ -9,13 +9,13 @@
                                     up
                                     rotate-x rotate-y rotate-z
                                     point chart]]
-            [emmy.simplify :refer [hermetic-simplify-fixture]]
-            [emmy.value :as v]))
+            [emmy.generic :as g]
+            [emmy.simplify :refer [hermetic-simplify-fixture]]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 
 (def simplify
-  (comp v/freeze e/simplify))
+  (comp g/freeze e/simplify))
 
 (deftest ch11-tests
   (testing "Implementation, p175"
