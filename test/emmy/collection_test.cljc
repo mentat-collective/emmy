@@ -178,7 +178,7 @@
     (testing "sorted map"
       (let [m (sorted-map 1 2 3 4)]
         (is (= (type m) (v/kind m))
-            "This would fail without special handling when the `Value`
+            "This would fail without special handling when the `IKind`
             implementation attempts to pass a `:type` keyword to a sorted map
             containing numbers, since keywords and numbers don't compare.")))
 

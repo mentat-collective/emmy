@@ -51,8 +51,8 @@
   (with-comparator (v/within 1e-3)
     (l/field 100 sg/complex "Complex")))
 
-(deftest value-protocol
-  (testing "v/Value protocol implementation"
+(deftest generic-functions
+  (testing "generic function implementation (formerly Value)"
     (is (every?
          g/zero?
          [(c/complex -0.0 -0.0)

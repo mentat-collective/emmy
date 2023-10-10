@@ -2,8 +2,7 @@
 
 (ns emmy.laws
   "test.check laws useful for checking the algebraic properties of different types
-  that implement the emmy.generic operations, and the additive and
-  multiplicative options in emmy.value.Value."
+  that implement the emmy.generic operations."
   (:require [clojure.test :refer [is]]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
             [emmy.generic :as g]

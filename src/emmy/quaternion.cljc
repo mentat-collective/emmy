@@ -103,7 +103,7 @@
 ;; - The `D` operator should work on quaternions, so derivatives of functions
 ;;   that return quaternions work well.
 ;;
-;; - All [[emmy.value/Value]] functions should work well.
+;; - All [[emmy.generic]] functions should work well.
 
 (deftype Quaternion [r i j k m]
   f/IArity
