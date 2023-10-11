@@ -625,7 +625,7 @@
            (check-coordinates [_ coords]
              (and (s/up? coords)
                   (= (g/dimension coords)
-                     (:dimension manifold))
+                     (:dimension manifold))*
                   (or (not (v/number? coords))
                       (>= (nth coords 0) 0))))
 
@@ -656,6 +656,7 @@
                            (g/+ (g/square x)
                                 (g/square y)
                                 (g/square z)))]
+                    (println "r is" r)
                     (when (g/zero? r)
                       (u/illegal-state "SphericalCylindrical singular"))
                     (-> rep

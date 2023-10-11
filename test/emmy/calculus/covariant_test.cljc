@@ -48,7 +48,7 @@
                       (-> (simplify expr)
                           (x/substitute '(up x0 y0 z0) 'p)))]
 
-(is (= '(+ (* (Y↑0 p) (((partial 0) w_0) p) (X↑0 p))
+        (is (= '(+ (* (Y↑0 p) (((partial 0) w_0) p) (X↑0 p))
                    (* (Y↑0 p) (w_0 p) (((partial 0) X↑0) p))
                    (* (Y↑0 p) (w_1 p) (((partial 0) X↑1) p))
                    (* (Y↑0 p) (w_2 p) (((partial 0) X↑2) p))
@@ -69,6 +69,7 @@
                (present
                 ((((g/Lie-derivative X) w) Y) R3-rect-point))))
 
+        (is (= '(Lie-derivative X) (g/freeze (g/Lie-derivative X))))
         (is (= 0 (simplify
                   ((- ((ff/d ((g/Lie-derivative X) f)) Y)
                       (((g/Lie-derivative X) (ff/d f)) Y))
@@ -883,12 +884,17 @@
           (- (((((CD CF-rect R2-polar) X) Y) F) m_0)
              (((((cov/covariant-derivative CF-rect) X) Y) F) m_0)))))
 
+    ;; throws when given something that doesn't look like a
+    ;; vector field for Y
+    (is (thrown? #?(:clj UnsupportedOperationException :cljs js/Error)
+                 (((cov/covariant-derivative CF-rect) X) 99)))
+
     ;; TODO: Too slow... it works if we bump the timeout, but this is not fast.
     #_(binding [pg/*poly-gcd-time-limit* [5 :seconds]]
-      (is (zero?
-           (simplify
-            (- (((((CD CF-polar R2-polar) X) Y) F) m_0)
-               (((((cov/covariant-derivative CF-polar) X) Y) F) m_0))))))
+        (is (zero?
+             (simplify
+              (- (((((CD CF-polar R2-polar) X) Y) F) m_0)
+                 (((((cov/covariant-derivative CF-polar) X) Y) F) m_0))))))
 
     (testing "Testing on forms."
       (let [omega (ff/literal-oneform-field 'omega R2-rect)

@@ -266,6 +266,13 @@
   (testing "make-diagonal"
     (is (= (m/I 10) (m/make-diagonal 10 1))))
 
+  (testing "symmetric?"
+    (is (m/symmetric? (m/by-rows [1 2] [2 1])))
+    (is (not (m/symmetric? (m/by-rows [1 2] [-2 1])))))
+
+  (testing "empty"
+    (is (g/zero? (empty (m/by-rows [1 2] [2 1])))))
+
   (checking "make-diagonal" 100
             [vs (gen/vector sg/real 1 20)]
             (let [M (m/make-diagonal vs)]

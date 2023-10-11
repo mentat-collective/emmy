@@ -11,6 +11,8 @@
             [emmy.value :as v]
             [same.core :refer [ish? with-comparator]]))
 
+(defmulti unknown-multifn-for-test)
+
 (deftest value-protocol-tests
   (testing "g/zero? returns false for fns"
     (is (not (g/zero? neg?)))
@@ -75,9 +77,14 @@
            (map g/freeze [+ - * / mod quot rem neg?]))
         "These freeze to the same symbols as their generic counterparts.")
 
+    (is (= (map g/freeze [#'g/+ #'g/- #'g/* #'g//]) '(+ - * /))
+        "vars freeze to their referents")
+
     (let [f (fn [x] (* x x))]
       (is (= f (g/freeze f))
-          "Unknown functions freeze to themselves")))
+          "Unknown functions freeze to themselves")
+      (is (= unknown-multifn-for-test (g/freeze unknown-multifn-for-test))
+          "Unknown multifns (without :name keyword method) freeze to themselves")))
 
   (testing "v/kind returns ::v/function"
     (is (= ::v/function (v/kind neg?)))

@@ -38,6 +38,14 @@
       convenient in some cases (like `false` for `exact?` and having
       the default case for `freeze` pass through).
 
+    - The default exponentiation routine built on generic multiplication
+      would, in the case of raising to the zero power, return the one-like
+      of the exponent; now it returns the one-like of the base, which is
+      correct.
+
+    - The generic `negative?` required Numbers instead of Comparables;
+      this is fixed.
+
 - #145 (thank you to @mhuebert for amazing work here!!):
 
   - Adds `emmy.util/sci-macro` for defining macros meant to be exposed via SCI,

@@ -48,7 +48,12 @@
       (is (not (v/numerical? x2))))
 
     (testing "g/freeze"
-      (is (= 'double (g/freeze x2))))
+      (is (= 'double (g/freeze x2)))
+      (is (= '(- double) (g/freeze (g/negate x2))))
+      (is (= '(/ double 3) (g/freeze (g/div x2 3)))))
+
+    (testing "toString"
+      (is (= "double" (str x2))))
 
     (testing "v/kind"
       (is (= ::o/operator (v/kind x2))))

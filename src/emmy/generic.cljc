@@ -355,7 +355,7 @@
                       (zero? n) (mul' z y)
                       :else (recur n (mul' z y) (mul' z z))))))]
         (cond (pos? e)  (expt' s e)
-              (zero? e) (one-like e)
+              (zero? e) (one-like s)
               :else (invert (expt' s (negate e)))))
       (u/illegal (str "No g/mul implementation registered for kind " kind)))))
 
@@ -425,7 +425,7 @@
   implementation on the type.`")
 
 (defmethod negative? :default [a]
-  (< a (zero-like a)))
+  (< (compare a (zero-like a)) 0))
 
 (defgeneric infinite? 1
   "Returns true if `a` is either numerically infinite (i.e., equal to `##Inf`) or

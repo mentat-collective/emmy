@@ -46,7 +46,14 @@
 
 (defrecord Wrap [s]
   v/IKind
-  (kind [_] ::wrap))
+  (kind [_] ::wrap)
+
+  #?@(:clj [Comparable
+            (compareTo [_ b]
+                       (compare s (.-s b)))]
+
+      :cljs [IComparable
+             (-compare [x] (compare s x))]))
 
 (defmethod g/zero? [::wrap] [a] (= a (g/zero-like a)))
 (defmethod g/one? [::wrap] [a] (= a (g/one-like a)))
@@ -82,11 +89,19 @@
       (is (= (->Wrap "l*r") (g/mul l r)))
       (is (= (->Wrap "l*l*l*l*l*l") (g/expt l 6)))
       (is (= (->Wrap "l*l*l*l") (g/expt l 4)))
-      (is (= l (g/expt l 1))))
+      (is (= l (g/expt l 1)))
+      (is (= (g/one-like l) (g/expt l 0))))
 
     (testing "div comes for free from mul and invert"
       (is (= (->Wrap "1/l") (g/invert l)))
       (is (= (->Wrap "l*1/r") (g/div l r))))
+
+    (testing "negative? comes from zero-like and Comparable"
+      (is (g/negative? (->Wrap "!")))
+      (is (not (g/negative? (->Wrap "@")))))
+
+    (testing "sinc comes from zero? and one-like"
+      (is (= (->Wrap "1") (g/sinc (->Wrap "0")))))
 
     (testing "unimplemented predicate behavior"
       (is (not (g/infinite? l))

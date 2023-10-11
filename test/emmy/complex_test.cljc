@@ -98,7 +98,9 @@
 
           :cljs
           [(is (g/exact? (c/complex 10)))
-           (is (g/exact? (c/complex 10 12)))]))))
+           (is (g/exact? (c/complex 10 12)))
+           (is (not (g/exact? (c/complex 10.1))))
+           (is (not (g/exact? (c/complex 10 12.1))))]))))
 
 (let [pi Math/PI]
   (deftest complex-numbers

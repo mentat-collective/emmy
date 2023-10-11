@@ -19,7 +19,7 @@
             [clojure.core :as core])
   #?(:clj
      (:import
-      (clojure.lang BigInt Sequential Var)
+      (clojure.lang BigInt Sequential)
       (org.apache.commons.math3.complex Complex))))
 
 (defprotocol Numerical
@@ -163,8 +163,8 @@
   nil
   (kind [_] nil)
 
-  Var
-  (kind [v] (type v))
+;;  Var
+;;  (kind [v] (type v))
 
   #?(:clj Object :cljs default)
   (kind [o] (:type o (type o))))
