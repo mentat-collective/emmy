@@ -70,6 +70,7 @@
                 ((((g/Lie-derivative X) w) Y) R3-rect-point))))
 
         (is (= '(Lie-derivative X) (g/freeze (g/Lie-derivative X))))
+        (is (= '(Lie-D X) (g/freeze (cov/Lie-D X))))
         (is (= 0 (simplify
                   ((- ((ff/d ((g/Lie-derivative X) f)) Y)
                       (((g/Lie-derivative X) (ff/d f)) Y))

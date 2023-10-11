@@ -119,6 +119,10 @@
            ((rule) '(log (sqrt x))))
         "Drop the internal sqrt down as a 1/2 exponent."))
 
+  (testing "log-contract"
+    (is (= '(+ (log (* a b)))
+           ((r/log-contract identity) '(+ (log a) (log b))))))
+
   (testing "exp-contract"
     (is (= '(exp (* 2 x))
            (r/exp-contract '(expt (exp x) 2)))
@@ -351,6 +355,14 @@
         "The full rule collects products into exponents.")))
 
 (deftest complex-test
+  (testing "complex-exp"
+    (is (= `(~'+ (~'cos 1.0) (~'* ~c/I (~'sin 1.0)))
+           (r/exp->sincos `(~'exp ~(c/complex 0 1)))))
+    (is (= `(~'* (~'exp 1.0) (~'+ (~'cos 1.0) (~'* ~c/I (~'sin 1.0))))
+           (r/exp->sincos `(~'exp ~(c/complex 1 1)))))
+    (is (= `(~'expt (~'exp (~'* ~c/I ~'z)) 2.0)
+           (r/exp-expand `(~'exp (~'* ~(c/complex 0 2) ~'z))))))
+
   (testing "complex-trig"
     (is (= '(cosh 1)
            (r/complex-trig (list 'cos c/I)))

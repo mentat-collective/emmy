@@ -10,7 +10,7 @@
   defined in [[emmy.generic]] and [[emmy.value]]."
   (:refer-clojure :exclude [zero? number? = compare])
   (:require #?@(:cljs [["complex.js" :as Complex]
-                       ["fraction.js/bigfraction.js" :as Fraction]
+                       ["fraction.js/bigfraction.js$default" :as Fraction]
                        [emmy.util :as u]
                        [goog.array :as garray]
                        [goog.object :as gobject]

@@ -236,8 +236,7 @@
       re
       (list 'complex re im))))
 (defmethod g/exact? [::complex] [c]
-  (and (g/exact? (real c))
-       (g/exact? (imaginary c))))
+  (and (g/exact? (real c)) (g/exact? (imaginary c))))
 (defmethod g/gcd [::complex ::complex] [a b] (gcd a b))
 (defmethod g/gcd [::complex ::v/real] [a b] (gcd a b))
 (defmethod g/gcd [::v/real ::complex] [a b] (gcd a b))

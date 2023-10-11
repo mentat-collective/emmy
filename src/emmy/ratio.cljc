@@ -12,7 +12,7 @@
   (:refer-clojure :exclude [ratio? numerator denominator rationalize])
   (:require #?(:clj [clojure.core :as core])
             #?(:clj [clojure.edn] :cljs [cljs.reader])
-            #?(:cljs ["fraction.js/bigfraction.js" :as Fraction])
+            #?(:cljs ["fraction.js/bigfraction.js$default" :as Fraction])
             #?(:cljs [emmy.complex :as c])
             #?(:cljs [goog.array :as garray])
             #?(:cljs [goog.object :as obj])
