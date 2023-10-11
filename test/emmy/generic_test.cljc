@@ -49,11 +49,10 @@
   (kind [_] ::wrap)
 
   #?@(:clj [Comparable
-            (compareTo [_ b]
-                       (compare s (.-s b)))]
+            (compareTo [_ b] (compare s (.-s b)))]
 
       :cljs [IComparable
-             (-compare [x] (compare s x))]))
+             (-compare [_ b] (compare s (.-s b)))]))
 
 (defmethod g/zero? [::wrap] [a] (= a (g/zero-like a)))
 (defmethod g/one? [::wrap] [a] (= a (g/one-like a)))

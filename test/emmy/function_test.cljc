@@ -11,7 +11,8 @@
             [emmy.value :as v]
             [same.core :refer [ish? with-comparator]]))
 
-(defmulti unknown-multifn-for-test)
+
+(defmulti unknown-multifn-for-test identity)
 
 (deftest value-protocol-tests
   (testing "g/zero? returns false for fns"
