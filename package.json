@@ -1,11 +1,13 @@
 {
   "devDependencies": {
-    "gh-pages": "^3.2.3"
+    "gh-pages": "^3.2.3",
+    "patch-package": "^8.0.0"
   },
   "scripts": {
     "test": "shadow-cljs compile test && node target/main/node-tests.js;",
     "watch-test": "shadow-cljs watch test;",
-    "gh-pages": "gh-pages -d public/build --dotfiles true"
+    "gh-pages": "gh-pages -d public/build --dotfiles true",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@codemirror/autocomplete": "6.5.1",

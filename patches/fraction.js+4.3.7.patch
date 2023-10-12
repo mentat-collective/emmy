@@ -1,0 +1,22 @@
+diff --git a/node_modules/fraction.js/package.json b/node_modules/fraction.js/package.json
+index 085d287..94061ea 100644
+--- a/node_modules/fraction.js/package.json
++++ b/node_modules/fraction.js/package.json
+@@ -19,14 +19,15 @@
+     "email": "robert@raw.org",
+     "url": "https://raw.org/"
+   },
+-  "type": "module",
++  "type": "commonjs",
+   "main": "fraction.cjs",
+   "exports": {
+     ".": {
+       "import": "./fraction.js",
+       "require": "./fraction.cjs",
+       "types": "./fraction.d.ts"
+-    }
++    },
++    "./bigfraction.js": "./bigfraction.js"
+   },
+   "types": "./fraction.d.ts",
+   "private": false,
