@@ -281,42 +281,44 @@
     (laws/additive-monoid 100 set-gen "Set"
                           :commutative? true))
 
-  (testing "Set protocol implementations"
-    (checking "f/arity" 100 [s (gen/set gen/any-equatable)]
-              (is (= [:between 1 2] (f/arity s))
-                  "sets respond to f/arity correctly"))
+  (checking "f/arity" 100 [s (gen/set gen/any-equatable)]
+            (is (= [:between 1 2] (f/arity s))
+                "sets respond to f/arity correctly"))
 
-    (checking "g/zero-like works" 100
-              [s (gen/set sg/number)]
-              (let [zero-s (g/zero-like s)]
-                (is (g/zero? zero-s))))
+  (doseq [generator [gen/set gen/sorted-set]]
+    (testing "Set protocol implementations"
+      (checking "g/zero-like works" 100
+                [s (generator sg/any-integral)]
+                (let [zero-s (g/zero-like s)]
+                  (is (g/zero? zero-s))))
 
-    (checking "v/kind, g/one?, g/identity?" 100 [s (gen/set sg/any-integral)]
-              (is (not (g/one? s))
-                  "no map is a multiplicative identity.")
+      (checking "v/kind, g/one?, g/identity?" 100
+                [s (generator sg/any-integral)]
+                (is (not (g/one? s))
+                    "no map is a multiplicative identity.")
 
-              (is (not (g/identity? s))
-                  "no map is a multiplicative identity.")
+                (is (not (g/identity? s))
+                    "no map is a multiplicative identity.")
 
-              (is (isa? (v/kind s) ::collection/set)
-                  "All sets inherit from this new keyword."))
+                (is (isa? (v/kind s) ::collection/set)
+                    "All sets inherit from this new keyword."))
 
-    (testing "g/one-like, g/identity-like throw"
-      (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
-                   (g/one-like #{"v"})))
+      (testing "g/one-like, g/identity-like throw"
+        (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
+                     (g/one-like #{"v"})))
 
-      (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
-                   (g/identity-like #{"V"}))))
+        (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
+                     (g/identity-like #{"V"}))))
 
-    (checking "g/exact?" 100
-              [s (gen/set sg/any-integral)]
-              (is (g/exact? s)
-                  "all integral values == exact map")
+      (checking "g/exact?" 100
+                [s (generator sg/any-integral)]
+                (is (g/exact? s)
+                    "all integral values == exact map")
 
-              (is (not (g/exact? (conj s 1.5)))
-                  "adding an inexact key removes the exact? designation"))
+                (is (not (g/exact? (conj s 1.5)))
+                    "adding an inexact key removes the exact? designation"))
 
-    (testing "g/freeze currently throws, since we don't have a way of rendering
+      (testing "g/freeze currently throws, since we don't have a way of rendering
     it or simplifying."
-      (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
-                   (g/freeze #{"v"}))))))
+        (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
+                     (g/freeze #{"v"})))))))

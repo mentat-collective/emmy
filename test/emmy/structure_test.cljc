@@ -72,20 +72,23 @@
              (g/zero-like (s/up (u/long 1) (u/int 2) 3)))))
 
     (testing "one-like"
-      (let [one (g/one-like (s/up 1 2 3))]
-        (is (= 1 one))
-        (is (g/one? one))))
+      (doseq [constructor [s/up s/down]]
+        (let [one (g/one-like (constructor 1 2 3))]
+          (is (= 1 one))
+          (is (g/one? one)))))
 
     (testing "identity-like"
-      (let [id (g/identity-like (s/up 1 2 3))]
-        (is (= 1 id))
-        (is (g/identity? id))))
+      (doseq [constructor [s/up s/down]]
+        (let [id (g/identity-like (constructor 1 2 3))]
+          (is (= 1 id))
+          (is (g/identity? id)))))
 
     (testing "exact?"
-      (is (g/exact? (s/up 1 2 3 4)))
-      (is (not (g/exact? (s/up 1.2 3 4))))
-      (is (g/exact? (s/up 0 1 #emmy/ratio 3/2)))
-      (is (not (g/exact? (s/up 0 0 0.00001)))))
+      (doseq [constructor [s/up s/down]]
+        (is (g/exact? (constructor 1 2 3 4)))
+        (is (not (g/exact? (constructor 1.2 3 4))))
+        (is (g/exact? (constructor 0 1 #emmy/ratio 3/2)))
+        (is (not (g/exact? (constructor 0 0 0.00001))))))
 
     (testing "numerical?"
       (checking "no structure is numerical." 100
@@ -93,7 +96,8 @@
                 (is (not (v/numerical? s)))))
 
     (testing "freeze"
-      (is (= '(up 1 2 3) (g/freeze (s/up 1 2 3)))))
+      (is (= '(up 1 2 3) (g/freeze (s/up 1 2 3))))
+      (is (= '(down 1 2 3) (g/freeze (s/down 1 2 3)))))
 
     (testing "kind"
       (is (= ::s/up (v/kind (s/up 1 2))))
@@ -251,6 +255,7 @@
   (testing "a structure has a nth element (ILookup)"
     (is (= 14 (nth (s/up 10 12 14) 2)))
     (is (= 5 (nth (s/up 4 5 6) 1)))
+    (is (= 9 (nth (s/up 4 5 6) 3 9)))
     (is (thrown? #?(:clj IndexOutOfBoundsException :cljs js/Error)
                  (nth (s/up 4 5 6) 4))
         "out of bounds"))
@@ -258,6 +263,7 @@
   (testing "get, get-in work natively"
     (is (= 5 (get (s/up 4 5 6) 1)))
     (is (= 4 (get (s/up 4 5 6) 0)))
+    (is (= 9 (get (s/up 4 5 6) 3 9)))
     (is (= 4 (get-in (s/down (s/up 1 2) (s/up 3 4)) [1 1])))
     (is (= 2 (get-in (s/down (s/up 1 2) (s/up 3 4)) [0 1]))))
 
@@ -265,7 +271,9 @@
     (is (= (s/up 4 55 6)
            (assoc (s/up 4 5 6) 1 55)))
     (is (= (s/down (s/up 1 22) (s/up 3 4))
-           (assoc-in (s/down (s/up 1 2) (s/up 3 4)) [0 1] 22))))
+           (assoc-in (s/down (s/up 1 2) (s/up 3 4)) [0 1] 22)))
+    (is (contains? (s/up 4 5 6) 1))
+    (is (not (contains? (s/up 4 5 6) 3))))
 
   (testing "IFn"
     (is (= (s/up 6 9 1)
@@ -364,6 +372,10 @@
             (is (= 1 (s/s:count n)))
             (is (= n (s/s:nth n 0))))
 
+  (testing "s:nth throws for non-sequential objects at i != 0"
+    (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
+                 (s/s:nth 99. 1))))
+
   (checking "s:count, s:nth for structures" 100
             [s (sg/structure sg/real 5)
              n (gen/choose 0 4)]
@@ -458,6 +470,17 @@
     (is (= (s/up 1 4 9 16 25)
            (s/generate 5 ::s/up (comp #(* % %) inc)))))
 
+  (testing "invocation"
+    (let [sum (fn [& xs] (reduce + 0 xs))
+          product (fn [& xs] (reduce * 1 xs))
+          S (s/up sum product)]
+      (is (= (s/up 0 1) (S)))
+      (is (= (s/up 1 1) (S 1)))
+      (is (= (s/up 3 2) (S 1 2)))
+      (is (= (s/up 6 6) (S 1 2 3)))
+      (is (= (s/up 10 24) (S 1 2 3 4)))
+      (is (= (s/up 15 120) (S 1 2 3 4 5)))
+      (is (= (s/up 21 720) (S 1 2 3 4 5 6)))))
   (testing "literal-up,down"
     (is (thrown? #?(:clj AssertionError :cljs js/Error)
                  (s/literal 'x 3 ::random))
@@ -822,6 +845,16 @@
                  (g/dot-product
                   (s/up (s/down 1 2))
                   (s/up (s/down 1 2 3 4))))))
+
+  (testing "*allow-incompatible-multiplication*"
+    (let [a (s/up 1 2)
+          b (s/down 2 3 4)]
+      (is (not (s/compatible-for-contraction? a b)))
+      (is (= (s/down (s/up 2 4) (s/up 3 6) (s/up 4 8))
+             (g/* a b)))
+      (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
+                   (binding [s/*allow-incompatible-multiplication* false]
+                     (g/* a b))))))
 
   (checking "dot-product equals inner for reals, complex on the right" 100
             [v1 (-> (sg/up1 sg/real 5)

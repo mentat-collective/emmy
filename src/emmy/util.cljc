@@ -142,6 +142,7 @@
   "Like `defmacro` but when emitting cljs, emits a function
   with &env and &form prepended to arglists and :sci/macro metadata,
   so that the macro can be imported into sci using copy-var."
+  {:clj-kondo/lint-as 'clojure.core/defn}
   [name & body]
   (if (:ns &env)
     (let [[doc body] (if (string? (first body))

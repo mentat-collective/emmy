@@ -1,3 +1,15 @@
+diff --git a/node_modules/fraction.js/bigfraction.js b/node_modules/fraction.js/bigfraction.js
+index 038ca05..03c8603 100644
+--- a/node_modules/fraction.js/bigfraction.js
++++ b/node_modules/fraction.js/bigfraction.js
+@@ -40,6 +40,7 @@
+ (function(root) {
+ 
+   "use strict";
++  console.log('bigfraction edited edition');
+ 
+   // Set Identity function to downgrade BigInt to Number if needed
+   if (typeof BigInt === 'undefined') BigInt = function(n) { if (isNaN(n)) throw new Error(""); return n; };
 diff --git a/node_modules/fraction.js/package.json b/node_modules/fraction.js/package.json
 index 085d287..94061ea 100644
 --- a/node_modules/fraction.js/package.json
