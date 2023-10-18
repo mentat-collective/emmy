@@ -259,7 +259,22 @@
     (testing "series derivative"
       (is (= [1 2 3 4 5 6] ;; 1 + 2x + 3x^2 + ...
              (take 6 (-> (s/generate (constantly 1))
-                         (g/partial-derivative []))))))))
+                         (g/partial-derivative [])))))
+      (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
+                   (-> (s/generate (constantly 1))
+                       (g/partial-derivative [1])))))
+
+    (testing "series value"
+      (is (= '(1 x (expt x 2) (expt x 3))
+             (take 4 (-> (s/generate (constantly 1))
+                         (s/value 'x)
+                         g/simplify
+                         g/freeze))))
+      (is (= (take 4 (-> (s/series* [g/sin g/cos g/tan])
+                         (s/value '[x])
+                         g/simplify
+                         g/freeze))
+             '((sin x) (cos x) (tan x) 0))))))
 
 (deftest series-as-fn-tests
   (let [f (fn [i] #(g/* %1 %2 i))
@@ -574,12 +589,23 @@
     (is (= [0 1 0 0 0]
            (take 5 (g/sin s/asin-series))))
     (is (= [0 1 0 0 0]
+           (take 5 (g/asin s/sin-series))))
+    (is (= [0 1 0 0 0]
            (take 5 (g/tan s/atan-series))))
+    (is (= [0 1 0 0 0]
+           (take 5 (g/atan s/tan-series))))
 
     (is (= [0 1 0 0 0]
            (take 5 (g/sinh s/asinh-series))))
     (is (= [0 1 0 0 0]
+           (take 5 (g/asinh s/sinh-series))))
+    (is (= [0 1 0 0 0]
            (take 5 (g/tanh s/atanh-series))))
+    (is (= [0 1 0 0 0]
+           (take 5 (g/atanh s/tanh-series))))
+
+    (is (= [1 0 0 0 0] (take 5 (g/cosh (s/constant 0)))))
+    (is (= [(g/acot 0) 0 0 0 0] (take 5 (g/acot (s/constant 0)))))
 
     (is (= (take 20 s/sec-series)
            (take 20 (g/invert s/cos-series))))

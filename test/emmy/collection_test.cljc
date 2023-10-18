@@ -285,15 +285,18 @@
             (is (= [:between 1 2] (f/arity s))
                 "sets respond to f/arity correctly"))
 
-  (doseq [generator [gen/set gen/sorted-set]]
-    (testing "Set protocol implementations"
+
+  (testing "Set protocol implementations"
+    (doseq [generator [(gen/set gen/any-equatable)
+                       (gen/sorted-set gen/small-integer)]]
+
       (checking "g/zero-like works" 100
-                [s (generator sg/any-integral)]
+                [s generator]
                 (let [zero-s (g/zero-like s)]
                   (is (g/zero? zero-s))))
 
       (checking "v/kind, g/one?, g/identity?" 100
-                [s (generator sg/any-integral)]
+                [s generator]
                 (is (not (g/one? s))
                     "no map is a multiplicative identity.")
 
@@ -308,17 +311,18 @@
                      (g/one-like #{"v"})))
 
         (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
-                     (g/identity-like #{"V"}))))
+                     (g/identity-like #{"V"})))))
 
+    (doseq [generator [(gen/set gen/small-integer)
+                       (gen/sorted-set gen/small-integer)]]
       (checking "g/exact?" 100
-                [s (generator sg/any-integral)]
+                [s generator]
                 (is (g/exact? s)
-                    "all integral values == exact map")
-
+                    "all exact values == exact set")
                 (is (not (g/exact? (conj s 1.5)))
-                    "adding an inexact key removes the exact? designation"))
+                    "adding an inexact key removes the exact? designation")))
 
-      (testing "g/freeze currently throws, since we don't have a way of rendering
+    (testing "g/freeze currently throws, since we don't have a way of rendering
     it or simplifying."
-        (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
-                     (g/freeze #{"v"})))))))
+      (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
+                   (g/freeze #{"v"}))))))

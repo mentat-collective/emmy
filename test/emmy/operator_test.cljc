@@ -197,6 +197,7 @@
     (is (= 12 ((double f) 1)))
     (is (= 24 ((double (double f)) 1)))
     (is (= 12 ((double-op f) 1)))
+    (is (= -12 ((g/negate (double-op f)) 1)))
     (is (= 24 ((double-op (double-op f)) 1)))
     (is (= 24 (((g/* double-op double-op) f) 1))) ;; * for operators is composition
     (is (= 144 (((g/* double double) f) 1)))      ;; * for functions is pointwise multiply
@@ -383,6 +384,22 @@
       (is (= {:subtype ::cake}
              (o/context (* o p))
              (o/context (* p o))))))
+
+  (testing "bring your own zero/one/identity functions"
+    (let [wrap (fn [tag]
+                 (fn [o] (* o (o/make-operator #(comp (f/literal-function tag) %) tag))))
+          o (o/make-operator identity 'o {:zero-like (wrap 'Zero-like)
+                                          :one-like (wrap 'One-like)
+                                          :identity-like (wrap 'Identity-like)
+                                          :one? (wrap 'One?)
+                                          :zero? (wrap 'Zero?)})]
+      (is (= '(f x) (g/freeze (f 'x))))
+      (is (= '(f x) (g/freeze ((o f) 'x))))
+      (is (= '(Zero-like (f x)) (g/freeze (((g/zero-like o) f) 'x)) ))
+      (is (= '(One-like (f x)) (g/freeze (((g/one-like o) f) 'x))))
+      (is (= '(Identity-like (f x)) (g/freeze (((g/identity-like o) f) 'x))))
+      (is (= '(One? (f x)) (g/freeze (((g/one? o) f) 'x))))
+      (is (= '(Zero? (f x)) (g/freeze (((g/zero? o) f) 'x))))))
 
   (testing "*, -, + between operators simplifies"
     (is (= (o/procedure D)

@@ -123,7 +123,7 @@
   denominator evaluates to 0.")
 
 (def pochhammer
-  "Alias for [[falling-factorial]]."
+  "Alias for [[rising-factorial]]."
   rising-factorial)
 
 (defmethod rising-factorial :default [x n]

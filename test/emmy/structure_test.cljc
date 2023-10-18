@@ -480,7 +480,11 @@
       (is (= (s/up 6 6) (S 1 2 3)))
       (is (= (s/up 10 24) (S 1 2 3 4)))
       (is (= (s/up 15 120) (S 1 2 3 4 5)))
-      (is (= (s/up 21 720) (S 1 2 3 4 5 6)))))
+      (is (= (s/up 21 720) (S 1 2 3 4 5 6)))
+      (is (= (s/up 28 5040) (S 1 2 3 4 5 6 7)))
+      (is (= (s/up 36 40320) (S 1 2 3 4 5 6 7 8)))
+      (is (= (s/up 45 362880) (S 1 2 3 4 5 6 7 8 9)))
+      (is (= (s/up 55 3628800) (S 1 2 3 4 5 6 7 8 9 10)))))
   (testing "literal-up,down"
     (is (thrown? #?(:clj AssertionError :cljs js/Error)
                  (s/literal 'x 3 ::random))
