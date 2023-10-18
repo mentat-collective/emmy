@@ -287,18 +287,28 @@
     (testing "series of fns with high arity"
       (let [sum #(reduce + 0 %&)
             product #(reduce * 1 %&)
-            S (s/series* [sum product])]
-        (is (= '(1 1 0) (take 3 (S 1))))
-        (is (= '(3 2 0) (take 3 (S 1 2))))
-        (is (= '(6 6 0) (take 3 (S 1 2 3))))
-        (is (= '(10 24 0) (take 3 (S 1 2 3 4))))
-        (is (= '(15 120 0) (take 3 (S 1 2 3 4 5))))
-        (is (= '(21 720 0) (take 3 (S 1 2 3 4 5 6))))
-        (is (= '(28 5040 0) (take 3 (S 1 2 3 4 5 6 7))))
-        (is (= '(36 40320 0) (take 3 (S 1 2 3 4 5 6 7 8))))
-        (is (= '(45 362880 0) (take 3 (S 1 2 3 4 5 6 7 8 9))))
-        (is (= '(55 3628800 0) (take 3 (S 1 2 3 4 5 6 7 8 9 10))))
-        (is (= '(66 39916800 0) (take 3 (S 1 2 3 4 5 6 7 8 9 10 11))))))
+            S (s/series* [sum product])
+            expect (fn [n]
+                     (let [ns (range 1 (inc n))]
+                       (list (apply sum ns) (apply product ns) 0)))]
+        (is (= (expect 1) (take 3 (S 1))))
+        (is (= (expect 2) (take 3 (S 1 2))))
+        (is (= (expect 3) (take 3 (S 1 2 3))))
+        (is (= (expect 4) (take 3 (S 1 2 3 4))))
+        (is (= (expect 5) (take 3 (S 1 2 3 4 5))))
+        (is (= (expect 6) (take 3 (S 1 2 3 4 5 6))))
+        (is (= (expect 7) (take 3 (S 1 2 3 4 5 6 7))))
+        (is (= (expect 8) (take 3 (S 1 2 3 4 5 6 7 8))))
+        (is (= (expect 9) (take 3 (S 1 2 3 4 5 6 7 8 9))))
+        (is (= (expect 10) (take 3 (S 1 2 3 4 5 6 7 8 9 10))))
+        (is (= (expect 11) (take 3 (S 1 2 3 4 5 6 7 8 9 10 11))))
+        (is (= (expect 12) (take 3 (S 1 2 3 4 5 6 7 8 9 10 11 12))))
+        (is (= (expect 13) (take 3 (S 1 2 3 4 5 6 7 8 9 10 11 12 13))))
+        (is (= (expect 14) (take 3 (S 1 2 3 4 5 6 7 8 9 10 11 12 13 14))))
+        (is (= (expect 15) (take 3 (S 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15))))
+        (is (= (expect 16) (take 3 (S 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16))))
+        (is (= (expect 17) (take 3 (S 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17))))
+        (is (= (expect 18) (take 3 (S 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18))))))
 
     (testing "a series of fns is a fn too"
       (let [nats*index-series (-> (fn [i] (g/* i nats))

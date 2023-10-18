@@ -5,6 +5,7 @@
   (:require #?(:cljs [goog.string :refer [format]])
             [clojure.test :refer [is deftest testing use-fixtures]]
             [emmy.complex :as c]
+            [emmy.expression :as e]
             [emmy.expression.analyze :as a]
             [emmy.generic :as g]
             [emmy.matrix :as m]
@@ -150,6 +151,17 @@
 
     (is (= '(log x) (g/simplify (g/log 'x))))
     (is (= '(exp x) (g/simplify (g/exp 'x)))))
+
+  (testing "symbols vs. constants"
+    (let [->exp #(e/make-literal ::e/numeric %)]
+      (is (= '(floor x) (g/simplify (g/floor 'x))))
+      (is (= 3 (g/simplify (g/floor (->exp 3.14)))))
+      (is (= '(ceiling x) (g/simplify (g/ceiling 'x))))
+      (is (= 4 (g/simplify (g/ceiling (->exp 3.14)))))
+      (is (= '(integer-part x) (g/simplify (g/integer-part 'x))))
+      (is (= 3 (g/simplify (g/integer-part (->exp 3.14)))))
+      (is (= '(fractional-part x) (g/simplify (g/fractional-part 'x))))
+      (is (= (- 3.14 3) (g/simplify (g/fractional-part (->exp 3.14)))))))
 
   (testing "zero/one elimination"
     (is (= 'x (g/+ 0 'x)))
