@@ -284,6 +284,22 @@
       (is (= [0 6 12 18 24 30]
              (take 6 (square-series 2 3)))))
 
+    (testing "series of fns with high arity"
+      (let [sum #(reduce + 0 %&)
+            product #(reduce * 1 %&)
+            S (s/series* [sum product])]
+        (is (= '(1 1 0) (take 3 (S 1))))
+        (is (= '(3 2 0) (take 3 (S 1 2))))
+        (is (= '(6 6 0) (take 3 (S 1 2 3))))
+        (is (= '(10 24 0) (take 3 (S 1 2 3 4))))
+        (is (= '(15 120 0) (take 3 (S 1 2 3 4 5))))
+        (is (= '(21 720 0) (take 3 (S 1 2 3 4 5 6))))
+        (is (= '(28 5040 0) (take 3 (S 1 2 3 4 5 6 7))))
+        (is (= '(36 40320 0) (take 3 (S 1 2 3 4 5 6 7 8))))
+        (is (= '(45 362880 0) (take 3 (S 1 2 3 4 5 6 7 8 9))))
+        (is (= '(55 3628800 0) (take 3 (S 1 2 3 4 5 6 7 8 9 10))))
+        (is (= '(66 39916800 0) (take 3 (S 1 2 3 4 5 6 7 8 9 10 11))))))
+
     (testing "a series of fns is a fn too"
       (let [nats*index-series (-> (fn [i] (g/* i nats))
                                   (s/generate ::s/series))]

@@ -46,6 +46,8 @@
     - The generic `negative?` required Numbers instead of Comparables;
       this is fixed.
 
+    - Documentation string for `pochhammer` corrected.
+
 - #145 (thank you to @mhuebert for amazing work here!!):
 
   - Adds `emmy.util/sci-macro` for defining macros meant to be exposed via SCI,
