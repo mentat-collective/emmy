@@ -760,8 +760,8 @@
             s2 (simplify (r/template m (* ??f3 ??f4)))]
         (when (g/exact-zero?
                (simplify (list '- s1 s2)))
-          {'??s1 s1})))
-    (+ (* (log (* ?x ?y)) ??s1)
+          {'?s1 s1})))
+    (+ (* (log (* ?x ?y)) ?s1)
        ??x1 ??x2 ??x3))))
 
 (def log-expand

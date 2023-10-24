@@ -1,7 +1,7 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
 (ns emmy.simplify.rules-test
-  (:require [clojure.test :refer [is deftest testing]]
+  (:require [clojure.test :refer [is deftest testing use-fixtures]]
             [emmy.complex :as c]
             [emmy.generic :as g]
             [emmy.numbers]
@@ -9,6 +9,8 @@
             [emmy.ratio]
             [emmy.simplify :as s]
             [emmy.simplify.rules :as r]))
+
+(use-fixtures :each s/hermetic-simplify-fixture)
 
 (deftest algebraic-tests
   (testing "unary elimination"
@@ -121,7 +123,13 @@
 
   (testing "log-contract"
     (is (= '(+ (log (* a b)))
-           ((r/log-contract identity) '(+ (log a) (log b))))))
+           ((r/log-contract s/*poly-simplify*) '(+ (log a) (log b)))))
+    (is (= '(+ (* (log (* x z)) 2) y)
+           ((r/log-contract s/*poly-simplify*) '(+ (* 2 (log x)) y (* 2 (log z)))))))
+
+  (testing "contract-expt-trig"
+    (is (= '(* (/ 1 2) (expt (sin x) 0) (- 1 (cos (* 2 x))))
+           (r/contract-expt-trig '(expt (sin x) 2)))))
 
   (testing "exp-contract"
     (is (= '(exp (* 2 x))
@@ -326,6 +334,10 @@
              (rule '(+ 2 (- (* (expt (cos x) 2) z)) 3 (* z (expt (cos x) 4))))
              (rule '(+ 2 (* z (expt (cos x) 4)) 3 (- (* (expt (cos x) 2) z))))))))
 
+  (testing "multiangle"
+    (is (= '(+ (* -4 (expt (sin x) 3) (cos x)) (* 4 (sin x) (expt (cos x) 3)))
+           (s/*poly-simplify* (r/expand-multiangle '(sin (* 4 x)))))))
+
   (testing "high degree cosines unwrap the (expt ... 1) remainder."
     (let [r (rule-simplifier r/split-high-degree-sincos)]
       (is (= '(+ 1 2 (* (expt (cos x) 2)
@@ -361,7 +373,9 @@
     (is (= `(~'* (~'exp 1.0) (~'+ (~'cos 1.0) (~'* ~c/I (~'sin 1.0))))
            (r/exp->sincos `(~'exp ~(c/complex 1 1)))))
     (is (= `(~'expt (~'exp (~'* ~c/I ~'z)) 2.0)
-           (r/exp-expand `(~'exp (~'* ~(c/complex 0 2) ~'z))))))
+           (r/exp-expand `(~'exp (~'* ~(c/complex 0 2) ~'z)))))
+    (is (= '(expt (exp (* k t)) 2)
+           (r/exp-expand '(exp (* 2 k t))))))
 
   (testing "complex-trig"
     (is (= '(cosh 1)

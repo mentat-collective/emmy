@@ -434,6 +434,21 @@
                      (x/expression-of
                       (g/csc (an/literal-number x))))))))
 
+(deftest symbolic-value-tests
+  (testing "zero? and friends work symbolically"
+    (let [sym:zero? (sym/symbolic-operator 'zero?)
+          sym:one? (sym/symbolic-operator 'one?)
+          sym:identity? (sym/symbolic-operator 'identity?)]
+      (is (= '(= 0 x) (sym:zero? 'x)))
+      (is (sym:zero? 0))
+      (is (not (sym:zero? 1)))
+      (is (= '(= 1 x) (sym:one? 'x)))
+      (is (sym:one? 1))
+      (is (not (sym:one? 0)))
+      (is (= '(= 1 x) (sym:identity? 'x)))
+      (is (sym:identity? 1))
+      (is (not (sym:identity? 0))))))
+
 (deftest symbolic-arithmetic-tests
   (testing "0-arity cases for symbolic operators"
     (is (false? ((sym/symbolic-operator 'or))))

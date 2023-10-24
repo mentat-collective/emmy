@@ -308,7 +308,9 @@
         (is (= (expect 15) (take 3 (S 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15))))
         (is (= (expect 16) (take 3 (S 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16))))
         (is (= (expect 17) (take 3 (S 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17))))
-        (is (= (expect 18) (take 3 (S 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18))))))
+        (is (= (expect 18) (take 3 (S 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18))))
+        (is (= (expect 19) (take 3 (S 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19))))
+        (is (= (expect 20) (take 3 (S 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20))))))
 
     (testing "a series of fns is a fn too"
       (let [nats*index-series (-> (fn [i] (g/* i nats))
