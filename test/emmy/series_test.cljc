@@ -274,7 +274,18 @@
                          (s/value '[x])
                          g/simplify
                          g/freeze))
-             '((sin x) (cos x) (tan x) 0))))))
+             '((sin x) (cos x) (tan x) 0))))
+
+    (testing "series string form"
+      (let [segment [4 5 6 7 8]
+            s (s/series* segment)
+            p (s/power-series* segment)]
+
+        (is (= "(+ 4 5 6 7 ...)" (str s)))
+        (is (= "(+ (* 4 (expt _ 0)) (* 5 (expt _ 1)) (* 6 (expt _ 2)) (* 7 (expt _ 3)) ...)"
+               (str p)))
+        (is (= (str s) (str (g/freeze s))))
+        (is (= (str p) (str (g/freeze p))))))))
 
 (deftest series-as-fn-tests
   (let [f (fn [i] #(g/* %1 %2 i))
@@ -291,6 +302,7 @@
             expect (fn [n]
                      (let [ns (range 1 (inc n))]
                        (list (apply sum ns) (apply product ns) 0)))]
+        (is (= (expect 0) (take 3 (S))))
         (is (= (expect 1) (take 3 (S 1))))
         (is (= (expect 2) (take 3 (S 1 2))))
         (is (= (expect 3) (take 3 (S 1 2 3))))
