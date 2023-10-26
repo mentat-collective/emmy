@@ -1450,21 +1450,21 @@
                       q2 (g// q2q3 q3)]
                   (make q0 q1 q2 q3)))
 
-          (not (g/numeric-zero? q0-2s))
+          (not (g/zero? q0-2s))
           (let [q0 (g/sqrt q0-2)
                 q1 (g// q0q1 q0)
                 q2 (g// q0q2 q0)
                 q3 (g// q0q3 q0)]
             (make q0 q1 q2 q3))
 
-          (not (g/numeric-zero? q1-2s))
+          (not (g/zero? q1-2s))
           (let [q1 (g/sqrt q1-2)
                 q0 0
                 q2 (g// q1q2 q1)
                 q3 (g// q1q3 q1)]
             (make q0 q1 q2 q3))
 
-          (not (g/numeric-zero? q2-2s))
+          (not (g/zero? q2-2s))
           (let [q2 (g/sqrt q2-2)
                 q0 0
                 q1 0

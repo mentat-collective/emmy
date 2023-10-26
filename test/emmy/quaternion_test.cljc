@@ -915,6 +915,26 @@
                   "Build up the tensor, check that it matches the matrix
                   version."))))
 
+(deftest symbolic-rotation-matrices
+  (is (= (q/make (g/sqrt (g/+ (g/* 3/4 'x) 1/4)) 0 0 0)
+         (g/simplify
+          (q/from-rotation-matrix
+           (m/by-rows ['x 0 0]
+                      [0 'x 0]
+                      [0 0 'x])))))
+  (is (= (q/make 0 (g/sqrt (g/+ (g/* 1/2 'x) 1/2)) 0 0)
+         (g/simplify
+          (q/from-rotation-matrix
+           (m/by-rows ['x 0 0]
+                      [0 -1 0]
+                      [0 0 (g/- 'x)])))))
+  (is (= (q/make 0 0 (g/sqrt (g/+ (g/* 1/2 'x) 1/2)) 0)
+         (g/simplify
+          (q/from-rotation-matrix
+           (m/by-rows [-1 0 0]
+                      [0 'x 0]
+                      [0 0 (g/- 'x)]))))))
+
 (deftest rotation-matrix-tests
   (checking "to and from 3x3 rotation matrices" 100
             [x (sg/quaternion)]
