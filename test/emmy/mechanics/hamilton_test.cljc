@@ -145,6 +145,18 @@
              (simplify
               ((H/Legendre-transform (fn [x] (* 'c x x))) 'y))))
 
+      (is (= '(/ (* (/ 1 4) (expt y 2)) c)
+             (binding [H/*validate-Legendre-transform?* true]
+               (simplify
+                ((H/Legendre-transform (fn [x] (* 'c x x))) 'y))))
+          "works with validation")
+
+      (is (thrown-with-msg? #?(:clj clojure.lang.ExceptionInfo :cljs js/Error)
+                            #"Legendre Transform Failure"
+                            (binding [H/*validate-Legendre-transform?* true]
+                              ((H/Legendre-transform (fn [x] (* 'c x))) 'y)))
+          "throws for singular arguments")
+
       (is (= '(* (/ 1 4) (expt p 2))
              (g/freeze
               (simplify
