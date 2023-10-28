@@ -11,13 +11,12 @@
             [emmy.calculus.vector-field :as vf]
             [emmy.generic :as g :refer [+ - *]]
             [emmy.simplify :refer [hermetic-simplify-fixture]]
-            [emmy.util :as u]
-            [emmy.value :as v]))
+            [emmy.util :as u]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 
 (def simplify
-  (comp v/freeze g/simplify))
+  (comp g/freeze g/simplify))
 
 ;; ## Testing a function for being a tensor field.
 

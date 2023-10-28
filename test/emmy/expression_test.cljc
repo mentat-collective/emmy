@@ -6,30 +6,51 @@
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
             [emmy.abstract.number :as an]
             [emmy.expression :as e]
-            [emmy.generic :as g]
-            [emmy.value :as v]))
+            [emmy.generic :as g]))
+
+(defn- unimplemented?
+  "Returns true if applying method to value results in an exception
+  indicating the absence of that method."
+  [method value]
+  (try
+    (method value)
+    false
+    (catch #?(:clj IllegalArgumentException :cljs js/Error) e
+      (re-find #"No method in multimethod" (str e)))))
 
 (deftest expressions
   (testing "value protocol impl"
-    (is (v/zero? (e/make-literal ::blah 0)))
-    (is (v/one? (e/make-literal ::blah 1)))
-    (is (v/identity? (e/make-literal ::blah 1)))
+    ;; Things produced by make-literal have the `kind` supplied at creation
+    ;; time. Outside of the builtin kind(s), nothing is known about the zero-nature
+    ;; (etc.) of such objects. To inherit the default behavior, derive from :e/numeric
+    (derive ::blah-derived ::e/numeric)
+    (is (isa? ::blah-derived ::e/numeric))
+    (is (unimplemented? g/zero? (e/make-literal ::blah 0)))
+    (is (g/zero? (e/make-literal ::blah-derived 0)))
+    (is (g/one? (e/make-literal ::blah-derived 1)))
+    (is (g/identity? (e/make-literal ::blah-derived 1)))
 
-    (is (not (v/zero? (e/make-literal ::blah 10))))
-    (is (v/zero? (v/zero-like (e/make-literal ::blah 10))))
+    (is (unimplemented? g/one? (e/make-literal ::blah 1)))
+    (is (unimplemented? g/identity? (e/make-literal ::blah 1)))
+    (is (unimplemented? g/zero? (e/make-literal ::blah 10)))
+    (is (not (g/zero? (e/make-literal ::blah-derived 10))))
+    (is (g/zero? (g/zero-like (e/make-literal ::blah-derived 10))))
 
-    (is (not (v/one? (e/make-literal ::blah 10))))
-    (is (v/one? (v/one-like (e/make-literal ::blah 10))))
+    (is (not (g/one? (e/make-literal ::blah-derived 10))))
+    (is (g/one? (g/one-like (e/make-literal ::blah-derived 10))))
+    (is (unimplemented? g/one-like (e/make-literal ::blah 10)))
 
-    (is (not (v/identity? (e/make-literal ::blah 10))))
-    (is (v/identity? (v/identity-like (e/make-literal ::blah 10))))
+    (is (not (g/identity? (e/make-literal ::blah-derived 10))))
+    (is (g/identity? (g/identity-like (e/make-literal ::blah-derived 10))))
+    (is (unimplemented? g/identity-like (e/make-literal ::blah 10)))
 
-    (is (not (v/exact? (e/make-literal ::blah 10.5))))
-    (is (v/exact? (e/make-literal ::blah 10)))
+    (is (unimplemented? g/exact? (e/make-literal ::blah 10)))
+    (is (not (g/exact? (e/make-literal ::blah-derived 10.5))))
+    (is (g/exact? (e/make-literal ::blah-derived 10)))
 
     (is (= '(sin 1 2 3)
-           (v/freeze
-            (e/literal-apply ::blah 'sin [1 2 3]))))
+           (g/freeze
+            (e/literal-apply ::blah-derived 'sin [1 2 3]))))
 
     (is (e/literal?
          (e/literal-apply ::blah 'sin [1 2 3])))
@@ -140,10 +161,10 @@
 
     (testing "for types that don't play nice we resort to hashing."
       (is (= -1 (e/compare '(+ x y) #emmy/complex "1+2i")))
-      (is (= 1 (e/compare #emmy/complex "1+2i" '(+ x y)))))
+      (is (= 1 (e/compare #emmy/complex "1+2i" '(+ x y)))))))
 
     ;; TODO add more tests as we start to explore this function.
-))
+
 
 (deftest string-form-test
   (let [expr (g/+ 'x 'x)]

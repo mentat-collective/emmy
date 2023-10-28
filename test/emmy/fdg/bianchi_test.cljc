@@ -4,13 +4,13 @@
   (:refer-clojure :exclude [+ - * /])
   (:require [clojure.test :refer [is deftest testing use-fixtures]]
             [emmy.env :as e :refer [+ -]]
-            [emmy.simplify :refer [hermetic-simplify-fixture]]
-            [emmy.value :as v]))
+            [emmy.generic :as g]
+            [emmy.simplify :refer [hermetic-simplify-fixture]]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 
 (def simplify
-  (comp v/freeze e/simplify))
+  (comp g/freeze e/simplify))
 
 (defn cyclic-sum [f]
   (fn [x y z]

@@ -5,6 +5,7 @@
   (:require [emmy.generic :as g :refer [cos sin + - * /]]
             [emmy.matrix :as matrix]
             [emmy.structure :as s :refer [up]]
+            [emmy.util :as u]
             [emmy.util.stream :as us]
             [emmy.value :as v]))
 
@@ -161,8 +162,8 @@
    (M->Euler M nil))
   ([M tolerance-in-ulps]
    (let [tolerance (if (nil? tolerance-in-ulps)
-                     v/machine-epsilon
-                     (* tolerance-in-ulps v/machine-epsilon))
+                     u/machine-epsilon
+                     (* tolerance-in-ulps u/machine-epsilon))
          close? (us/close-enuf? tolerance)
          cx (get-in M [2 2])
          cx-number? (v/number? cx)]

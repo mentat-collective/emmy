@@ -12,13 +12,12 @@
             [emmy.polynomial.gcd :as pg]
             [emmy.simplify :refer [hermetic-simplify-fixture]]
             [emmy.sr.boost :as sb]
-            [emmy.structure :as s :refer [up]]
-            [emmy.value :as v]))
+            [emmy.structure :as s :refer [up]]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 
 (def simplify
-  (comp v/freeze g/simplify))
+  (comp g/freeze g/simplify))
 
 (deftest boost-tests
   (is (= 0 (simplify

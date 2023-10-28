@@ -42,7 +42,7 @@
                  (us/seq-limit {:tolerance 1e-13})))))))
 
 (deftest D-numeric-tests
-  (with-comparator (v/within (g/sqrt v/machine-epsilon))
+  (with-comparator (v/within (g/sqrt u/machine-epsilon))
     (testing "D-numeric packages all of this up."
       (let [f (d/D-numeric g/sqrt)]
         (is (ish? (u/double
@@ -133,7 +133,7 @@
 
 (deftest central-d2-tests
   (testing "central-d2 mode generates a second derivative."
-    (with-comparator (v/within (g/sqrt v/machine-epsilon))
+    (with-comparator (v/within (g/sqrt u/machine-epsilon))
       (let [f   (fn [x] (g/* (g// (g/expt x 3) 3)))
             f'' (d/D-numeric f {:method :central-d2})]
 

@@ -153,7 +153,7 @@
                (fn [_]
                  ((V-over-mu f) n)))
              `(~'make-fake-vector-field
-               ~(v/freeze V-over-mu))))
+               ~(g/freeze V-over-mu))))
           (the-metric [v1 v2]
             (fn [n]
               ((g-on-M
@@ -177,8 +177,8 @@
       (ff/procedure->oneform-field
        omega
        `(~'lower
-         ~(v/freeze u)
-         ~(v/freeze metric))))))
+         ~(g/freeze u)
+         ~(g/freeze metric))))))
 
 (def vector-field->oneform-field
   "Alias for [[lower]]."
@@ -201,8 +201,8 @@
         (vf/procedure->vector-field
          v
          `(~'raise
-           ~(v/freeze omega)
-           ~(v/freeze metric)))))))
+           ~(g/freeze omega)
+           ~(g/freeze metric)))))))
 
 (def oneform-field->vector-field
   "Alias for [[raise]]."

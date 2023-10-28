@@ -3,11 +3,11 @@
 (ns emmy.simplify
   (:require [emmy.expression :as x]
             [emmy.expression.analyze :as a]
+            [emmy.generic :as g]
             [emmy.polynomial :as poly]
             [emmy.polynomial.factor :as factor]
             [emmy.rational-function :as rf]
             [emmy.simplify.rules :as rules]
-            [emmy.value :as v]
             [taoensso.timbre :as log])
   #?(:clj
      (:import (java.util.concurrent TimeoutException))))
@@ -74,7 +74,7 @@
         expr
         (let [canonicalized-expr (canonicalize new-expr)]
           (cond (= canonicalized-expr expr) expr
-                (v/zero?
+                (g/numeric-zero?
                  (*poly-simplify*
                   (list '- expr canonicalized-expr)))
                 canonicalized-expr

@@ -25,40 +25,40 @@
     gen/symbol]))
 
 (deftest value-protocol-tests
-  (checking "v/zero? returns true for wrapped zero"
-            100 [n (gen/one-of [sg/real (gen/fmap v/zero-like sg/real)])]
-            (if (v/zero? n)
-              (is (v/zero? (an/literal-number n)))
-              (is (not (v/zero? (an/literal-number n))))))
+  (checking "g/zero? returns true for wrapped zero"
+            100 [n (gen/one-of [sg/real (gen/fmap g/zero-like sg/real)])]
+            (if (g/zero? n)
+              (is (g/zero? (an/literal-number n)))
+              (is (not (g/zero? (an/literal-number n))))))
 
-  (checking "v/one? returns true for wrapped zero"
-            100 [n (gen/one-of [sg/real (gen/fmap v/one-like sg/real)])]
-            (if (v/one? n)
-              (is (v/one? (an/literal-number n)))
-              (is (not (v/one? (an/literal-number n))))))
+  (checking "g/one? returns true for wrapped zero"
+            100 [n (gen/one-of [sg/real (gen/fmap g/one-like sg/real)])]
+            (if (g/one? n)
+              (is (g/one? (an/literal-number n)))
+              (is (not (g/one? (an/literal-number n))))))
 
-  (checking "v/identity? returns true for wrapped zero"
-            100 [n (gen/one-of [sg/real (gen/fmap v/identity-like sg/real)])]
-            (if (v/identity? n)
-              (is (v/identity? (an/literal-number n)))
-              (is (not (v/identity? (an/literal-number n))))))
+  (checking "g/identity? returns true for wrapped zero"
+            100 [n (gen/one-of [sg/real (gen/fmap g/identity-like sg/real)])]
+            (if (g/identity? n)
+              (is (g/identity? (an/literal-number n)))
+              (is (not (g/identity? (an/literal-number n))))))
 
   (checking "v/{zero?,one?,identity?} etc match v/{zero,one,identity}-like" 100 [n gen-literal]
-            (is (v/zero? (v/zero-like n)))
-            (is (v/one? (v/one-like n)))
-            (is (v/identity? (v/identity-like n))))
+            (is (g/zero? (g/zero-like n)))
+            (is (g/one? (g/one-like n)))
+            (is (g/identity? (g/identity-like n))))
 
   (checking "v/numerical? returns true for all literal-number instances" 100 [n gen-literal]
             (is (v/numerical? n)))
 
   (checking "exact? mirrors input" 100 [n gen-literal-element]
-            (if (v/exact? n)
-              (is (v/exact? (an/literal-number n)))
-              (is (not (v/exact? (an/literal-number n))))))
+            (if (g/exact? n)
+              (is (g/exact? (an/literal-number n)))
+              (is (not (g/exact? (an/literal-number n))))))
 
-  (checking "v/freeze" 100 [n gen-literal-element]
-            (is (= (v/freeze n)
-                   (v/freeze (an/literal-number n)))))
+  (checking "g/freeze" 100 [n gen-literal-element]
+            (is (= (g/freeze n)
+                   (g/freeze (an/literal-number n)))))
 
   (checking "v/kind" 100 [n gen-literal-element]
             (is (= ::x/numeric (v/kind (an/literal-number n))))))
@@ -150,7 +150,7 @@
               (is (= (if (zero? x)
                        2
                        `(~'+ 1 (~'cos ~x)))
-                     (v/freeze result))
+                     (g/freeze result))
                   "When literal-number wraps an actual number, it attempts to
         keep the result exact instead of evaluating the fns... UNLESS specific
         values like (cos 0) can be exactly evaluated.")))
@@ -297,10 +297,10 @@
   (checking "angle" 100 [z sg/complex]
             (let [z'       (an/literal-number z)
                   result   (g/angle z)
-                  expected (cond (and (v/exact? z') (v/exact? result))
+                  expected (cond (and (g/exact? z') (g/exact? result))
                                  (an/literal-number result)
 
-                                 (v/exact? z')
+                                 (g/exact? z')
                                  (g/atan (g/imag-part z')
                                          (g/real-part z'))
 
@@ -308,7 +308,7 @@
               (is (= expected (g/angle z')))))
 
   (checking "magnitude" 100 [z sg/complex]
-            (let [expected (if (v/exact? z)
+            (let [expected (if (g/exact? z)
                              (g/sqrt
                               (an/literal-number
                                (g/* z (g/conjugate z))))
@@ -357,15 +357,15 @@
                     don't work bail out to Math/tan."))))
 
   (checking "asin" 100 [x sg/real]
-            (is (= (cond (v/zero? x) (v/zero-like x)
-                         (v/exact? x)   (list 'asin x)
+            (is (= (cond (g/zero? x) (g/zero-like x)
+                         (g/exact? x)   (list 'asin x)
                          :else          (g/asin x))
                    (x/expression-of
                     (g/asin (an/literal-number x))))))
 
   (checking "acos" 100 [x sg/real]
-            (is (= (cond (v/one? x) (v/zero-like x)
-                         (v/exact? x) (list 'acos x)
+            (is (= (cond (g/one? x) (g/zero-like x)
+                         (g/exact? x) (list 'acos x)
                          :else        (g/acos x))
                    (x/expression-of
                     (g/acos (an/literal-number x))))))
@@ -375,18 +375,18 @@
             (is (= (g/atan (an/literal-number x))
                    (g/atan (an/literal-number x) 1)))
 
-            (is (= (cond (v/zero? y) (v/zero-like y)
-                         (v/exact? y)   (list 'atan y)
+            (is (= (cond (g/zero? y) (g/zero-like y)
+                         (g/exact? y)   (list 'atan y)
                          :else          (g/atan y))
                    (x/expression-of
                     (g/atan (an/literal-number y))))
                 "single arity")
 
-            (let [y-exact? (v/exact? y)
-                  x-exact? (v/exact? x)
-                  y-zero?  (v/zero? y)
-                  x-zero?  (v/zero? x)
-                  x-one?   (v/one? x)]
+            (let [y-exact? (g/exact? y)
+                  x-exact? (g/exact? x)
+                  y-zero?  (g/zero? y)
+                  x-zero?  (g/zero? x)
+                  x-one?   (g/one? x)]
               (is (= (cond (and x-one? y-zero?)            0
                            (and x-one? y-exact?)           (list 'atan y)
                            x-one?                          (g/atan y)
@@ -403,36 +403,51 @@
                   "double arity")))
 
   (checking "cosh" 100 [x sg/real]
-            (is (= (cond (v/zero? x) 1
-                         (v/exact? x)   (list 'cosh x)
+            (is (= (cond (g/zero? x) 1
+                         (g/exact? x)   (list 'cosh x)
                          :else          (g/cosh x))
                    (x/expression-of
                     (g/cosh (an/literal-number x))))))
 
   (checking "sinh" 100 [x sg/real]
-            (is (= (cond (v/zero? x) 0
-                         (v/exact? x)   (list 'sinh x)
+            (is (= (cond (g/zero? x) 0
+                         (g/exact? x)   (list 'sinh x)
                          :else          (g/sinh x))
                    (x/expression-of
                     (g/sinh (an/literal-number x))))))
 
   (checking "sec" 100 [x sg/real]
-            (is (= (cond (v/zero? x) 1
-                         (v/exact? x)   (list '/ 1 (list 'cos x))
+            (is (= (cond (g/zero? x) 1
+                         (g/exact? x)   (list '/ 1 (list 'cos x))
                          :else          (g/sec x))
                    (x/expression-of
                     (g/sec (an/literal-number x))))))
 
   (checking "csc" 100 [x sg/real]
-            (if (v/zero? x)
+            (if (g/zero? x)
               (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
                            (g/csc (an/literal-number x))))
 
-              (is (= (if (v/exact? x)
+              (is (= (if (g/exact? x)
                        (list '/ 1 (list 'sin x))
                        (g/csc x))
                      (x/expression-of
                       (g/csc (an/literal-number x))))))))
+
+(deftest symbolic-value-tests
+  (testing "zero? and friends work symbolically"
+    (let [sym:zero? (sym/symbolic-operator 'zero?)
+          sym:one? (sym/symbolic-operator 'one?)
+          sym:identity? (sym/symbolic-operator 'identity?)]
+      (is (= '(= 0 x) (sym:zero? 'x)))
+      (is (sym:zero? 0))
+      (is (not (sym:zero? 1)))
+      (is (= '(= 1 x) (sym:one? 'x)))
+      (is (sym:one? 1))
+      (is (not (sym:one? 0)))
+      (is (= '(= 1 x) (sym:identity? 'x)))
+      (is (sym:identity? 1))
+      (is (not (sym:identity? 0))))))
 
 (deftest symbolic-arithmetic-tests
   (testing "0-arity cases for symbolic operators"
@@ -451,11 +466,11 @@
             (is (v/= x (g/add x 0))))
 
   (testing "sums fuse together in the constructor"
-    (is (= '(+ x y z) (v/freeze (g/add 'x (g/add 'y 'z)))))
-    (is (= '(+ 10 y z) (v/freeze (g/add 10 (g/add 'y 'z)))))
-    (is (= '(+ y z 10) (v/freeze (g/add (g/add 'y 'z) 10))))
+    (is (= '(+ x y z) (g/freeze (g/add 'x (g/add 'y 'z)))))
+    (is (= '(+ 10 y z) (g/freeze (g/add 10 (g/add 'y 'z)))))
+    (is (= '(+ y z 10) (g/freeze (g/add (g/add 'y 'z) 10))))
     (is (= '(+ y z a b)
-           (v/freeze (g/add (g/add 'y 'z)
+           (g/freeze (g/add (g/add 'y 'z)
                             (g/add 'a 'b))))))
 
   (checking "- constructor optimizations" 100
@@ -475,11 +490,11 @@
     (is (= (g/- 10 (g/+ 20 'x 3 2 1)) (g/- 10 20 'x 3 2 1))))
 
   (testing "products fuse together in the constructor"
-    (is (= '(* x y z) (v/freeze (g/mul 'x (g/mul 'y 'z)))))
-    (is (= '(* 10 y z) (v/freeze (g/mul 10 (g/mul 'y 'z)))))
-    (is (= '(* y z 10) (v/freeze (g/mul (g/mul 'y 'z) 10))))
+    (is (= '(* x y z) (g/freeze (g/mul 'x (g/mul 'y 'z)))))
+    (is (= '(* 10 y z) (g/freeze (g/mul 10 (g/mul 'y 'z)))))
+    (is (= '(* y z 10) (g/freeze (g/mul (g/mul 'y 'z) 10))))
     (is (= '(* y z a b)
-           (v/freeze (g/mul (g/mul 'y 'z)
+           (g/freeze (g/mul (g/mul 'y 'z)
                             (g/mul 'a 'b))))))
 
   (checking "* constructor optimizations" 100
@@ -515,30 +530,30 @@
             (is (v/= 0 (g/modulo 0 x)))
             (is (v/= 0 (g/modulo x x)))
             (if (= x y)
-              (is (= 0 (v/freeze (g/modulo x y))))
+              (is (= 0 (g/freeze (g/modulo x y))))
               (is (= (list 'modulo x y)
-                     (v/freeze (g/modulo x y)))))
+                     (g/freeze (g/modulo x y)))))
             (is (v/= x (g/modulo x 1))))
 
   (testing "unary ops with symbols"
-    (is (= '(floor x) (v/freeze (g/floor 'x))))
-    (is (= '(ceiling x) (v/freeze (g/ceiling 'x))))
-    (is (= '(integer-part x) (v/freeze (g/integer-part 'x))))
-    (is (= '(fractional-part x) (v/freeze (g/fractional-part 'x)))))
+    (is (= '(floor x) (g/freeze (g/floor 'x))))
+    (is (= '(ceiling x) (g/freeze (g/ceiling 'x))))
+    (is (= '(integer-part x) (g/freeze (g/integer-part 'x))))
+    (is (= '(fractional-part x) (g/freeze (g/fractional-part 'x)))))
 
   (checking "gcd, lcm annihilation" 100
             [pre (gen/vector gen/symbol)
              post (gen/vector gen/symbol)]
-            (is (v/one?
+            (is (g/one?
                  (apply (sym/symbolic-operator 'gcd)
                         (concat pre [1] post))))
 
-            (is (v/zero?
+            (is (g/zero?
                  (apply (sym/symbolic-operator 'lcm)
                         (concat pre [0] post)))))
 
   (let [non-one-zero (gen/fmap (fn [n]
-                                 (if (or (v/zero? n) (v/one? n))
+                                 (if (or (g/zero? n) (g/one? n))
                                    2
                                    n))
                                sg/any-integral)]
@@ -550,16 +565,16 @@
               (is (v/= sym (g/gcd sym sym))
                   "gcd(x,x)==x")
 
-              (is (v/= sym (g/gcd (v/zero-like n) sym))
+              (is (v/= sym (g/gcd (g/zero-like n) sym))
                   "gcd(x,0)==x")
 
-              (is (v/= sym (g/gcd sym (v/zero-like n)))
+              (is (v/= sym (g/gcd sym (g/zero-like n)))
                   "gcd(0,x)==x")
 
-              (is (v/one? (g/gcd (v/one-like n) sym))
+              (is (g/one? (g/gcd (g/one-like n) sym))
                   "gcd(1,x)==1")
 
-              (is (v/one? (g/gcd sym (v/one-like n)))
+              (is (g/one? (g/gcd sym (g/one-like n)))
                   "gcd(x,1)==1"))
 
     (checking "symbolic lcm" 100 [sym gen/symbol
@@ -570,16 +585,16 @@
               (is (v/= sym (g/lcm sym sym))
                   "lcm(x,x)==x")
 
-              (is (v/zero? (g/lcm (v/zero-like n) sym))
+              (is (g/zero? (g/lcm (g/zero-like n) sym))
                   "lcm(x,0)==0")
 
-              (is (v/zero? (g/lcm sym (v/zero-like n)))
+              (is (g/zero? (g/lcm sym (g/zero-like n)))
                   "lcm(0,x)==0")
 
-              (is (v/= sym (g/lcm (v/one-like n) sym))
+              (is (v/= sym (g/lcm (g/one-like n) sym))
                   "lcm(1,x)==x")
 
-              (is (v/= sym (g/lcm sym (v/one-like n)))
+              (is (v/= sym (g/lcm sym (g/one-like n)))
                   "lcm(x,1)==x")))
 
   (testing "/ with symbols"
@@ -591,12 +606,12 @@
 
   (testing "negate"
     (is (= (g/+ 'x (g/- 'x)) (g/+ 'x (g/negate 'x))))
-    (is (= '(+ x (- x)) (v/freeze
+    (is (= '(+ x (- x)) (g/freeze
                          (g/+ 'x (g/negate 'x))))))
 
   (testing "invert"
     (is (= (g/div 1 'x) (g/invert 'x)))
-    (is (= '(/ 1 x) (v/freeze
+    (is (= '(/ 1 x) (g/freeze
                      (g/invert 'x)))))
 
   (testing "square"
@@ -618,7 +633,7 @@
 
   (checking "sqrt" 100 [x gen/symbol]
             (is (= (list 'sqrt x)
-                   (v/freeze (g/sqrt x)))))
+                   (g/freeze (g/sqrt x)))))
 
   (checking "log" 100 [x gen/symbol]
             (is (v/= (list 'log x)
@@ -635,7 +650,7 @@
 
   (checking "exp" 100 [x gen/symbol]
             (is (= (list 'exp x)
-                   (v/freeze (g/exp x))))
+                   (g/freeze (g/exp x))))
             (is (= (g/expt 2 x) (g/exp2 x)))
             (is (= (g/expt 10 x) (g/exp10 x))))
 
@@ -648,16 +663,16 @@
 
   (testing "conjugate"
     (is (= '(conjugate (random x))
-           (v/freeze
+           (g/freeze
             (g/conjugate (an/literal-number
                           '(random x))))))
     (doseq [op @#'sym/conjugate-transparent-operators]
-      (is (= (v/freeze
+      (is (= (g/freeze
               (an/literal-number
                (list op
                      (g/conjugate 'x)
                      (g/conjugate 'y))))
-             (v/freeze
+             (g/freeze
               (g/conjugate (an/literal-number
                             (list op 'x 'y)))))
           "This is a little busted, since we don't check for the proper number
@@ -692,14 +707,14 @@
                 "for other cases, the complex number is evaluated.")
 
             ;; Case of symbolic radius, angle `n`:
-            (if (v/exact? n)
-              (if (v/zero? n)
+            (if (g/exact? n)
+              (if (g/zero? n)
                 (is (v/= sym (g/make-polar sym n))
                     "an exact zero returns the symbolic radius.")
-                (is (= `(~'* ~sym (~'+ (~'cos ~(v/freeze n))
+                (is (= `(~'* ~sym (~'+ (~'cos ~(g/freeze n))
                                    (~'* (~'complex 0.0 1.0)
-                                    (~'sin ~(v/freeze n)))))
-                       (v/freeze
+                                    (~'sin ~(g/freeze n)))))
+                       (g/freeze
                         (g/make-polar sym n)))
                     "otherwise, an exact numeric angle stays exact and is
                     treated as a literal number."))
@@ -744,7 +759,7 @@
   (testing "dot-product"
     (is (= '(+ (* 0.5 x (conjugate y))
                (* 0.5 y (conjugate x)))
-           (v/freeze
+           (g/freeze
             (g/simplify
              (g/dot-product 'x 'y)))))
 
@@ -818,73 +833,73 @@
                    (g/tan 'pi-over-2)))))
 
   (testing "asin"
-    (is (= '(asin x) (v/freeze (g/asin 'x)))))
+    (is (= '(asin x) (g/freeze (g/asin 'x)))))
 
   (testing "acos"
-    (is (= '(acos x) (v/freeze (g/acos 'x)))))
+    (is (= '(acos x) (g/freeze (g/acos 'x)))))
 
   (testing "atan"
-    (is (= '(atan x) (v/freeze (g/atan 'x)))))
+    (is (= '(atan x) (g/freeze (g/atan 'x)))))
 
   (testing "sinh"
-    (is (= '(sinh x) (v/freeze (g/sinh 'x)))))
+    (is (= '(sinh x) (g/freeze (g/sinh 'x)))))
 
   (testing "cosh"
-    (is (= '(cosh x) (v/freeze (g/cosh 'x)))))
+    (is (= '(cosh x) (g/freeze (g/cosh 'x)))))
 
   (testing "tan"
-    (is (= '(tan x) (v/freeze (g/tan 'x)))))
+    (is (= '(tan x) (g/freeze (g/tan 'x)))))
 
   (testing "cot"
     (is (= '(/ (cos x) (sin x))
-           (v/freeze (g/cot 'x)))))
+           (g/freeze (g/cot 'x)))))
 
   (testing "sec"
-    (is (= '(/ 1 (cos x)) (v/freeze (g/sec 'x)))))
+    (is (= '(/ 1 (cos x)) (g/freeze (g/sec 'x)))))
 
   (testing "csc"
-    (is (= '(/ 1 (sin x)) (v/freeze (g/csc 'x)))))
+    (is (= '(/ 1 (sin x)) (g/freeze (g/csc 'x)))))
 
   (testing "acot"
     (is (= '(- (/ pi 2) (atan x))
-           (v/freeze (g/acot 'x)))))
+           (g/freeze (g/acot 'x)))))
 
   (testing "asec"
     (is (= '(atan (sqrt (- (expt x 2) 1)))
-           (v/freeze
+           (g/freeze
             (g/asec 'x)))))
 
   (testing "tanh"
     (is (= '(/ (sinh x) (cosh x))
-           (v/freeze (g/tanh 'x)))))
+           (g/freeze (g/tanh 'x)))))
 
   (testing "coth"
     (is (= '(/ (cosh x) (sinh x))
-           (v/freeze (g/coth 'x)))))
+           (g/freeze (g/coth 'x)))))
 
   (testing "sech"
     (is (= '(/ 1 (cosh x))
-           (v/freeze (g/sech 'x)))))
+           (g/freeze (g/sech 'x)))))
 
   (testing "csch"
     (is (= '(/ 1 (sinh x))
-           (v/freeze (g/csch 'x)))))
+           (g/freeze (g/csch 'x)))))
 
   (testing "acosh"
     (is (= '(* 2 (log
                   (+ (sqrt (/ (+ x 1) 2))
                      (sqrt (/ (- x 1) 2)))))
-           (v/freeze (g/acosh 'x)))))
+           (g/freeze (g/acosh 'x)))))
 
   (testing "asinh"
     (is (= '(log (+ x (sqrt (+ 1 (expt x 2)))))
-           (v/freeze (g/asinh 'x)))))
+           (g/freeze (g/asinh 'x)))))
 
   (testing "atanh"
     (is (= '(/ (- (log (+ 1 x))
                   (log (- 1 x)))
                2)
-           (v/freeze (g/atanh 'x))))))
+           (g/freeze (g/atanh 'x))))))
 
 (deftest boolean-tests
   ;; These don't QUITE belong in the namespace for abstract number; TODO move
@@ -994,7 +1009,7 @@
 (deftest incremental-simplifier-tests
   (testing "incremental simplifier works for unary, binary"
     (binding [sym/*incremental-simplifier* simpl/simplify-expression]
-      (is (= 1 (v/freeze
+      (is (= 1 (g/freeze
                 (g/+ (g/square (g/cos 'x))
                      (g/square (g/sin 'x)))))))
 
@@ -1003,11 +1018,11 @@
                 (rule/rule (cos x) => 12))]
       (binding [sym/*incremental-simplifier* flip]
         (is (= '(* 2 (cos theta))
-               (v/freeze
+               (g/freeze
                 (g/+ (g/cos 'theta) (g/cos 'theta))))
             "The rule applies a single simplification.")
 
-        (is (= 24 (v/freeze
+        (is (= 24 (g/freeze
                    (g/+ (g/cos 'x) (g/cos 'x))))
             "rule here maps `(g/cos 'x)` to 12 internally, then `g/+` actually
             performs the addition."))))

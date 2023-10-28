@@ -329,7 +329,10 @@
   dot-product inner-product outer-product cross-product
   partial-derivative Lie-derivative
   solve-linear solve-linear-left solve-linear-right
-  simplify]
+  simplify
+  zero? one? identity?
+  zero-like one-like identity-like
+  exact? freeze]
  [emmy.structure
   compatible-shape
   compatible-zero dual-zero
@@ -581,6 +584,5 @@
  [emmy.util.stream vector:generate]
  [emmy.special.elliptic elliptic-f]
  [emmy.special.factorial factorial]
- [emmy.value = compare exact? zero? one? identity?
-  zero-like one-like identity-like
-  numerical? freeze kind kind-predicate])
+ [emmy.value = compare
+  numerical? kind kind-predicate])

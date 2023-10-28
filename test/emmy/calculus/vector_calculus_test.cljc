@@ -11,13 +11,12 @@
             [emmy.calculus.vector-calculus :as vc]
             [emmy.generic :as g :refer [+ - * / sin cos]]
             [emmy.simplify :refer [hermetic-simplify-fixture]]
-            [emmy.structure :as s :refer [up down]]
-            [emmy.value :as v]))
+            [emmy.structure :as s :refer [up down]]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 
 (def simplify
-  (comp v/freeze g/simplify))
+  (comp g/freeze g/simplify))
 
 (deftest old-vector-calculus-tests
   (let [f (fn [[x y z]]

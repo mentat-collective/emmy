@@ -11,15 +11,15 @@
   (:refer-clojure :exclude [zero? number? = compare])
   (:require #?@(:cljs [["complex.js" :as Complex]
                        ["fraction.js/bigfraction.js" :as Fraction]
+                       [emmy.util :as u]
                        [goog.array :as garray]
                        [goog.object :as gobject]
                        [goog.math.Long]
                        [goog.math.Integer]])
-            [clojure.core :as core]
-            [emmy.util :as u])
+            [clojure.core :as core])
   #?(:clj
      (:import
-      (clojure.lang BigInt Sequential Var)
+      (clojure.lang BigInt Sequential)
       (org.apache.commons.math3.complex Complex))))
 
 (defprotocol Numerical
@@ -29,21 +29,7 @@
   #?(:clj Object :cljs default)
   (numerical? [_] false))
 
-(defprotocol Value
-  (^boolean zero? [this])
-  (^boolean one? [this])
-  (^boolean identity? [this])
-  (zero-like [this])
-  (one-like [this])
-  (identity-like [this])
-  (^boolean exact? [this] "Entries that are exact are available for `gcd`, among
-  other operations.")
-  (freeze [this]
-    "Freezing an expression means removing wrappers and other metadata from
-  subexpressions, so that the result is basically a pure S-expression with the
-  same structure as the input. Doing this will rob an expression of useful
-  information for further computation; so this is intended to be done just
-  before simplification and printing, to simplify those processes.")
+(defprotocol IKind
   (kind [this]))
 
 (defn argument-kind [& args]
@@ -114,12 +100,6 @@
                (instance? goog.math.Long x)
                (instance? Complex x))))
 
-(defn numeric-zero?
-  "Returns `true` if `x` is both a [[number?]] and [[zero?]], false otherwise."
-  [x]
-  (and (number? x)
-       (zero? x)))
-
 ;; `::scalar` is a thing that symbolic expressions AND actual numbers both
 ;; derive from.
 
@@ -162,98 +142,33 @@
        java.lang.Float
        (numerical? [_] true)]))
 
-(extend-protocol Value
+(extend-protocol IKind
   #?(:clj Number :cljs number)
-  (zero? [x] (core/zero? x))
-  (one? [x] (== 1 x))
-  (identity? [x] (== 1 x))
-  (zero-like [_] 0)
-  (one-like [_] 1)
-  (identity-like [_] 1)
-  (freeze [x] x)
-  (exact? [x] #?(:clj  (or (integer? x) (ratio? x))
-                 :cljs (integer? x)))
   (kind [x] #?(:clj (type x)
-               :cljs (if (exact? x)
+               :cljs (if (and (. js/Number isInteger x)
+                              (< (Math/abs x) (.-MAX_SAFE_INTEGER js/Number)))
                        ::native-integral
                        ::floating-point)))
 
   #?(:clj Boolean :cljs boolean)
-  (zero? [_] false)
-  (one? [_] false)
-  (identity? [_] false)
-  (zero-like [_] 0)
-  (one-like [_] 1)
-  (identity-like [_] 1)
-  (freeze [x] x)
-  (exact? [_] false)
   (kind [x] (type x))
 
   #?@(:clj
       [java.lang.Double
-       (zero? [x] (core/zero? x))
-       (one? [x] (== 1 x))
-       (identity? [x] (== 1 x))
-       (zero-like [_] 0.0)
-       (one-like [_] 1.0)
-       (identity-like [_] 1.0)
-       (freeze [x] x)
-       (exact? [_] false)
        (kind [x] (type x))
 
        java.lang.Float
-       (zero? [x] (core/zero? x))
-       (one? [x] (== 1 x))
-       (identity? [x] (== 1 x))
-       (zero-like [_] 0.0)
-       (one-like [_] 1.0)
-       (identity-like [_] 1.0)
-       (freeze [x] x)
-       (exact? [_] false)
        (kind [x] (type x))])
 
   nil
-  (zero? [_] true)
-  (one? [_] false)
-  (identity? [_] false)
-  (zero-like [_] (u/unsupported "nil doesn't support zero-like."))
-  (one-like [_] (u/unsupported "nil doesn't support one-like."))
-  (identity-like [_] (u/unsupported "nil doesn't support identity-like."))
-  (freeze [_] nil)
-  (exact? [_] false)
   (kind [_] nil)
 
-  Var
-  (zero? [_] false)
-  (one? [_] false)
-  (identity? [_] false)
-  (zero-like [v] (u/unsupported (str "zero-like: " v)))
-  (one-like [v] (u/unsupported (str "one-like: " v)))
-  (identity-like [v] (u/unsupported (str "identity-like: " v)))
-  (freeze [v] (:name (meta v)))
-  (exact? [_] false)
-  (kind [v] (type v))
+;;  Var
+;;  (kind [v] (type v))
 
   #?(:clj Object :cljs default)
-  (zero? [_] false)
-  (one? [_] false)
-  (identity? [_] false)
-  (zero-like [o] (u/unsupported (str "zero-like: " o)))
-  (one-like [o] (u/unsupported (str "one-like: " o)))
-  (identity-like [o] (u/unsupported (str "identity-like: " o)))
-  (exact? [_] false)
-  (freeze [o] (if (sequential? o)
-                (map freeze o)
-                (get @object-name-map o o)))
   (kind [o] (:type o (type o))))
 
-(defn exact-zero?
-  "Returns true if the supplied argument is an exact numerical zero, false
-  otherwise."
-  [n]
-  (and (number? n)
-       (exact? n)
-       (zero? n)))
 
 ;; Override equiv for numbers.
 (defmulti = argument-kind)
@@ -331,7 +246,7 @@
 
      IPrintWithWriter
      (-pr-writer [x writer _]
-       (let [rep (if (<= x (.-MAX_SAFE_INTEGER js/Number))
+       (let [rep (if (< (if (< x 0) (- x) x) (.-MAX_SAFE_INTEGER js/Number))
                    (str x)
                    (str "\"" x "\""))]
          (write-all writer "#emmy/bigint " rep)))))
@@ -387,9 +302,7 @@
 
 #?(:cljs
    ;; ClojureScript-specific implementations of Value.
-   (let [big-zero (js/BigInt 0)
-         big-one (js/BigInt 1)]
-
+   (do
      (extend-protocol Numerical
        js/BigInt
        (numerical? [_] true)
@@ -400,43 +313,14 @@
        goog.math.Long
        (numerical? [_] true))
 
-     (extend-protocol Value
+     (extend-protocol IKind
        js/BigInt
-       (zero? [x] (coercive-= big-zero x))
-       (one? [x] (coercive-= big-one x))
-       (identity? [x] (coercive-= big-one x))
-       (zero-like [_] big-zero)
-       (one-like [_] big-one)
-       (identity-like [_] big-one)
-       (freeze [x]
-         ;; Bigint freezes into a non-bigint if it can be represented as a
-         ;; number; otherwise, it turns into its own literal.
-         (if (<= x (.-MAX_SAFE_INTEGER js/Number))
-           (js/Number x)
-           x))
-       (exact? [_] true)
        (kind [_] js/BigInt)
 
        goog.math.Integer
-       (zero? [x] (.isZero x))
-       (one? [x] (core/= (.-ONE goog.math.Integer) x))
-       (identity? [x] (core/= (.-ONE goog.math.Integer) x))
-       (zero-like [_] (.-ZERO goog.math.Integer))
-       (one-like [_] (.-ONE goog.math.Integer))
-       (identity-like [_] (.-ONE goog.math.Integer))
-       (freeze [x] x)
-       (exact? [_] true)
        (kind [_] goog.math.Integer)
 
        goog.math.Long
-       (zero? [x] (.isZero x))
-       (one? [x] (core/= (goog.math.Long/getOne) x))
-       (identity? [x] (core/= (goog.math.Long/getOne) x))
-       (zero-like [_] (goog.math.Long/getZero))
-       (one-like [_] (goog.math.Long/getOne))
-       (identity-like [_] (goog.math.Long/getOne))
-       (freeze [x] x)
-       (exact? [_] true)
        (kind [_] goog.math.Long))))
 
 #?(:cljs
@@ -538,40 +422,11 @@
   [o->syms]
   (swap! object-name-map into o->syms))
 
-(def machine-epsilon
-  (loop [e 1.0]
-    (if (core/= 1.0 (+ e 1.0))
-      (* e 2.0)
-      (recur (/ e 2.0)))))
-
-(def sqrt-machine-epsilon
-  (Math/sqrt machine-epsilon))
-
 (defn within
   "Returns a function that tests whether two values are within ε of each other."
   [^double ε]
   (fn [^double x ^double y]
     (< (Math/abs (- x y)) ε)))
-
-(def ^:no-doc relative-integer-tolerance (* 100 machine-epsilon))
-(def ^:no-doc absolute-integer-tolerance 1e-20)
-
-(defn almost-integral?
-  "Returns true if `x` is either:
-
-  - [[integral?]],
-  - a floating point number either < [[absolute-integer-tolerance]] (if near
-    zero) or within [[relative-integer-tolerance]] of the closest integer,
-
-  false otherwise."
-  [x]
-  (or (integral? x)
-      (and (float? x)
-           (let [x (double x)
-                 z (Math/round x)]
-             (if (zero? z)
-               (< (Math/abs x) absolute-integer-tolerance)
-               (< (Math/abs (/ (- x z) z)) relative-integer-tolerance))))))
 
 (def twopi (* 2 Math/PI))
 

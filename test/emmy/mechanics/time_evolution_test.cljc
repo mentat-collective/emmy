@@ -6,8 +6,7 @@
             [emmy.generic :as g :refer [+]]
             [emmy.mechanics.hamilton :as h]
             [emmy.mechanics.time-evolution :as te]
-            [emmy.structure :as s :refer [up]]
-            [emmy.value :as v]))
+            [emmy.structure :as s :refer [up]]))
 
 (deftest time-evolution-tests
   (is (= (h/->H-state (+ 't 'dt) (up 'x) (up 'p_x))
@@ -18,7 +17,7 @@
         Hp    ((te/H->Hp 'dt) H)
         state (h/->H-state 't (up 'x) (up 'p_x))]
     (is (= '(/ (* (/ 1 2) (expt p_x 2)) m)
-           (v/freeze
+           (g/freeze
             (g/simplify
              (Hp state))))
         "this Hamiltonian is not time dependent!")))

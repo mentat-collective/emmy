@@ -14,13 +14,12 @@
             [emmy.mechanics.lagrange :as L]
             [emmy.operator :as o]
             [emmy.simplify :refer [hermetic-simplify-fixture]]
-            [emmy.structure :as s :refer [component up down]]
-            [emmy.value :as v]))
+            [emmy.structure :as s :refer [component up down]]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 
 (def simplify
-  (comp v/freeze g/simplify))
+  (comp g/freeze g/simplify))
 
 (deftest basic-tests
   (checking "basic accessors and state creation" 100
@@ -50,8 +49,8 @@
 
   (testing "Hamiltonian type sig"
     (let [state (H/literal-Hamiltonian-state 4)]
-      (is (= (list 'f (v/freeze state))
-             (v/freeze
+      (is (= (list 'f (g/freeze state))
+             (g/freeze
               ((f/literal-function 'f (H/Hamiltonian 4))
                state)))
           "Applying the state passes the type check.")))
@@ -146,15 +145,27 @@
              (simplify
               ((H/Legendre-transform (fn [x] (* 'c x x))) 'y))))
 
+      (is (= '(/ (* (/ 1 4) (expt y 2)) c)
+             (binding [H/*validate-Legendre-transform?* true]
+               (simplify
+                ((H/Legendre-transform (fn [x] (* 'c x x))) 'y))))
+          "works with validation")
+
+      (is (thrown-with-msg? #?(:clj clojure.lang.ExceptionInfo :cljs js/Error)
+                            #"Legendre Transform Failure"
+                            (binding [H/*validate-Legendre-transform?* true]
+                              ((H/Legendre-transform (fn [x] (* 'c x))) 'y)))
+          "throws for singular arguments")
+
       (is (= '(* (/ 1 4) (expt p 2))
-             (v/freeze
+             (g/freeze
               (simplify
                ((H/Legendre-transform g/square) 'p)))))
 
       (is (= '(+ (* (/ 1 2) m (expt v_x 2))
                  (* (/ 1 2) m (expt v_y 2))
                  (* -1 (V x y)))
-             (v/freeze
+             (g/freeze
               (simplify
                ((L/L-rectangular 'm V) (up 't (up 'x 'y) (up 'v_x 'v_y)))))))
 

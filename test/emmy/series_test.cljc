@@ -24,31 +24,31 @@
   (testing "v/numerical?"
     (is (not (v/numerical? series))))
 
-  (testing "v/exact?"
-    (is (not (v/exact? series))))
+  (testing "g/exact?"
+    (is (not (g/exact? series))))
 
   (testing "zero-like"
     (is (= (take 10 s/zero)
-           (take 10 (g/* series (v/zero-like series))))))
+           (take 10 (g/* series (g/zero-like series))))))
 
   (testing "one-like"
     (is (= (take 10 series)
-           (take 10 (g/* series (v/one-like series))))))
+           (take 10 (g/* series (g/one-like series))))))
 
   (testing "identity-like"
     (let [id (if (s/power-series? series)
                (s/power-series* [0 1])
                (s/series* [0 1]))]
       (is (= (take 10 (g/* id series))
-             (take 10 (g/* series (v/identity-like series))))
+             (take 10 (g/* series (g/identity-like series))))
           "the identity-series is an identity on APPLICATION, not for
         multiplication with other series.")))
 
   (testing "meta / with-meta work")
   (testing "one? zero? identity? always return false (for now!)"
-    (is (not (v/zero? (v/zero-like series))))
-    (is (not (v/one? (v/one-like series))))
-    (is (not (v/identity? (v/identity-like series)))))
+    (is (not (g/zero? (g/zero-like series))))
+    (is (not (g/one? (g/one-like series))))
+    (is (not (g/identity? (g/identity-like series)))))
 
   (checking "f/arity" 100 [v (sg/power-series sg/real)]
             (is (= [:exactly 1]
@@ -83,7 +83,7 @@
     (check-series (s/series 1 2 3 4)))
 
   (checking "identity-like power-series application" 100 [n sg/real]
-            (is (= n (-> ((v/identity-like s/sin-series) n)
+            (is (= n (-> ((g/identity-like s/sin-series) n)
                          (s/sum 50)))
                 "evaluating the identity series at `n` will return a series that sums to `n`.")))
 
@@ -259,7 +259,33 @@
     (testing "series derivative"
       (is (= [1 2 3 4 5 6] ;; 1 + 2x + 3x^2 + ...
              (take 6 (-> (s/generate (constantly 1))
-                         (g/partial-derivative []))))))))
+                         (g/partial-derivative [])))))
+      (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
+                   (-> (s/generate (constantly 1))
+                       (g/partial-derivative [1])))))
+
+    (testing "series value"
+      (is (= '(1 x (expt x 2) (expt x 3))
+             (take 4 (-> (s/generate (constantly 1))
+                         (s/value 'x)
+                         g/simplify
+                         g/freeze))))
+      (is (= (take 4 (-> (s/series* [g/sin g/cos g/tan])
+                         (s/value '[x])
+                         g/simplify
+                         g/freeze))
+             '((sin x) (cos x) (tan x) 0))))
+
+    (testing "series string form"
+      (let [segment [4 5 6 7 8]
+            s (s/series* segment)
+            p (s/power-series* segment)]
+
+        (is (= "(+ 4 5 6 7 ...)" (str s)))
+        (is (= "(+ (* 4 (expt _ 0)) (* 5 (expt _ 1)) (* 6 (expt _ 2)) (* 7 (expt _ 3)) ...)"
+               (str p)))
+        (is (= (str s) (str (g/freeze s))))
+        (is (= (str p) (str (g/freeze p))))))))
 
 (deftest series-as-fn-tests
   (let [f (fn [i] #(g/* %1 %2 i))
@@ -268,6 +294,35 @@
     (testing "a series of fns is a fn too"
       (is (= [0 6 12 18 24 30]
              (take 6 (square-series 2 3)))))
+
+    (testing "series of fns with high arity"
+      (let [sum #(reduce + 0 %&)
+            product #(reduce * 1 %&)
+            S (s/series* [sum product])
+            expect (fn [n]
+                     (let [ns (range 1 (inc n))]
+                       (list (apply sum ns) (apply product ns) 0)))]
+        (is (= (expect 0) (take 3 (S))))
+        (is (= (expect 1) (take 3 (S 1))))
+        (is (= (expect 2) (take 3 (S 1 2))))
+        (is (= (expect 3) (take 3 (S 1 2 3))))
+        (is (= (expect 4) (take 3 (S 1 2 3 4))))
+        (is (= (expect 5) (take 3 (S 1 2 3 4 5))))
+        (is (= (expect 6) (take 3 (S 1 2 3 4 5 6))))
+        (is (= (expect 7) (take 3 (S 1 2 3 4 5 6 7))))
+        (is (= (expect 8) (take 3 (S 1 2 3 4 5 6 7 8))))
+        (is (= (expect 9) (take 3 (S 1 2 3 4 5 6 7 8 9))))
+        (is (= (expect 10) (take 3 (S 1 2 3 4 5 6 7 8 9 10))))
+        (is (= (expect 11) (take 3 (S 1 2 3 4 5 6 7 8 9 10 11))))
+        (is (= (expect 12) (take 3 (S 1 2 3 4 5 6 7 8 9 10 11 12))))
+        (is (= (expect 13) (take 3 (S 1 2 3 4 5 6 7 8 9 10 11 12 13))))
+        (is (= (expect 14) (take 3 (S 1 2 3 4 5 6 7 8 9 10 11 12 13 14))))
+        (is (= (expect 15) (take 3 (S 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15))))
+        (is (= (expect 16) (take 3 (S 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16))))
+        (is (= (expect 17) (take 3 (S 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17))))
+        (is (= (expect 18) (take 3 (S 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18))))
+        (is (= (expect 19) (take 3 (S 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19))))
+        (is (= (expect 20) (take 3 (S 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20))))))
 
     (testing "a series of fns is a fn too"
       (let [nats*index-series (-> (fn [i] (g/* i nats))
@@ -278,7 +333,7 @@
                  (+ (* 3 (expt x 2)) (* 4 x) 3)
                  (+ (* 4 (expt x 3)) (* 6 (expt x 2)) (* 6 x) 4)
                  (+ (* 5 (expt x 4)) (* 8 (expt x 3)) (* 9 (expt x 2)) (* 8 x) 5))
-               (v/freeze
+               (g/freeze
                 (g/simplify
                  (take 6 (nats*index-series 'x))))))))))
 
@@ -302,7 +357,7 @@
       (let [ps (s/->function
                 (s/series 1 2 3))]
         (is (= '(1 (* 2 x) (* 3 x x) 0 0)
-               (v/freeze (take 5 (ps 'x))))
+               (g/freeze (take 5 (ps 'x))))
             "->function converts a series to a power series."))
 
       (testing "function->"
@@ -314,7 +369,7 @@
                (-> ((s/function-> g/sin) 'x)
                    (s/sum 10)
                    (g/simplify)
-                   (v/freeze)))
+                   (g/freeze)))
             "power series expansion of g/sin around 0, evaluated at 'x")
 
         (is (= '(+ (* (/ 1 6) (expt dx 3) (exp a))
@@ -324,7 +379,7 @@
                (-> ((s/function-> g/exp 'a) 'dx)
                    (s/sum 3)
                    (g/simplify)
-                   (v/freeze)))
+                   (g/freeze)))
             "power series expansion of g/exp around 'a, evaluated at 'dx")
 
         (is (= '(/ (+
@@ -343,7 +398,7 @@
                (-> ((s/function-> g/atan 'a 'b) ['da 'db])
                    (s/sum 2)
                    (g/simplify)
-                   (v/freeze)))
+                   (g/freeze)))
             "power series expansion of g/atan around 'a and 'b, evaluated
             at (the vector value) ['da 'db]. Shows that function-> can handle
             multiple arguments without a structural wrapping.")
@@ -505,7 +560,7 @@
              (/ 1 5040)
              (/ 1 40320)
              (/ 1 362880))
-           (v/freeze (take 10 s/exp-series)))))
+           (g/freeze (take 10 s/exp-series)))))
 
   (testing "sine expansion"
     (is (= '(0
@@ -518,7 +573,7 @@
              (/ -1 5040)
              0
              (/ 1 362880))
-           (v/freeze (take 10 s/sin-series)))))
+           (g/freeze (take 10 s/sin-series)))))
 
   (testing "cosine expansion"
     (is (= '(1
@@ -531,7 +586,7 @@
              0
              (/ 1 40320)
              0)
-           (v/freeze (take 10 s/cos-series)))))
+           (g/freeze (take 10 s/cos-series)))))
 
   (testing "catalan numbers"
     (is (= [1 1 2 5 14 42 132 429 1430 4862]
@@ -553,19 +608,19 @@
   (is (->> (g/- s/sin-series
                 (g/sqrt (g/- 1 (g/expt s/cos-series 2))))
            (take 30)
-           (every? v/zero?))
+           (every? g/zero?))
       "sin(x) = sqrt(1-cos(x)^2) to 30 terms")
 
   (is (->> (g/- s/tan-series (s/revert s/atan-series))
            (take 30)
-           (every? v/zero?))
+           (every? g/zero?))
       "tan(x) = revert(arctan(x))")
 
   (is (->> (g/- s/atan-series
                 (s/integral
                  (g/invert (s/power-series 1 0 1))))
            (take 30)
-           (every? v/zero?))
+           (every? g/zero?))
       "atan(x) = integral(1/(1+x^2))"))
 
 (deftest series-trig-tests
@@ -574,12 +629,23 @@
     (is (= [0 1 0 0 0]
            (take 5 (g/sin s/asin-series))))
     (is (= [0 1 0 0 0]
+           (take 5 (g/asin s/sin-series))))
+    (is (= [0 1 0 0 0]
            (take 5 (g/tan s/atan-series))))
+    (is (= [0 1 0 0 0]
+           (take 5 (g/atan s/tan-series))))
 
     (is (= [0 1 0 0 0]
            (take 5 (g/sinh s/asinh-series))))
     (is (= [0 1 0 0 0]
+           (take 5 (g/asinh s/sinh-series))))
+    (is (= [0 1 0 0 0]
            (take 5 (g/tanh s/atanh-series))))
+    (is (= [0 1 0 0 0]
+           (take 5 (g/atanh s/tanh-series))))
+
+    (is (= [1 0 0 0 0] (take 5 (g/cosh (s/constant 0)))))
+    (is (= [(g/acot 0) 0 0 0 0] (take 5 (g/acot (s/constant 0)))))
 
     (is (= (take 20 s/sec-series)
            (take 20 (g/invert s/cos-series))))

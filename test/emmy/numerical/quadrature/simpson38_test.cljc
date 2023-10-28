@@ -9,7 +9,6 @@
             [emmy.numerical.quadrature.trapezoid :as qt]
             [emmy.numsymb]
             [emmy.simplify :as s :refer [hermetic-simplify-fixture]]
-            [emmy.value :as v]
             [same.core :refer [ish?]]))
 
 (use-fixtures :each hermetic-simplify-fixture)
@@ -48,7 +47,7 @@
             richardson-step (let [t**2 (g/square 3)]
                               (/ (- (* t**2 t3) t1)
                                  (- t**2 1)))]
-        (is (v/zero?
+        (is (g/zero?
              (g/simplify
               (g/- richardson-step
                    (simpson38-step f a b))))

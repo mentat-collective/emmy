@@ -19,7 +19,7 @@
 (use-fixtures :each hermetic-simplify-fixture)
 
 (def simplify
-  (comp v/freeze g/simplify))
+  (comp g/freeze g/simplify))
 
 (deftest rigid-tests
   (f/with-literal-functions [theta phi psi]
@@ -71,7 +71,7 @@
                  an-Euler-state)
                 (get 1)))))
 
-    (is (v/zero?
+    (is (g/zero?
          (simplify
           ;; this first is the fucked up one
           (- (-> ((rig/L-space-Euler 'A 'B 'C) an-Euler-state)

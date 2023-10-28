@@ -1,15 +1,16 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
 (ns emmy.simplify.rules-test
-  (:require [clojure.test :refer [is deftest testing]]
+  (:require [clojure.test :refer [is deftest testing use-fixtures]]
             [emmy.complex :as c]
             [emmy.generic :as g]
             [emmy.numbers]
             [emmy.pattern.rule :as pr :refer [rule-simplifier template]]
             [emmy.ratio]
             [emmy.simplify :as s]
-            [emmy.simplify.rules :as r]
-            [emmy.value :as v]))
+            [emmy.simplify.rules :as r]))
+
+(use-fixtures :each s/hermetic-simplify-fixture)
 
 (deftest algebraic-tests
   (testing "unary elimination"
@@ -119,6 +120,16 @@
     (is (= '(* (/ 1 2) (log x))
            ((rule) '(log (sqrt x))))
         "Drop the internal sqrt down as a 1/2 exponent."))
+
+  (testing "log-contract"
+    (is (= '(+ (log (* a b)))
+           ((r/log-contract s/*poly-simplify*) '(+ (log a) (log b)))))
+    (is (= '(+ (* (log (* x z)) 2) y)
+           ((r/log-contract s/*poly-simplify*) '(+ (* 2 (log x)) y (* 2 (log z)))))))
+
+  (testing "contract-expt-trig"
+    (is (= '(* (/ 1 2) (expt (sin x) 0) (- 1 (cos (* 2 x))))
+           (r/contract-expt-trig '(expt (sin x) 2)))))
 
   (testing "exp-contract"
     (is (= '(exp (* 2 x))
@@ -254,7 +265,7 @@
     (is (= '(+ (* (/ 1 3) a)
                (* (/ 1 3) b)
                (* (/ 1 3) c))
-           (v/freeze
+           (g/freeze
             (d '(/ (+ a b c) 3)))))))
 
 (deftest triginv-tests
@@ -264,15 +275,15 @@
              (triginv '(atan y x))))
 
       (is (= '(/ pi 4)
-             (v/freeze
+             (g/freeze
               (triginv '(atan 1 1)))))
 
       (is (= '(/ pi 4)
-             (v/freeze
+             (g/freeze
               (triginv '(atan x x)))))
 
       (is (= '(- (/ (* 3 pi) 4))
-             (v/freeze
+             (g/freeze
               (triginv '(atan -1 -1)))))
 
       (is (= '(atan -1)
@@ -323,6 +334,10 @@
              (rule '(+ 2 (- (* (expt (cos x) 2) z)) 3 (* z (expt (cos x) 4))))
              (rule '(+ 2 (* z (expt (cos x) 4)) 3 (- (* (expt (cos x) 2) z))))))))
 
+  (testing "multiangle"
+    (is (= '(+ (* -4 (expt (sin x) 3) (cos x)) (* 4 (sin x) (expt (cos x) 3)))
+           (s/*poly-simplify* (r/expand-multiangle '(sin (* 4 x)))))))
+
   (testing "high degree cosines unwrap the (expt ... 1) remainder."
     (let [r (rule-simplifier r/split-high-degree-sincos)]
       (is (= '(+ 1 2 (* (expt (cos x) 2)
@@ -352,6 +367,16 @@
         "The full rule collects products into exponents.")))
 
 (deftest complex-test
+  (testing "complex-exp"
+    (is (= `(~'+ (~'cos 1.0) (~'* ~c/I (~'sin 1.0)))
+           (r/exp->sincos `(~'exp ~(c/complex 0 1)))))
+    (is (= `(~'* (~'exp 1.0) (~'+ (~'cos 1.0) (~'* ~c/I (~'sin 1.0))))
+           (r/exp->sincos `(~'exp ~(c/complex 1 1)))))
+    (is (= `(~'expt (~'exp (~'* ~c/I ~'z)) 2.0)
+           (r/exp-expand `(~'exp (~'* ~(c/complex 0 2) ~'z)))))
+    (is (= '(expt (exp (* k t)) 2)
+           (r/exp-expand '(exp (* 2 k t))))))
+
   (testing "complex-trig"
     (is (= '(cosh 1)
            (r/complex-trig (list 'cos c/I)))

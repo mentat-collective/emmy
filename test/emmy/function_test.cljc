@@ -11,23 +11,26 @@
             [emmy.value :as v]
             [same.core :refer [ish? with-comparator]]))
 
+
+(defmulti unknown-multifn-for-test identity)
+
 (deftest value-protocol-tests
-  (testing "v/zero? returns false for fns"
-    (is (not (v/zero? neg?)))
-    (is (not (v/zero? #'neg?)))
-    (is (not (v/zero? g/add))))
+  (testing "g/zero? returns false for fns"
+    (is (not (g/zero? neg?)))
+    (is (not (g/zero? #'neg?)))
+    (is (not (g/zero? g/add))))
 
-  (testing "v/one? returns false for fns"
-    (is (not (v/one? neg?)))
-    (is (not (v/one? #'neg?)))
-    (is (not (v/one? g/add)))
-    (is (not (v/one? identity))))
+  (testing "g/one? returns false for fns"
+    (is (not (g/one? neg?)))
+    (is (not (g/one? #'neg?)))
+    (is (not (g/one? g/add)))
+    (is (not (g/one? identity))))
 
-  (testing "v/identity? returns false for fns"
-    (is (not (v/identity? neg?)))
-    (is (not (v/identity? #'neg?)))
-    (is (not (v/identity? g/add)))
-    (is (not (v/identity? identity))
+  (testing "g/identity? returns false for fns"
+    (is (not (g/identity? neg?)))
+    (is (not (g/identity? #'neg?)))
+    (is (not (g/identity? g/add)))
+    (is (not (g/identity? identity))
         "We go conservative and say that EVEN the actual identity function is not identity."))
 
   (testing "v/numerical? returns false for fns"
@@ -37,40 +40,52 @@
     (is (not (v/numerical? identity))))
 
   (checking "zero-like, one-like returns 0, 1 for fns, vars" 100
-            [f (gen/elements [g/negative? g/abs g/sin g/cos
-                              #'g/negative? #'g/abs #'g/sin #'g/cos])
+            [f (gen/elements [g/abs g/sin g/cos
+                              #'g/abs #'g/sin #'g/cos])
              n sg/real]
-            (is (== 0 ((v/zero-like f) n)))
-            (is (== 1 ((v/one-like f) n))))
+            (is (== 0 ((g/zero-like f) n)))
+            (is (== 1 ((g/one-like f) n))))
+
+  (checking "zero-like, one-like returns false, true for boolean-valued fns, vars" 100
+            [f (gen/elements [g/negative? g/zero? g/one?
+                              #'g/negative? #'g/zero? #'g/one?])
+             n sg/real]
+            (is (= false ((g/zero-like f) n)))
+            (is (= true ((g/one-like f) n))))
 
   (checking "identity-like returns the identity fn" 100
             [f (gen/elements [g/negative? g/abs g/sin g/cos
                               #'g/negative? #'g/abs #'g/sin #'g/cos])
              n sg/real]
-            (is (= n ((v/identity-like f) n))))
+            (is (= n ((g/identity-like f) n))))
 
   (checking "exact? mirrors input" 100 [n sg/real]
-            (if (v/exact? n)
-              (is ((v/exact? identity) n))
-              (is (not ((v/exact? identity) n)))))
+            (if (g/exact? n)
+              (is ((g/exact? identity) n))
+              (is (not ((g/exact? identity) n)))))
 
-  (testing "v/freeze"
+  (testing "g/freeze"
     (is (= ['+ '- '* '/ 'modulo 'quotient 'remainder
             'negative? '< '<= '> '>= '=
             'partial-derivative]
-           (map v/freeze [+ - * / mod quot rem
+           (map g/freeze [+ - * / mod quot rem
                           neg? < <= > >= =
                           g/partial-derivative]))
         "Certain functions freeze to symbols")
 
-    (is (= (map v/freeze [g/+ g/- g/* g//
+    (is (= (map g/freeze [g/+ g/- g/* g//
                           g/modulo g/quotient g/remainder g/negative?])
-           (map v/freeze [+ - * / mod quot rem neg?]))
+           (map g/freeze [+ - * / mod quot rem neg?]))
         "These freeze to the same symbols as their generic counterparts.")
 
+    (is (= (map g/freeze [#'g/+ #'g/- #'g/* #'g//]) '(+ - * /))
+        "vars freeze to their referents")
+
     (let [f (fn [x] (* x x))]
-      (is (= f (v/freeze f))
-          "Unknown functions freeze to themselves")))
+      (is (= f (g/freeze f))
+          "Unknown functions freeze to themselves")
+      (is (= unknown-multifn-for-test (g/freeze unknown-multifn-for-test))
+          "Unknown multifns (without :name keyword method) freeze to themselves")))
 
   (testing "v/kind returns ::v/function"
     (is (= ::v/function (v/kind neg?)))
@@ -312,12 +327,12 @@
   (with-comparator (v/within 1e-10)
     (checking "tan, sin, cos" 100 [n sg/real]
               (let [f (g/- g/tan (g/div g/sin g/cos))]
-                (when-not (v/zero? n)
+                (when-not (g/zero? n)
                   (is (ish? 0 (f n))))))
 
     (checking "cot" 100 [n sg/real]
               (let [f (g/- g/cot (g/invert g/tan))]
-                (when-not (v/zero? n)
+                (when-not (g/zero? n)
                   (is (ish? 0 (f n)))))))
 
   (checking "tanh" 100 [n (sg/reasonable-double {:min -100 :max 100})]
@@ -330,7 +345,7 @@
 
   (checking "csc" 100 [n sg/real]
             (let [f (g/- (g/invert g/sin) g/csc)]
-              (when-not (v/zero? n)
+              (when-not (g/zero? n)
                 (is (ish? 0 (f n))))))
 
   (checking "sech" 100 [n sg/real]
@@ -358,7 +373,7 @@
 
     (checking "atanh" 100
               [n (sg/reasonable-double {:min -10 :max 10})]
-              (when-not (v/one? (g/abs n))
+              (when-not (g/one? (g/abs n))
                 (let [f (f/compose g/tanh g/atanh)]
                   (is (ish? n (f n))))))))
 
@@ -406,13 +421,13 @@
       (is (= 20 ((g/determinant *) 4 5))))
 
     (checking "invert" 100 [n sg/real]
-              (when-not (v/zero? n)
+              (when-not (g/zero? n)
                 (is (= ((g/+ 1 g/invert) n)
                        (g/+ 1 (g/invert n))))))
 
     (checking "negative?" 100 [n sg/real]
               (is (not ((g/negative? g/abs) n)))
-              (when-not (v/zero? n)
+              (when-not (g/zero? n)
                 (is ((g/negative? (f/compose g/negate g/abs)) n))))
 
     (checking "abs" 100 [n sg/real]
@@ -421,13 +436,13 @@
 
     (checking "quotient" 100 [l sg/any-integral
                               r sg/any-integral]
-              (when-not (v/zero? r)
+              (when-not (g/zero? r)
                 (is (= ((g/+ 1 g/quotient) l r)
                        (g/+ 1 (g/quotient l r))))))
 
     (checking "exact-divide" 100 [n (gen/choose -200 200)
                                   m (gen/choose -20 20)]
-              (when-not (v/zero? m)
+              (when-not (g/zero? m)
                 (is (= n ((g/exact-divide g/* m) n m))
                     "The f position here is a function that takes 2 elements,
                   passes them to g/*, the calls exact-divide on the result and
@@ -440,13 +455,13 @@
 
     (checking "remainder" 100 [l sg/any-integral
                                r sg/any-integral]
-              (when-not (v/zero? r)
+              (when-not (g/zero? r)
                 (is (= ((g/+ 1 g/remainder) l r)
                        (g/+ 1 (g/remainder l r))))))
 
     (checking "modulo" 100 [l sg/any-integral
                             r sg/any-integral]
-              (when-not (v/zero? r)
+              (when-not (g/zero? r)
                 (is (= ((g/+ 1 g/modulo) l r)
                        (g/+ 1 (g/modulo l r))))))
 
@@ -472,7 +487,7 @@
       (checking "solve-linear, div pass through correctly" 100
                 [l sg/real
                  r sg/real]
-                (when-not (v/zero? r)
+                (when-not (g/zero? r)
                   (is (= (g// l r)
                          ((passthrough g//) l r)))
 

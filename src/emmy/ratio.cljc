@@ -12,7 +12,7 @@
   (:refer-clojure :exclude [ratio? numerator denominator rationalize])
   (:require #?(:clj [clojure.core :as core])
             #?(:clj [clojure.edn] :cljs [cljs.reader])
-            #?(:cljs ["fraction.js/bigfraction.js$default" :as Fraction])
+            #?(:cljs ["fraction.js/bigfraction.js" :as Fraction])
             #?(:cljs [emmy.complex :as c])
             #?(:cljs [goog.array :as garray])
             #?(:cljs [goog.object :as obj])
@@ -57,7 +57,7 @@
 
 #?(:cljs
    (defn- promote [x]
-     (if (v/one? (denominator x))
+     (if (g/one? (denominator x))
        (numerator x)
        x)))
 
@@ -69,7 +69,7 @@
               (Fraction. x))
       :clj (core/rationalize x)))
   ([n d]
-   #?(:cljs (if (v/one? d)
+   #?(:cljs (if (g/one? d)
               n
               (promote (Fraction. n d)))
       :clj (core/rationalize (/ n d)))))
@@ -110,54 +110,44 @@
         :else (u/illegal (str "Invalid ratio: " x))))
 
 #?(:clj
-   (extend-type Ratio
-     v/Numerical
-     (numerical? [_] true)
+   (do
+     (defmethod g/exact? [Ratio] [_] true)
+     (defmethod g/freeze [Ratio] [x]
+       (let [n (numerator x)
+             d (denominator x)]
+         (if (g/one? d)
+           n
+           `(~'/ ~n ~d))))
+     (extend-type Ratio
+       v/Numerical
+       (numerical? [_] true)
 
-     v/Value
-     (zero? [c] (zero? c))
-     (one? [c] (= 1 c))
-     (identity? [c] (= 1 c))
-     (zero-like [_] 0)
-     (one-like [_] 1)
-     (identity-like [_] 1)
-     (freeze [x] (let [n (numerator x)
-                       d (denominator x)]
-                   (if (v/one? d)
-                     n
-                     `(~'/ ~n ~d))))
-     (exact? [_] true)
-     (kind [_] Ratio))
+       v/IKind
+       (kind [_] Ratio)))
 
    :cljs
-   (let [ZERO (Fraction. 0)
-         ONE  (Fraction. 1)]
+   (do
+     (defmethod g/exact? [Fraction] [_] true)
+     (defmethod g/freeze [Fraction] [x]
+       (let [n (numerator x)
+             d (denominator x)]
+         (if (g/one? d)
+           (g/freeze n)
+           `(~'/
+             ~(g/freeze n)
+             ~(g/freeze d)))))
      (extend-type Fraction
        v/Numerical
        (numerical? [_] true)
 
-       v/Value
-       (zero? [c] (.equals c ZERO))
-       (one? [c] (.equals c ONE))
-       (identity? [c] (.equals c ONE))
-       (zero-like [_] 0)
-       (one-like [_] 1)
-       (identity-like [_] 1)
-       (freeze [x] (let [n (numerator x)
-                         d (denominator x)]
-                     (if (v/one? d)
-                       (v/freeze n)
-                       `(~'/
-                         ~(v/freeze n)
-                         ~(v/freeze d)))))
-       (exact? [_] true)
+       v/IKind
        (kind [_] Fraction)
 
        IEquiv
        (-equiv [this other]
          (cond (ratio? other) (.equals this other)
                (v/integral? other)
-               (and (v/one? (denominator this))
+               (and (g/one? (denominator this))
                     (v/= (numerator this) other))
 
                ;; Enabling this would work, but would take us away from
@@ -184,7 +174,7 @@
 
        Object
        (toString [r]
-         (let [x (v/freeze r)]
+         (let [x (g/freeze r)]
            (if (number? x)
              x
              (let [[_ n d] x]
@@ -194,7 +184,7 @@
        (-pr-writer [x writer opts]
          (let [n (numerator x)
                d (denominator x)]
-           (if (v/one? d)
+           (if (g/one? d)
              (-pr-writer n writer opts)
              (write-all writer "#emmy/ratio \""
                         (str n) "/" (str d)
@@ -229,7 +219,8 @@
        (defmethod op [::v/integral Ratio] [a b] (f a b))))
 
    :cljs
-   (do
+   (let [ZERO (Fraction. 0)
+         ONE  (Fraction. 1)]
      (defn- pow [r m]
        (let [n (numerator r)
              d (denominator r)]
@@ -254,6 +245,13 @@
 
      (defmethod g/exact-divide [Fraction Fraction] [a b]
        (promote (.div ^js a b)))
+
+     (defmethod g/zero? [Fraction] [^Fraction c] (.equals c ZERO))
+     (defmethod g/one? [Fraction] [^Fraction c] (.equals c ONE))
+     (defmethod g/identity? [Fraction] [^Fraction c] (.equals c ONE))
+     (defmethod g/zero-like [Fraction] [_] 0)
+     (defmethod g/one-like [Fraction] [_] 1)
+     (defmethod g/identity-like [Fraction] [_] 1)
 
      (defmethod g/negate [Fraction] [a] (promote (.neg ^js a)))
      (defmethod g/negative? [Fraction] [a] (neg? (obj/get a "s")))
@@ -284,7 +282,7 @@
      ;; Only integral ratios let us stay exact. If a ratio appears in the
      ;; exponent, convert the base to a number and call g/expt again.
      (defmethod g/expt [Fraction Fraction] [a b]
-       (if (v/one? (denominator b))
+       (if (g/one? (denominator b))
          (promote (.pow ^js a (numerator b)))
          (g/expt (.valueOf a)
                  (.valueOf b))))

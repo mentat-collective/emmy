@@ -10,8 +10,7 @@
   NOTE: This namespace is not yet stable: Expect these functions to change as
   new root-finding methods are added. "
   (:require [emmy.util :as u]
-            [emmy.util.stream :as us]
-            [emmy.value :as v]))
+            [emmy.util.stream :as us]))
 
 ;; ## Root finding by successive bisection
 ;;
@@ -140,7 +139,7 @@
                   maxiter
                   maxfun
                   callback]
-           :or {eps     v/machine-epsilon
+           :or {eps     u/machine-epsilon
                 maxiter 1000
                 callback (constantly nil)}
            :as opts}]

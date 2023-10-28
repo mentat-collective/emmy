@@ -1,8 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
 ^#:nextjournal.clerk
-{:toc true
- :visibility :hide-ns}
+  {:toc true
+   :visibility :hide-ns}
 (ns emmy.abstract.function
   "Implementation of a [[literal-function]] constructor. Literal functions can be
   applied to structures and numeric inputs, and differentiated.
@@ -65,17 +65,7 @@
    (sicm-set->exemplar range)])
 
 (deftype Function [f-name arity domain range]
-  v/Value
-  (zero? [_] false)
-  (one? [_] false)
-  (identity? [_] false)
-  (zero-like [_] (fn [& _] (v/zero-like range)))
-  (one-like [_] (fn [& _] (v/one-like range)))
-  (identity-like [_]
-    (let [meta {:arity arity :from :identity-like}]
-      (with-meta identity meta)))
-  (exact? [f] (f/compose v/exact? f))
-  (freeze [_] (v/freeze f-name))
+  v/IKind
   (kind [_] ::function)
 
   f/IArity
@@ -229,7 +219,8 @@
              (entry->fn entry)])
           litfns)))
 
-(u/sci-macro with-literal-functions [litfns & body]
+(u/sci-macro with-literal-functions
+  [litfns & body]
   (let [pairs    (binding-pairs litfns)
         bindings (into [] cat pairs)]
     `(let ~bindings ~@body)))
@@ -263,7 +254,7 @@
         partials (s/map-chain
                   (fn [x path _]
                     (let [dx (d/tangent-part x tag)]
-                      (if (v/zero? dx)
+                      (if (g/zero? dx)
                         0
                         (d/d:* (literal-apply
                                 (literal-partial f path) ve)
@@ -299,7 +290,7 @@
   (check-argument-type f xs (domain-types f) [0])
   (if (some d/perturbed? xs)
     (literal-derivative f xs)
-    (an/literal-number `(~(name f) ~@(map v/freeze xs)))))
+    (an/literal-number `(~(name f) ~@(map g/freeze xs)))))
 
 ;; ## Specific Generics
 ;;
@@ -311,3 +302,11 @@
               (f/arity f)
               (domain-types f)
               (range-type f)))
+
+(defmethod g/zero-like [::function] [^Function a] (fn [& _] (g/zero-like (.-range a))))
+(defmethod g/one-like [::function] [^Function a] (fn [& _] (g/one-like (.-range a))))
+(defmethod g/identity-like [::function] [^Function a]
+  (let [meta {:arity (.-arity a) :from :identity-like}]
+    (with-meta identity meta)))
+(defmethod g/exact? [::function] [a] (f/compose g/exact? a))
+(defmethod g/freeze [::function] [^Function a] (g/freeze (.-f-name a)))

@@ -142,6 +142,7 @@
   "Like `defmacro` but when emitting cljs, emits a function
   with &env and &form prepended to arglists and :sci/macro metadata,
   so that the macro can be imported into sci using copy-var."
+  {:clj-kondo/lint-as 'clojure.core/defn}
   [name & body]
   (if (:ns &env)
     (let [[doc body] (if (string? (first body))
@@ -168,3 +169,12 @@
          ns-sym
          sci-ns
          (merge {:copy-meta [:doc :arglists :macro :sci/macro :imported-from]} opts))))
+
+(def machine-epsilon
+  (loop [e 1.0]
+    (if (= 1.0 (+ e 1.0))
+      (* e 2.0)
+      (recur (/ e 2.0)))))
+
+(def sqrt-machine-epsilon
+  (Math/sqrt machine-epsilon))

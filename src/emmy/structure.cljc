@@ -74,15 +74,7 @@
 (declare s:= mapr)
 
 (deftype Structure [orientation v m]
-  v/Value
-  (zero? [_] (every? v/zero? v))
-  (one? [_] false)
-  (identity? [_] false)
-  (zero-like [_] (Structure. orientation (v/zero-like v) m))
-  (one-like [_] 1)
-  (identity-like [_] 1)
-  (exact? [_] (every? v/exact? v))
-  (freeze [_] `(~(orientation orientation->symbol) ~@(map v/freeze v)))
+  v/IKind
   (kind [_] orientation)
 
   f/IArity
@@ -395,6 +387,16 @@
 (defmethod v/= [v/seqtype ::down] [_ _] false)
 (prefer-method v/= [::up ::down] [v/seqtype ::down])
 (prefer-method v/= [::down ::up] [::down v/seqtype])
+
+(doseq [kind [::up ::down]]
+  (defmethod g/zero? [kind] [s] (every? g/zero? s))
+  (defmethod g/one? [kind] [_] false)
+  (defmethod g/identity? [kind] [_] false)
+  (defmethod g/zero-like [kind] [^Structure s] (Structure. (.-orientation s) (g/zero-like (.-v s)) (.-m s)))
+  (defmethod g/one-like [kind] [_] 1)
+  (defmethod g/identity-like [kind] [_] 1)
+  (defmethod g/exact? [kind] [^Structure s] (every? g/exact? (.-v s)))
+  (defmethod g/freeze [kind] [^Structure s] `(~((.-orientation s) orientation->symbol) ~@(map g/freeze (.-v s)))))
 
 (defn- s:=
   "Returns true if the supplied structure `this` is equal to the argument on the
@@ -853,7 +855,7 @@
 (defn compatible-zero
   "Returns a structure compatible for multiplication with `s` down to 0."
   [s]
-  (v/zero-like
+  (g/zero-like
    (transpose s)))
 
 (def dual-zero
@@ -956,8 +958,8 @@
 (defn- expt
   "Raise the structure `s` to the nth power."
   [s n]
-  (let [one (v/one-like n)]
-    (cond (v/one? n) s
+  (let [one (g/one-like n)]
+    (cond (g/one? n) s
           (> n one) (g/* s (g/expt s (g/- n one)))
           :else (u/arithmetic-ex (str "Cannot: " `(expt ~s ~n))))))
 

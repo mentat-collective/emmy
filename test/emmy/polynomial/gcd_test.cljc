@@ -452,9 +452,9 @@
                      (gen/tuple (sg/polynomial :arity arity)
                                 (sg/polynomial :arity arity)))]
             (let [g (g/gcd u v)]
-              (is (or (and (v/zero? u)
-                           (v/zero? v)
-                           (v/zero? g))
+              (is (or (and (g/zero? u)
+                           (g/zero? v)
+                           (g/zero? g))
                       (and (g/exact-divide u g)
                            (g/exact-divide v g))))))
 

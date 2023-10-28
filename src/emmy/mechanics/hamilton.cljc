@@ -221,12 +221,13 @@
                     M (Dw-of-v z)
                     b (w-of-v z)]
                 (if (and *validate-Legendre-transform?*
-                         (v/zero?
+                         (g/zero?
                           (g/simplify
                            (g/determinant M))))
-                  (throw
-                   (ex-info "Legendre Transform Failure: determinant = 0"
-                            {:F F :w w}))
+                  (do (println "determinant" (g/determinant M))
+                      (throw
+                       (ex-info "Legendre Transform Failure: determinant = 0"
+                                {:F F :w w})))
                   (let [v (g/solve-linear-left M (- w b))]
                     (- (* w v) (F v))))))]
       (let [Dpg (D putative-G)]
@@ -413,8 +414,8 @@
 
 (defn T-func [s]
   (up 1
-      (v/zero-like (l/coordinates s))
-      (v/zero-like (momenta s))))
+      (g/zero-like (l/coordinates s))
+      (g/zero-like (momenta s))))
 
 (defn canonical-H? [C H]
   (- (f/compose (D-phase-space H) C)

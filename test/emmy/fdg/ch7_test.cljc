@@ -11,6 +11,7 @@
                                     R2-rect R2-polar R3-rect
                                     R1-rect S2-spherical
                                     let-coordinates]]
+            [emmy.generic :as g]
             [emmy.operator :as o]
             [emmy.simplify :refer [hermetic-simplify-fixture]]
             [emmy.value :as v]
@@ -19,7 +20,7 @@
 (use-fixtures :each hermetic-simplify-fixture)
 
 (def simplify
-  (comp v/freeze e/simplify))
+  (comp g/freeze e/simplify))
 
 (defn F->directional-derivative
   [F]
@@ -171,7 +172,7 @@
           (fn [f]
             (fn [m]
               (let [m0  (((phi v) (- delta)) m)
-                    Aij (+ (v/one-like ((omega v) m0))
+                    Aij (+ (g/one-like ((omega v) m0))
                            (* delta (- ((omega v) m0))))
                     ui ((etilde u) m0)]
                 (* ((e f) m)

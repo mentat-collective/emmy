@@ -62,7 +62,7 @@
               [p (sg/polynomial)]
               (is (p/polynomial? p))
               (is (not (p/coeff? p)))
-              (is (not (v/exact? p)))
+              (is (not (g/exact? p)))
               (is (= ::p/polynomial (v/kind p))
                   "kind works"))
 
@@ -96,71 +96,71 @@
           "term limitation in printing")
 
       (is (= '(polynomial 1 [[{} 1] [{0 1} 2] [{0 2} 3]])
-             (v/freeze
+             (g/freeze
               (p/make [1 2 3])))
           "freeze representation isn't THAT great yet..."))
 
     (checking "zero-like" 100 [p (sg/polynomial)]
-              (is (v/zero?
-                   (v/zero-like p))))
+              (is (g/zero?
+                   (g/zero-like p))))
 
     (testing "one"
-      (is (not (v/one? (p/make []))))
-      (is (v/one? (p/make [1])))
-      (is (v/one? (p/make 2 {[0 0] 1})))
-      (is (v/one? (p/make 3 {[0 0 0] 1})))
-      (is (not (v/one? (p/make 3 {[0 0 0] 1 [0 0 1] 2}))))
-      (is (not (v/one? (p/make [1.1]))))
-      (is (v/one? (p/make [1.0])))
-      (is (v/one? (p/make [(p/make [1])])))
-      (is (not (v/one? (p/make [(p/make [2])])))))
+      (is (not (g/one? (p/make []))))
+      (is (g/one? (p/make [1])))
+      (is (g/one? (p/make 2 {[0 0] 1})))
+      (is (g/one? (p/make 3 {[0 0 0] 1})))
+      (is (not (g/one? (p/make 3 {[0 0 0] 1 [0 0 1] 2}))))
+      (is (not (g/one? (p/make [1.1]))))
+      (is (g/one? (p/make [1.0])))
+      (is (g/one? (p/make [(p/make [1])])))
+      (is (not (g/one? (p/make [(p/make [2])])))))
 
     (checking "one-like" 100 [p (sg/polynomial)]
-              (is (v/one?
-                   (v/one-like p))))
+              (is (g/one?
+                   (g/one-like p))))
 
     (testing "one-like unit tests"
       (is (= (p/constant 1 1)
-             (v/one-like (p/make [1 2 3]))))
+             (g/one-like (p/make [1 2 3]))))
 
       (is (= (p/constant 2 1)
-             (v/one-like
+             (g/one-like
               (p/make 2 {[1 0] 1
                          [2 1] 3}))))
 
       (is (= (p/constant 3 1)
-             (v/one-like
+             (g/one-like
               (p/make 3 {[1 2 1] 4
                          [0 1 0] 5}))))
 
       (is (= (p/make 2 {[0 0] 1})
-             (v/one-like (p/make 2 [])))
+             (g/one-like (p/make 2 [])))
           "If we can't deduce the unit element from the zero polynomial over an
           unknown ring, assume it's 1"))
 
     (checking "identity-like (only on monomials)" 100
               [p (sg/polynomial :arity 1)]
-              (is (v/identity?
-                   (v/identity-like p))))
+              (is (g/identity?
+                   (g/identity-like p))))
 
     (testing "identity unit tests"
-      (is (v/identity? (p/make [0 1])))
-      (is (not (v/identity? (p/make []))))
-      (is (not (v/identity? (p/make [0]))))
+      (is (g/identity? (p/make [0 1])))
+      (is (not (g/identity? (p/make []))))
+      (is (not (g/identity? (p/make [0]))))
 
       (testing "identity? only returns true for monomials."
-        (is (v/identity? (p/identity 1)))
-        (is (not (v/identity? (p/identity 2 1))))))
+        (is (g/identity? (p/identity 1)))
+        (is (not (g/identity? (p/identity 2 1))))))
 
     (testing "identity-like unit tests"
       (is (= (p/make [0 1])
-             (v/identity-like (p/make [0 0 0 1]))))
+             (g/identity-like (p/make [0 0 0 1]))))
 
       (is (= (p/make [0 1])
-             (v/identity-like (p/make [1 2 3]))))
+             (g/identity-like (p/make [1 2 3]))))
 
       (is (thrown? #?(:clj AssertionError :cljs js/Error)
-                   (v/identity-like (p/constant 10 1)))
+                   (g/identity-like (p/constant 10 1)))
           "identity-like is only supported on monomials."))))
 
 (deftest constructor-accessor-tests
@@ -262,9 +262,9 @@
                   "unless both sides are coeffs!")))
 
   (testing "dense make returns 0 for no entries or a zero first entry"
-    (is (v/zero? (p/make [])))
-    (is (v/zero? (p/make [0])))
-    (is (not (v/zero? (p/make [1])))))
+    (is (g/zero? (p/make [])))
+    (is (g/zero? (p/make [0])))
+    (is (not (g/zero? (p/make [1])))))
 
   (checking "dense construction round-trips with univariate->dense" 100
             [prefix (gen/vector gen/nat 1 20)
@@ -303,19 +303,19 @@
                (* (/ 1 2) (expt x 2))
                x
                1)
-           (v/freeze
+           (g/freeze
             (g/simplify
              ((p/from-power-series ss/exp-series 4) 'x))))))
 
   (checking "p/make returns zero only if first entry is zero" 100
             [arity gen/nat
              x sg/number]
-            (if (v/zero? x)
-              (is (v/zero? (p/make [x])))
+            (if (g/zero? x)
+              (is (g/zero? (p/make [x])))
               (is (= x (p/make [x]))))
 
-            (if (v/zero? x)
-              (is (v/zero? (p/constant arity x)))
+            (if (g/zero? x)
+              (is (g/zero? (p/constant arity x)))
               (is (v/= x (p/constant arity x)))))
 
   (checking "terms, lead term" 100
@@ -381,10 +381,10 @@
     (is (not (p/monic? 2))))
 
   (checking "scale, scale-l" 100 [p (sg/polynomial)]
-            (is (v/zero? (p/scale-l 0 p)))
-            (is (v/zero? (p/scale-l p 0)))
-            (is (v/zero? (p/scale 0 p)))
-            (is (v/zero? (p/scale p 0))))
+            (is (g/zero? (p/scale-l 0 p)))
+            (is (g/zero? (p/scale-l p 0)))
+            (is (g/zero? (p/scale 0 p)))
+            (is (g/zero? (p/scale p 0))))
 
   (checking "map-exponents works on scalars" 100
             [c  gen/nat
@@ -457,7 +457,7 @@
   (checking "drop-leading-term" 100
             [xs (gen/vector (gen/fmap inc gen/nat) 2 20)
              c  (gen/fmap inc gen/nat)]
-            (is (v/zero? (p/drop-leading-term c))
+            (is (g/zero? (p/drop-leading-term c))
                 "dropping the leading term from a constant returns 0.")
 
             (is (= (p/make xs)
@@ -476,7 +476,7 @@
            (+ (expt x 5) (* 10 (expt x 4)) (* 25 (expt x 3)) (* 15 (expt x 2)) x)]
          (map #(-> (p/touchard %)
                    (p/->expression ['x])
-                   (v/freeze))
+                   (g/freeze))
               (range -1 6)))
       "Touchard matches examples from https://mathworld.wolfram.com/BellPolynomial.html"))
 
@@ -520,7 +520,7 @@
                    (g/negate (p/make l)))))
 
   (testing "add/sub unit tests"
-    (is (v/zero?
+    (is (g/zero?
          (g/add (p/make [0 0 2])
                 (p/make [0 0 -2]))))
 
@@ -536,7 +536,7 @@
            (g/add (p/make [0 1])
                   (p/make [-1]))))
 
-    (is (v/zero?
+    (is (g/zero?
          (g/sub (p/make [0 0 2])
                 (p/make [0 0 2]))))
 
@@ -580,7 +580,7 @@
             (let [p*q (g/mul p q)
                   [Q R] (p/divide p*q q)]
               (is (p/divisible? p*q q))
-              (is (v/zero? R))
+              (is (g/zero? R))
               (is (= p Q))))
 
   (testing "mul"
@@ -810,7 +810,7 @@
               [p  (sg/polynomial :arity arity)
                xs (gen/vector sg/symbol arity)]
               (is (every?
-                   v/zero?
+                   g/zero?
                    (for [idx (range (inc arity))]
                      (let [sub-xs (subvec xs 0 idx)
                            padded (into sub-xs (repeat (- arity idx) 0))]
@@ -857,13 +857,13 @@
               [term-count (gen/choose 2 10)
                factor pos
                p (gen/fmap p/make (gen/vector pos term-count))]
-              (is (v/zero?
+              (is (g/zero?
                    (g/simplify
                     (g/- (p (g/* 'x factor))
                          ((p/arg-scale p [factor]) 'x))))
                   "arg-scale")
 
-              (is (v/zero?
+              (is (g/zero?
                    (g/simplify
                     (g/- (p (g/+ 'x factor))
                          ((p/arg-shift p [factor]) 'x))))
@@ -908,13 +908,13 @@
         U (p/make 2 [[[1 1] 3] [[2 2] 4] [[0 0] 5] [[0 3] 7] [[4 0] -2]])]
     (testing "univariate and multivariate polynomials work with D operator"
       (is (= '(+ (* 12 (expt x 2)) (* 6 x) 2)
-             (v/freeze
+             (g/freeze
               (g/simplify
                ((D V) 'x)))))
 
       (is (= '(down (+ (* -8 (expt x 3)) (* 8 x (expt y 2)) (* 3 y))
                     (+ (* 8 (expt x 2) y) (* 21 (expt y 2)) (* 3 x)))
-             (v/freeze
+             (g/freeze
               (g/simplify
                ((D U) 'x 'y))))))
 

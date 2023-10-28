@@ -45,16 +45,28 @@
 ;; Install methods on a new, custom defrecord to test default implementations.
 
 (defrecord Wrap [s]
-  v/Value
-  (one? [this] (= this (v/one-like this)))
-  (zero? [this] (= this (v/zero-like this)))
-  (identity? [this] (= this (v/identity-like this)))
-  (zero-like [_] (Wrap. "0"))
-  (one-like [_] (Wrap. "1"))
-  (identity-like [_] (Wrap. "1"))
-  (freeze [_] (list 'wrap s))
-  (exact? [_] false)
-  (kind [_] ::wrap))
+  v/IKind
+  (kind [_] ::wrap)
+
+  #?@(:clj [Comparable
+            (compareTo [_ b]
+                       (if (instance? Wrap b)
+                         (compare s (.-s ^Wrap b))
+                         (compare s b)))]
+
+      :cljs [IComparable
+             (-compare [_ b]
+                       (if (instance? Wrap b)
+                         (compare s (.-s ^Wrap b))
+                         (compare s b)))]))
+
+(defmethod g/zero? [::wrap] [a] (= a (g/zero-like a)))
+(defmethod g/one? [::wrap] [a] (= a (g/one-like a)))
+(defmethod g/identity? [::wrap] [a] (= a (g/identity-like a)))
+(defmethod g/zero-like [::wrap] [_] (Wrap. "0"))
+(defmethod g/one-like [::wrap] [_] (Wrap. "1"))
+(defmethod g/identity-like [::wrap] [_] (Wrap. "1"))
+(defmethod g/freeze [::wrap] [^Wrap a] (list 'wrap (.-s a)))
 
 (defmethod g/add [::wrap ::wrap] [l r]
   (->Wrap (str (:s l) "+" (:s r))))
@@ -82,11 +94,19 @@
       (is (= (->Wrap "l*r") (g/mul l r)))
       (is (= (->Wrap "l*l*l*l*l*l") (g/expt l 6)))
       (is (= (->Wrap "l*l*l*l") (g/expt l 4)))
-      (is (= l (g/expt l 1))))
+      (is (= l (g/expt l 1)))
+      (is (= (g/one-like l) (g/expt l 0))))
 
     (testing "div comes for free from mul and invert"
       (is (= (->Wrap "1/l") (g/invert l)))
       (is (= (->Wrap "l*1/r") (g/div l r))))
+
+    (testing "negative? comes from zero-like and Comparable"
+      (is (g/negative? (->Wrap "!")))
+      (is (not (g/negative? (->Wrap "@")))))
+
+    (testing "sinc comes from zero? and one-like"
+      (is (= (->Wrap "1") (g/sinc (->Wrap "0")))))
 
     (testing "unimplemented predicate behavior"
       (is (not (g/infinite? l))
@@ -94,13 +114,13 @@
 
 (deftest generic-freeze-behavior
   (testing "freeze should return symbols"
-    (is (= 'abs (v/freeze g/abs))
+    (is (= 'abs (g/freeze g/abs))
         "fn where we don't override the name.")
 
     (is (= ['+ '- '- '* '/ '/]
-           (map v/freeze [g/add g/sub g/negate g/mul g/div g/invert])
-           (map v/freeze [g/+ g/- g/- g/* g// g/divide]))
-        "v/freeze returns symbols for our generic multimethods. The hidden g/add
+           (map g/freeze [g/add g/sub g/negate g/mul g/div g/invert])
+           (map g/freeze [g/+ g/- g/- g/* g// g/divide]))
+        "g/freeze returns symbols for our generic multimethods. The hidden g/add
         etc return proper higher-level symbols.")))
 
 (deftest type-assigner
@@ -115,14 +135,14 @@
   (checking "g/+" 100 [x gen/any-equatable]
             (is (= x (g/+ x)) "single arg should return itself, for any type.")
 
-            (is (= (if (v/numeric-zero? x) 0 x)
+            (is (= (if (g/numeric-zero? x) 0 x)
                    (g/+ x 0))
                 "adding a 0 works for any input. The first zero element gets
                 returned.")
 
             (is (= x (g/+ 0 x)) "adding a leading 0 acts as identity.")
 
-            (is (= (if (v/numeric-zero? x) 0 x)
+            (is (= (if (g/numeric-zero? x) 0 x)
                    (g/+ 0 x 0.0 0 0)) "multi-arg works as long as zeros
             appear.")))
 
@@ -136,7 +156,7 @@
   (is (= 1 (g/*)) "No args returns the multiplicative identity.")
   (checking "g/*" 100 [x gen/any-equatable]
             (is (v/= x (g/* x)) "single arg returns itself.")
-            (is (v/= (if (v/one? x) 1 x)
+            (is (v/= (if (and (v/numerical? x) (g/one? x)) 1 x)
                      (g/* x 1)) "First unity gets returned.")
             (is (v/= x (g/* 1 x)) "Anything times a 1 returns itself.")))
 

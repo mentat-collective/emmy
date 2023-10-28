@@ -35,26 +35,7 @@
   v/Numerical
   (numerical? [_] (= type ::numeric))
 
-  v/Value
-  (zero? [_]
-    (and (v/number? expression)
-         (v/zero? expression)))
-
-  (one? [_]
-    (and (v/number? expression)
-         (v/one? expression)))
-
-  (identity? [_]
-    (and (v/number? expression)
-         (v/one? expression)))
-
-  (zero-like [_] 0)
-  (one-like [_] 1)
-  (identity-like [_] 1)
-  (exact? [_]
-    (and (v/number? expression)
-         (v/exact? expression)))
-  (freeze [_] (v/freeze expression))
+  v/IKind
   (kind [_] type)
 
   Object
@@ -306,10 +287,27 @@
   expression `expr`."
   [expr]
   (pr-str
-   (v/freeze (g/simplify expr))))
+   (g/freeze (g/simplify expr))))
 
 (defn print-expression [expr]
   (pp/pprint
-   (v/freeze (g/simplify expr))))
+   (g/freeze (g/simplify expr))))
 
 (def pe print-expression)
+
+(defmethod g/zero? [::numeric] [^Literal a]
+  (let [x (.-expression a)]
+    (and (v/number? x) (g/zero? x))))
+
+(defmethod g/one? [::numeric] [^Literal a]
+  (let [x (.-expression a)]
+    (and (v/number? x) (g/one? x))))
+
+(defmethod g/identity? [::numeric] [^Literal a] (g/one? a))
+(defmethod g/zero-like [::numeric] [_] 0)
+(defmethod g/one-like [::numeric] [_] 1)
+(defmethod g/identity-like [::numeric] [_] 1)
+(defmethod g/exact? [::numeric] [^Literal a]
+  (let [x (.-expression a)]
+    (and (v/number? x) (g/exact? x))))
+(defmethod g/freeze [::numeric] [^Literal a] (g/freeze (.-expression a)))

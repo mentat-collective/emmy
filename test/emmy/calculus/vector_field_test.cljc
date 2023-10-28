@@ -18,20 +18,20 @@
 (use-fixtures :each hermetic-simplify-fixture)
 
 (def simplify
-  (comp v/freeze g/simplify))
+  (comp g/freeze g/simplify))
 
 (deftest vector-field-tests
-  (testing "v/zero-like, v/one-like, v/identity-like"
+  (testing "g/zero-like, g/one-like, g/identity-like"
     (let [vf (vf/literal-vector-field 'b R2-rect)]
-      (is (v/zero? (v/zero-like vf)))
-      (is (vf/vector-field? (v/zero-like vf)))
-      (is (= 'vf:zero (v/freeze
-                       (v/zero-like vf))))
+      (is (g/zero? (g/zero-like vf)))
+      (is (vf/vector-field? (g/zero-like vf)))
+      (is (= 'vf:zero (g/freeze
+                       (g/zero-like vf))))
 
       (testing "the returned identity keeps its context and `::vf/vector-field`
        status."
-        (is (vf/vector-field? (v/one-like vf)))
-        (is (vf/vector-field? (v/identity-like vf))))))
+        (is (vf/vector-field? (g/one-like vf)))
+        (is (vf/vector-field? (g/identity-like vf))))))
 
   (testing "with-coordinate-prototype"
     (let [A R2-rect
@@ -59,13 +59,13 @@
         (is (vf/vector-field? f))
 
         (is (= '(up (- y0) x0)
-               (v/freeze
+               (g/freeze
                 ((vf/vector-field->components circular R2-rect)
                  (up 'x0 'y0)))))
 
         (is (= '(up (f↑0 (up x0 y0))
                     (f↑1 (up x0 y0)))
-               (v/freeze
+               (g/freeze
                 ((vf/vector-field->components f R2-rect)
                  (up 'x0 'y0))))))))
 
@@ -116,7 +116,7 @@
 
         (is (= '(+ (* x d:dx)
                    (* y d:dy))
-               (v/freeze
+               (g/freeze
                 (vf/basis-components->vector-field (up x y) vb))))
 
         (let [vf (vf/basis-components->vector-field (up x y) vb)

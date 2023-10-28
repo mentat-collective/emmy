@@ -24,8 +24,30 @@
               (java.math BigInteger)
               (org.apache.commons.math3.util ArithmeticUtils))))
 
+(def ^:private boolean-type #?(:clj Boolean :cljs js/Boolean))
+(defmethod g/zero? [boolean-type] [b] (not b))
+(defmethod g/one? [boolean-type] [b] b)
+(defmethod g/identity? [boolean-type] [b] b)
+(defmethod g/zero-like [boolean-type] [_] false)
+(defmethod g/one-like [boolean-type] [_] true)
+(defmethod g/identity-like [boolean-type] [_] true)
+
+(defmethod g/zero-like [::v/floating-point] [_] 0.0)
+(defmethod g/one-like [::v/floating-point] [_] 1.0)
+(defmethod g/identity-like [::v/floating-point] [_] 1.0)
+
 ;; "Backstop" implementations that apply to anything that descends from
 ;; ::v/real.
+(defmethod g/zero? [::v/real] [a] (core/zero? a))
+(defmethod g/one? [::v/real] [a] (== 1 a))
+(defmethod g/identity? [::v/real] [a] (== 1 a))
+(defmethod g/zero-like [::v/real] [_] 0)
+(defmethod g/one-like [::v/real] [_] 1)
+(defmethod g/identity-like [::v/real] [_] 1)
+(defmethod g/exact? [::v/integral] [_] true)
+(defmethod g/exact? [::v/floating-point] [_] false)
+(defmethod g/freeze [::v/real] [a] a)
+
 (defmethod g/add [::v/real ::v/real] [a b] (#?(:clj +' :cljs core/+) a b))
 (defmethod g/mul [::v/real ::v/real] [a b] (#?(:clj *' :cljs core/*) a b))
 (defmethod g/sub [::v/real ::v/real] [a b] (#?(:clj -' :cljs core/-) a b))
@@ -62,14 +84,14 @@
 (defmethod g/angle [::v/real] [a]
   (if (neg? a)
     Math/PI
-    (v/zero-like a)))
+    (g/zero-like a)))
 
 (defmethod g/conjugate [::v/real] [a] a)
 
 ;; ## Trig Operations
 
 (defmethod g/sinc [::v/real] [a]
-  (cond (v/zero? a)     1
+  (cond (g/zero? a)     1
         (g/infinite? a) 0
         :else (g// (g/sin a) a)))
 
@@ -158,10 +180,10 @@
   returns 1 or -1 respectively. If `a` is 1 or -1, returns `b` or `-b`
   respectively. Else, returns nil."
   [b a]
-  (cond (v/= a b)            (v/one-like a)
-        (v/= a (g/negate b)) (g/negate (v/one-like a))
-        (v/one? a)            b
-        (v/one? (g/negate a)) (g/negate b)
+  (cond (v/= a b)            (g/one-like a)
+        (v/= a (g/negate b)) (g/negate (g/one-like a))
+        (g/one? a)            b
+        (g/one? (g/negate a)) (g/negate b)
         :else nil))
 
 (defmethod g/exact-divide [::v/scalar ::v/real] [b a]
@@ -178,7 +200,7 @@
   "Checked implementation of g/exact-divide general enough to use for any type
   that defines g/remainder and g/quotient."
   [a b]
-  {:pre [(v/zero? (g/remainder a b))]}
+  {:pre [(g/zero? (g/remainder a b))]}
   (g/quotient a b))
 
 (defmethod g/exact-divide [::v/integral ::v/integral] [b a]
@@ -265,12 +287,12 @@
 
      (defmethod g/div [::v/integral ::v/integral] [a b]
        (let [rem (g/remainder a b)]
-         (if (v/zero? rem)
+         (if (g/zero? rem)
            (g/quotient a b)
            (r/rationalize a b))))
 
      (defmethod g/invert [::v/integral] [a]
-       (if (v/one? a)
+       (if (g/one? a)
          a
          (r/rationalize 1 a)))))
 
@@ -278,8 +300,9 @@
 ;; don't respond true to number? These each require their own block of method
 ;; implementations.
 #?(:cljs
-   (do
-     ;; native BigInt type in JS.
+   ;; native BigInt type in JS.
+   (let [big-zero (js/BigInt 0)
+         big-one (js/BigInt 1)]
      (defmethod g/add [js/BigInt js/BigInt] [a b] (core/+ a b))
      (defmethod g/mul [js/BigInt js/BigInt] [a b] (core/* a b))
      (defmethod g/modulo [js/BigInt js/BigInt] [a b] (g/modulo-default a b))
@@ -291,6 +314,14 @@
          (g/invert (js* "~{} ** ~{}" a (core/- b)))
          (js* "~{} ** ~{}" a b)))
 
+     (defmethod g/zero? [js/BigInt] [a] (coercive-= big-zero a))
+     (defmethod g/one? [js/BigInt] [a] (coercive-= big-one a))
+     (defmethod g/identity? [js/BigInt] [a] (coercive-= big-one a))
+     (defmethod g/zero-like [js/BigInt] [_] big-zero)
+     (defmethod g/one-like [js/BigInt] [_] big-one)
+     (defmethod g/identity-like [js/BigInt] [_] big-one)
+     (defmethod g/exact? [js/BigInt] [_] true)
+
      (defmethod g/abs [js/BigInt] [a] (if (neg? a) (core/- a) a))
      (defmethod g/quotient [js/BigInt js/BigInt] [a b] (core// a b))
      (defmethod g/remainder [js/BigInt js/BigInt] [a b] (js-mod a b))
@@ -299,7 +330,7 @@
 
      (defmethod g/div [js/BigInt js/BigInt] [a b]
        (let [rem (js-mod a b)]
-         (if (v/zero? rem)
+         (if (g/zero? rem)
            (core// a b)
            (r/rationalize a b))))
 
@@ -333,8 +364,33 @@
      (defmethod g/atan [js/BigInt ::v/real] [l r] (g/atan (js/Number l) r))
      (defmethod g/atan [::v/real js/BigInt] [l r] (g/atan l (js/Number r)))
      (defmethod g/atan [js/BigInt js/BigInt] [l r] (g/atan (js/Number l) (js/Number r)))
+     (defmethod g/exact? [js/BigInt] [_] true)
+     (defmethod g/freeze [js/BigInt] [x]
+       ;; Bigint freezes into a non-bigint if it can be represented as a
+       ;; number; otherwise, it turns into its own literal.
+       (if (< (g/abs x) (.-MAX_SAFE_INTEGER js/Number))
+         (js/Number x)
+         x))
+
+     ;; Google Closure library's Integer:
+     (defmethod g/zero? [Integer] [^Integer x] (.isZero x))
+     (defmethod g/one? [Integer] [x] (core/= (.-ONE goog.math.Integer) x))
+     (defmethod g/identity? [Integer] [x] (core/= (.-ONE goog.math.Integer) x))
+     (defmethod g/zero-like [Integer] [_] (.-ZERO goog.math.Integer))
+     (defmethod g/one-like [Integer] [_] (.-ONE goog.math.Integer))
+     (defmethod g/identity-like [Integer] [_] (.-ONE goog.math.Integer))
+     (defmethod g/exact? [Integer] [_] true)
+     (defmethod g/freeze [Integer] [x] x)
 
      ;; Google Closure library's 64-bit Long:
+     (defmethod g/zero? [Long] [^Long x] (.isZero x))
+     (defmethod g/one? [Long] [x] (core/= (Long/getOne) x))
+     (defmethod g/identity? [Long] [x] (core/= (Long/getOne) x))
+     (defmethod g/zero-like [Long] [_] (Long/getZero))
+     (defmethod g/one-like [Long] [_] (Long/getOne))
+     (defmethod g/identity-like [Long] [_] (Long/getOne))
+     (defmethod g/exact? [Long] [_] true)
+     (defmethod g/freeze [Long] [x] x)
      (defmethod g/add [Long Long] [a b] (.add a b))
      (defmethod g/mul [Long Long] [a b] (.multiply a b))
      (defmethod g/sub [Long Long] [^Long a ^Long b] (.subtract a b))

@@ -5,6 +5,7 @@
   (:require #?(:cljs [goog.string :refer [format]])
             [clojure.test :refer [is deftest testing use-fixtures]]
             [emmy.complex :as c]
+            [emmy.expression :as e]
             [emmy.expression.analyze :as a]
             [emmy.generic :as g]
             [emmy.matrix :as m]
@@ -62,7 +63,7 @@
   (is (= '(* x y z) (simplify-expression '(* 1 x y z))))
   (is (= '(+ x y) (simplify-expression '(/ (* 2 (+ x y)) 2))))
   (is (= '(+ (* (/ 1 2) x) (* (/ 1 2) y))
-         (v/freeze
+         (g/freeze
           (simplify-expression '(/ (+ x y) 2))))))
 
 (deftest structures
@@ -151,6 +152,17 @@
     (is (= '(log x) (g/simplify (g/log 'x))))
     (is (= '(exp x) (g/simplify (g/exp 'x)))))
 
+  (testing "symbols vs. constants"
+    (let [->exp #(e/make-literal ::e/numeric %)]
+      (is (= '(floor x) (g/simplify (g/floor 'x))))
+      (is (= 3 (g/simplify (g/floor (->exp 3.14)))))
+      (is (= '(ceiling x) (g/simplify (g/ceiling 'x))))
+      (is (= 4 (g/simplify (g/ceiling (->exp 3.14)))))
+      (is (= '(integer-part x) (g/simplify (g/integer-part 'x))))
+      (is (= 3 (g/simplify (g/integer-part (->exp 3.14)))))
+      (is (= '(fractional-part x) (g/simplify (g/fractional-part 'x))))
+      (is (= (- 3.14 3) (g/simplify (g/fractional-part (->exp 3.14)))))))
+
   (testing "zero/one elimination"
     (is (= 'x (g/+ 0 'x)))
     (is (= 'x (g/* 1 'x)))
@@ -164,16 +176,16 @@
     (is (= 'x (g/* 'x 1.0)))
     (is (= 'x (g/divide 'x 1.0)))
     (is (= 'x (g/divide 'x 1)))
-    (is (v/zero? (g/divide 0 'x)))
+    (is (g/zero? (g/divide 0 'x)))
     (is (= 0 (g/* 0 'x)))
     (is (= 0 (g/* 'x 0)))
     (is (thrown? #?(:clj ArithmeticException :cljs js/Error)
                  (g/divide 'x 0))))
 
   (testing "symbolic moves"
-    (is (v/one? (g/expt 'x 0)))
+    (is (g/one? (g/expt 'x 0)))
     (is (= 'x (g/gcd 'x 'x)))
-    (is (v/one? (g/expt 1 'x)))
+    (is (g/one? (g/expt 1 'x)))
     (is (= (g/negate 'x) (g/- 0 'x)))))
 
 (deftest matrix-tests
@@ -183,7 +195,7 @@
       (is (= '(matrix-by-rows
                [(+ (* a e) (* b g)) (+ (* a f) (* b h))]
                [(+ (* c e) (* d g)) (+ (* c f) (* d h))])
-             (v/freeze
+             (g/freeze
               (g/simplify (g/* M S)))))))
 
   (testing "div"
@@ -192,7 +204,7 @@
       (is (= '(up
                (/ (+ (* -1 b y) (* d x)) (+ (* a d) (* -1 b c)))
                (/ (+ (* a y) (* -1 c x)) (+ (* a d) (* -1 b c))))
-             (v/freeze
+             (g/freeze
               (g/simplify
                (g/divide u M)))))))
 

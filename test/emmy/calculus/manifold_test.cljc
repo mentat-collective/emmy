@@ -14,13 +14,12 @@
             [emmy.simplify :refer [hermetic-simplify-fixture]]
             [emmy.structure :refer [up]]
             [emmy.util :as u]
-            [emmy.value :as v]
             [same.core :refer [ish?]]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 
 (def s-freeze
-  (comp v/freeze g/simplify))
+  (comp g/freeze g/simplify))
 
 (defn rt
   "Round trip the supplied coordinates through the supplied `coordinate-system`."
@@ -176,7 +175,7 @@
 
   (checking "R2-rect->polar" 100 [x (gen/fmap #(g/modulo % 1000) sg/real)
                                   y (gen/fmap #(g/modulo % 1000) sg/real)]
-            (when-not (and (v/zero? x) (v/zero? y))
+            (when-not (and (g/zero? x) (g/zero? y))
               (let [r     (g/abs (up x y))
                     theta (g/atan y x)]
                 (is (= (up r theta)
@@ -191,6 +190,18 @@
            (->> (up 'ρ 'θ)
                 (m/coords->point m/R2-polar)
                 (m/point->coords m/R2-rect)))))
+
+  (testing "Spherical singular coordinates throw"
+    (is (thrown? #?(:clj IllegalStateException :cljs js/Error)
+                 (->> (up 0 0 0)
+                      (m/coords->point m/R3-rect)
+                      (m/point->coords m/R3-spherical)))))
+
+  (testing "Spacetime singular coordinates throw"
+    (is (thrown? #?(:clj clojure.lang.ExceptionInfo :cljs js/Error)
+                 (->> (up 0 0 0 0)
+                      (m/coords->point m/spacetime-rect)
+                      (m/point->coords m/spacetime-sphere)))))
 
   (checking "R3-rect" 100 [coords (sg/structure1 sg/real 3)]
             (check-coord-system m/R3-rect coords)
@@ -405,6 +416,7 @@
   (roundtrips? m/S3-spherical (up 'a 'b 'c))
   (roundtrips? m/S3-tilted (up 'a 'b 'c))
 
+
   (testing "S3-{spherical,tilted}"
     (is (= '(up (atan
                  (sqrt
@@ -463,23 +475,27 @@
   (check-manifold-family m/SO3-type)
   (check-manifold m/SO3)
 
-  (testing "SO(3)"
-    (roundtrips? m/alternate-angles (up 'theta 'phi 'psi))
-    (roundtrips? m/Euler-angles (up 'theta 'phi 'psi))
+(testing "SO(3)"
+  (roundtrips? m/alternate-angles (up 'theta 'phi 'psi))
+  (roundtrips? m/Euler-angles (up 'theta 'phi 'psi))
 
-    (is (= '(up theta phi psi)
-           (s-freeze
-            ((f/compose (m/chart m/Euler-angles)
-                        (m/point m/alternate-angles)
-                        (m/chart m/alternate-angles)
-                        (m/point m/Euler-angles))
-             (up 'theta 'phi 'psi)))))
+  (is (= '(up theta phi psi)
+         (s-freeze
+          ((f/compose (m/chart m/Euler-angles)
+                      (m/point m/alternate-angles)
+                      (m/chart m/alternate-angles)
+                      (m/point m/Euler-angles))
+           (up 'theta 'phi 'psi)))))
 
-    (is (= '(up (asin (* (sin theta) (cos psi)))
-                (atan (+ (* (sin phi) (cos theta) (cos psi)) (* (cos phi) (sin psi)))
-                      (+ (* (cos theta) (cos phi) (cos psi)) (* -1 (sin phi) (sin psi))))
-                (atan (* -1 (sin theta) (sin psi)) (cos theta)))
-           (s-freeze
-            ((f/compose (m/chart m/alternate-angles)
-                        (m/point m/Euler-angles))
-             (up 'theta 'phi 'psi)))))))
+  (is (= '(up (asin (* (sin theta) (cos psi)))
+              (atan (+ (* (sin phi) (cos theta) (cos psi)) (* (cos phi) (sin psi)))
+                    (+ (* (cos theta) (cos phi) (cos psi)) (* -1 (sin phi) (sin psi))))
+              (atan (* -1 (sin theta) (sin psi)) (cos theta)))
+         (s-freeze
+          ((f/compose (m/chart m/alternate-angles)
+                      (m/point m/Euler-angles))
+           (up 'theta 'phi 'psi)))))
+
+  (is (thrown? #?(:clj java.lang.AssertionError :cljs js/Error)
+               (->> (up 0 0 0)
+                    (m/coords->point m/Euler-angles))))))

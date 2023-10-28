@@ -19,13 +19,12 @@
             [emmy.mechanics.lagrange :refer [osculating-path]]
             [emmy.operator :as o]
             [emmy.simplify :refer [hermetic-simplify-fixture]]
-            [emmy.structure :as s :refer [up down]]
-            [emmy.value :as v]))
+            [emmy.structure :as s :refer [up down]]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 
 (def simplify
-  (comp v/freeze g/simplify))
+  (comp g/freeze g/simplify))
 
 (def M (m/make-manifold m/Rn 2))
 (def M-rect (m/coordinate-system-at M :rectangular :origin))

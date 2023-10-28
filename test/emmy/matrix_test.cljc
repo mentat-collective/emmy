@@ -19,47 +19,47 @@
 
 (deftest value-protocol-tests
   (testing "zero?"
-    (is (v/zero? (m/by-rows [0])))
-    (is (v/zero?
+    (is (g/zero? (m/by-rows [0])))
+    (is (g/zero?
          (m/by-rows [0 0 0]
                     [0 0 0]
                     [0 0 0])))
-    (is (not (v/zero? (m/by-rows [1 2 3])))))
+    (is (not (g/zero? (m/by-rows [1 2 3])))))
 
   (testing "zero-like"
     (is (= (m/by-rows [0 0 0])
-           (v/zero-like (m/by-rows [1 2 3]))))
+           (g/zero-like (m/by-rows [1 2 3]))))
     (is (= (m/by-rows [0])
-           (v/zero-like (m/by-rows [1]))))
+           (g/zero-like (m/by-rows [1]))))
 
     (is (= (m/by-rows [0.0] [0.0])
-           (v/zero-like (m/by-rows [1.5] [2.5])))
+           (g/zero-like (m/by-rows [1.5] [2.5])))
         "zero-like preserves types"))
 
   (testing "one? vs identity?"
     (let [I10 (m/I 10)]
-      (is (not (v/one? I10))
+      (is (not (g/one? I10))
           "one? implies that multiplying by this acts as identity, which is only
           true for matrices of the correct shape (not for scalars!) so one? will
           always return false for a matrix.")
 
-      (is (v/identity? I10)
+      (is (g/identity? I10)
           "identity? exists to check for an identity matrix.")))
 
   (testing "one-like"
     (is (= (m/I 3)
-           (v/one-like
+           (g/one-like
             (m/by-rows [1 2 3] [4 5 6] [7 8 9]))))
     (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
-                 (v/one-like (m/by-rows [1 2 3 4])))
+                 (g/one-like (m/by-rows [1 2 3 4])))
         "one-like is only supported on square matrices."))
 
   (testing "identity-like"
     (is (= (m/I 3)
-           (v/identity-like
+           (g/identity-like
             (m/by-rows [1 2 3] [4 5 6] [7 8 9]))))
     (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
-                 (v/identity-like (m/by-rows [1 2 3 4])))
+                 (g/identity-like (m/by-rows [1 2 3 4])))
         "identity-like is only supported on square matrices."))
 
   (testing "numerical? returns false, always"
@@ -69,10 +69,10 @@
     (is (not (v/numerical? (m/by-rows [0 1 (g// 3 2)])))))
 
   (testing "exact?"
-    (is (v/exact? (m/by-rows [1] [2])))
-    (is (not (v/exact? (m/by-rows [1.2] [3] [4]))))
-    (is (not (v/exact? (m/by-rows [0] [0] [0.00001]))))
-    (is (v/exact? (m/by-rows [0 1 (g// 3 2)]))))
+    (is (g/exact? (m/by-rows [1] [2])))
+    (is (not (g/exact? (m/by-rows [1.2] [3] [4]))))
+    (is (not (g/exact? (m/by-rows [0] [0] [0.00001]))))
+    (is (g/exact? (m/by-rows [0 1 (g// 3 2)]))))
 
   (testing "kind"
     (is (= ::m/row-matrix (v/kind (m/by-rows [1 2]))))
@@ -177,15 +177,15 @@
              (M 2)))
 
       (is (= (m/I 2)
-             ((v/identity-like M) 2))
+             ((g/identity-like M) 2))
           "identity-like on a matrix of functions returns a new matrix of fns.")
 
       (is (= (m/I 2)
-             ((v/one-like M) 2))
+             ((g/one-like M) 2))
           "one-like on a matrix of functions returns a new matrix of fns.")
 
       (is (= (m/make-zero 2)
-             ((v/zero-like M) 2))
+             ((g/zero-like M) 2))
           "one-like on a matrix of functions returns a new matrix of fns.")))
 
   (checking "by-rows == (comp transpose by-cols), vice versas" 100
@@ -259,12 +259,19 @@
   (checking "make-zero" 100 [m (gen/choose 0 10)
                              n (gen/choose 0 10)]
             (let [M (m/make-zero m n)]
-              (is (v/zero? M))
+              (is (g/zero? M))
               (is (= m (m/num-rows M)))
               (is (= n (m/num-cols M)))))
 
   (testing "make-diagonal"
     (is (= (m/I 10) (m/make-diagonal 10 1))))
+
+  (testing "symmetric?"
+    (is (m/symmetric? (m/by-rows [1 2] [2 1])))
+    (is (not (m/symmetric? (m/by-rows [1 2] [-2 1])))))
+
+  (testing "empty"
+    (is (g/zero? (empty (m/by-rows [1 2] [2 1])))))
 
   (checking "make-diagonal" 100
             [vs (gen/vector sg/real 1 20)]
@@ -277,17 +284,17 @@
               (is (= vs (m/diagonal M)))
               (is (= vs (m/diagonal M)))))
 
-  (checking "make-diagonal, v/identity? v/one?" 100
+  (checking "make-diagonal, g/identity? g/one?" 100
             [v (gen/vector (gen/return 1) 1 20)]
             (let [M (m/make-diagonal v)]
-              (is (v/identity? M))
-              (is (not (v/identity? (g/* 2 M))))
+              (is (g/identity? M))
+              (is (not (g/identity? (g/* 2 M))))
 
-              (is (not (v/one? M))
+              (is (not (g/one? M))
                   "matrices don't act as one; they need to maintain their
                   structure when multiplied by constants.")
 
-              (is (not (v/one? (g/* 2 M))))))
+              (is (not (g/one? (g/* 2 M))))))
 
   (let [M (m/by-rows (list 1 2 3)
                      (list 4 5 6))
@@ -299,11 +306,11 @@
     (is (= '(matrix-by-rows
              [1 2 3]
              [4 5 6])
-           (v/freeze M)))
+           (g/freeze M)))
     (is (= (m/by-rows [1 4] [2 5] [3 6]) (g/transpose M)))
-    (is (= (m/by-rows [0 0 0] [0 0 0]) (v/zero-like M)))
-    (is (= (m/by-rows [1 0 0] [0 1 0] [0 0 1]) (v/one-like A)))
-    (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error) (v/one-like M)))
+    (is (= (m/by-rows [0 0 0] [0 0 0]) (g/zero-like M)))
+    (is (= (m/by-rows [1 0 0] [0 1 0] [0 0 1]) (g/one-like A)))
+    (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error) (g/one-like M)))
     (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error) (m/by-rows [1 2 3] [4 5])))
     (is (thrown? #?(:clj AssertionError :cljs js/Error) (m/by-rows)))
     (is (= 5 (m/get-in M [1 1])))
@@ -357,7 +364,7 @@
     (is (not (m/diagonal?
               (m/generate 3 3 +))))
 
-    (is (v/zero? (m/by-rows [0 0]
+    (is (g/zero? (m/by-rows [0 0]
                             [0 0])))))
 
 (deftest literal-matrix-creation
@@ -458,7 +465,7 @@
             100 [[l inner r] (gen/let [rows (gen/choose 1 5)
                                        cols (gen/choose 1 5)]
                                (<l|:inner:|r> rows cols))]
-            (is (v/zero?
+            (is (g/zero?
                  (g/- (m/s:transpose l inner r)
                       (s/transpose-outer inner)))))
 
@@ -474,9 +481,9 @@
               (if (empty? r)
                 (testing "in this case, the right side is fully collapsed and
                 empty and the left side contains a single empty structure."
-                  (do (is (v/zero? (m/s:transpose l inner r)))
+                  (do (is (g/zero? (m/s:transpose l inner r)))
                       (is (empty? (s/transpose-outer inner)))))
-                (is (v/zero?
+                (is (g/zero?
                      (g/- (m/s:transpose l inner r)
                           (s/transpose-outer inner)))
                     "left side empty generates a compatible, zero entry"))))
@@ -830,7 +837,7 @@
 (defspec a*ainv=i
   (gen/let [n (gen/choose 1 5)]
     (prop/for-all [A (sg/square-matrix n)]
-                  (or (v/zero? (g/determinant A))
+                  (or (g/zero? (g/determinant A))
                       (= (m/I n)
                          (g/* (g/invert A) A)
                          (g/* A (g/invert A)))))))
@@ -852,7 +859,7 @@
 
 (deftest naive-vs-determinant-tests
   (let [M (m/literal-matrix 'x 6)]
-    (is (v/zero?
+    (is (g/zero?
          (g/simplify
           (g/- (m/determinant M)
                (naive-determinant M))))
@@ -874,7 +881,7 @@
 
 (deftest naive-vs-invert-tests
   (let [M (m/literal-matrix 'x 4)]
-    (is (v/zero?
+    (is (g/zero?
          (g/simplify
           (g/- (m/invert M)
                (naive-invert M))))
@@ -992,7 +999,7 @@
     with the denominator." 100
               [s (sg/up1 sg/any-integral 5)
                x (gen/fmap (fn [x]
-                             (if (v/zero? x) 1 x))
+                             (if (g/zero? x) 1 x))
                            sg/any-integral)]
               (is (= s (g/* x (g// s x)))))
 
@@ -1198,7 +1205,7 @@
            (g/* d M))
         "multiplying by down directly matches conversion to matrix first.")
 
-    (is (v/zero?
+    (is (g/zero?
          (g/simplify
           (g/- (g/transpose (g/* M v))
                (g/* (g/transpose v)

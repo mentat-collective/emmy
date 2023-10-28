@@ -12,6 +12,7 @@
                      Rx Ry Rz]]
             [emmy.examples.driven-pendulum :as driven]
             [emmy.examples.pendulum :as pendulum]
+            [emmy.generic :as g]
             [emmy.mechanics.lagrange :as L]
             [emmy.simplify :refer [hermetic-simplify-fixture]]
             [emmy.value :as v :refer [within]]))
@@ -70,7 +71,7 @@
       (is (= '(+ (* (/ 1 2) m (expt ((D x) t) 2))
                  (* (/ 1 2) m (expt ((D y) t) 2))
                  (* (/ 1 2) m (expt ((D z) t) 2)))
-             (v/freeze
+             (g/freeze
               (simplify ((compose (L/L-free-particle 'm) (e/Gamma q)) 't)))))
 
       ;; p. 20
@@ -179,7 +180,7 @@
                (* (/ 1 2) m (expt r 2) (expt φdot 2))
                (* (/ 1 2) m (expt rdot 2))
                (* -1 (U r)))
-             (v/freeze
+             (g/freeze
               (simplify ((L-alternate-central-polar 'm U)
                          (->local 't (up 'r 'φ) (up 'rdot 'φdot)))))))
 
@@ -217,7 +218,7 @@
                    (* g l m (cos θ))
                    (* -1 g m (y_s t))
                    (* (/ 1 2) m (expt ((D y_s) t) 2)))
-               (v/freeze
+               (g/freeze
                 (simplify ((L-pend2 'm 'l 'g y_s) (->local 't 'θ 'θdot))))))))))
 
 (deftest ^:long section-1-7-1
@@ -243,7 +244,7 @@
              ((harmonic-state-derivative 2. 1.) (up 0 (up 1. 2.) (up 3. 4.)))))
 
       (is (= '(1 3.0 4.0 (/ -1 2) -1.0)
-             (v/freeze
+             (g/freeze
               (flatten ((harmonic-state-derivative 2. 1.)
                         (up 0 (up 1. 2.) (up 3. 4.)))))))
       ;; p. 72
@@ -328,7 +329,7 @@
                  (* (/ 1 2) m (expt r 2) (expt θdot 2))
                  (* (/ 1 2) m (expt rdot 2))
                  (V r))
-             (v/freeze
+             (g/freeze
               (simplify ((e/Lagrangian->energy (L3-central 'm V)) spherical-state)))))
       (let [L (L/L-central-rectangular 'm U)
             F-tilde (fn [angle-x angle-y angle-z]

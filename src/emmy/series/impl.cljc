@@ -10,7 +10,6 @@
             [emmy.numbers]
             [emmy.special.factorial :as sf]
             [emmy.util :as u]
-            [emmy.value :as v]
             [mentat.clerk-utils :refer [->clerk-only]]))
 
 ;; # Power Series
@@ -42,7 +41,7 @@
 ;; A 'series' is an infinite sequence of numbers, represented by Clojure's lazy
 ;; sequence. First, a function `->series` that takes some existing sequence,
 ;; finite or infinite, and coerces it to an infinite seq by concatenating it
-;; with an infinite sequence of zeros. (We use `v/zero-like` so that everything
+;; with an infinite sequence of zeros. (We use `g/zero-like` so that everything
 ;; plays nicely with generic arithmetic.)
 
 (defn ->series
@@ -50,7 +49,7 @@
   remainder of the series will be filled with the zero-value
   corresponding to the first of the given values."
   [xs]
-  (lazy-cat xs (repeat (v/zero-like (first xs)))))
+  (lazy-cat xs (repeat (g/zero-like (first xs)))))
 
 ;; This works as expected:
 
@@ -166,14 +165,14 @@
 (defn seq:* [f g]
   (letfn [(step [f]
             (lazy-seq
-             (if (v/zero? (first f))
+             (if (g/zero? (first f))
                (cons (first f) (step (rest f)))
                (let [f*g  (g/mul (first f) (first g))
                      f*G1 (c*seq (first f) (rest g))
                      F1*G (step (rest f))]
                  (cons f*g (seq:+ f*G1 F1*G))))))]
     (lazy-seq
-     (if (v/zero? (first g))
+     (if (g/zero? (first g))
        (cons (first g) (seq:* f (rest g)))
        (step f)))))
 
@@ -220,13 +219,13 @@
   (lazy-seq
    (let [f0 (first f) fs (rest f)
          g0 (first g) gs (rest g)]
-     (cond (and (v/zero? f0) (v/zero? g0))
+     (cond (and (g/zero? f0) (g/zero? g0))
            (div fs gs)
 
-           (v/zero? f0)
+           (g/zero? f0)
            (cons f0 (div fs g))
 
-           (v/zero? g0)
+           (g/zero? g0)
            (u/arithmetic-ex "ERROR: denominator has a zero constant term")
 
            :else (let [q (g/div f0 g0)]
@@ -333,7 +332,7 @@
             (lazy-seq
              ;; TODO I don't understand why we get a StackOverflow if I move
              ;; this assertion out of the `letfn`.
-             (assert (v/zero? (first g)))
+             (assert (g/zero? (first g)))
              (let [[f0 & fs] f
                    gs (rest g)
                    tail (seq:* gs (step fs))]
@@ -369,7 +368,7 @@
 ;; $R$ thanks to the stream-based approach:
 
 (defn revert [f]
-  {:pre [(v/zero? (first f))]}
+  {:pre [(g/zero? (first f))]}
   (letfn [(step [f]
             (lazy-seq
              (let [F1   (rest f)
@@ -471,8 +470,8 @@
 ;; Here it is in Clojure:
 
 (defn sqrt [[f1 & [f2 & fs] :as f]]
-  (if (and (v/zero? f1)
-           (v/zero? f2))
+  (if (and (g/zero? f1)
+           (g/zero? f2))
     (cons f1 (sqrt fs))
     (let [const (g/sqrt f1)
           step  (fn step [g]

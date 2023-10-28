@@ -5,7 +5,7 @@
   working with strict and lazy sequences."
   (:require [clojure.pprint :as pp]
             [emmy.generic :as g]
-            [emmy.value :as v]))
+            [emmy.util :as u]))
 
 (defn seq-print
   "Realizes, simplifies and prints `n` elements from the supplied sequence `xs`."
@@ -115,7 +115,7 @@
                tolerance
                convergence-fn]
         :or {minterms       2
-             tolerance      v/sqrt-machine-epsilon
+             tolerance      u/sqrt-machine-epsilon
              convergence-fn (close-enuf? tolerance)}}]
    (if (empty? xs)
      {:converged? false

@@ -7,8 +7,7 @@
             [emmy.mechanics.lagrange :as l]
             [emmy.mechanics.noether :as n]
             [emmy.mechanics.rotation :as r]
-            [emmy.structure :as s :refer [up]]
-            [emmy.value :as v]))
+            [emmy.structure :as s :refer [up]]))
 
 (defn F-tilde [theta phi psi]
   (comp (r/Rx theta)
@@ -20,7 +19,7 @@
   (is (= '(down (+ (* -1 m vy z) (* m vz y))
                 (+ (* m vx z) (* -1 m vz x))
                 (+ (* -1 m vx y) (* m vy x)))
-         (v/freeze
+         (g/freeze
           (g/simplify
            ((n/Noether-integral
              (l/L-central-rectangular 'm (f/literal-function 'Vr))

@@ -26,7 +26,7 @@
 (use-fixtures :each hermetic-simplify-fixture)
 
 (def simplify
-  (comp v/freeze g/simplify))
+  (comp g/freeze g/simplify))
 
 (deftest fn-iperturbed-tests
   (testing "tag-active? responds appropriately"
@@ -152,7 +152,7 @@
       (is (o/operator? ((D f) 'x))
           "if f returns an operator, (D f) does too.")
       (is (= '(sin y)
-             (v/freeze
+             (g/freeze
               (((D f) 'x) 'y)))
           "derivative pushes into the operator's fn.."))))
 
@@ -363,8 +363,8 @@
              (simplify ((D g) 'x 'y)))))
 
     (testing "D of zero-like"
-      (is (= 0 ((v/zero-like f) 'x)))
-      (is (= 0 ((D (v/zero-like f)) 'x))))))
+      (is (= 0 ((g/zero-like f) 'x)))
+      (is (= 0 ((D (g/zero-like f)) 'x))))))
 
 (deftest complex-derivatives
   (let [f (fn [z] (* c/I (sin (* c/I z))))]
@@ -491,14 +491,14 @@
 
   (testing "D can handle functions of varying arities"
     (let [f100dd (fn [x n acc]
-                   (if (v/zero? n)
+                   (if (g/zero? n)
                      acc
                      (recur x (dec n) (sin (+ x acc)))))
           f100d  (fn [x] (f100dd x 100 x))
           f100e  (fn f100e
                    ([x] (f100e x 100 x))
                    ([x n acc]
-                    (if (v/zero? n)
+                    (if (g/zero? n)
                       acc
                       (recur x (dec n) (sin (+ x acc))))))
           f100ea (f/with-arity f100e [:exactly 1])
@@ -555,7 +555,7 @@
     (let [S (s/up 't (s/up 'x 'y) (s/down 'p_x 'p_y))
           present (fn [expr]
                     (-> (simplify expr)
-                        (x/substitute (v/freeze S) 'p)))]
+                        (x/substitute (g/freeze S) 'p)))]
       (is (= '(matrix-by-rows
                [(((partial 0) H) p)
                 (((partial 1 0) H) p)
@@ -576,7 +576,7 @@
           S (s/up 't (s/up 'x 'y) (s/down 'px 'py))
           present (fn [expr]
                     (-> (simplify expr)
-                        (x/substitute (v/freeze S) 'p)))]
+                        (x/substitute (g/freeze S) 'p)))]
       (is (= '(matrix-by-rows [(((partial 0) C↑0) p)
                                (((partial 1 0) C↑0) p)
                                (((partial 1 1) C↑0) p)
@@ -713,7 +713,7 @@
            (* (/ 7 256) (expt dx 5)))
          (simplify
           (take 6 ((d/taylor-series
-                    (fn [x] (g/sqrt (+ (v/one-like x) x)))
+                    (fn [x] (g/sqrt (+ (g/one-like x) x)))
                     0) 'dx))))))
 
 (deftest derivative-of-matrix
@@ -1222,13 +1222,13 @@
 
       ;; Calling f1 or f2 separately work as expected:
       (is (= '(((partial 0) a) t t)
-             (v/freeze
+             (g/freeze
               (((D f) 't) (fn [f1 _] (f1 't)))))
           "`a` received `x` as its first arg, so we see `(partial 0)`")
 
       (let [g (af/literal-function 'g)]
         (is (= '((D g) t)
-               (v/freeze
+               (g/freeze
                 (((D f) 't) (fn [_ f2] (f2 g)))))
             "derivative of (g x) == ((D g) x)."))
 
@@ -1508,7 +1508,7 @@
                          (* -8 (sin (* 3 a)) (cos (* 4 b)))))]
            (->> (d/symbolic-taylor-series f (s/up 'a 'b))
                 (take 3)
-                (v/freeze)))
+                (g/freeze)))
         "coefficients with structural input"))
 
   (let [G (af/literal-function 'G '(-> (UP Real Real) Real))]
@@ -1523,7 +1523,7 @@
                (* (/ 1 2) (((expt (partial 1) 2) G) (up a b)))))]
            (->> (d/symbolic-taylor-series G (s/up 'a 'b))
                 (take 3)
-                (v/freeze)))
+                (g/freeze)))
         "abstract function, coefficients with structural input"))
 
   (let [H (af/literal-function 'H '(-> (X Real Real) Real))]
@@ -1560,7 +1560,7 @@
                 (* (/ 1 6) (((expt (partial 1) 3) H) a b))))))
            (->> (d/symbolic-taylor-series H 'a 'b)
                 (take 4)
-                (v/freeze)))
+                (g/freeze)))
         "coefficients with a multi-arg function"))
 
   (is (v/= [0 1 0 0]

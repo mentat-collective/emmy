@@ -19,7 +19,7 @@
 (use-fixtures :each hermetic-simplify-fixture)
 
 (def simplify
-  (comp v/freeze g/simplify))
+  (comp g/freeze g/simplify))
 
 (deftest basic-tests
   (checking "basic accessors and state creation" 100

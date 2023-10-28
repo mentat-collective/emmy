@@ -43,20 +43,7 @@
   (numerator [_] u)
   (denominator [_] v)
 
-  v/Value
-  (zero? [_] (v/zero? u))
-  (one? [_] (and (v/one? u) (v/one? v)))
-  (identity? [_] (and (v/identity? u) (v/one? v)))
-
-  (zero-like [_] (v/zero-like u))
-  (one-like [_] (v/one-like u))
-  (identity-like [_]
-    (RationalFunction. arity
-                       (v/identity-like u)
-                       (v/one-like v)
-                       m))
-  (exact? [_] false)
-  (freeze [_] (list '/ (v/freeze u) (v/freeze v)))
+  v/IKind
   (kind [_] ::rational-function)
 
   #?@(:clj
@@ -283,8 +270,8 @@
   NOTE: The behavior of this mildly-opinionated constructor is similar
   to [[polynomial/terms->polynomial]]"
   [arity u v]
-  (cond (v/zero? u) 0
-        (v/one? v)  u
+  (cond (g/zero? u) 0
+        (g/one? v)  u
 
         (or (p/polynomial? u)
             (p/polynomial? v))
@@ -323,7 +310,7 @@
   The result can be either a [[RationalFunction]], [[polynomial/Polynomial]] or
   a `(g/div u v)`. See [[make-reduced]] for the details."
   [u v]
-  (when (v/zero? v)
+  (when (g/zero? v)
     (u/arithmetic-ex
      (str "Can't form rational function with zero denominator: " v)))
   (let [a (check-same-arity u v)
@@ -337,12 +324,12 @@
                          (p/leading-coefficient v)))
                  factor
                  (g/negate factor))
-        [u' v'] (if (v/one? factor)
+        [u' v'] (if (g/one? factor)
                   [u v]
                   [(g/mul factor u)
                    (g/mul factor v)])
         g (g/gcd u' v')
-        [u'' v''] (if (v/one? g)
+        [u'' v''] (if (g/one? g)
                     [u' v']
                     [(p/evenly-divide u' g)
                      (p/evenly-divide v' g)])]
@@ -394,7 +381,7 @@
         u-d  (r/denominator u)
         v-n  (r/numerator v)
         v-d  (r/denominator v)
-        [n d] (if (and (v/one? u-d) (v/one? v-d))
+        [n d] (if (and (g/one? u-d) (g/one? v-d))
                 [(poly-op u-n v-n) 1]
                 (uv-op u-n u-d v-n v-d))]
     (make-reduced a n d)))
@@ -418,10 +405,10 @@
   creating large products."
   [u u' v v']
   (letfn [(divide-through [n d]
-            (if (v/zero? n)
+            (if (g/zero? n)
               [0 1]
               (let [g (g/gcd d n)]
-                (if (v/one? g)
+                (if (g/one? g)
                   [n d]
                   [(p/evenly-divide n g)
                    (p/evenly-divide d g)]))))]
@@ -430,7 +417,7 @@
       (let [n (p/add u v)]
         (divide-through n u'))
       (let [g (g/gcd u' v')]
-        (if (v/one? g)
+        (if (g/one? g)
           ;; Denominators are relatively prime:
           (divide-through
            (p/add (p/mul u v')
@@ -457,7 +444,7 @@
   "Returns the `[numerator, denominator]` pair resulting from rational function
   multiplication of `(/ u u')` and `(/ v v')`."
   [u u' v v']
-  (if (or (v/zero? u) (v/zero? v))
+  (if (or (g/zero? u) (g/zero? v))
     [0 1]
     (let [d1 (g/gcd u v')
           d2 (g/gcd u' v)
@@ -508,8 +495,8 @@
   of [[RationalFunction]], [[polynomial/Polynomial]] or coefficients of neither
   type on either side."
   [r s]
-  (cond (v/zero? r) s
-        (v/zero? s) r
+  (cond (g/zero? r) s
+        (g/zero? s) r
         :else (binary-combine r s p/add uv:+)))
 
 (defn sub
@@ -517,8 +504,8 @@
   handling of [[RationalFunction]], [[polynomial/Polynomial]] or coefficients of
   neither type on either side."
   [r s]
-  (cond (v/zero? r) (negate s)
-        (v/zero? s) r
+  (cond (g/zero? r) (negate s)
+        (g/zero? s) r
         :else (binary-combine r s p/sub uv:-)))
 
 (defn mul
@@ -526,10 +513,10 @@
   handling of [[RationalFunction]], [[polynomial/Polynomial]] or coefficients of
   neither type on either side."
   [r s]
-  (cond (v/zero? r) r
-        (v/zero? s) s
-        (v/one? r) s
-        (v/one? s) r
+  (cond (g/zero? r) r
+        (g/zero? s) s
+        (g/one? r) s
+        (g/one? s) r
         :else (binary-combine r s p/mul uv:*)))
 
 (defn square
@@ -580,7 +567,7 @@
     (g/invert r)
     (let [u (bare-u r)
           v (bare-v r)]
-      (cond (v/zero? u)
+      (cond (g/zero? u)
             (u/arithmetic-ex
              "Can't form rational function with zero denominator.")
 
@@ -691,7 +678,7 @@
   between [[RationalFunction]], [[polynomial/Polynomial]] and coefficient
   instances."
   (assoc p/operator-table
-         '/ (ua/group g/div g/mul g/invert 1 v/zero?)
+         '/ (ua/group g/div g/mul g/invert 1 g/zero?)
          'invert g/invert))
 
 (def ^:no-doc operators-known
@@ -844,6 +831,18 @@
 (defbinary g/solve-linear-right div)
 (defbinary g/solve-linear (fn [l r] (div r l)))
 (defbinary g/gcd gcd)
+
+(defmethod g/zero? [::rational-function] [^RationalFunction a] (g/zero? (.-u a)))
+(defmethod g/one? [::rational-function] [^RationalFunction a] (and (g/one? (.-u a)) (g/one? (.-v a))))
+(defmethod g/identity? [::rational-function] [^RationalFunction a] (and (g/identity? (.-u a)) (g/one? (.-v a))))
+(defmethod g/zero-like [::rational-function] [^RationalFunction a] (g/zero-like (.-u a)))
+(defmethod g/one-like [::rational-function] [^RationalFunction a] (g/one-like (.-u a)))
+(defmethod g/identity-like [::rational-function] [^RationalFunction a]
+  (RationalFunction. (.-arity a)
+                     (g/identity-like (.-u a))
+                     (g/one-like (.-v a))
+                     (.-m a)))
+(defmethod g/freeze [::rational-function] [^RationalFunction a] (list '/ (g/freeze (.-u a)) (g/freeze (.-v a))))
 
 (defmethod g/negative? [::rational-function] [a] (negative? a))
 (defmethod g/abs [::rational-function] [a] (abs a))

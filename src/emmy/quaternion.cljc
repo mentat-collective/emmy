@@ -1,8 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
 ^#:nextjournal.clerk
-{:toc true
- :visibility :hide-ns}
+  {:toc true
+   :visibility :hide-ns}
 (ns emmy.quaternion
   "This namespace provides a number of functions and constructors for working
   with [[Quaternion]] instances in Clojure and ClojureScript, and
@@ -103,7 +103,7 @@
 ;; - The `D` operator should work on quaternions, so derivatives of functions
 ;;   that return quaternions work well.
 ;;
-;; - All [[emmy.value/Value]] functions should work well.
+;; - All [[emmy.generic]] functions should work well.
 
 (deftype Quaternion [r i j k m]
   f/IArity
@@ -132,29 +132,7 @@
      (d/extract-tangent k tag)
      m))
 
-  v/Value
-  (zero? [this] (zero? this))
-  (one? [this] (one? this))
-  (identity? [this] (one? this))
-
-  (zero-like [_]
-    (Quaternion. (v/zero-like r) 0 0 0 m))
-  (one-like [_]
-    (Quaternion. (v/one-like r) 0 0 0 m))
-  (identity-like [_]
-    (Quaternion. (v/one-like r) 0 0 0 m))
-
-  (exact? [_]
-    (and (v/exact? r)
-         (v/exact? i)
-         (v/exact? j)
-         (v/exact? k)))
-  (freeze [_]
-    (list 'quaternion
-          (v/freeze r)
-          (v/freeze i)
-          (v/freeze j)
-          (v/freeze k)))
+  v/IKind
   (kind [_] ::quaternion)
 
   #?@(:clj
@@ -493,28 +471,28 @@
   "Returns true if the quaternion `q` has zero entries for all non-real fields,
   false otherwise."
   [q]
-  (and (v/zero? (get-i q))
-       (v/zero? (get-j q))
-       (v/zero? (get-k q))))
+  (and (g/zero? (get-i q))
+       (g/zero? (get-j q))
+       (g/zero? (get-k q))))
 
-(defn zero?
+(defn- zero?
   "Returns true if `q` is a quaternion with zeros in all coefficient positions,
   false otherwise."
   [q]
-  (and (real? q) (v/zero? (get-r q))))
+  (and (real? q) (g/zero? (get-r q))))
 
-(defn one?
+(defn- one?
   "Returns true if `q` is a [[real?]] quaternion with a one-like coefficient in
   the real position, false otherwise."
   [q]
-  (and (real? q) (v/one? (get-r q))))
+  (and (real? q) (g/one? (get-r q))))
 
 (defn pure?
   "Returns true if the quaternion `q` has a zero real entry, false otherwise.
 
   A 'pure' quaternion is sometimes called an 'imaginary' quaternion."
   [q]
-  (v/zero? (get-r q)))
+  (g/zero? (get-r q)))
 
 (declare magnitude-sq)
 
@@ -530,7 +508,7 @@
    (let [mag-sq (magnitude-sq q)]
      (if epsilon
        ((v/within epsilon) 1 (g/sqrt mag-sq))
-       (v/one? mag-sq)))))
+       (g/one? mag-sq)))))
 
 (defn eq
   "Returns true if the supplied quaternion `q1` is equal to the value `q2`. The
@@ -564,8 +542,8 @@
           (sc/complex? q2)
           (and (v/= r (sc/real q2))
                (v/= i (sc/imaginary q2))
-               (v/zero? j)
-               (v/zero? k))
+               (g/zero? j)
+               (g/zero? k))
 
           (sequential? q2)
           (and (= (count q2) 4)
@@ -1069,9 +1047,9 @@
   $$"
   [q]
   (let [[r i j k] q]
-    (if (and (v/zero? j)
-             (v/zero? k))
-      (if (v/zero? i)
+    (if (and (g/zero? j)
+             (g/zero? k))
+      (if (g/zero? i)
         (make (g/log r))
         (make (g/log (g/abs [r i]))
               (g/atan i r)
@@ -1099,7 +1077,7 @@
         exp-r (g/exp r)
         v     (three-vector q)
         v-mag (g/abs v)]
-    (if (v/zero? v-mag)
+    (if (g/zero? v-mag)
       (make exp-r 0 0 0)
       (make (g/* exp-r (g/cos v-mag))
             (g/* exp-r (g/sinc v-mag) v)))))
@@ -1472,21 +1450,21 @@
                       q2 (g// q2q3 q3)]
                   (make q0 q1 q2 q3)))
 
-          (not (v/numeric-zero? q0-2s))
+          (not (g/zero? q0-2s))
           (let [q0 (g/sqrt q0-2)
                 q1 (g// q0q1 q0)
                 q2 (g// q0q2 q0)
                 q3 (g// q0q3 q0)]
             (make q0 q1 q2 q3))
 
-          (not (v/numeric-zero? q1-2s))
+          (not (g/zero? q1-2s))
           (let [q1 (g/sqrt q1-2)
                 q0 0
                 q2 (g// q1q2 q1)
                 q3 (g// q1q3 q1)]
             (make q0 q1 q2 q3))
 
-          (not (v/numeric-zero? q2-2s))
+          (not (g/zero? q2-2s))
           (let [q2 (g/sqrt q2-2)
                 q0 0
                 q1 0
@@ -1544,6 +1522,28 @@
 
 ;; ## Generic Method Installation
 ;;
+
+(defmethod g/zero? [::quaternion] [a] (zero? a))
+(defmethod g/one? [::quaternion] [a] (one? a))
+(defmethod g/identity? [::quaternion] [a] (one? a))
+(defmethod g/zero-like [::quaternion] [^Quaternion a]
+  (Quaternion. (g/zero-like (.-r a)) 0 0 0 (.-m a)))
+(defmethod g/one-like [::quaternion] [^Quaternion a]
+  (Quaternion. (g/one-like (.-r a)) 0 0 0 (.-m a)))
+(defmethod g/identity-like [::quaternion] [^Quaternion a]
+  (Quaternion. (g/one-like (.-r a)) 0 0 0 (.-m a)))
+(defmethod g/exact? [::quaternion] [^Quaternion a]
+        (and (g/exact? (.-r a))
+             (g/exact? (.-i a))
+             (g/exact? (.-j a))
+             (g/exact? (.-k a))))
+(defmethod g/freeze [::quaternion] [^Quaternion a]
+        (list 'quaternion
+              (g/freeze (.-r a))
+              (g/freeze (.-i a))
+              (g/freeze (.-j a))
+              (g/freeze (.-k a))))
+
 ;; ### Equality
 ;;
 ;; Because equality is a symmetric relation, these methods arrange their

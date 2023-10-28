@@ -28,13 +28,13 @@
 
     (testing "falling factorial works on unital rings, functions are game!"
       (is (= '(/ 1 (+ (expt x 3) (* 6 (expt x 2)) (* 11 x) 6))
-             (v/freeze
+             (g/freeze
               (g/simplify
                ((sf/falling-factorial g/+ -3) 'x))))
           "negative second arg")
 
       (is (= '(+ (expt x 3) (* -3 (expt x 2)) (* 2 x))
-             (v/freeze
+             (g/freeze
               (g/simplify
                ((sf/falling-factorial g/+ 3) 'x))))
           "positive second arg"))
@@ -90,13 +90,13 @@
 
     (testing "rising factorial works on unital rings, functions are game!"
       (is (= '(/ 1 (+ (expt x 3) (* -6 (expt x 2)) (* 11 x) -6))
-             (v/freeze
+             (g/freeze
               (g/simplify
                ((sf/rising-factorial g/+ -3) 'x))))
           "negative second arg")
 
       (is (= '(+ (expt x 3) (* 3 (expt x 2)) (* 2 x))
-             (v/freeze
+             (g/freeze
               (g/simplify
                ((sf/rising-factorial g/+ 3) 'x))))
           "positive second arg"))

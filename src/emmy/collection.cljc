@@ -1,8 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
 ^#:nextjournal.clerk
-{:toc true
- :visibility :hide-ns}
+  {:toc true
+   :visibility :hide-ns}
 (ns emmy.collection
   "This namespace contains implementations of various Emmy protocols for
   native Clojure collections."
@@ -26,27 +26,23 @@
 ;; ## Vector Implementations
 ;;
 ;; Vectors are implicitly treated as [[emmy.structure/Structure]] instances
-;; with an `up` orientation, and implement [[v/freeze]] identically. They can
+;; with an `up` orientation, and implement [[g/freeze]] identically. They can
 ;; act as `zero?`, but they can't act as `one?` or `identity?`; those are
 ;; reserved for instances that have no effect on multiplication.
 
 (defmethod g/simplify [PersistentVector] [v]
   (mapv g/simplify v))
+(defmethod g/zero-like [PersistentVector] [v]
+  (mapv g/zero-like v))
+(defmethod g/exact? [PersistentVector] [v] (every? g/exact? v))
+(defmethod g/freeze [PersistentVector] [v] `(~'up ~@(map g/freeze v)))
 
 #?(:clj
    (defmethod g/simplify [clojure.lang.APersistentVector$SubVector] [v]
      (mapv g/simplify v)))
 
 (extend-type #?(:clj IPersistentVector :cljs PersistentVector)
-  v/Value
-  (zero? [v] (every? v/zero? v))
-  (one? [_] false)
-  (identity? [_] false)
-  (zero-like [v] (mapv v/zero-like v))
-  (one-like [_] 1)
-  (identity-like [_] 1)
-  (exact? [v] (every? v/exact? v))
-  (freeze [v] `(~'up ~@(map v/freeze v)))
+  v/IKind
   (kind [v] (type v))
 
   ;; Another difference from [[emmy.structure/Structure]] is that a
@@ -68,31 +64,29 @@
 ;; ## Sequences
 ;;
 ;; Sequences can't act as functions or respond to any of
-;; the [[v/zero?]]-and-friends predicates. They pass along the operations that
+;; the [[g/zero?]]-and-friends predicates. They pass along the operations that
 ;; they can implement to their elements via [[map]].
 
 (defmethod g/simplify [v/seqtype] [a]
   (map g/simplify a))
 
-#_{:clj-kondo/ignore [:redundant-do]}
-(#?@(:clj [do]
-     :cljs [doseq [klass [Cons IndexedSeq LazySeq List Range IntegerRange]]])
- (extend-type #?(:clj ISeq :cljs klass)
-   v/Value
-   (zero? [_] false)
-   (one? [_] false)
-   (identity? [_] false)
-   (zero-like [xs] (map v/zero-like xs))
-   (one-like [xs] (u/unsupported (str "one-like: " xs)))
-   (identity-like [xs] (u/unsupported (str "identity-like: " xs)))
-   (exact? [_] false)
-   (freeze [xs] (map v/freeze xs))
-   (kind [xs] (type xs))
+(doseq [klass #?(:clj [ISeq]
+                 :cljs [Cons IndexedSeq LazySeq List Range IntegerRange])]
+  (defmethod g/zero? [klass] [_] false)
+  (defmethod g/one? [klass] [_] false)
+  (defmethod g/identity? [klass] [_] false)
+  (defmethod g/zero-like [klass] [xs] (map g/zero-like xs))
+  (defmethod g/exact? [klass] [xs] (every? g/exact? xs))
+  (defmethod g/freeze [klass] [xs] (map g/freeze xs))
 
-   d/IPerturbed
-   (perturbed? [_] false)
-   (replace-tag [xs old new] (map #(d/replace-tag % old new) xs))
-   (extract-tangent [xs tag] (map #(d/extract-tangent % tag) xs))))
+  (extend-type #?(:clj ISeq :cljs klass)
+    v/IKind
+    (kind [xs] (type xs))
+
+    d/IPerturbed
+    (perturbed? [_] false)
+    (replace-tag [xs old new] (map #(d/replace-tag % old new) xs))
+    (extract-tangent [xs tag] (map #(d/extract-tangent % tag) xs))))
 
 ;; ## Maps
 ;;
@@ -128,9 +122,9 @@
 
 (defn- combine [f m1 m2 l-default]
   (letfn [(merge-entry [m e]
-			      (let [k (key e)
+            (let [k (key e)
                   v (val e)]
-			        (assoc m k (f (get m k l-default) v))))]
+              (assoc m k (f (get m k l-default) v))))]
     (reduce merge-entry m1 (seq m2))))
 
 (defmethod g/make-rectangular [::map ::map] [m1 m2]
@@ -166,20 +160,19 @@
               m))
 
 (doseq [klass [PersistentHashMap PersistentArrayMap PersistentTreeMap]]
+  (defmethod g/zero? [klass] [m] (every? g/zero? (vals m)))
+  (defmethod g/one? [klass] [_] false)
+  (defmethod g/identity? [klass] [_] false)
+  (defmethod g/zero-like [klass] [m] (u/map-vals g/zero-like m))
+  (defmethod g/exact? [klass] [m] (every? g/exact? (vals m)))
+  (defmethod g/freeze [klass] [m] (u/map-vals g/freeze m))
+
   #?(:clj
      (extend klass
-       v/Value
-       {:zero? (fn [m] (every? v/zero? (vals m)))
-        :one? (fn [_] false)
-        :identity? (fn [_] false)
-        :zero-like (fn [m] (u/map-vals v/zero-like m))
-        :one-like (fn [m] (u/unsupported (str "one-like: " m)))
-        :identity-like (fn [m] (u/unsupported (str "identity-like: " m)))
-        :exact? (fn [m] (every? v/exact? (vals m)))
-        :freeze (fn [m] (u/map-vals v/freeze m))
-        :kind (fn [m] (if (sorted? m)
-                       (type m)
-                       (:type m (type m))))}
+       v/IKind
+       {:kind (fn [m] (if (sorted? m)
+                        (type m)
+                        (:type m (type m))))}
 
        f/IArity
        {:arity (fn [_] [:between 1 2])}
@@ -197,15 +190,7 @@
 
      :cljs
      (extend-type klass
-       v/Value
-       (zero? [m] (every? v/zero? (vals m)))
-       (one? [_] false)
-       (identity? [_] false)
-       (zero-like [m] (u/map-vals v/zero-like m))
-       (one-like [m] (u/unsupported (str "one-like: " m)))
-       (identity-like [m] (u/unsupported (str "identity-like: " m)))
-       (exact? [m] (every? v/exact? (vals m)))
-       (freeze [m] (u/map-vals v/freeze m))
+       v/IKind
        (kind [m] (if (sorted? m)
                    (type m)
                    (:type m (type m))))
@@ -235,33 +220,23 @@
   (cs/union a b))
 
 (doseq [klass [PersistentHashSet PersistentTreeSet]]
+  (defmethod g/zero? [klass] [s] (empty? s))
+  (defmethod g/one? [klass] [_] false)
+  (defmethod g/identity? [klass] [_] false)
+  (defmethod g/zero-like [klass] [_] #{})
+  (defmethod g/exact? [klass] [s] (every? g/exact? s))
+
   #?(:clj
      (extend klass
-       v/Value
-       {:zero? empty?
-        :one? (fn [_] false)
-        :identity? (fn [_] false)
-        :zero-like (fn [_] #{})
-        :one-like (fn [s] (u/unsupported (str "one-like: " s)))
-        :identity-like (fn [s] (u/unsupported (str "identity-like: " s)))
-        :exact? (fn [_] false)
-        :freeze (fn [s] (u/unsupported (str "freeze: " s)))
-        :kind type}
+       v/IKind
+       {:kind type}
 
        f/IArity
        {:arity (fn [_] [:between 1 2])})
 
      :cljs
      (extend-type klass
-       v/Value
-       (zero? [s] (empty? s))
-       (one? [_] false)
-       (identity? [_] false)
-       (zero-like [_] #{})
-       (one-like [s] (u/unsupported (str "one-like: " s)))
-       (identity-like [s] (u/unsupported (str "identity-like: " s)))
-       (exact? [_] false)
-       (freeze [s] (u/unsupported (str "freeze: " s)))
+       v/IKind
        (kind [s] (type s))
 
        f/IArity

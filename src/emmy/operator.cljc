@@ -26,46 +26,7 @@
 (declare op:get)
 
 (deftype Operator [o arity name context m]
-  v/Value
-  (zero? [this]
-    (if-let [z-fn (:zero? context)]
-      (z-fn this)
-      (= o v/zero-like)))
-
-  ;; NOTE: `one?` is the multiplicative identity; by default, we return false
-  ;; because the system doesn't currently check if the types match for
-  ;; multiplicative identity. So `(* o:identity 5)` would return 5, which is
-  ;; incorrect. (We should get back a new operator that carries the scale-by-5
-  ;; along until the final function resolves.)
-  (one? [this]
-    (if-let [one-fn (:one? context)]
-      (one-fn this)
-      false))
-
-  (identity? [this]
-    (if-let [id-fn (:identity? context)]
-      (id-fn this)
-      (= o core/identity)))
-
-  (zero-like [this]
-    (if-let [z-fn (:zero-like context)]
-      (z-fn this)
-      (Operator. v/zero-like arity 'zero context m)))
-
-  (one-like [this]
-    (if-let [one-fn (:one-like context)]
-      (one-fn this)
-      (Operator. core/identity arity 'identity context m)))
-
-  (identity-like [this]
-    (if-let [id-fn (:identity-like context)]
-      (id-fn this)
-      (Operator. core/identity arity 'identity context m)))
-
-  (freeze [_]
-    (simplify-operator-name
-     (v/freeze name)))
-
+  v/IKind
   (kind [_] (:subtype context))
 
   f/IArity
@@ -86,7 +47,7 @@
 
   Object
   (toString [o]
-    (let [n (v/freeze o)]
+    (let [n (g/freeze o)]
       (str (if (seqable? n)
              (seq n)
              n))))
@@ -230,7 +191,7 @@
   (make-operator
    (f/get (procedure o) k)
    `(~'compose (~'component ~k)
-     ~(name o))))
+               ~(name o))))
 
 (def identity
   "Identity operator. Returns its argument unchanged."
@@ -286,7 +247,7 @@
   (let [h (f/coerce-to-fn f [:exactly 1])]
     (->Operator (fn [g] (op (f/compose h g) (o g)))
                 (arity o)
-	              `(~sym ~(v/freeze f) ~(name o))
+                `(~sym ~(g/freeze f) ~(name o))
                 (context o)
                 nil)))
 
@@ -311,7 +272,7 @@
   (let [h (f/coerce-to-fn f [:exactly 1])]
     (->Operator (fn [g] (op (o g) (f/compose h g)))
                 (arity o)
-	              `(~sym ~(name o) ~(v/freeze f))
+                `(~sym ~(name o) ~(g/freeze f))
                 (context o)
                 nil)))
 
@@ -325,7 +286,7 @@
                 (g/negate (apply o fs)))
               (arity o)
               (list '- (name o))
-	            (context o)
+              (context o)
               (meta o)))
 
 (defn- o:-
@@ -333,7 +294,7 @@
   difference of applying the supplied operators."
   [o p]
   (let [ctx (joint-context o p)]
-    (if (v/zero? p)
+    (if (g/zero? p)
       (with-context o ctx)
       (->Operator (fn [& xs]
                     (g/sub (apply o xs)
@@ -351,8 +312,8 @@
   given operators."
   [o p]
   (let [ctx (joint-context o p)]
-    (cond (v/zero? o) (with-context p ctx)
-          (v/zero? p) (with-context o ctx)
+    (cond (g/zero? o) (with-context p ctx)
+          (g/zero? p) (with-context o ctx)
           :else
           (->Operator (fn [& xs]
                         (g/add (apply o xs)
@@ -371,9 +332,9 @@
   ([o] o)
   ([o p]
    (let [ctx (joint-context o p)]
-     (cond (v/identity? o) (with-context p ctx)
-           (v/identity? p) (with-context o ctx)
-           (v/zero? o)     (with-context o ctx)
+     (cond (g/identity? o) (with-context p ctx)
+           (g/identity? p) (with-context o ctx)
+           (g/zero? o)     (with-context o ctx)
            :else
            (->Operator (f/compose o p)
                        (arity p)
@@ -388,7 +349,7 @@
   (->Operator (fn [& gs]
                 (g/mul f (apply o gs)))
               (arity o)
-              `(~'* ~(v/freeze f) ~(name o))
+              `(~'* ~(g/freeze f) ~(name o))
               (context o)
               (meta o)))
 
@@ -399,7 +360,7 @@
   (->Operator (fn [& gs]
                 (apply o (map (fn [g] (g/mul f g)) gs)))
               (arity o)
-              `(~'* ~(name o) ~(v/freeze f))
+              `(~'* ~(name o) ~(g/freeze f))
               (context o)
               (meta o)))
 
@@ -410,7 +371,7 @@
   (->Operator (fn [& gs]
                 (g/mul (g/invert n) (apply o gs)))
               (arity o)
-	            `(~'/ ~(name o) ~n)
+              `(~'/ ~(name o) ~n)
               (context o)
               (meta o)))
 
@@ -478,6 +439,45 @@
                   `(~sym ~(name g))
                   (context g)
                   nil))))
+
+(defmethod g/zero? [::operator] [^Operator o]
+  (if-let [z-fn (:zero? (.-context o))]
+    (z-fn o)
+    (= (.-o o) g/zero-like)))
+
+;; NOTE: `one?` is the multiplicative identity; by default, we return false
+;; because the system doesn't currently check if the types match for
+;; multiplicative identity. So `(* o:identity 5)` would return 5, which is
+;; incorrect. (We should get back a new operator that carries the scale-by-5
+;; along until the final function resolves.)
+(defmethod g/one? [::operator] [^Operator o]
+  (if-let [one-fn (:one? (.-context o))]
+    (one-fn o)
+    false))
+
+(defmethod g/identity? [::operator] [^Operator o]
+  (if-let [id-fn (:identity? (.-context o))]
+    (id-fn o)
+    (= (.-o o) core/identity)))
+
+(defmethod g/zero-like [::operator] [^Operator o]
+  (if-let [z-fn (:zero-like (.-context o))]
+    (z-fn o)
+    (Operator. g/zero-like (.-arity o) 'zero (.-context o) (.-m o))))
+
+(defmethod g/one-like [::operator] [^Operator o]
+  (if-let [one-fn (:one-like (.-context o))]
+    (one-fn o)
+    (Operator. core/identity (.-arity o) 'identity (.-context o) (.-m o))))
+
+(defmethod g/identity-like [::operator] [^Operator o]
+  (if-let [id-fn (:identity-like (.-context o))]
+    (id-fn o)
+    (Operator. core/identity (.-arity o) 'identity (.-context o) (.-m o))))
+
+(defmethod g/freeze [::operator] [^Operator o]
+        (simplify-operator-name
+         (g/freeze (.-name o))))
 
 (defmethod g/add [::operator ::operator] [o p] (o:+ o p))
 (defmethod g/add [::operator ::co-operator] [o f] (o+f o f))

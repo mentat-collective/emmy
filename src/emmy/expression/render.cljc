@@ -216,7 +216,7 @@
                 (or (and render-primitive (render-primitive n))
                     n))))]
     (fn [expr]
-      (let [result (-> (v/freeze expr)
+      (let [result (-> (g/freeze expr)
                        (z/seq-zip)
                        (render-loc))]
         (if (string? result)

@@ -137,7 +137,7 @@
   "Given some vector field `vf`, returns a vector field with the same context and
   its procedure replaced by `vf:zero`.
 
-  The returned vector field responds `true` to `v/zero?`."
+  The returned vector field responds `true` to `g/zero?`."
   [vf]
   {:pre [(vector-field? vf)]}
   (o/make-operator vf:zero
@@ -256,8 +256,8 @@
 	                    (components point)))))
         name `(~'+ ~@(map (fn [component basis-element]
 		                        `(~'*
-                              ~(v/freeze component)
-		                          ~(v/freeze basis-element)))
+                              ~(g/freeze component)
+		                          ~(g/freeze basis-element)))
 	                        (flatten components)
 	                        (flatten vector-basis)))]
     (procedure->vector-field op name)))

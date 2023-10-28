@@ -56,24 +56,24 @@
         x-1     (p/make [-1 1])
         x+1:x-1 (rf/make x+1 x-1)]
     (testing "zero?, one-like"
-      (is (v/zero? (v/zero-like x+1:x-1)))
-      (is (v/zero? (g/* x+1:x-1 (v/zero-like x+1:x-1)))))
+      (is (g/zero? (g/zero-like x+1:x-1)))
+      (is (g/zero? (g/* x+1:x-1 (g/zero-like x+1:x-1)))))
 
     (testing "one?, one-like"
-      (is (v/one? (v/one-like x+1:x-1)))
-      (is (= x+1:x-1 (g/* x+1:x-1 (v/one-like x+1:x-1)))))
+      (is (g/one? (g/one-like x+1:x-1)))
+      (is (= x+1:x-1 (g/* x+1:x-1 (g/one-like x+1:x-1)))))
 
     (testing "identity?, identity-like"
-      (is (v/identity? (v/identity-like x+1:x-1)))
+      (is (g/identity? (g/identity-like x+1:x-1)))
       (is (= (g/* (p/make [0 1]) x+1:x-1)
-             (g/* x+1:x-1 (v/identity-like x+1:x-1)))
+             (g/* x+1:x-1 (g/identity-like x+1:x-1)))
           "identity is `x`, multiplying should be equivalent to multiplying by
           x."))
 
-    (testing "v/freeze"
+    (testing "g/freeze"
       (is (= '(/ (polynomial 1 [[{} 1] [{0 1} 1]])
                  (polynomial 1 [[{} -1] [{0 1} 1]]))
-             (v/freeze x+1:x-1))))
+             (g/freeze x+1:x-1))))
 
     (testing "v/numerical?"
       (is (not (v/numerical? x+1:x-1))))
@@ -250,7 +250,7 @@
                xs (gen/vector sg/symbol arity)]
               (let [rf (rf/->RationalFunction arity n 12 nil)]
                 (is (every?
-                     v/zero?
+                     g/zero?
                      (for [idx (range (inc arity))]
                        (let [sub-xs (subvec xs 0 idx)
                              padded (into sub-xs (repeat (- arity idx) 0))]
@@ -266,13 +266,13 @@
             [r (sg/rational-function)
              factor (gen/fmap inc gen/nat)]
             (let [scaled (rf/arg-scale r [factor])]
-              (is (v/zero?
+              (is (g/zero?
                    (g/simplify
                     (g/- (r (g/* 'x factor))
                          (rf/evaluate scaled ['x]))))))
 
             (let [shifted (rf/arg-shift r [factor])]
-              (is (v/zero?
+              (is (g/zero?
                    (g/simplify
                     (g/- (r (g/+ 'x factor))
                          (rf/evaluate shifted ['x])))))))
@@ -336,7 +336,7 @@
     (is (= 3 (rf-simp '(gcd 9 (* x 6 y)))))
     (is (= '(* 7 y) (rf-simp '(gcd (* 14 x y) (* 21 y z)))))
     (is (= '(* (/ 1 6) y)
-           (v/freeze
+           (g/freeze
             (rf-simp
              '(gcd (* (/ 5 2) x y) (* (/ 7 3) y z)))))
         "Can handle rational gcd!"))
@@ -358,7 +358,7 @@
         x-1     (p/make [-1 1])
         x+1:x-1 (rf/make x+1 x-1)]
     (is (= '(/ -2 (+ (expt x 2) (* -2 x) 1))
-           (v/freeze
+           (g/freeze
             (g/simplify
              ((D x+1:x-1) 'x)))))
 

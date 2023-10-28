@@ -51,41 +51,44 @@
 
   (testing "value protocol"
     (testing "zero?"
-      (is (v/zero? (s/up)))
-      (is (v/zero? (s/down)))
-      (is (v/zero? (s/down 0)))
-      (is (v/zero? (s/up 0 0)))
-      (is (v/zero? (s/up 0)))
-      (is (v/zero? (s/down 0 0)))
-      (is (v/zero? (s/up 0 (s/down (s/up 0 0) (s/up 0 0)))))
-      (is (v/zero? (s/up 0 (u/long 0) (u/int 0)))))
+      (is (g/zero? (s/up)))
+      (is (g/zero? (s/down)))
+      (is (g/zero? (s/down 0)))
+      (is (g/zero? (s/up 0 0)))
+      (is (g/zero? (s/up 0)))
+      (is (g/zero? (s/down 0 0)))
+      (is (g/zero? (s/up 0 (s/down (s/up 0 0) (s/up 0 0)))))
+      (is (g/zero? (s/up 0 (u/long 0) (u/int 0)))))
 
     (testing "zero-like"
-      (is (v/zero? (v/zero-like (s/up 1 2 3))))
-      (is (= (s/up 0 0 0) (v/zero-like (s/up 1 2 3))))
-      (is (= (s/up) (v/zero-like (s/up))))
-      (is (= (s/down 0 0 0) (v/zero-like (s/down 1 2 3))))
-      (is (= (s/down) (v/zero-like (s/down))))
+      (is (g/zero? (g/zero-like (s/up 1 2 3))))
+      (is (= (s/up 0 0 0) (g/zero-like (s/up 1 2 3))))
+      (is (= (s/up) (g/zero-like (s/up))))
+      (is (= (s/down 0 0 0) (g/zero-like (s/down 1 2 3))))
+      (is (= (s/down) (g/zero-like (s/down))))
       (is (= (s/up 0 (s/down (s/up 0 0) (s/up 0 0)))
-             (v/zero-like (s/up 1 (s/down (s/up 2 3) (s/up 4 5))))))
+             (g/zero-like (s/up 1 (s/down (s/up 2 3) (s/up 4 5))))))
       (is (= (s/up (u/long 0) (u/int 0) 0)
-             (v/zero-like (s/up (u/long 1) (u/int 2) 3)))))
+             (g/zero-like (s/up (u/long 1) (u/int 2) 3)))))
 
     (testing "one-like"
-      (let [one (v/one-like (s/up 1 2 3))]
-        (is (= 1 one))
-        (is (v/one? one))))
+      (doseq [constructor [s/up s/down]]
+        (let [one (g/one-like (constructor 1 2 3))]
+          (is (= 1 one))
+          (is (g/one? one)))))
 
     (testing "identity-like"
-      (let [id (v/identity-like (s/up 1 2 3))]
-        (is (= 1 id))
-        (is (v/identity? id))))
+      (doseq [constructor [s/up s/down]]
+        (let [id (g/identity-like (constructor 1 2 3))]
+          (is (= 1 id))
+          (is (g/identity? id)))))
 
     (testing "exact?"
-      (is (v/exact? (s/up 1 2 3 4)))
-      (is (not (v/exact? (s/up 1.2 3 4))))
-      (is (v/exact? (s/up 0 1 #emmy/ratio 3/2)))
-      (is (not (v/exact? (s/up 0 0 0.00001)))))
+      (doseq [constructor [s/up s/down]]
+        (is (g/exact? (constructor 1 2 3 4)))
+        (is (not (g/exact? (constructor 1.2 3 4))))
+        (is (g/exact? (constructor 0 1 #emmy/ratio 3/2)))
+        (is (not (g/exact? (constructor 0 0 0.00001))))))
 
     (testing "numerical?"
       (checking "no structure is numerical." 100
@@ -93,7 +96,8 @@
                 (is (not (v/numerical? s)))))
 
     (testing "freeze"
-      (is (= '(up 1 2 3) (v/freeze (s/up 1 2 3)))))
+      (is (= '(up 1 2 3) (g/freeze (s/up 1 2 3))))
+      (is (= '(down 1 2 3) (g/freeze (s/down 1 2 3)))))
 
     (testing "kind"
       (is (= ::s/up (v/kind (s/up 1 2))))
@@ -251,6 +255,7 @@
   (testing "a structure has a nth element (ILookup)"
     (is (= 14 (nth (s/up 10 12 14) 2)))
     (is (= 5 (nth (s/up 4 5 6) 1)))
+    (is (= 9 (nth (s/up 4 5 6) 3 9)))
     (is (thrown? #?(:clj IndexOutOfBoundsException :cljs js/Error)
                  (nth (s/up 4 5 6) 4))
         "out of bounds"))
@@ -258,6 +263,7 @@
   (testing "get, get-in work natively"
     (is (= 5 (get (s/up 4 5 6) 1)))
     (is (= 4 (get (s/up 4 5 6) 0)))
+    (is (= 9 (get (s/up 4 5 6) 3 9)))
     (is (= 4 (get-in (s/down (s/up 1 2) (s/up 3 4)) [1 1])))
     (is (= 2 (get-in (s/down (s/up 1 2) (s/up 3 4)) [0 1]))))
 
@@ -265,7 +271,9 @@
     (is (= (s/up 4 55 6)
            (assoc (s/up 4 5 6) 1 55)))
     (is (= (s/down (s/up 1 22) (s/up 3 4))
-           (assoc-in (s/down (s/up 1 2) (s/up 3 4)) [0 1] 22))))
+           (assoc-in (s/down (s/up 1 2) (s/up 3 4)) [0 1] 22)))
+    (is (contains? (s/up 4 5 6) 1))
+    (is (not (contains? (s/up 4 5 6) 3))))
 
   (testing "IFn"
     (is (= (s/up 6 9 1)
@@ -364,6 +372,10 @@
             (is (= 1 (s/s:count n)))
             (is (= n (s/s:nth n 0))))
 
+  (testing "s:nth throws for non-sequential objects at i != 0"
+    (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
+                 (s/s:nth 99. 1))))
+
   (checking "s:count, s:nth for structures" 100
             [s (sg/structure sg/real 5)
              n (gen/choose 0 4)]
@@ -458,6 +470,21 @@
     (is (= (s/up 1 4 9 16 25)
            (s/generate 5 ::s/up (comp #(* % %) inc)))))
 
+  (testing "invocation"
+    (let [sum (fn [& xs] (reduce + 0 xs))
+          product (fn [& xs] (reduce * 1 xs))
+          S (s/up sum product)]
+      (is (= (s/up 0 1) (S)))
+      (is (= (s/up 1 1) (S 1)))
+      (is (= (s/up 3 2) (S 1 2)))
+      (is (= (s/up 6 6) (S 1 2 3)))
+      (is (= (s/up 10 24) (S 1 2 3 4)))
+      (is (= (s/up 15 120) (S 1 2 3 4 5)))
+      (is (= (s/up 21 720) (S 1 2 3 4 5 6)))
+      (is (= (s/up 28 5040) (S 1 2 3 4 5 6 7)))
+      (is (= (s/up 36 40320) (S 1 2 3 4 5 6 7 8)))
+      (is (= (s/up 45 362880) (S 1 2 3 4 5 6 7 8 9)))
+      (is (= (s/up 55 3628800) (S 1 2 3 4 5 6 7 8 9 10)))))
   (testing "literal-up,down"
     (is (thrown? #?(:clj AssertionError :cljs js/Error)
                  (s/literal 'x 3 ::random))
@@ -477,7 +504,7 @@
     (is (= '(+ (* x↑0 x_0)
                (* x↑1 x_1)
                (* x↑2 x_2))
-           (v/freeze
+           (g/freeze
             (g/* (s/literal-up 'x 3)
                  (s/literal-down 'x 3))))
         "It can be convenient to generate symbolic structures if you don't care
@@ -631,7 +658,7 @@
                     (s/unflatten (range) s)))
                 "flattening generates the replaced sequence")
 
-            (is (v/zero? (g/* s (s/transpose
+            (is (g/zero? (g/* s (s/transpose
                                  (s/unflatten (repeat 0) s))))
                 "flipping indices after replacing with all zeros creates a
                 structure that annihilates the original on multiplying."))
@@ -671,13 +698,13 @@
 
   (checking "s/compatible-zero works" 100
             [s (sg/structure sg/real)]
-            (is (v/zero? (g/* s (s/compatible-zero s))))
-            (is (v/zero? (g/* (s/compatible-zero s) s)))
+            (is (g/zero? (g/* s (s/compatible-zero s))))
+            (is (g/zero? (g/* (s/compatible-zero s) s)))
 
-            (is (v/zero? (g/* s (s/dual-zero s)))
+            (is (g/zero? (g/* s (s/dual-zero s)))
                 "dual-zero is an alias for compatible-zero.")
 
-            (is (v/zero? (g/* (s/dual-zero s) s))
+            (is (g/zero? (g/* (s/dual-zero s) s))
                 "dual-zero is an alias for compatible-zero."))
 
   (testing "compatible-shape"
@@ -716,7 +743,7 @@
             [[l inner r] (gen/let [rows (gen/choose 1 5)
                                    cols (gen/choose 1 5)]
                            (<l|:inner:|r> rows cols))]
-            (is (v/zero?
+            (is (g/zero?
                  (g/simplify
                   (g/- (g/transpose
                         (g/* l (g/* inner r)))
@@ -728,7 +755,7 @@
             [[l inner r] (gen/let [n (gen/choose 1 5)]
                            (<l|:inner:|r> n 0))]
 
-            (is (v/zero?
+            (is (g/zero?
                  (g/- (g/transpose
                        (g/* l (g/* inner r)))
                       (g/* (g/transpose r)
@@ -746,7 +773,7 @@
             [[l inner r] (gen/let [rows (gen/choose 0 5)
                                    cols (gen/choose 1 5)]
                            (<l|:inner:|r> rows cols))]
-            (is (v/zero?
+            (is (g/zero?
                  (g/simplify
                   (g/- (g/* l (g/* inner r))
                        (g/* (g/* (s/transpose-outer inner) l) r))))))
@@ -754,7 +781,7 @@
   (checking "cols=0 transpose-outer law produces incompatible sides" 100
             [[l inner r] (gen/let [rows (gen/choose 1 5)]
                            (<l|:inner:|r> rows 0))]
-            (is (v/zero?
+            (is (g/zero?
                  (g/* l (g/* inner r)))
                 "the left side is a structure of zeros")
 
@@ -823,6 +850,16 @@
                   (s/up (s/down 1 2))
                   (s/up (s/down 1 2 3 4))))))
 
+  (testing "*allow-incompatible-multiplication*"
+    (let [a (s/up 1 2)
+          b (s/down 2 3 4)]
+      (is (not (s/compatible-for-contraction? a b)))
+      (is (= (s/down (s/up 2 4) (s/up 3 6) (s/up 4 8))
+             (g/* a b)))
+      (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
+                   (binding [s/*allow-incompatible-multiplication* false]
+                     (g/* a b))))))
+
   (checking "dot-product equals inner for reals, complex on the right" 100
             [v1 (-> (sg/up1 sg/real 5)
                     (sg/down1 5))
@@ -853,8 +890,8 @@
                    (sg/structure1 2))]
             (let [I (s/up (s/up 1 0)
                           (s/up 0 1))]
-              (is (= (s/up (s/up s (v/zero-like s))
-                           (s/up (v/zero-like s) s))
+              (is (= (s/up (s/up s (g/zero-like s))
+                           (s/up (g/zero-like s) s))
                      (g/outer-product s I)))))
 
   (checking "inner, dot, outer with fns" 100
@@ -991,20 +1028,20 @@
 
   (testing "<structure> * <operator> pushes operator multiplication into the
   structure (unlike <structure> * <function>!)"
-    (is (= (v/freeze
+    (is (= (g/freeze
             (s/up (s/down (* 1 o/identity)
                           (* 2 o/identity))
                   (s/down (* 4 o/identity)
                           (* 5 o/identity))))
-           (v/freeze
+           (g/freeze
             (* (s/up (s/down 1 2)
                      (s/down 4 5))
                o/identity))))
 
-    (is (= (v/freeze
+    (is (= (g/freeze
             (s/up (s/down (* o/identity 1)
                           (* o/identity 2))))
-           (v/freeze
+           (g/freeze
             (* o/identity
                (s/up (s/down 1 2)))))
         "operator*structure is not commutative."))

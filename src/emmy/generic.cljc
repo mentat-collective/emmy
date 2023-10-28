@@ -11,7 +11,7 @@
   cljdocs](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/basics/generics)
   for a detailed discussion of how to use and extend the generic operations
   defined in [[emmy.generic]] and [[emmy.value]]."
-  (:refer-clojure :exclude [/ + - * divide infinite? abs])
+  (:refer-clojure :exclude [/ + - * divide infinite? abs zero?])
   (:require [emmy.util :as u]
             [emmy.util.def :refer [defgeneric]]
             [emmy.value :as v])
@@ -20,8 +20,8 @@
 ;; ## Generic Numerics
 ;;
 ;; The first section introduces generic versions of
-;; Clojure's [[+]], [[-]], [[*]] and [[/]] operations. Any type that can
-;; implement all four of these operations forms a
+;; Clojure's [[zero?]], [[+]], [[-]], [[*]] and [[/]] operations. Any type that can
+;; implement all of of these operations forms a
 ;; mathematical [Field](https://en.wikipedia.org/wiki/Field_(mathematics)).
 ;;
 ;; There are, of course, other technical names for types that can only implement
@@ -49,6 +49,41 @@
 ;; each generic operation to some new type is sparse. Have a look
 ;; at [[emmy.complex]] for an example of how to do this.
 
+(defgeneric zero? 1
+  "Is true if `x` is an additive identity.")
+(defgeneric one? 1
+  "Is true if `x` is a multiplicative identity.")
+(defgeneric identity? 1
+  "Like `one?`, but this is true of square identity matrices as well.
+  No matrix is considered `one?` because its function as a multiplicative
+  identity depends on the shape of the other multiplicand.")
+(defgeneric zero-like 1
+  "In general, this procedure returns the additive identity of the type of its
+  argument, if it exists. For numbers this is 0.")
+(defgeneric one-like 1
+  "In general, this procedure returns the multiplicative identity of the type of
+  its argument, if it exists. For numbers this is 1.")
+(defgeneric identity-like 1
+  "Like `one-like` but works for square matrices.")
+
+(defgeneric exact? 1
+  "Entries that are exact are available for `gcd`, among other operations.")
+
+(defgeneric freeze 1
+  "Freezing an expression means removing wrappers and other metadata from
+  subexpressions, so that the result is basically a pure S-expression with the
+  same structure as the input. Doing this will rob an expression of useful
+  information for further computation; so this is intended to be done just
+  before simplification and printing, to simplify those processes.")
+(defmethod freeze [#?(:clj String :cljs js/String)] [s] s)
+(defmethod freeze [nil] [_] nil)
+
+(defn numeric-zero?
+  "Returns `true` if `x` is both a [[number?]] and [[zero?]], false otherwise."
+  [x]
+  (and (v/number? x)
+       (zero? x)))
+
 (defgeneric ^:no-doc add 2
   "Returns the sum of arguments `a` and `b`.
 
@@ -74,8 +109,8 @@
   ([] 0)
   ([x] x)
   ([x y]
-   (cond (v/numeric-zero? x) y
-         (v/numeric-zero? y) x
+   (cond (numeric-zero? x) y
+         (numeric-zero? y) x
          :else (add x y)))
   ([x y & more]
    (reduce + (+ x y) more)))
@@ -83,7 +118,7 @@
 (defgeneric negate 1
   "Returns the negation of `a`.
 
-  Equivalent to `(- (v/zero-like a) a)`."
+  Equivalent to `(- (g/zero-like a) a)`."
   {:name '-
    :dfdx (fn [_] -1)})
 
@@ -123,8 +158,8 @@
   ([] 0)
   ([x] (negate x))
   ([x y]
-   (cond (v/numeric-zero? y) x
-         (v/numeric-zero? x) (negate y)
+   (cond (numeric-zero? y) x
+         (numeric-zero? x) (negate y)
          :else (sub x y)))
   ([x y & more]
    (- x (apply + y more))))
@@ -144,7 +179,7 @@
 ;;;       |a b c| |0|   |0|       |0|
 ;;;       |d e f| |0| = |0|, not  |0|
 ;;;
-;;; We are less worried about the v/zero? below,
+;;; We are less worried about the zero? below,
 ;;; because any invertible matrix is square.
 
 (defn *
@@ -166,10 +201,10 @@
   ([x y]
    (let [numx? (v/numerical? x)
          numy? (v/numerical? y)]
-     (cond (and numx? (v/zero? x)) (v/zero-like y)
-           (and numy? (v/zero? y)) (v/zero-like x)
-           (and numx? (v/one? x)) y
-           (and numy? (v/one? y)) x
+     (cond (and numx? (zero? x)) (zero-like y)
+           (and numy? (zero? y)) (zero-like x)
+           (and numx? (one? x)) y
+           (and numy? (one? y)) x
            :else (mul x y))))
   ([x y & more]
    (reduce * (* x y) more)))
@@ -230,7 +265,7 @@
   ([] 1)
   ([x] (invert x))
   ([x y]
-   (if (and (v/number? y) (v/one? y))
+   (if (and (v/number? y) (one? y))
      x
      (div x y)))
   ([x y & more]
@@ -241,7 +276,7 @@
   /)
 
 (defgeneric exact-divide 2
-  "Similar to the binary case of [[/]], but throws if `(v/exact? <result>)`
+  "Similar to the binary case of [[/]], but throws if `(g/exact? <result>)`
   returns false.")
 
 ;; ### Exponentiation, Log, Roots
@@ -288,7 +323,7 @@
   {:dfdx (fn [x y]
            (mul y (expt x (sub y 1))))
    :dfdy (fn [x y]
-           (if (and (v/number? x) (v/zero? x))
+           (if (and (v/number? x) (zero? x))
              (if (v/number? y)
                (if (not (negative? y))
                  0
@@ -311,7 +346,7 @@
     (if-let [mul' (get-method mul [kind kind])]
       (letfn [(expt' [base pow]
                 (loop [n pow
-                       y (v/one-like base)
+                       y (one-like base)
                        z base]
                   (let [t (even? n)
                         n (quot n 2)]
@@ -320,9 +355,37 @@
                       (zero? n) (mul' z y)
                       :else (recur n (mul' z y) (mul' z z))))))]
         (cond (pos? e)  (expt' s e)
-              (zero? e) (v/one-like e)
+              (zero? e) (one-like s)
               :else (invert (expt' s (negate e)))))
       (u/illegal (str "No g/mul implementation registered for kind " kind)))))
+
+(def ^:no-doc relative-integer-tolerance (clojure.core/* 100 u/machine-epsilon))
+(def ^:no-doc absolute-integer-tolerance 1e-20)
+
+(defn almost-integral?
+  "Returns true if `x` is either:
+
+  - [[integral?]],
+  - a floating point number either < [[absolute-integer-tolerance]] (if near
+    zero) or within [[relative-integer-tolerance]] of the closest integer,
+
+  false otherwise."
+  [x]
+  (or (v/integral? x)
+      (and (float? x)
+           (let [x (double x)
+                 z (Math/round x)]
+             (if (zero? z)
+               (< (Math/abs x) absolute-integer-tolerance)
+               (< (Math/abs (/ (- x z) z)) relative-integer-tolerance))))))
+
+(defn exact-zero?
+  "Returns true if the supplied argument is an exact numerical zero, false
+  otherwise."
+  [n]
+  (and (v/number? n)
+       (exact? n)
+       (zero? n)))
 
 ;; [[expt]] can be defined (as a default) in terms of repeated multiplication,
 ;; if the exponent is a (native) integer. The native requirement is simply due
@@ -357,12 +420,12 @@
 ;; ## More Generics
 
 (defgeneric negative? 1
-  "Returns true if the argument `a` is less than `(v/zero-like a)`,
+  "Returns true if the argument `a` is less than `(g/zero-like a)`,
   false otherwise. The default implementation depends on a proper Comparable
   implementation on the type.`")
 
 (defmethod negative? :default [a]
-  (< a (v/zero-like a)))
+  (< (compare a (zero-like a)) 0))
 
 (defgeneric infinite? 1
   "Returns true if `a` is either numerically infinite (i.e., equal to `##Inf`) or
@@ -485,7 +548,7 @@
 
 (defmethod lcm :default [a b]
   (let [g (gcd a b)]
-    (if (v/zero? g)
+    (if (zero? g)
       g
       (abs
        (* (exact-divide a g) b)))))
@@ -853,14 +916,14 @@ defaults to `ln((1 + sqrt(1+x^2)) / x)`."
    - [Boost notes on [[sinc]]
      and [[sinch]]](https://www.boost.org/doc/libs/1_65_0/libs/math/doc/html/math_toolkit/sinc/sinc_overview.html)"
   {:dfdx (fn [x]
-           (if (v/zero? x)
+           (if (zero? x)
              x
              (sub (div (cos x) x)
                   (div (sin x) (square x)))))})
 
 (defmethod sinc :default [x]
-  (if (v/zero? x)
-    (v/one-like x)
+  (if (zero? x)
+    (one-like x)
     (div (sin x) x)))
 
 ;; > NOTE that we don't define `cosc`. [This StackExchange
@@ -889,15 +952,15 @@ defaults to `ln((1 + sqrt(1+x^2)) / x)`."
    - [Wikipedia page](https://en.wikipedia.org/wiki/Tanc_function)
    - [Mathworld page on Sinc](https://mathworld.wolfram.com/TancFunction.html)"
   {:dfdx (fn [x]
-           (if (v/zero? x)
+           (if (zero? x)
              x
              (let [sx (sec x)]
                (sub (div (* sx sx) x)
                     (div (tan x) (square x))))))})
 
 (defmethod tanc :default [x]
-  (if (v/zero? x)
-    (v/one-like x)
+  (if (zero? x)
+    (one-like x)
     (div (tan x) x)))
 
 ;; ### Hyperbolic Variants
@@ -911,14 +974,14 @@ defaults to `ln((1 + sqrt(1+x^2)) / x)`."
    - [Wikipedia page](https://en.wikipedia.org/wiki/Sinhc_function)
    - [Mathworld page on Sinhc](https://mathworld.wolfram.com/SinhcFunction.html)"
   {:dfdx (fn [x]
-           (if (v/zero? x)
+           (if (zero? x)
              x
              (sub (div (cosh x) x)
                   (div (sinh x) (square x)))))})
 
 (defmethod sinhc :default [x]
-  (if (v/zero? x)
-    (v/one-like x)
+  (if (zero? x)
+    (one-like x)
     (div (sinh x) x)))
 
 (defgeneric tanhc 1
@@ -930,15 +993,15 @@ defaults to `ln((1 + sqrt(1+x^2)) / x)`."
    - [Wikipedia page](https://en.wikipedia.org/wiki/Tanhc_function)
    - [Mathworld page on Tanhc](https://mathworld.wolfram.com/TanhcFunction.html)"
   {:dfdx (fn [x]
-           (if (v/zero? x)
+           (if (zero? x)
              x
              (let [sx (sech x)]
                (sub (div (* sx sx) x)
                     (div (tanh x) (square x))))))})
 
 (defmethod tanhc :default [x]
-  (if (v/zero? x)
-    (v/one-like x)
+  (if (zero? x)
+    (one-like x)
     (div (tanh x) x)))
 
 ;; ## Complex Operators
@@ -1023,7 +1086,7 @@ defaults to `ln((1 + sqrt(1+x^2)) / x)`."
 
 ;; This call registers a symbol for any non-multimethod we care about. These
 ;; will be returned instead of the actual function body when the user
-;; calls `(v/freeze fn)`, for example.
+;; calls `(g/freeze fn)`, for example.
 
 (v/add-object-symbols!
  {+ '+

@@ -28,18 +28,7 @@
 (derive ::matrix ::f/cofunction)
 
 (deftype Matrix [r c v]
-  v/Value
-  (zero? [_] (every? #(every? v/zero? %) v))
-  (one? [_] false)
-  (identity? [m] (identity? m))
-  (zero-like [this] (fmap v/zero-like this))
-  (one-like [this] (identity-like this))
-  (identity-like [this] (identity-like this))
-
-  (freeze [_] (if (= c 1)
-                `(~'column-matrix ~@(map (comp v/freeze first) v))
-                `(~'matrix-by-rows ~@(map #(mapv v/freeze %) v))))
-  (exact? [_] (every? #(every? v/exact? %) v))
+  v/IKind
   (kind [_] (cond (= r c) ::square-matrix
                   (= r 1) ::row-matrix
                   (= c 1) ::column-matrix
@@ -68,7 +57,7 @@
        (seq [_] (seq v))
        (valAt [_ key] (get v key))
        (valAt [_ key default] (get v key default))
-       (empty [this] (fmap v/zero-like this))
+       (empty [this] (fmap g/zero-like this))
        (equiv [this that] (m:= this that))
 
        IFn
@@ -129,7 +118,7 @@
                               "\"]"))
 
        IEmptyableCollection
-       (-empty [this] (v/zero-like this))
+       (-empty [this] (g/zero-like this))
 
        ISequential
 
@@ -936,7 +925,7 @@
   "Returns the determinant of the supplied square matrix `m`.
 
   Generic operations are used, so this works on symbolic square matrices."
-  (general-determinant g/+ g/- g/* v/numeric-zero?))
+  (general-determinant g/+ g/- g/* g/numeric-zero?))
 
 (defn cofactors
   "Returns the matrix of cofactors of the supplied square matrix `m`."
@@ -972,15 +961,15 @@
           (->Matrix 1 1 [[(div (core/get-in A [0 0]))]])
           (let* [d  (det A)
                  -d (sub d)]
-            (generate dim dim
-                      (fn [i j]
-                        (let [denom (if (even? (+ i j)) d -d)]
-                          (div (det (without A j i)) denom))))))))))
+                (generate dim dim
+                          (fn [i j]
+                            (let [denom (if (even? (+ i j)) d -d)]
+                              (div (det (without A j i)) denom))))))))))
 
 (def ^{:arglists '([A])}
   invert
   "Returns the inverse of the supplied square matrix `m`."
-  (classical-adjoint-formula g/+ g/- g/* g// v/numeric-zero?))
+  (classical-adjoint-formula g/+ g/- g/* g// g/numeric-zero?))
 
 (defn- m-div-m [m1 m2]
   (mul m1 (invert m2)))
@@ -1038,8 +1027,8 @@
     (u/illegal "identity-like on non-square")
     (fmap-indexed (fn [elem i j]
                     (if (= i j)
-                      (v/one-like elem)
-                      (v/zero-like elem)))
+                      (g/one-like elem)
+                      (g/zero-like elem)))
                   M)))
 
 (defn identity?
@@ -1053,8 +1042,8 @@
                        j (range n)
                        :let [entry (core/get-in m [i j])]]
                    (if (= i j)
-                     (v/one? entry)
-                     (v/zero? entry)))))))
+                     (g/one? entry)
+                     (g/zero? entry)))))))
 
 (defn make-diagonal
   "Given a single (sequential) argument `v`, returns the diagonal matrix of
@@ -1083,13 +1072,13 @@
                        j (range n)
                        :when (not= i j)
                        :let [entry (core/get-in m [i j])]]
-                   (v/zero? entry))))))
+                   (g/zero? entry))))))
 
 (defn symmetric?
   "Returns true if the supplied matrix `M` is equal to its own transpose (i.e.,
   symmetric), false otherwise."
   [M]
-  (v/zero?
+  (g/zero?
    (g/simplify
     (g/sub (transpose M) M))))
 
@@ -1097,7 +1086,7 @@
   "Returns true if the supplied matrix `M` is equal to the negation of its own
   transpose (i.e., antisymmetric), false otherwise."
   [M]
-  (v/zero?
+  (g/zero?
    (g/simplify
     (g/add (transpose M) M))))
 
@@ -1163,7 +1152,7 @@
   Returns the column matrix `x`.
 
   Unlike LU decomposition, Cramer's rule generalizes to symbolic solutions."
-  (cramers-rule g/+ g/- g/* g// v/numeric-zero?))
+  (cramers-rule g/+ g/- g/* g// g/numeric-zero?))
 
 (defn rsolve
   "Generalization of [[solve]] that can handle `up` and `down` structures, as well
@@ -1187,6 +1176,19 @@
         :else (u/illegal (str "I don't know how to solve:" b A))))
 
 ;; ## Generic Operation Installation
+
+
+(defmethod g/zero? [::matrix] [a] (every? #(every? g/zero? %) a))
+(defmethod g/one? [::matrix] [_] false)
+(defmethod g/identity? [::matrix] [m] (identity? m))
+(defmethod g/zero-like [::matrix] [m] (fmap g/zero-like m))
+(defmethod g/one-like [::matrix] [m] (identity-like m))
+(defmethod g/identity-like [::matrix] [m] (identity-like m))
+(defmethod g/freeze [::matrix] [^Matrix m]
+  (if (= (.-c m) 1)
+    `(~'column-matrix ~@(map (comp g/freeze first) (.-v m)))
+    `(~'matrix-by-rows ~@(map #(mapv g/freeze %) (.-v m)))))
+(defmethod g/exact? [::matrix] [^Matrix m] (every? #(every? g/exact? %) (.-v m)))
 
 (defmethod v/= [::matrix ::matrix] [a b] (m:= a b))
 (defmethod v/= [::square-matrix ::v/scalar] [m c] (matrix=scalar m c))

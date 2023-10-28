@@ -227,7 +227,7 @@
             primitive (p/map-coefficients (fn [_] 1) p)]
         [content primitive])
       (let [content   (apply gcd coeffs)
-            primitive (if (v/one? content)
+            primitive (if (g/one? content)
                         p
                         (p/map-coefficients
                          #(g/exact-divide % content) p))]
@@ -296,10 +296,10 @@
   reached.
 
   NOTE: This is only appropriate if you don't expect rational coefficients; the
-  GCD of 1 and a rational number IS that other number, so the `v/one?` guard is
+  GCD of 1 and a rational number IS that other number, so the `g/one?` guard is
   not appropriate."
   [binary-gcd]
-  (ua/monoid binary-gcd 0 v/one?))
+  (ua/monoid binary-gcd 0 g/one?))
 
 (def ^:no-doc primitive-gcd
   (->gcd (fn [l r]
@@ -328,8 +328,8 @@
   divisor of `u` and `v` by testing for trivial cases. If no trivial case
   applies, returns `nil`."
   [u v]
-  (cond (v/zero? u) (g/abs v)
-        (v/zero? v) (g/abs u)
+  (cond (g/zero? u) (g/abs v)
+        (g/zero? v) (g/abs u)
         (p/coeff? u) (if (p/coeff? v)
                        (primitive-gcd u v)
                        (gcd-poly-number v u))
@@ -387,7 +387,7 @@
     (maybe-bail-out! "euclid inner loop")
     (or (trivial-gcd u v)
         (let [[r _] (p/pseudo-remainder u v)]
-          (if (v/zero? r)
+          (if (g/zero? r)
             (g/abs v)
             (let [[_ prim] (->content+primitive r gcd)]
               (recur v prim)))))))
@@ -516,7 +516,7 @@
   If a non-[[p/Polynomial]] is supplied, returns 1."
   [p]
   (if (p/polynomial? p)
-    (transduce (halt-when v/one?)
+    (transduce (halt-when g/one?)
                gcd
                (p/partial-derivatives p))
     1))
@@ -532,11 +532,11 @@
   (gcd-dispatch u v))
 
 (defmethod g/gcd [::p/polynomial ::p/coeff] [u v]
-  (if (v/zero? v)
+  (if (g/zero? v)
     u
     (gcd-poly-number u v)))
 
 (defmethod g/gcd [::p/coeff ::p/polynomial] [u v]
-  (if (v/zero? u)
+  (if (g/zero? u)
     v
     (gcd-poly-number v u)))

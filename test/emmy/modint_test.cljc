@@ -23,7 +23,7 @@
 
   (testing "value implementation"
     (is (= '(modint 1 2)
-           (v/freeze (m/make 1 2)))))
+           (g/freeze (m/make 1 2)))))
 
   (checking "v/= can handle non-modint instances" 100
             [m (sg/modint)
@@ -96,16 +96,16 @@
                            (g/modulo modulus))))))
 
     (testing "zero?"
-      (is (v/zero? m0_7))
-      (is (v/zero? (v/zero-like m5_7))))
+      (is (g/zero? m0_7))
+      (is (g/zero? (g/zero-like m5_7))))
 
     (testing "one?"
-      (is (v/one? m1_7))
-      (is (v/one? (v/one-like m5_7))))
+      (is (g/one? m1_7))
+      (is (g/one? (g/one-like m5_7))))
 
     (testing "identity?"
-      (is (v/identity? m1_7))
-      (is (v/identity? (v/identity-like m5_7))))
+      (is (g/identity? m1_7))
+      (is (g/identity? (g/identity-like m5_7))))
 
     (testing "compatibility"
       (is 4 (g/integer-part m4_7))

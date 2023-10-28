@@ -19,15 +19,7 @@
   v/Numerical
   (numerical? [_] true)
 
-  v/Value
-  (zero? [_] false)
-  (one? [_] false)
-  (identity? [_] false)
-  (zero-like [_] 0)
-  (one-like [_] 1)
-  (identity-like [_] 1)
-  (exact? [_] false)
-  (freeze [o] o)
+  v/IKind
   (kind [_] Symbol))
 
 (defn literal-number
@@ -211,6 +203,11 @@
 ;; whether or not they are negative, we return /something/. Maybe this is
 ;; ill-founded, but it was required for some polynomial code.
 (defmethod g/negative? [::x/numeric] [_] false)
+(defmethod g/zero? [Symbol] [_] false)
+(defmethod g/one? [Symbol] [_] false)
+(defmethod g/identity? [Symbol] [_] false)
+(defmethod g/freeze [Symbol] [s] s)
+(defmethod g/exact? [Symbol] [_] false)
 
 (defmethod g/simplify [Symbol] [a] a)
 (defmethod g/simplify [::x/numeric] [a]

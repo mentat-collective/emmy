@@ -9,9 +9,7 @@
             [emmy.numbers]
             [emmy.polynomial :as p]
             [emmy.polynomial.factor :as pf]
-            [emmy.simplify
-             :refer [hermetic-simplify-fixture simplify-expression]]
-            [emmy.value :as v]))
+            [emmy.simplify :refer [hermetic-simplify-fixture simplify-expression]]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 
@@ -58,25 +56,25 @@
                  (expt (+ y (cos (expt (+ (* x (expt y 2)) x) 2))) 2)
                  (expt (+ y (* -1 (cos (expt (+ (* x (expt y 2)) x) 2)))) 3))
              (pf/factor
-              (v/freeze test-poly))))))
+              (g/freeze test-poly))))))
 
   (testing "factoring works on literals"
     (let [expr (g// (g/square (g/+ 'x 'y))
                     (g/square (g/+ 'x 'z)))]
       (is (= '(/ (expt (+ x y) 2)
                  (expt (+ x z) 2))
-             (v/freeze expr))
+             (g/freeze expr))
           "unfactored before simplification.")
 
       (is (= '(/ (+ (expt x 2) (* 2 x y) (expt y 2))
                  (+ (expt x 2) (* 2 x z) (expt z 2)))
-             (v/freeze
+             (g/freeze
               (g/simplify expr)))
           "simplification expands by default.")
 
       (is (= '(/ (expt (+ x y) 2)
                  (expt (+ x z) 2))
-             (v/freeze
+             (g/freeze
               (pf/factor
                (g/simplify expr))))
           "calling factor re-factors the expression!"))))

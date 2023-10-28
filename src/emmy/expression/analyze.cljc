@@ -19,6 +19,7 @@
   an expression with respect to an analyzer is therefore effected by a
   round-trip to and from the canonical form."
   (:require [emmy.expression :as x]
+            [emmy.generic :as g]
             [emmy.numsymb :as sym]
             [emmy.util :as u]
             [emmy.value :as v]))
@@ -231,7 +232,7 @@
                  ;;
                  ;; NOTE: Make sure to use the FROZEN version of the expression
                  ;; as the key!
-                 (let [expr-k (v/freeze expr)]
+                 (let [expr-k (g/freeze expr)]
                    (#?(:clj dosync :cljs identity)
                     (if-let [existing-expr (@expr->var expr-k)]
                       existing-expr

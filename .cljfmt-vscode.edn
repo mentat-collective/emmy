@@ -1,0 +1,3 @@
+{:sort-ns-references? true
+ :extra-indents {sci-macro [[:block 1]]}
+ }

@@ -152,35 +152,35 @@
 
   (testing "value protocol"
     (testing "zero?"
-      (is (q/zero? q/ZERO))
-      (is (v/zero? (q/make 0 0 0 0)))
-      (is (not (v/zero? (q/make 1 0 0 0)))))
+      (is (g/zero? q/ZERO))
+      (is (g/zero? (q/make 0 0 0 0)))
+      (is (not (g/zero? (q/make 1 0 0 0)))))
 
     (checking "zero-like" 100 [x (sg/quaternion)]
-              (if (v/zero? x)
+              (if (g/zero? x)
                 (is (= x (q/make 0 0 0 0)))
-                (do (is (v/zero? (v/zero-like x)))
-                    (is (v/zero? (empty x))
+                (do (is (g/zero? (g/zero-like x)))
+                    (is (g/zero? (empty x))
                         "empty also returns the zero"))))
 
     (testing "one?"
-      (is (q/one? q/ONE))
-      (is (v/identity? q/ONE)))
+      (is (g/one? q/ONE))
+      (is (g/identity? q/ONE)))
 
     (checking "one-like, identity-like" 100 [x (sg/quaternion)]
-              (if (v/one? x)
+              (if (g/one? x)
                 (is (= x (q/make 1 0 0 0)))
-                (is (v/one? (v/one-like x))))
+                (is (g/one? (g/one-like x))))
 
-              (if (v/identity? x)
+              (if (g/identity? x)
                 (is (= x (q/make 1 0 0 0)))
-                (is (v/identity? (v/identity-like x)))))
+                (is (g/identity? (g/identity-like x)))))
 
     (testing "exact?"
-      (is (v/exact? (q/make 1 2 3 4)))
-      (is (not (v/exact? (q/make 1.2 3 4 5))))
-      (is (v/exact? (q/make 1 2 3 #emmy/ratio 3/2)))
-      (is (not (v/exact? (q/make 0 0 0 0.00001)))))
+      (is (g/exact? (q/make 1 2 3 4)))
+      (is (not (g/exact? (q/make 1.2 3 4 5))))
+      (is (g/exact? (q/make 1 2 3 #emmy/ratio 3/2)))
+      (is (not (g/exact? (q/make 0 0 0 0.00001)))))
 
     (testing "numerical?"
       (is (not (v/numerical? (s/up 1 2 3 4)))
@@ -188,7 +188,7 @@
 
     (testing "freeze"
       (is (= '(quaternion (/ 1 2) 2 3 x)
-             (v/freeze (q/make #emmy/ratio 1/2
+             (g/freeze (q/make #emmy/ratio 1/2
                                2 3 'x)))))
 
     (checking "kind" 100 [x (sg/quaternion)]
@@ -531,20 +531,20 @@
                        (g/dot-product x-complex x))
                   "quaternion dots with complex")
 
-              (is (= (g/dot-product x x-complex)
-                     (g/dot-product x-complex x-complex))
+              (is (== (g/dot-product x x-complex)
+                      (g/dot-product x-complex x-complex))
                   "quaternion dots with complex")
 
-              (is (= (g/dot-product x x-real)
-                     (g/dot-product x-real x)
-                     (g/dot-product x-real x-real))
+              (is (== (g/dot-product x x-real)
+                      (g/dot-product x-real x)
+                      (g/dot-product x-real x-real))
                   "quaternion dots with real"))
 
             (let [m      (q/magnitude x)
                   normal (q/normalize x)]
               (is (ish? normal (q/normalize normal)))
-              (if (v/zero? m)
-                (is (q/zero? x)
+              (if (g/zero? m)
+                (is (g/zero? x)
                     "can't normalize if the quaternion is zero.")
 
                 (is (q/unit? normal :epsilon 1e-8)
@@ -560,7 +560,7 @@
                 (is (q/pure? q1xq2)
                     "quaternion cross product has no real component")
 
-                (is (v/zero? (g/dot-product q1 q1xq2))
+                (is (g/zero? (g/dot-product q1 q1xq2))
                     "dot of quaternion with an orthogonal quaternion == 0")
 
                 (testing "cross with scalar"
@@ -589,12 +589,12 @@
   (testing "commutator"
     (let [p (q/make 'r1 'i1 'j1 'k1)
           q (q/make 'r2 'i2 'j2 'k2)]
-      (is (q/zero?
+      (is (g/zero?
            (g/simplify
             (q/commutator p p)))
           "the commutator of a vector with itself is zero")
 
-      (is (q/zero?
+      (is (g/zero?
            (g/simplify
             (g/- (q/commutator p q)
                  (g/cross-product  (g/* 2 p) q))))
@@ -620,20 +620,20 @@
   (checking "q/commutator" 100
             [q1 (sg/quaternion sg/small-integral)
              q2 (sg/quaternion sg/small-integral)]
-            (is (v/zero?
+            (is (g/zero?
                  (q/commutator
                   (q/make (first (q/->complex-pair q1)))
                   (q/make (first (q/->complex-pair q2)))))
                 "complex multiplication commutes, so the commutator of the
                 complex part (r,i) is always zero.")
 
-            (is (v/zero?
+            (is (g/zero?
                  (q/commutator
                   (q/make (q/real-part q1))
                   q2))
                 "real quaternions commute with all other quaternions")
 
-            (is (v/zero?
+            (is (g/zero?
                  (q/commutator
                   q1
                   (q/make (q/real-part q2))))
@@ -671,14 +671,14 @@
 
     (testing "q/log unit tests"
       (is (= '(quaternion (log y) (* (/ 1 2) pi) 0 0)
-             (v/freeze
+             (g/freeze
               (g/simplify
                (q/log (q/make 0 'y 0 0)))))
           "this test failed before a fix in `emmy.numsymb` forced atan to
         return an exact value of `pi/2` instead of a floating point number.")
 
       (is (= '(quaternion (log y) 0 0 0)
-             (v/freeze
+             (g/freeze
               (g/simplify
                (q/log (q/make 'y 0 0 0)))))
           "note that symbolic log on a real quaternion generates a symbolic real
@@ -723,7 +723,7 @@
                             (q/expt x 2))
                       "q*q == q^2, expt impl matches manual exponentiation")
 
-                  (is (q/one? (g/expt x q/ZERO))
+                  (is (g/one? (g/expt x q/ZERO))
                       "x to the quaternion 0 power == 1")
 
                   (is (ish? x (g/expt x q/ONE))
@@ -865,7 +865,7 @@
               (up x y (sqrt (+ (* -1 (expt x 2))
                                (* -1 (expt y 2))
                                1))))
-         (v/freeze
+         (g/freeze
           (g/simplify
            (q/->angle-axis
             (q/from-angle-axis
@@ -914,6 +914,26 @@
                       (g/* k q/K-tensor)))
                   "Build up the tensor, check that it matches the matrix
                   version."))))
+
+(deftest symbolic-rotation-matrices
+  (is (= (q/make (g/sqrt (g/+ (g/* (/ 3 4) 'x) (/ 4))) 0 0 0)
+         (g/simplify
+          (q/from-rotation-matrix
+           (m/by-rows ['x 0 0]
+                      [0 'x 0]
+                      [0 0 'x])))))
+  (is (= (q/make 0 (g/sqrt (g/+ (g/* (/ 2) 'x) (/ 2))) 0 0)
+         (g/simplify
+          (q/from-rotation-matrix
+           (m/by-rows ['x 0 0]
+                      [0 -1 0]
+                      [0 0 (g/- 'x)])))))
+  (is (= (q/make 0 0 (g/sqrt (g/+ (g/* (/ 2) 'x) (/ 2))) 0)
+         (g/simplify
+          (q/from-rotation-matrix
+           (m/by-rows [-1 0 0]
+                      [0 'x 0]
+                      [0 0 (g/- 'x)]))))))
 
 (deftest rotation-matrix-tests
   (checking "to and from 3x3 rotation matrices" 100

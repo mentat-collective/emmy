@@ -141,12 +141,12 @@
 
 (defn- zero-like [f]
   (-> (fn [& args]
-        (v/zero-like (apply f args)))
+        (g/zero-like (apply f args)))
       (with-arity (arity f) {:from :zero-like})))
 
 (defn- one-like [f]
   (-> (fn [& args]
-        (v/one-like (apply f args)))
+        (g/one-like (apply f args)))
       (with-arity (arity f) {:from :one-like})))
 
 (def I
@@ -186,58 +186,18 @@
           (apply f (map g/* xs factors)))
         (with-arity (arity f)))))
 
-(extend-protocol v/Value
+(extend-protocol v/IKind
   MultiFn
-  (zero? [_] false)
-  (one? [_] false)
-  (identity? [_] false)
-  (zero-like [f] (zero-like f))
-  (one-like [f] (one-like f))
-  (identity-like [f] (identity-like f))
-  (exact? [f] (compose v/exact? f))
-  (freeze [f]
-    (if-let [m (get-method f [Keyword])]
-      (m :name)
-      (core/get @v/object-name-map f f)))
   (kind [_] ::v/function)
 
   #?(:clj AFunction :cljs function)
-  (zero? [_] false)
-  (one? [_] false)
-  (identity? [_] false)
-  (zero-like [f] (zero-like f))
-  (one-like [f] (one-like f))
-  (identity-like [f] (identity-like f))
-  (exact? [f] (compose v/exact? f))
-  (freeze [f] (core/get
-               @v/object-name-map
-               f #?(:clj (:name (meta f) f)
-                    :cljs f)))
   (kind [_] ::v/function)
 
   Var
-  (zero? [_] false)
-  (one? [_] false)
-  (identity? [_] false)
-  (zero-like [f] (zero-like f))
-  (one-like [f] (one-like f))
-  (identity-like [f] (identity-like f))
-  (exact? [f] (compose v/exact? f))
-  (freeze [f] (core/get @v/object-name-map @f f))
   (kind [_] ::v/function)
 
-  #?@(:cljs
-      [MetaFn
-       (zero? [_] false)
-       (one? [_] false)
-       (identity? [_] false)
-       (zero-like [f] (zero-like f))
-       (one-like [f] (one-like f))
-       (identity-like [f] (identity-like f))
-       (exact? [f] (compose v/exact? f))
-       (freeze [f] (core/get
-                    @v/object-name-map f (:name (.-meta f) f)))
-       (kind [_] ::v/function)]))
+  #?@(:cljs [MetaFn
+             (kind [_] ::v/function)]))
 
 ;; we record arities as a vector with an initial keyword:
 ;;   [:exactly m]
@@ -583,3 +543,32 @@
 (defunary g/magnitude)
 (defunary g/angle)
 (defunary g/conjugate)
+
+;; Generic Methods
+
+(defmethod g/zero? [::v/function] [_] false)
+(defmethod g/one? [::v/function] [_] false)
+(defmethod g/identity? [::v/function] [_] false)
+(defmethod g/zero-like [::v/function] [f] (zero-like f))
+(defmethod g/one-like [::v/function] [f] (one-like f))
+(defmethod g/identity-like [::v/function] [f] (identity-like f))
+(defmethod g/exact? [::v/function] [f] (compose g/exact? f))
+
+(defmethod g/freeze [::v/function] [f]
+  (core/get @v/object-name-map f
+            (cond
+              (instance? MultiFn f)
+              (if-let [m (get-method f [Keyword])]
+                (m :name)
+                f)
+
+              #?@(:clj [(instance? AFunction f)
+                        (:name (meta f) f)]
+
+                  :cljs [(instance? MetaFn f)
+                         (:name (.-meta f) f)])
+
+              (var? f)
+              (g/freeze @f)
+
+              :else f)))

@@ -26,29 +26,34 @@
 (deftest value-protocol-tests
   (let [x2 (-> (fn [f] (fn [x] (* 2 (f x))))
                (o/make-operator 'double))]
-    (let [f ((v/zero-like x2) g/sin)]
+    (let [f ((g/zero-like x2) g/sin)]
       (checking " zero-like" 100 [n sg/real]
-                (is (v/zero? (f n)))))
+                (is (g/zero? (f n)))))
 
-    (let [f ((v/one-like x2) g/sin)]
+    (let [f ((g/one-like x2) g/sin)]
       (checking " one-like" 100 [n sg/real]
                 (is (= (g/sin n) (f n))
                     "operator one-like is identity")))
 
-    (let [f ((v/identity-like x2) g/sin)]
+    (let [f ((g/identity-like x2) g/sin)]
       (checking " identity-like" 100 [n sg/real]
                 (is (= (g/sin n) (f n)))))
 
     (testing "one? zero? identity? return true appropriately"
-      (is (v/zero? (v/zero-like x2)))
-      (is (not (v/one? (v/one-like x2))))
-      (is (v/identity? (v/identity-like x2))))
+      (is (g/zero? (g/zero-like x2)))
+      (is (not (g/one? (g/one-like x2))))
+      (is (g/identity? (g/identity-like x2))))
 
     (testing "v/numerical?"
       (is (not (v/numerical? x2))))
 
-    (testing "v/freeze"
-      (is (= 'double (v/freeze x2))))
+    (testing "g/freeze"
+      (is (= 'double (g/freeze x2)))
+      (is (= '(- double) (g/freeze (g/negate x2))))
+      (is (= '(/ double 3) (g/freeze (g/div x2 3)))))
+
+    (testing "toString"
+      (is (= "double" (str x2))))
 
     (testing "v/kind"
       (is (= ::o/operator (v/kind x2))))
@@ -72,56 +77,56 @@
 (deftest simplifier-tests
   (testing "identity gets stripped from products"
     (is (= 'D
-           (v/freeze (g/* D o/identity))
-           (v/freeze (g/* o/identity D)))))
+           (g/freeze (g/* D o/identity))
+           (g/freeze (g/* o/identity D)))))
 
   (testing "identity does NOT get stripped from sums"
     (is (= '(+ identity D)
-           (v/freeze
+           (g/freeze
             (g/+ o/identity D))))
 
     (is (= '(+ D identity)
-           (v/freeze
+           (g/freeze
             (g/+ D o/identity)))))
 
   (let [x2 (-> (fn [f] (fn [x] (* 2 (f x))))
                (o/make-operator 'double))]
     (is (= '(+ D (* D double (expt D 2)))
-           (v/freeze
+           (g/freeze
             (g/+ D (g/* D x2 o/identity D D))))
         "operators next to each other are gathered into exponents, and `identity`
       gets removed (since it's the multiplicative identity)")
 
     (is (= '(expt D 2)
-           (v/freeze (g/* D D))))
+           (g/freeze (g/* D D))))
 
     (is (= '(* D double D)
-           (v/freeze (g/* (* D x2) D)))
+           (g/freeze (g/* (* D x2) D)))
         "multiplication is commutative but NOT associative, so we gather these
        together."))
 
   (testing "internal multiplication on both sides"
     (is (= '(expt D 6)
-           (v/freeze (g/* (g/* D D D) (g/* D D D)))
-           (v/freeze (g/* (g/* D (g/expt D 2) D) (g/* D D)))
-           (v/freeze (g/* (g/* (g/expt D 2) D) (g/* D D D)))
-           (v/freeze (g/* (g/* D D D) (g/* D (g/expt D 2))))
-           (v/freeze (g/* (g/* D D D) (g/* (g/expt D 2) D)))
-           (v/freeze (g/* (g/* D D D) (g/* D (g/expt D 2))))
-           (v/freeze (g/* (g/* D D D) (g/* (g/expt D 2) D))))))
+           (g/freeze (g/* (g/* D D D) (g/* D D D)))
+           (g/freeze (g/* (g/* D (g/expt D 2) D) (g/* D D)))
+           (g/freeze (g/* (g/* (g/expt D 2) D) (g/* D D D)))
+           (g/freeze (g/* (g/* D D D) (g/* D (g/expt D 2))))
+           (g/freeze (g/* (g/* D D D) (g/* (g/expt D 2) D)))
+           (g/freeze (g/* (g/* D D D) (g/* D (g/expt D 2))))
+           (g/freeze (g/* (g/* D D D) (g/* (g/expt D 2) D))))))
 
   (testing "internal multiplication on right"
     (is (= '(expt D 4)
-           (v/freeze (g/* D (g/* D D D)))
-           (v/freeze (g/* (g/expt D 2) (g/* D D)))
-           (v/freeze (g/* D (g/* D (g/expt D 2))))
-           (v/freeze (g/* D (g/* (g/expt D 2) D)))
-           (v/freeze (g/* D (g/* D (g/expt D 2))))
-           (v/freeze (g/* D (g/* (g/expt D 2) D))))))
+           (g/freeze (g/* D (g/* D D D)))
+           (g/freeze (g/* (g/expt D 2) (g/* D D)))
+           (g/freeze (g/* D (g/* D (g/expt D 2))))
+           (g/freeze (g/* D (g/* (g/expt D 2) D)))
+           (g/freeze (g/* D (g/* D (g/expt D 2))))
+           (g/freeze (g/* D (g/* (g/expt D 2) D))))))
 
   (testing "sums collapse too via the associative rule"
     (is (= '(+ D (partial 1) (expt D 3))
-           (v/freeze
+           (g/freeze
             (g/+ D (g/+ (partial 1) (g/* D (g/expt D 2)))))))))
 
 (deftest custom-getter-tests
@@ -135,7 +140,7 @@
 
   (testing "get names"
     (is (= '(compose (component x) identity)
-           (v/freeze (get o/identity 'x)))
+           (g/freeze (get o/identity 'x)))
         "The name of the operator returned by `get` reflects the (sort of
         awkward) composition that `get` induces."))
 
@@ -192,6 +197,7 @@
     (is (= 12 ((double f) 1)))
     (is (= 24 ((double (double f)) 1)))
     (is (= 12 ((double-op f) 1)))
+    (is (= -12 ((g/negate (double-op f)) 1)))
     (is (= 24 ((double-op (double-op f)) 1)))
     (is (= 24 (((g/* double-op double-op) f) 1))) ;; * for operators is composition
     (is (= 144 (((g/* double double) f) 1)))      ;; * for functions is pointwise multiply
@@ -242,14 +248,14 @@
                (* -1 ((D f) x) ((D g) (+ (f x) ((D f) x))))
                (((expt D 2) f) x)
                (((expt D 3) f) x))
-           (v/freeze
+           (g/freeze
             (g/simplify
              ((D ((* (- D g) (+ D I)) f)) 'x))))))
 
   (testing "that basic arithmetic operations work on multivariate literal functions"
     (is (= '(down (* 2 (((partial 0) ff) x y))
                   (* 2 (((partial 1) ff) x y)))
-           (v/freeze
+           (g/freeze
             (g/simplify
              (((+ D D) ff) 'x 'y)))))
 
@@ -283,7 +289,7 @@
              (* (/ 1 6) (expt ε 3) (((expt D 3) f) t))
              (* (/ 1 24) (expt ε 4) (((expt D 4) f) t))
              (* (/ 1 120) (expt ε 5) (((expt D 5) f) t)))
-           (v/freeze
+           (g/freeze
             (g/simplify (take 6 (seq (((g/exp (* 'ε D)) (f/literal-function 'f)) 't)))))))
 
     (is (ish? '(0
@@ -298,7 +304,7 @@
                 (* (/ 1 362880) (expt ε 9))
                 0
                 (* (/ -1 39916800) (expt ε 11)))
-              (v/freeze
+              (g/freeze
                (g/simplify (take 12 (seq (((g/exp (* 'ε D)) g/sin) 0)))))))
 
     (is (ish? '(1
@@ -313,7 +319,7 @@
                 0
                 (* (/ -1 3628800) (expt ε 10))
                 0)
-              (v/freeze
+              (g/freeze
                (g/simplify (take 12 (seq (((g/exp (* 'ε D)) g/cos) 0)))))))
 
     (is (= '(1
@@ -322,7 +328,7 @@
              (* (/ 1 16) (expt ε 3))
              (* (/ -5 128) (expt ε 4))
              (* (/ 7 256) (expt ε 5)))
-           (v/freeze
+           (g/freeze
             (g/simplify (take 6 (seq (((g/exp (* 'ε D)) #(g/sqrt (+ % 1))) 0)))))))
 
     (is (= '(+
@@ -333,7 +339,7 @@
              (* (/ 29 90) (expt n 3) (expt ε 7))
              (* (/ -7 20) (expt n 2) (expt ε 7))
              (* (/ 1 7) n (expt ε 7)))
-           (v/freeze
+           (g/freeze
             (g/simplify (nth (seq (((g/exp (* 'ε D)) #(g/expt (+ 1 %) 'n)) 0)) 7))))))
 
   (testing "mixed types don't combine"
@@ -379,6 +385,22 @@
              (o/context (* o p))
              (o/context (* p o))))))
 
+  (testing "bring your own zero/one/identity functions"
+    (let [wrap (fn [tag]
+                 (fn [o] (* o (o/make-operator #(comp (f/literal-function tag) %) tag))))
+          o (o/make-operator identity 'o {:zero-like (wrap 'Zero-like)
+                                          :one-like (wrap 'One-like)
+                                          :identity-like (wrap 'Identity-like)
+                                          :one? (wrap 'One?)
+                                          :zero? (wrap 'Zero?)})]
+      (is (= '(f x) (g/freeze (f 'x))))
+      (is (= '(f x) (g/freeze ((o f) 'x))))
+      (is (= '(Zero-like (f x)) (g/freeze (((g/zero-like o) f) 'x)) ))
+      (is (= '(One-like (f x)) (g/freeze (((g/one-like o) f) 'x))))
+      (is (= '(Identity-like (f x)) (g/freeze (((g/identity-like o) f) 'x))))
+      (is (= '(One? (f x)) (g/freeze (((g/one? o) f) 'x))))
+      (is (= '(Zero? (f x)) (g/freeze (((g/zero? o) f) 'x))))))
+
   (testing "*, -, + between operators simplifies"
     (is (= (o/procedure D)
            (o/procedure (* o/identity D))
@@ -386,16 +408,16 @@
         "* ignores identity")
 
     (is (= (o/procedure D)
-           (o/procedure (+ D (v/zero-like D)))
-           (o/procedure (+ (v/zero-like D) D)))
+           (o/procedure (+ D (g/zero-like D)))
+           (o/procedure (+ (g/zero-like D) D)))
         "+ ignores zeros")
 
     (is (= (o/procedure D)
-           (o/procedure (- D (v/zero-like D))))
+           (o/procedure (- D (g/zero-like D))))
         "- ignores zeros on right")
 
     (is (not= (o/procedure D)
-              (o/procedure (- (v/zero-like D) D)))
+              (o/procedure (- (g/zero-like D) D)))
         "- does NOT ignore zero on left")))
 
     ;;; more testing to come as we implement multivariate literal functions that

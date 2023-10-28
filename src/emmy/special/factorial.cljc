@@ -33,7 +33,7 @@
     #?(:clj
        (apply *' elems)
        :cljs
-       (if (<= n 20)
+       (if (< n 19)
          (apply * elems)
          (transduce (map u/bigint) g/* elems)))))
 
@@ -79,7 +79,7 @@
   (cond (zero? n) 1
         (neg? n)
         (let [denom (rising-factorial (g/add x 1) (g/- n))]
-          (if (v/zero? denom)
+          (if (g/zero? denom)
             ##Inf
             (g/invert denom)))
 
@@ -100,7 +100,7 @@
   (cond (zero? n) 1
         (neg? n)
         (let [denom (rising-factorial (inc x) (- n))]
-          (if (v/zero? denom)
+          (if (g/zero? denom)
             ##Inf
             (g// 1 denom)))
 
@@ -123,7 +123,7 @@
   denominator evaluates to 0.")
 
 (def pochhammer
-  "Alias for [[falling-factorial]]."
+  "Alias for [[rising-factorial]]."
   rising-factorial)
 
 (defmethod rising-factorial :default [x n]
@@ -131,7 +131,7 @@
   (cond (zero? n) 1
         (neg? n)
         (let [denom (falling-factorial (g/sub x 1) (g/- n))]
-          (if (v/zero? denom)
+          (if (g/zero? denom)
             ##Inf
             (g/invert denom)))
 
@@ -146,7 +146,7 @@
   (cond (zero? n) 1
         (neg? n)
         (let [denom (falling-factorial (dec x) (- n))]
-          (if (v/zero? denom)
+          (if (g/zero? denom)
             ##Inf
             (g// 1 denom)))
 

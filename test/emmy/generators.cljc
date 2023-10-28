@@ -75,7 +75,7 @@
   ([opts]
    (->> (reasonable-double opts)
         (gen/fmap (fn [x]
-                    (if (v/exact? x)
+                    (if (g/exact? x)
                       (+ x 0.5)
                       x))))))
 
@@ -97,7 +97,7 @@
 (def big-ratio
   (gen/let [n bigint
             d bigint]
-    (let [d (if (v/zero? d)
+    (let [d (if (g/zero? d)
               (u/bigint 1)
               d)]
       (r/rationalize n d))))
@@ -291,7 +291,7 @@
    (let [term-gen   (gen/let [tags (vector-set gen/nat)
                               coef coeff-gen]
                       (let [tags (if (empty? tags) [0] tags)
-                            coef (if (v/zero? coef) 1 coef)]
+                            coef (if (g/zero? coef) 1 coef)]
                         (#'d/make-term tags coef)))]
      (gen/let [terms  (gen/vector term-gen 1 5)
                primal coeff-gen]
@@ -333,7 +333,7 @@
                                        (poly/constant arity p))))
                                  terms)]
               (if nonzero?
-                (gen/such-that (complement v/zero?) pgen)
+                (gen/such-that (complement g/zero?) pgen)
                 pgen)))]
     (let [arity (if (integer? arity)
                   (gen/return arity)

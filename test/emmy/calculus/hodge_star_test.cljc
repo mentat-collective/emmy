@@ -15,13 +15,12 @@
             [emmy.function :refer [compose]]
             [emmy.generic :as g :refer [+ - * /]]
             [emmy.simplify :refer [hermetic-simplify-fixture]]
-            [emmy.structure :as s :refer [up down]]
-            [emmy.value :as v]))
+            [emmy.structure :as s :refer [up down]]))
 
 (use-fixtures :each hermetic-simplify-fixture)
 
 (def simplify
-  (comp v/freeze g/simplify))
+  (comp g/freeze g/simplify))
 
 (deftest gram-schmidt-tests
   (testing "Orthonormalizing with respect to the Lorentz metric in 2 dimensions."
@@ -135,7 +134,7 @@
 
       (testing "What is a rank 0 form?"
         (is (= '(V↑1 (up x y))
-               (v/freeze
+               (g/freeze
                 (((E2-star dx)
                   (vf/literal-vector-field 'V R2-rect))
                  ((m/point R2-rect) (up 'x 'y))))))
