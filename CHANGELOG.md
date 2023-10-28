@@ -2,10 +2,10 @@
 
 ## [unreleased]
 
-- #XXX
+- #149
 
   - Retires the Value protocol in favor of MultiFns in the generic scope.
-    Doing this carefully, by revoking the exisiting implementation and
+    Doing this carefully, by revoking the existing implementation and
     then restoring it step by step, revealed some interesting corner cases:
 
       - `(zero? [0])` but `(not (zero? (lazy-seq [0])))`
