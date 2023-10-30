@@ -251,10 +251,6 @@
 (import-def matrix/row row-matrix)
 (import-def matrix/column column-matrix)
 
-(import-def v/principal-value principal-value)
-
-(import-def series/series series)
-(import-def series/power-series power-series)
 (import-def series/constant constant-series)
 (import-def series/sum series:sum)
 (import-def cm/invert metric:invert)
@@ -296,7 +292,7 @@
  [emmy.operator commutator anticommutator]
  [emmy.polynomial.factor factor]
  [emmy.ratio numerator denominator #?@(:cljs [ratio? rationalize])]
- [emmy.series binomial-series partial-sums]
+ [emmy.series series power-series binomial-series partial-sums]
  [emmy.util bigint? #?@(:cljs [bigint])]
 
  [emmy.generic
@@ -585,4 +581,4 @@
  [emmy.special.elliptic elliptic-f]
  [emmy.special.factorial factorial]
  [emmy.value = compare
-  numerical? kind kind-predicate])
+  numerical? kind kind-predicate principal-value])
