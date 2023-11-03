@@ -71,6 +71,15 @@
                               :min excluded-upper
                               :max max})])))
 
+(defn reasonable-complex
+  "A complex number in the unit square, bounded away from the axes,
+  in order to avoid branch points"
+  []
+  (let [bounds {:min -1 :max 1 :excluded-lower -1e-3 :excluded-upper 1e-3}]
+    (gen/let [re (reasonable-double bounds)
+              im (reasonable-double bounds)]
+      (c/complex re im))))
+
 (defn inexact-double
   ([] (inexact-double {}))
   ([opts]

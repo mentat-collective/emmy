@@ -15,7 +15,7 @@
 
    * Copyright (c) 2020, Robert Eisele (robert@xarg.org)
    * Dual licensed under the MIT or GPL Version 2 licenses."
-  (:refer-clojure :exclude [abs zero?])
+  (:refer-clojure :exclude [abs zero? infinite?])
   (:require [emmy.generic :as g]
             [emmy.util :as u]
             [emmy.value :as v]))
@@ -160,20 +160,6 @@
                        b (g// b 2)]
                    (g/+ LN2 (g/* 0.5 (Math/log (g/+ (g/* a a) (g/* b b))))))))))
 
-(comment
-
-  (def c-re #"([+-]?\d+(\.\d*)?)(\s?([+-])\s?(\d+(\.\d*)?)[Ii])?")
-  (def c-re #"([+-]?\d+(\.\d*)?([Ee][+-]?\d+)?)(\s?([+-])\s?(\d+(\.\d*)?([Ee][+-]?\d+)?)[Ii])?")
-
-
-
-  (re-matches c-re "+1.0e0+2.2e-03i")
-  (re-matches c-re "1e2")
-  (re-matches c-re "1+2i")
-  (def m (re-matches c-re))
-  (m "3.14")
-  )
-
 (let [complex-re #"([+-]?\d+(\.\d*)?([Ee][+-]?\d+)?)(\s?([+-])\s?(\d+(\.\d*)?([Ee][+-]?\d+)?)[Ii])?"]
   (defn parse
     "Parse a complex number. We expect one or two floating point numbers.
@@ -185,24 +171,6 @@
                  (* (if (= sign "-") -1 1)
                     (if im ((if (or im-frac im-expt) u/parse-double u/parse-int) im) 0)))
       (throw (ex-info "invalid complex number" {:input s})))))
-
-(comment
-  (parse "1+2i")
-
-  (parse "1.1-3.2i")
-
-  (parse "-1.1-2.3I")
-
-  (parse "foo")
-  )
-
-(defn sign
-  "Calculates the sign of a complex number, which is a normalized complex"
-  [z]
-  (let [abs-z (abs z)]
-    (->Complex
-     (/ (.-re z) abs-z)
-     (/ (.-im z) abs-z))))
 
 (defn add
   "Compute the complex sum."
@@ -348,17 +316,17 @@
     (if (and (g/zero? b)
              age0)
       (->Complex (g/sqrt a) 0)
-      (let [r (abs z)
+      (let [r (g/abs z)
             re (if age0
-                 (* 0.5 (Math/sqrt (* 2 (+ r a))))
-                 (/ (Math/abs b) (Math/sqrt (* 2 (- r a)))))
+                 (g// (g/sqrt (g/* 2 (g/+ r a))) 2)
+                 (g// (g/abs b) (g/sqrt (g/* 2 (g/- r a)))))
             im (if age0
-                 (/ (Math/abs b) (Math/sqrt (* 2 (+ r a))))
-                 (* 0.5 (Math/sqrt (* 2 (- r a)))))]
-        (->Complex re (if (< b 0) (- im) im))))))
+                 (g// (g/abs b) (g/sqrt (g/* 2 (g/+ r a))))
+                 (g// (g/sqrt (g/* 2 (g/- r a))) 2))]
+        (->Complex re (if (g/negative? b) (g/negate im) im))))))
 
 (defn exp
-  "Calculate the complex exponential"
+  "Calculate the complex exponential."
   [^Complex z]
   (let [ea (g/exp (.-re z))
         b (.-im z)]
@@ -378,18 +346,19 @@
                (* (Math/exp a) (Math/sin b)))))
 
 (defn log
-  "Calculate the natural log"
+  "Calculate complex the natural log."
   [^Complex z]
   (let [a (.-re z)
         b (.-im z)]
    (->Complex (log-hypot z) (Math/atan2 b a))))
 
 (defn arg
-  "Calculate the angle of the complex number"
+  "Calculate the angle of the complex number."
   [^Complex z]
   (Math/atan2 (.-im z) (.-re z)))
 
 (defn sin
+  "Calculate the complex sine."
   [^Complex z]
   ;; sin(z) = ( e^iz - e^-iz ) / 2i
   ;;        = sin(a)cosh(b) + i cos(a)sinh(b)
@@ -490,86 +459,47 @@
             (->Complex (g// (.-im t1) -2)
                        (g// (.-re t1) 2))))))
 
-(defn acot [z])
-;;     /**
-;;      * Calculate the complex arcus cotangent
-;;      *
-;;      * @returns {Complex}
-;;      */
-;;     'acot': function() {
+(defn acot
+  "Calculate the complex arc cotangent."
+  [^Complex z]
+  ;; acot(c) = i / 2 log((c - i) / (c + i))
+  (let [a (.-re z)
+        b (.-im z)]
+    (if (g/zero? b)
+      (->Complex (g/atan 1 a) 0)
+      (let [d (g/+ (g/square a) (g/square b))]
+        (if (g/zero? d)
+          (atan (->Complex (if (g/zero? a) 0 (g// a 0))
+                           (if (g/zero? b) 0 (g// (g/negate b) 0))))
+          (atan (->Complex (g// a d)
+                           (g// (g/negate b) d))))))))
 
-;;       // acot(c) = i / 2 log((c - i) / (c + i))
+(defn asec
+  "Calculate the complex arc secant."
+  [^Complex z]
+  ;; asec(c) = -i * log(1 / c + sqrt(1 - i / c^2))
+  (if (zero? z)
+    (->Complex 0 ##Inf)
+    (let [a (.-re z)
+          b (.-im z)
+          d (g/+ (g/square a) (g/square b))]
+      ;; the JS source tested for d == 0, but that is ruled out by the
+      ;; zero check above
+      (acos (->Complex (g// a d)
+                       (g// (g/negate b) d))))))
 
-;;       var a = this['re'];
-;;       var b = this['im'];
-
-;;       if (b === 0) {
-;;         return new Complex(Math.atan2(1, a), 0);
-;;       }
-
-;;       var d = a * a + b * b;
-;;       return (d !== 0)
-;;         ? new Complex(
-;;           a / d,
-;;           -b / d).atan()
-;;         : new Complex(
-;;           (a !== 0) ? a / 0 : 0,
-;;           (b !== 0) ? -b / 0 : 0).atan();
-;;     },
-
-(defn asec [z])
-;;     /**
-;;      * Calculate the complex arcus secant
-;;      *
-;;      * @returns {Complex}
-;;      */
-;;     'asec': function() {
-
-;;       // asec(c) = -i * log(1 / c + sqrt(1 - i / c^2))
-
-;;       var a = this['re'];
-;;       var b = this['im'];
-
-;;       if (a === 0 && b === 0) {
-;;         return new Complex(0, Infinity);
-;;       }
-
-;;       var d = a * a + b * b;
-;;       return (d !== 0)
-;;         ? new Complex(
-;;           a / d,
-;;           -b / d).acos()
-;;         : new Complex(
-;;           (a !== 0) ? a / 0 : 0,
-;;           (b !== 0) ? -b / 0 : 0).acos();
-;;     },
-
-(defn acsc [z])
-;;     /**
-;;      * Calculate the complex arcus cosecans
-;;      *
-;;      * @returns {Complex}
-;;      */
-;;     'acsc': function() {
-
-;;       // acsc(c) = -i * log(i / c + sqrt(1 - 1 / c^2))
-
-;;       var a = this['re'];
-;;       var b = this['im'];
-
-;;       if (a === 0 && b === 0) {
-;;         return new Complex(Math.PI / 2, Infinity);
-;;       }
-
-;;       var d = a * a + b * b;
-;;       return (d !== 0)
-;;         ? new Complex(
-;;           a / d,
-;;           -b / d).asin()
-;;         : new Complex(
-;;           (a !== 0) ? a / 0 : 0,
-;;           (b !== 0) ? -b / 0 : 0).asin();
-;;     },
+(defn acsc
+  "Compute the complex arc cosecant."
+  [^Complex z]
+  ;; acsc(c) = -i * log(i / c + sqrt(1 - 1 / c^2))
+  (if (zero? z)
+    (->Complex (/ Math/PI 2) ##Inf)
+    (let [a (.-re z)
+          b (.-im z)
+          d (g/+ (g/square a) (g/square b))]
+      ;; original code had a check for d == 0 here, but that seems to
+      ;; be ruled out by the case (zero? z) above
+      (asin (->Complex (g// a d) (g// (g/negate b) d))))))
 
 (defn sinh
   "Calculate the complex hyperbolic sine"
@@ -617,8 +547,6 @@
     (->Complex (g// (g/* -2 (g/sinh a) (g/cos b)) d)
                (g// (g/* 2 (g/cosh a) (g/sin b)) d))))
 
-
-
 (defn sech
   "Calculate the complex hyperbolic secant."
   [^Complex z]
@@ -629,29 +557,12 @@
     (->Complex (g// (g/* 2 (g/cosh a) (g/cos b)) d)
                (g// (g/* -2 (g/sinh a) (g/sin b)) d))))
 
-(defn asinh [z])
-;;     /**
-;;      * Calculate the complex asinh
-;;      *
-;;      * @returns {Complex}
-;;      */
-;;     'asinh': function() {
-
-;;       // asinh(c) = log(c + sqrt(c^2 + 1))
-
-;;       var tmp = this['im'];
-;;       this['im'] = -this['re'];
-;;       this['re'] = tmp;
-;;       var res = this['asin']();
-
-;;       this['re'] = -this['im'];
-;;       this['im'] = tmp;
-;;       tmp = res['re'];
-
-;;       res['re'] = -res['im'];
-;;       res['im'] = tmp;
-;;       return res;
-;;     },
+(defn asinh
+  "Calculate the arc hyperbolic sine."
+  [^Complex z]
+  ;; asinh(c) = log(c + sqrt(c^2 + 1))
+  (let [t (asin (->Complex (.-im z) (g/negate (.-re z))))]
+    (->Complex (g/negate (.-im t)) (.-re t))))
 
 (defn acosh
   "Compute the complex arc hyperbolic cosine"
@@ -663,27 +574,6 @@
     (if (< ia 0)
       (->Complex (- ia) ra)
       (->Complex ia (- ra)))))
-
-;;     /**
-;;      * Calculate the complex an
-;;      *
-;;      * @returns {Complex}
-;;      */
-;;     'acosh': function() {
-
-
-;;       var res = this['acos']();
-;;       if (res['im'] <= 0) {
-;;         var tmp = res['re'];
-;;         res['re'] = -res['im'];
-;;         res['im'] = tmp;
-;;       } else {
-;;         var tmp = res['im'];
-;;         res['im'] = -res['re'];
-;;         res['re'] = tmp;
-;;       }
-;;       return res;
-;;     },
 
 (defn atanh [z])
 ;;     /**
@@ -747,67 +637,42 @@
 ;;           (b !== 0) ? -b / 0 : 0).atanh();
 ;;     },
 
-(defn acsch [z])
-;;     /**
-;;      * Calculate the complex acsch
-;;      *
-;;      * @returns {Complex}
-;;      */
-;;     'acsch': function() {
+(defn acsch
+  "Calculate the complex arc hyperbolic cosecant."
+  [^Complex z]
+  ;; acsch(c) = log((1+sqrt(1+c^2))/c)
+  (let [a (.-re z)
+        b (.-im z)]
+    (if (g/zero? b)
+      (if (g/zero? a)
+        (->Complex ##Inf 0)
+        (->Complex (g/log (g/+ a (g/sqrt (g/+ (g/square a) 1)))) 0))
+      (let [d (g/+ (g/square a) (g/square b))]
+        ;; the JS source treated the special case d == 0, but that can't
+        ;; happen since d == 0 ==> b == 0, which is treated above
+        (asinh (->Complex (g// a d)
+                          (g// (g/negate b) d)))))))
 
-;;       // acsch(c) = log((1+sqrt(1+c^2))/c)
-
-;;       var a = this['re'];
-;;       var b = this['im'];
-
-;;       if (b === 0) {
-
-;;         return new Complex(
-;;           (a !== 0)
-;;             ? Math.log(a + Math.sqrt(a * a + 1))
-;;             : Infinity, 0);
-;;       }
-
-;;       var d = a * a + b * b;
-;;       return (d !== 0)
-;;         ? new Complex(
-;;           a / d,
-;;           -b / d).asinh()
-;;         : new Complex(
-;;           (a !== 0) ? a / 0 : 0,
-;;           (b !== 0) ? -b / 0 : 0).asinh();
-;;     },
-
-(defn asech [z])
-;;     /**
-;;      * Calculate the complex asech
-;;      *
-;;      * @returns {Complex}
-;;      */
-;;     'asech': function() {
-
-;;       // asech(c) = log((1+sqrt(1-c^2))/c)
-
-;;       var a = this['re'];
-;;       var b = this['im'];
-
-;;       if (this['isZero']()) {
-;;         return Complex['INFINITY'];
-;;       }
-
-;;       var d = a * a + b * b;
-;;       return (d !== 0)
-;;         ? new Complex(
-;;           a / d,
-;;           -b / d).acosh()
-;;         : new Complex(
-;;           (a !== 0) ? a / 0 : 0,
-;;           (b !== 0) ? -b / 0 : 0).acosh();
-;;     },
+(defn asech
+  "Calculate the complex arc hyperbolic secant."
+  [^Complex z]
+  (if (zero? z)
+    INFINITY
+    (let [a (.-re z)
+          b (.-im z)
+          d (g/+ (g/square a) (g/square b))]
+      ;; The test for d = 0 seems redundant. The only way d can
+      ;; be zero that I can see is for a and b to be zero, but then
+      ;; the zero test above would have worked.
+      (if (g/zero? d)
+        (acosh (->Complex (if (g/zero? a) 0 (g// a 0))
+                          (if (g/zero? b) 0 (g// (g/negate b) 0))))
+        (acosh (->Complex (g// a d)
+                          (g// (g/negate b) d)))))))
 
 (defn inverse
   "Calculate the complex inverse 1/z"
-  [z]
+  [^Complex z]
   (cond (zero? z) INFINITY
         (infinite? z) ZERO
         :else (let [a (.-re z)
@@ -831,7 +696,7 @@
 (defn ceil
   "Ceils the actual complex number"
   ([z] (ceil z 0))
-  ([z places]
+  ([^Complex z places]
    (let [places (Math/pow 10 places)]
      (->Complex
       (-> (.-re z) (* places) (Math/ceil) (/ places))
@@ -840,24 +705,8 @@
 (defn floor
   "Floors the actual complex number"
   ([z] (floor z 0))
-  ([z places]
+  ([^Complex z places]
    (let [places (Math/pow 10 places)]
      (->Complex
       (-> (.-re z) (* places) (Math/floor) (/ places))
       (-> (.-im z) (* places) (Math/floor) (/ places))))))
-
-(defn round
-  "Rounds the actual complex number"
-  ([z] (round z 0))
-  ([z places]
-   (let [places (Math/pow 10 places)]
-     (->Complex
-      (-> (.-re z) (* places) (Math/round) (/ places))
-      (-> (.-im z) (* places) (Math/round) (/ places))))))
-
-(comment
-  (require 'emmy.complex)
-  (read-string {:readers {'emmy/complex emmy.complex/complex}} "#emmy/complex [-1 -1]")
-
-  (g/conjugate (emmy.complex/complex [-1 -1]))
-  )

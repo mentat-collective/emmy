@@ -2,7 +2,7 @@
 
 (ns emmy.complex-test
   (:require #?(:cljs [cljs.reader :refer [read-string]])
-            [clojure.test :refer [is deftest testing]]
+            [clojure.test :refer [deftest is testing]]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
             [emmy.complex :as c]
             [emmy.generators :as sg]
@@ -11,24 +11,33 @@
             [emmy.laws :as l]
             [emmy.numbers]
             [emmy.value :as v]
-            [same.core :refer [ish? with-comparator]]))
+            [same.core :refer [ish? with-comparator]]
+            [clojure.zip :as z]))
 
 (defn ^:private near [w z]
   (< (g/abs (g/- w z)) 1e-10))
 
+(defn right-half-plane
+  "If z is not in the right half plane, move it there by rotating it 180°
+  (i.e., multiply by -1). This is used for inverse identity tests where the
+  principal value of the inverse function is the right half-plane."
+  [z]
+  (if (g/negative? (c/real z))
+    (g/negate z)
+    z))
+
 (deftest complex-literal
   (testing "complex constructor-as-parser can round-trip Complex instances. These
   show up as code snippets when you call `read-string` directly, and aren't evaluated
-  into Clojure. The fork in the test here captures the different behavior that will
-  appear in evaluated Clojure, vs self-hosted ClojureScript."
-    (is (= `(emmy.complex/complex [1 2])
+  into Clojure."
+    (is (= `(c/complex [1 2])
 
            ;; string input:
-           (read-string {:readers {'emmy/complex c/complex}}
+           (read-string {:readers {'emmy/complex c/parse-complex}}
                         (pr-str #emmy/complex "1 + 2i"))
 
            ;; vector input:
-           (read-string {:readers {'emmy/complex c/complex}}
+           (read-string {:readers {'emmy/complex c/parse-complex}}
                         (pr-str #emmy/complex [1 2]))))
 
     (checking "complex constructor can handle strings OR direct inputs" 100
@@ -298,6 +307,15 @@
       (is (near (c/complex 27) (g/cube (c/complex 3))))
       (is (near (c/complex -27) (g/cube (c/complex -3)))))
 
+    (testing "sqrt/square are mutually inverse"
+      ;; principal value for sqrt: right half-plane. If the value is in
+      ;; the left half-plane, make it principal by rotating 180°.
+
+      (checking "sqrt ∘ square = id" 100 [z (sg/reasonable-complex)]
+                (is (near (right-half-plane z) (g/sqrt (g/square z)))))
+      (checking "square ∘ sqrt = id" 100 [z (sg/reasonable-complex)]
+                (is (near z (g/square (g/sqrt z))))))
+
     (testing "sqrt"
       (is (near (c/complex 10 10) (g/sqrt (g/mul c/I 200)))))
 
@@ -369,67 +387,146 @@
                   (check gaussian-l (g/real-part gaussian-r)))))))
 
 (deftest trig-tests
-  (testing "sin"
-    (is (near (g/sin (c/complex 10))
-              (Math/sin 10))))
+  ;; Mathematica:
+  ;;   fns = {Sin, Cos, ..., ArcCoth}
+  ;;   z = 0.1 + 0.2 I
+  ;;   Table[{f, NumberForm[f[z], 12]}, {f, fns}]
+  ;; The results of that expression were massaged into the
+  ;; Clojure-readable form below.
+  (testing "one particular value"
+    (let [z (c/complex 0.1 0.2)
+          expected {:Sin #emmy/complex "0.101836749421+0.200330161149I"
+                    :Cos #emmy/complex "1.0149706707-0.0201000610277I"
+                    :Tan #emmy/complex "0.0963881308565+0.19928415106I"
+                    :Csc #emmy/complex "2.01645361897-3.96670632883I"
+                    :Sec #emmy/complex "0.984863898536+0.0195038389147I"
+                    :Cot #emmy/complex "1.9669102428-4.06662142386I"
+                    :Sinh #emmy/complex "0.0981700839054+0.199663505514I"
+                    :Cosh #emmy/complex "0.984970995703+0.0199000611944I"
+                    :Tanh #emmy/complex "0.103721150028+0.200614484227I"
+                    :Csch #emmy/complex "1.98311860447-4.03337143727I"
+                    :Sech #emmy/complex "1.01484407288-0.0205036079653I"
+                    :Coth #emmy/complex "2.03357864486-3.93328969902I"
+                    :ArcSin #emmy/complex "0.0981975111335+0.19963938539I"
+                    :ArcCos #emmy/complex "1.47259881566-0.19963938539I"
+                    :ArcTan #emmy/complex "0.103748113218+0.200586618131I"
+                    :ArcCsc #emmy/complex "0.453870209963-2.19857302792I"
+                    :ArcSec #emmy/complex "1.11692611683+2.19857302792I"
+                    :ArcCot #emmy/complex "1.46704821358-0.200586618131I"
+                    :ArcSinh #emmy/complex "0.10186391598+0.200303571099I"
+                    :ArcCosh #emmy/complex "0.19963938539+1.47259881566I"
+                    :ArcTanh #emmy/complex "0.096415620203+0.199261222833I"
+                    :ArcCsch #emmy/complex "2.18358521656-1.09692154883I"
+                    :ArcSech #emmy/complex "2.19857302792-1.11692611683I"
+                    :ArcCoth #emmy/complex "0.096415620203-1.37153510396I"}]
+      (is (near (:Sin expected) (g/sin z)))
+      (is (near (:Cos expected) (g/cos z)))
+      (is (near (:Tan expected) (g/tan z)))
+      (is (near (:Csc expected) (g/csc z)))
+      (is (near (:Sec expected) (g/sec z)))
+      (is (near (:Cot expected) (g/cot z)))
+      (is (near (:Sinh expected) (g/sinh z)))
+      (is (near (:Cosh expected) (g/cosh z)))
+      (is (near (:Tanh expected) (g/tanh z)))
+      (is (near (:Csch expected) (g/csch z)))
+      (is (near (:Sech expected) (g/sech z)))
+      (is (near (:Coth expected) (g/coth z)))
+      (is (near (:ArcSin expected) (g/asin z)))
+      (is (near (:ArcCos expected) (g/acos z)))
+      (is (near (:ArcTan expected) (g/atan z)))
+      (is (near (:ArcCsc expected) (g/acsc z)))
+      (is (near (:ArcSec expected) (g/asec z)))
+      (is (near (:ArcCot expected) (g/acot z)))
+      (is (near (:ArcSinh expected) (g/asinh z)))
+      (is (near (:ArcCosh expected) (g/acosh z)))
+      (is (near (:ArcTanh expected) (g/atanh z)))
+      (is (near (:ArcCsch expected) (g/acsch z)))
+      (is (near (:ArcSech expected) (g/asech z)))
+      (is (near (:ArcCoth expected) (g/acoth z)))))
+  (testing "reciprocal identities"
+    (let [near-enough (fn [w z] (< (g/abs (g/- z w)) 1e-6))]
+      ;; we relax `near` a bit because taking reciprocals moves
+      ;; some of the significance to the left of the decimal point
+      (checking "1/sin = csc" 100 [z (sg/reasonable-complex)]
+                (is (near-enough (g/invert (g/sin z)) (g/csc z))))
+      (checking "1/csc = sin" 100 [z (sg/reasonable-complex)]
+                (is (near-enough (g/invert (g/csc z)) (g/sin z))))
+      (checking "1/cos = sec" 100 [z (sg/reasonable-complex)]
+                (is (near-enough (g/invert (g/cos z)) (g/sec z))))
+      (checking "1/sec = cos" 100 [z (sg/reasonable-complex)]
+                (is (near-enough (g/invert (g/sec z)) (g/cos z))))
+      (checking "1/tan = cot" 100 [z (sg/reasonable-complex)]
+                (is (near-enough (g/invert (g/tan z)) (g/cot z))))
+      (checking "1/cot = tan" 100 [z (sg/reasonable-complex)]
+                (is (near-enough (g/invert (g/cot z)) (g/tan z))))
 
-  (testing "cos"
-    (is (near (g/cos (c/complex 10))
-              (Math/cos 10))))
+      (checking "1/sinh = csch" 100 [z (sg/reasonable-complex)]
+                (is (near-enough (g/invert (g/sinh z)) (g/csch z))))
+      (checking "1/csch = sinh" 100 [z (sg/reasonable-complex)]
+                (is (near-enough (g/invert (g/csch z)) (g/sinh z))))
+      (checking "1/cosh = sech" 100 [z (sg/reasonable-complex)]
+                (is (near-enough (g/invert (g/cosh z)) (g/sech z))))
+      (checking "1/sech = cosh" 100 [z (sg/reasonable-complex)]
+                (is (near-enough (g/invert (g/sech z)) (g/cosh z))))
+      (checking "1/tanh = coth" 100 [z (sg/reasonable-complex)]
+                (is (near-enough (g/invert (g/tanh z)) (g/coth z))))
+      (checking "1/coth = tanh" 100 [z (sg/reasonable-complex)]
+                (is (near-enough (g/invert (g/coth z)) (g/tanh z))))))
+  (testing "inverse identities"
+    (checking "asin ∘ sin = id" 100 [z (sg/reasonable-complex)]
+              (is (near z (g/asin (g/sin z)))))
+    (checking "sin ∘ asin = id" 100 [z (sg/reasonable-complex)]
+              (is (near z (g/sin (g/asin z)))))
+    (checking "acos ∘ cos = id" 100 [z (sg/reasonable-complex)]
+              (is (near (right-half-plane z) (g/acos (g/cos z)))))
+    (checking "cos ∘ acos = id" 100 [z (sg/reasonable-complex)]
+              (is (near z (g/cos (g/acos z)))))
+    (checking "atan ∘ tan = id" 100 [z (sg/reasonable-complex)]
+              (is (near z (g/atan (g/tan z)))))
+    (checking "tan ∘ atan = id" 100 [z (sg/reasonable-complex)]
+              (is (near z (g/tan (g/atan z)))))
+    (checking "acsc ∘ csc = id" 100 [z (sg/reasonable-complex)]
+              (is (near z (g/acsc (g/csc z)))))
+    (checking "csc ∘ acsc = id" 100 [z (sg/reasonable-complex)]
+              (is (near z (g/csc (g/acsc z)))))
+    (checking "asec ∘ sec = id" 100 [z (sg/reasonable-complex)]
+              (is (near (right-half-plane z) (g/asec (g/sec z)))))
+    (checking "sec ∘ asec = id" 100 [z (sg/reasonable-complex)]
+              (is (near z (g/sec (g/asec z)))))
+    (checking "acot ∘ cot = id" 100 [z (sg/reasonable-complex)]
+              (is (near z (g/acot (g/cot z)))))
+    (checking "cot ∘ acot = id" 100 [z (sg/reasonable-complex)]
+              (is (near z (g/cot (g/acot z)))))
 
-  (testing "tan"
-    (is (near (g/tan (c/complex 10))
-              (Math/tan 10))))
+    (checking "asinh ∘ sinh = id" 100 [z (sg/reasonable-complex)]
+              (is (near z (g/asinh (g/sinh z)))))
+    (checking "sinh ∘ asinh = id" 100 [z (sg/reasonable-complex)]
+              (is (near z (g/sinh (g/asinh z)))))
+    (checking "acosh ∘ cosh = id" 100 [z (sg/reasonable-complex)]
+              (is (near (right-half-plane z) (g/acosh (g/cosh z)))))
+    (checking "cosh ∘ acosh = id" 100 [z (sg/reasonable-complex)]
+              (is (near z (g/cosh (g/acosh z)))))
+    (checking "atanh ∘ tanh = id" 100 [z (sg/reasonable-complex)]
+              (is (near z (g/atanh (g/tanh z)))))
+    (checking "tanh ∘ atanh = id" 100 [z (sg/reasonable-complex)]
+              (is (near z (g/tanh (g/atanh z)))))
+    (checking "acsch ∘ csch = id" 100 [z (sg/reasonable-complex)]
+              (is (near z (g/acsch (g/csch z)))))
+    (checking "csch ∘ acsch = id" 100 [z (sg/reasonable-complex)]
+              (is (near z (g/csch (g/acsch z)))))
+    (checking "asech ∘ sech = id" 100 [z (sg/reasonable-complex)]
+              (is (near (right-half-plane z) (g/asech (g/sech z)))))
+    (checking "sech ∘ asech = id" 100 [z (sg/reasonable-complex)]
+              (is (near z (g/sech (g/asech z)))))
+    (checking "acoth ∘ coth = id" 100 [z (sg/reasonable-complex)]
+              (is (near z (g/acoth (g/coth z)))))
+    (checking "coth ∘ acoth = id" 100 [z (sg/reasonable-complex)]
+              (is (near z (g/coth (g/acoth z))))))
 
-  (testing "asin"
-    (is (near (g/asin (c/complex 1.1))
-              (c/complex 1.57079632679489 -0.443568254385115))))
-
-  (testing "acos"
-    (is (near (g/acos (c/complex 1.1))
-              (c/complex 0 0.4435682543851153))))
-
-  (testing "atan"
-    (is (near (g/atan (c/complex 1.1))
-              (c/complex 0.8329812666744317 0.0))))
-
-  (let [z (c/complex 3 4)]
-    (testing "cot"
-      (is (near (g/invert (g/tan z))
-                (g/cot z))))
-
-    (testing "cosh"
-      (is (near (c/complex -6.5806630406 -7.5815527427)
-                (g/cosh z))))
-
-    (testing "sinh"
-      (is (near (c/complex -6.5481200409 -7.6192317203)
-                (g/sinh z))))
-
-    (testing "tanh"
-      (is (near (g/div (g/sinh z) (g/cosh z))
-                (g/tanh z))))
-
-    (testing "sec"
-      (is (near (g/invert (g/cos z))
-                (g/sec z))))
-
-    (testing "csc"
-      (is (near (g/invert (g/sin z))
-                (g/csc z))))
-
-    (testing "sech"
-      (is (near (g/invert (g/cosh z))
-                (g/sech z))))
-
-    (testing "acosh"
-      (is (near z (g/cosh (g/acosh z)))))
-
-    (testing "asinh"
-      (is (near z (g/sinh (g/asinh z)))))
-
-    (testing "atanh"
-      (is (near z (g/tanh (g/atanh z)))))))
+  (testing "some corner cases"
+    (is (g/infinite? (g/atan c/I)))
+    (is (g/infinite? (g/atan (g/negate c/I))))
+    (is (g/infinite? (g/asech c/ZERO)))))
 
 (deftest promotions-from-real
   (is (= (c/complex 0 1) (g/sqrt -1)))

@@ -6,7 +6,6 @@
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
             [emmy.abstract.number]
-            [emmy.complex :as c]
             [emmy.expression :as x]
             [emmy.function :as f]
             [emmy.generators :as sg]

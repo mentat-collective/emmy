@@ -12,9 +12,6 @@
             [emmy.util :as u]
             [emmy.value :as v]))
 
-(extend-type emmy.complex.impl.Complex
- )
-
 (def ZERO
   "A [[Complex]] value equal to 0 (south pole on the Riemann Sphere)."
   c/ZERO)
@@ -46,11 +43,11 @@
    (c/->Complex re im)))
 
 (defn parse-complex
-  [& args]
   "Used as a [data reader](https://www.clojurescript.org/guides/reader#_clojurescript_compilation).
-   In Clojure, we could get away with just using the constructor above, but in
-   ClojureScript we need to act as a macro to delay evaluation of the constructor."
-  `(complex ~@args))
+  In Clojure, we could get away with just using the constructor above, but in
+  ClojureScript we need to act as a macro to delay evaluation of the constructor."
+  [c]
+  `(complex ~c))
 
 (defn complex?
   "Returns true if `a` is an instance of [[Complex]], false otherwise."
@@ -240,13 +237,20 @@
 (defmethod g/cos [::complex] [z] (c/cos z))
 (defmethod g/tan [::complex] [z] (c/tan z))
 (defmethod g/sec [::complex] [z] (c/sec z))
+(defmethod g/csc [::complex] [z] (c/csc z))
 (defmethod g/cot [::complex] [z] (c/cot z))
 
 (defmethod g/asin [::complex] [z] (c/asin z))
 (defmethod g/acos [::complex] [z] (c/acos z))
 (defmethod g/atan [::complex] [z] (c/atan z))
+(defmethod g/acsc [::complex] [z] (c/acsc z))
+(defmethod g/asec [::complex] [z] (c/asec z))
+(defmethod g/acot [::complex] [z] (c/acot z))
 
+(defmethod g/asinh [::complex] [z] (c/asinh z))
 (defmethod g/acosh [::complex] [z] (c/acosh z))
+(defmethod g/asech [::complex] [z] (c/asech z))
+(defmethod g/acsch [::complex] [z] (c/acsch z))
 
 (defmethod g/floor [::complex] [z] (c/floor z))
 (defmethod g/ceiling [::complex] [z] (c/ceil z))
@@ -254,6 +258,8 @@
 (defmethod g/cosh [::complex] [z] (c/cosh z))
 (defmethod g/sinh [::complex] [z] (c/sinh z))
 (defmethod g/tanh [::complex] [z] (c/tanh z))
+(defmethod g/sech [::complex] [z] (c/sech z))
+(defmethod g/csch [::complex] [z] (c/csch z))
 (defmethod g/coth [::complex] [z] (c/coth z))
 
 (defmethod g/integer-part [::complex] [a]
