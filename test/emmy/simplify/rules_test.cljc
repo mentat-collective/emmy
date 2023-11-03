@@ -250,7 +250,7 @@
   (is (= (template
           (+ x (/ (- (log (+ 1 (* ~c/I z)))
                      (log (- 1 (* ~c/I z))))
-                  ~(c/complex 0.0 2.0))))
+                  ~(c/complex 0 2))))
          (r/specfun->logexp '(+ x (atan z))))
       "lame test... but this is meant to show that complex numbers appear in the
       replacement."))
@@ -368,11 +368,11 @@
 
 (deftest complex-test
   (testing "complex-exp"
-    (is (= `(~'+ (~'cos 1.0) (~'* ~c/I (~'sin 1.0)))
+    (is (= `(~'+ (~'cos 1) (~'* ~c/I (~'sin 1)))
            (r/exp->sincos `(~'exp ~(c/complex 0 1)))))
-    (is (= `(~'* (~'exp 1.0) (~'+ (~'cos 1.0) (~'* ~c/I (~'sin 1.0))))
+    (is (= `(~'* (~'exp 1) (~'+ (~'cos 1) (~'* ~c/I (~'sin 1))))
            (r/exp->sincos `(~'exp ~(c/complex 1 1)))))
-    (is (= `(~'expt (~'exp (~'* ~c/I ~'z)) 2.0)
+    (is (= `(~'expt (~'exp (~'* ~c/I ~'z)) 2)
            (r/exp-expand `(~'exp (~'* ~(c/complex 0 2) ~'z)))))
     (is (= '(expt (exp (* k t)) 2)
            (r/exp-expand '(exp (* 2 k t))))))

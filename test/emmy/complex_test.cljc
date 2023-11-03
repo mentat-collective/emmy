@@ -17,33 +17,33 @@
   (< (g/abs (g/- w z)) 1e-10))
 
 (deftest complex-literal
-  (testing "parse-complex can round-trip Complex instances. These show up as
-  code snippets when you call `read-string` directly, and aren't evaluated into
-  Clojure. The fork in the test here captures the different behavior that will
+  (testing "complex constructor-as-parser can round-trip Complex instances. These
+  show up as code snippets when you call `read-string` directly, and aren't evaluated
+  into Clojure. The fork in the test here captures the different behavior that will
   appear in evaluated Clojure, vs self-hosted ClojureScript."
-    (is (= #?(:clj  '(emmy.complex/complex 1.0 2.0)
-              :cljs '(emmy.complex/complex 1 2))
+    (is (= `(emmy.complex/complex [1 2])
 
            ;; string input:
-           (read-string {:readers {'emmy/complex c/parse-complex}}
+           (read-string {:readers {'emmy/complex c/complex}}
                         (pr-str #emmy/complex "1 + 2i"))
 
            ;; vector input:
-           (read-string {:readers {'emmy/complex c/parse-complex}}
+           (read-string {:readers {'emmy/complex c/complex}}
                         (pr-str #emmy/complex [1 2]))))
 
     (checking "complex constructor can handle strings OR direct inputs" 100
               [re (sg/reasonable-double)
                im (sg/reasonable-double)]
               (is (= (c/complex re im)
-                     (c/complex (str re " + " im "i")))))
+                     (c/complex (str re (if (< im 0) " - " " + ") (g/abs im) "i")))))
 
     (testing "complex inputs"
       (is (= (c/complex 1 2) #emmy/complex [1 2]))
-      (is (= (c/complex 1) #emmy/complex [1]))
       (is (= (c/complex 1.2) #emmy/complex 1.2))
       (is (= (c/complex 1.2) #emmy/complex 1.2))
-      (is (= (c/complex "1.2+3.4i") #emmy/complex "1.2+3.4i")))))
+      (is (= (c/complex 1.2 3.4)
+             (c/complex "1.2+3.4i")
+             #emmy/complex "1.2+3.4i")))))
 
 (deftest complex-laws
   ;; Complex numbers form a field. We use a custom comparator to control some
@@ -84,23 +84,16 @@
     (is (not (g/one? (c/complex 2))))
     (is (not (g/one? (c/complex 0.0))))
 
-    (is (= 10.0 (g/freeze (c/complex 10)))
+    (is (= 10 (g/freeze (c/complex 10)))
         "If the imaginary piece is 0, freeze will return only the real part.")
     (is (v/numerical? (c/complex 10)))
 
     (testing "exact?"
       (is (not (g/exact? (c/complex 0 10.1))))
-
-      ;; cljs is able to maintain exact numbers here.
-      #?@(:clj
-          [(is (not (g/exact? (c/complex 10))))
-           (is (not (g/exact? (c/complex 10 12))))]
-
-          :cljs
-          [(is (g/exact? (c/complex 10)))
-           (is (g/exact? (c/complex 10 12)))
-           (is (not (g/exact? (c/complex 10.1))))
-           (is (not (g/exact? (c/complex 10 12.1))))]))))
+      (is (g/exact? (c/complex 10)))
+      (is (g/exact? (c/complex 10 12)))
+      (is (not (g/exact? (c/complex 10.1))))
+      (is (not (g/exact? (c/complex 10 12.1)))))))
 
 (let [pi Math/PI]
   (deftest complex-numbers
@@ -235,7 +228,7 @@
     (testing "fractional-part unit tests"
       (is (near (c/complex 0.5 0.9) (g/fractional-part (c/complex 1.5 2.9))))
       (is (near (c/complex 0.5 0.1) (g/fractional-part (c/complex -1.5 -2.9))))
-      (is (= 0.0 (g/fractional-part (c/complex 1 2))))
+      (is (= 0 (g/fractional-part (c/complex 1 2))))
       (is (= 0.5 (g/fractional-part (c/complex -1.5 2)))
           "imaginary part drops off if == zero"))
 
@@ -253,7 +246,7 @@
 
     (checking "floor pushes through to complex components" 100
               [x sg/complex]
-              (is (= (g/floor x)
+              (is (v/= (g/floor x)
                      (g/make-rectangular
                       (g/floor (g/real-part x))
                       (g/floor (g/imag-part x))))))
@@ -265,21 +258,20 @@
 
     (checking "ceiling pushes through to complex components" 100
               [x sg/complex]
-              (is (= (g/ceiling x)
-                     (g/make-rectangular
-                      (g/ceiling (g/real-part x))
-                      (g/ceiling (g/imag-part x))))))
+              (is (v/= (g/ceiling x)
+                       (g/make-rectangular
+                        (g/ceiling (g/real-part x))
+                        (g/ceiling (g/imag-part x))))))
 
     (testing "expt"
       (is (near -1 (g/expt (c/complex 0 1) 2)))
       (is (near (c/complex 16) (g/expt 2 (c/complex 4))))
       (is (near (c/complex 16) (g/expt (c/complex 2) (c/complex 4))))
 
-      (is (= -1 (g/square c/I))
+      (is (v/= -1 (g/square c/I))
           "squaring I produces an exact result.")
 
-      (is (= c/-I (g/cube c/I))
-          "cubing has an exact shortcut"))
+      (is (= c/-I (g/cube c/I))))
 
     (testing "negate"
       (is (= (c/complex -10 2)
@@ -289,7 +281,7 @@
       (is (g/zero? (g/add c/I (g/invert c/I)))))
 
     (testing "abs"
-      (is (= 5.0 (g/abs (c/complex 3 4)))))
+      (is (= 5 (g/abs (c/complex 3 4)))))
 
     (testing "exp"
       (is (near (c/complex -1) (g/exp (g/mul c/I pi)))

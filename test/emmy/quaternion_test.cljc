@@ -254,9 +254,9 @@
               (is (v/= r (q/make r)) "real == quaternion")
               (is (v/= (q/make r) r) "quaternion == real")
 
-              (is (ish? #emmy/complex [r i] (q/make r i 0 0))
+              (is (ish? (sc/complex r i) (q/make r i 0 0))
                   "complex == quaternion")
-              (is (ish? (q/make r i 0 0) #emmy/complex [r i])
+              (is (ish? (q/make r i 0 0) (sc/complex r i))
                   "quaternion == complex")
 
               (is (v/= v (q/make v)) "vector == quaternion")
@@ -285,7 +285,7 @@
                   real component and imaginary vector.")
 
               (is (ish? (q/make [r i 0 0])
-                        (q/make #emmy/complex [r i]))
+                        (q/make (sc/complex r i)))
                   "make can properly unpack complex numbers")
 
               (is (= (q/make v)

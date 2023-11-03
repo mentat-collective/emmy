@@ -9,8 +9,7 @@
   for a detailed discussion of how to use and extend the generic operations
   defined in [[emmy.generic]] and [[emmy.value]]."
   (:refer-clojure :exclude [zero? number? = compare])
-  (:require #?@(:cljs [["complex.js" :as Complex]
-                       ["fraction.js/bigfraction.js" :as Fraction]
+  (:require #?@(:cljs [["fraction.js/bigfraction.js" :as Fraction]
                        [emmy.util :as u]
                        [goog.array :as garray]
                        [goog.object :as gobject]
@@ -19,8 +18,7 @@
             [clojure.core :as core])
   #?(:clj
      (:import
-      (clojure.lang BigInt Sequential)
-      (org.apache.commons.math3.complex Complex))))
+      (clojure.lang BigInt Sequential))))
 
 (defprotocol Numerical
   (^boolean numerical? [_]))
@@ -92,13 +90,13 @@
   [x]
   #?(:clj
      (or (instance? Number x)
-         (instance? Complex x))
+         (core/= (kind x) :emmy.complex/complex))
      :cljs (or (cljs.core/number? x)
                (core/= "bigint" (goog/typeOf x))
                (instance? Fraction x)
                (instance? goog.math.Integer x)
                (instance? goog.math.Long x)
-               (instance? Complex x))))
+               (core/= (kind x) :emmy.complex/complex))))
 
 ;; `::scalar` is a thing that symbolic expressions AND actual numbers both
 ;; derive from.

@@ -6,6 +6,7 @@
   (:require [clojure.core :as core]
             [clojure.test.check.generators :as gen]
             [emmy.complex :as c]
+            #?(:cljs [emmy.complex.impl :refer [Complex]])
             [emmy.differential :as d]
             [emmy.generic :as g]
             [emmy.matrix :as m]
@@ -27,7 +28,7 @@
      (:import (clojure.lang Symbol)
               (emmy.structure Structure)
               (emmy.quaternion Quaternion)
-              (org.apache.commons.math3.complex Complex))))
+              (emmy.complex.impl Complex))))
 
 (def bigint
   "js/BigInt in cljs, clojure.lang.BigInt in clj."
@@ -413,7 +414,7 @@
        Number
        (ish [this that] (eq-delegate this that))])
 
-  #?(:cljs c/complextype :clj Complex)
+  Complex
   (ish [this that]
     (cond (c/complex? that)
           (and (si/*comparator* (c/real this)

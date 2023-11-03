@@ -178,3 +178,23 @@
 
 (def sqrt-machine-epsilon
   (Math/sqrt machine-epsilon))
+
+(defn parse-int
+  [s]
+  #?(:clj (Integer/parseInt s)
+     :cljs (. js/Number parseInt s)))
+
+(defn parse-double
+  [s]
+  #?(:clj (Double/parseDouble s)
+     :cljs (. js/Number parseFloat s)))
+
+(defn nan?
+  [x]
+  #?(:clj (Double/isNaN x)
+     :cljs (. js/Number isNaN x)))
+
+(defn finite?
+  [x]
+  #?(:clj (Double/isFinite x)
+     :cljs (. js/Number isFinite x)))
