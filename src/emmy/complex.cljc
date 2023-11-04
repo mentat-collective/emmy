@@ -249,8 +249,10 @@
 
 (defmethod g/asinh [::complex] [z] (c/asinh z))
 (defmethod g/acosh [::complex] [z] (c/acosh z))
+(defmethod g/atanh [::complex] [z] (c/atanh z))
 (defmethod g/asech [::complex] [z] (c/asech z))
 (defmethod g/acsch [::complex] [z] (c/acsch z))
+(defmethod g/acoth [::complex] [z] (c/acoth z))
 
 (defmethod g/floor [::complex] [z] (c/floor z))
 (defmethod g/ceiling [::complex] [z] (c/ceil z))

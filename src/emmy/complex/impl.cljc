@@ -46,8 +46,6 @@
 (def ONE (Complex. 1 0))
 (def I (Complex. 0 1))
 (def -I (Complex. 0 -1))
-(def PI (Complex. Math/PI 0))
-(def E (Complex. Math/E 0))
 (def INFINITY (Complex. ##Inf ##Inf))
 (def NAN (Complex. ##NaN ##NaN))
 (def LN2 (Math/log 2))
@@ -298,7 +296,7 @@
                     (and (g/zero? a)
                          (g/one? b)
                          (v/integral? c))
-                    (nth [1 I -1 (g/negate I)] (mod c 4))
+                    (nth [1 I -1 -I] (mod c 4))
 
                     :else
                     (power a b c d))
@@ -575,67 +573,35 @@
       (->Complex (- ia) ra)
       (->Complex ia (- ra)))))
 
-(defn atanh [z])
-;;     /**
-;;      * Calculate the complex atanh
-;;      *
-;;      * @returns {Complex}
-;;      */
-;;     'atanh': function() {
+(defn atanh
+  "Calculate the complex hyperbolic tangent."
+  [^Complex z]
+  ;; atanh(c) = log((1+c) / (1-c)) / 2
+  (let [a (.-re z)
+        b (.-im z)
+        noIM (and (> a 1) (g/zero? b))
+        om (g/- 1 a)
+        op (g/+ 1 a)
+        d (g/+ (g/square om) (g/square b))
+        x (if (g/zero? d)
+            (->Complex (if (== a -1) 0 (g// a 0))
+                       (if (g/zero? b) 0 (g// b 0)))
+            (->Complex (g// (g/- (g/* op om) (g/square b)) d)
+                       (g// (g/+ (g/* b om) (g/* op b)) d)))]
+    (->Complex (g// (log-hypot x) 2)
+               (g// (g/atan (.-im x) (.-re x)) (if noIM -2 2)))))
 
-;;       // atanh(c) = log((1+c) / (1-c)) / 2
-
-;;       var a = this['re'];
-;;       var b = this['im'];
-
-;;       var noIM = a > 1 && b === 0;
-;;       var oneMinus = 1 - a;
-;;       var onePlus = 1 + a;
-;;       var d = oneMinus * oneMinus + b * b;
-
-;;       var x = (d !== 0)
-;;         ? new Complex(
-;;           (onePlus * oneMinus - b * b) / d,
-;;           (b * oneMinus + onePlus * b) / d)
-;;         : new Complex(
-;;           (a !== -1) ? (a / 0) : 0,
-;;           (b !== 0) ? (b / 0) : 0);
-
-;;       var temp = x['re'];
-;;       x['re'] = logHypot(x['re'], x['im']) / 2;
-;;       x['im'] = Math.atan2(x['im'], temp) / 2;
-;;       if (noIM) {
-;;         x['im'] = -x['im'];
-;;       }
-;;       return x;
-;;     },
-
-(defn acoth [z])
-;;     /**
-;;      * Calculate the complex acoth
-;;      *
-;;      * @returns {Complex}
-;;      */
-;;     'acoth': function() {
-
-;;       // acoth(c) = log((c+1) / (c-1)) / 2
-
-;;       var a = this['re'];
-;;       var b = this['im'];
-
-;;       if (a === 0 && b === 0) {
-;;         return new Complex(0, Math.PI / 2);
-;;       }
-
-;;       var d = a * a + b * b;
-;;       return (d !== 0)
-;;         ? new Complex(
-;;           a / d,
-;;           -b / d).atanh()
-;;         : new Complex(
-;;           (a !== 0) ? a / 0 : 0,
-;;           (b !== 0) ? -b / 0 : 0).atanh();
-;;     },
+(defn acoth
+  "Calculate the complex arc hyperbolic cotangent."
+  [^Complex z]
+  ;; acoth(c) = log((c+1) / (c-1)) / 2
+  (if (zero? z)
+    (->Complex 0 (g// Math/PI 2))
+    (let [a (.-re z)
+          b (.-im z)
+          d (g/+ (g/square a) (g/square b))]
+      ;; the JS source checks for d = 0 here but that is ruled out by the test above
+      (atanh (->Complex (g// a d) (g// (g/negate b) d))))))
 
 (defn acsch
   "Calculate the complex arc hyperbolic cosecant."
@@ -661,14 +627,10 @@
     (let [a (.-re z)
           b (.-im z)
           d (g/+ (g/square a) (g/square b))]
-      ;; The test for d = 0 seems redundant. The only way d can
-      ;; be zero that I can see is for a and b to be zero, but then
-      ;; the zero test above would have worked.
-      (if (g/zero? d)
-        (acosh (->Complex (if (g/zero? a) 0 (g// a 0))
-                          (if (g/zero? b) 0 (g// (g/negate b) 0))))
-        (acosh (->Complex (g// a d)
-                          (g// (g/negate b) d)))))))
+      ;; The JS source treated the special case d == 0, but that can't
+      ;; happen because the case (zero? z) is treated above
+      (acosh (->Complex (g// a d)
+                        (g// (g/negate b) d))))))
 
 (defn inverse
   "Calculate the complex inverse 1/z"

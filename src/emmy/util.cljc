@@ -2,7 +2,7 @@
 
 (ns emmy.util
   "Shared utilities between clojure and clojurescript."
-  (:refer-clojure :exclude [bigint biginteger double long int uuid #?(:cljs parse-double)])
+  (:refer-clojure :exclude [bigint biginteger double long int uuid parse-double])
   (:require #?(:clj [clojure.core :as core])
             #?(:clj [clojure.math.numeric-tower :as nt])
             #?(:cljs goog.math.Integer)

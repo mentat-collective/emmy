@@ -5,14 +5,14 @@
             [clojure.test :refer [deftest is testing]]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
             [emmy.complex :as c]
+            [emmy.complex.impl :as ci]
             [emmy.generators :as sg]
             [emmy.generic :as g]
             [emmy.generic-test :as gt]
             [emmy.laws :as l]
             [emmy.numbers]
             [emmy.value :as v]
-            [same.core :refer [ish? with-comparator]]
-            [clojure.zip :as z]))
+            [same.core :refer [ish? with-comparator]]))
 
 (defn ^:private near [w z]
   (< (g/abs (g/- w z)) 1e-10))
@@ -526,7 +526,28 @@
   (testing "some corner cases"
     (is (g/infinite? (g/atan c/I)))
     (is (g/infinite? (g/atan (g/negate c/I))))
-    (is (g/infinite? (g/asech c/ZERO)))))
+    (is (g/infinite? (g/asec c/ZERO)))
+    (is (g/infinite? (g/acsc c/ZERO)))
+    (is (near (c/complex (g// Math/PI 2)) (g/acot c/ZERO)))
+    (is (g/infinite? (g/asech c/ZERO)))
+    (is (g/infinite? (g/acsch c/ZERO)))
+    (is (ci/nan? (g// c/ZERO c/ZERO)))
+    (is (ci/nan? (g// ci/INFINITY ci/INFINITY)))
+    (is (g/infinite? (g// ci/INFINITY c/ZERO)))
+
+    ;; In Emmy a zero in a `*` expression annihilates everything,
+    ;; preventing this particular behavior from being observed.
+    (is (ci/nan? (ci/mul c/ZERO ci/INFINITY)))
+    (is (ci/nan? (ci/mul ci/INFINITY c/ZERO)))
+    ;; In contrast:
+    (is (g/zero? (g/* c/ZERO ci/INFINITY)))
+    (is (g/zero? (g/* ci/INFINITY c/ZERO)))
+
+    (is (g/infinite? (g/* c/I ci/INFINITY)))
+    (is (g/infinite? (g/* ci/INFINITY c/I)))
+    (is (g/zero? (g/expt c/ZERO c/ONE)))
+    (is (ci/nan? (g/expt c/ZERO c/I)))))
+
 
 (deftest promotions-from-real
   (is (= (c/complex 0 1) (g/sqrt -1)))
