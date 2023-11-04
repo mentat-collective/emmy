@@ -75,29 +75,14 @@
 (defn round
   "Generates a [Gaussian integer](https://en.wikipedia.org/wiki/Gaussian_integer)
   from the complex number `z` by rounding the real and imaginary components of
-  `z` to their nearest integral values."
+  `z` to their nearest integral values. (Note: the use of cast-to-double is
+   unfortunate here, as complex numbers can now contain exact fractions, and
+   we'd want a nearest integer generic function for those)"
   [z]
-  (cond (complex? z)
-        (complex
-         (Math/round ^Float (real z))
-         (Math/round ^Float (imaginary z)))
+  (cond (complex? z) (complex (-> z real u/double Math/round u/int)
+                              (-> z imaginary u/double Math/round u/int))
         (v/native-integral? z) z
-        :else (Math/round (double z))))
-
-(defn gaussian-integer?
-  "Returns true if `z` is a [Gaussian
-  integer](https://en.wikipedia.org/wiki/Gaussian_integer), i.e., a complex entry
-  with integral real and imaginary components.
-
-  [[gaussian-integer?]] will return true if the real and imaginary components
-  are within `epsilon` of integral values. See [[value/almost-integral?]] for
-  details."
-  [z]
-  (if (complex? z)
-    (and (g/almost-integral? (real z))
-         (g/almost-integral? (imaginary z)))
-    (and (v/real? z)
-         (g/almost-integral? z))))
+        :else (Math/round (u/double z))))
 
 ;; ## Complex GCD
 
@@ -127,24 +112,15 @@
   (cond (g/zero? l) r
         (g/zero? r) l
         (v/= l r)   (abs-real l)
-        (not (or (gaussian-integer? l)
-                 (gaussian-integer? r)))
-        (u/illegal "gcd can only be computed for gaussian integers, but
-        both arguments were not.")
+        (not (and (g/exact? l)
+                  (g/exact? r))) (u/illegal "gcd can only be computed for gaussian integers.")
 
-        (not (gaussian-integer? l))
-        (u/illegal "gcd can only be computed for gaussian integers, but first
-        argument was not.")
-
-        (not (gaussian-integer? r))
-        (u/illegal "gcd can only be computed for gaussian integers, but second
-        argument was not.")
-
-        :else (let [[l r] (if (< (g/magnitude l)
+        :else (let [[l r] (if (> (g/magnitude l)
                                  (g/magnitude r))
                             [l r] [r l])]
-                (loop [a (round l)
-                       b (round r)]
+                (loop [a l
+                       b r]
+                  (println "gcd" a b (if (g/zero? b) "done" [(g/div a b) (round (g/div a b))]))
                   (if (g/zero? b)
                     (abs-real a)
                     (recur b (g/sub a (g/mul (round (g/div a b)) b))))))))
@@ -204,7 +180,7 @@
 
 (defmethod g/add [::complex ::complex] [a b] (c/add a b))
 ;; XXX consider making these methods in impl to avoid an allocation
-(defmethod g/add [::complex ::v/real] [a n] (c/add a (complex n)))x
+(defmethod g/add [::complex ::v/real] [a n] (c/add a (complex n)))
 (defmethod g/add [::v/real ::complex] [n a] (c/add (complex n) a))
 
 (defmethod g/sub [::complex ::complex] [a b] (c/sub a b))
