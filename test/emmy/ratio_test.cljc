@@ -141,8 +141,8 @@
            (g/sqrt #emmy/ratio 9/4))
         "Ratios should stay exact if the numerator and denominator are exact.")
 
-    (is (= #emmy/complex "0+1.5i"
-           (g/sqrt #emmy/ratio -9/4))
+    (is (= #emmy/complex [0 #emmy/ratio 3/2]
+            (g/sqrt #emmy/ratio -9/4))
         "sqrt of a negative returns a complex number.")
 
     (is (= #emmy/ratio 13/40

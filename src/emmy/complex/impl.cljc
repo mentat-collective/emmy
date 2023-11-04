@@ -15,7 +15,7 @@
 
    * Copyright (c) 2020, Robert Eisele (robert@xarg.org)
    * Dual licensed under the MIT or GPL Version 2 licenses."
-  (:refer-clojure :exclude [abs zero? infinite?])
+  (:refer-clojure :exclude [abs zero?])
   (:require [emmy.generic :as g]
             [emmy.util :as u]
             [emmy.value :as v]))
@@ -50,14 +50,21 @@
 (def NAN (Complex. ##NaN ##NaN))
 (def LN2 (Math/log 2))
 
+(def ^:private PI:2 (/ Math/PI 2))
 (def ^:private PI:4 (/ Math/PI 4))
 
 (defn equal?
   "Test for complex equality with another object."
   [^Complex a b]
-  (and (instance? Complex b)
-       (v/= (.-re a) (.-re b))
-       (v/= (.-im a) (.-im b))))
+  (cond (instance? Complex b)
+        (and (v/= (.-re a) (.-re b))
+             (v/= (.-im a) (.-im b)))
+
+        (v/real? b)
+        (and (g/zero? (.-im a))
+             (v/= (.-re a) b))
+
+        :else (v/= a b)))
 
 (defn zero?
   "Determines whether or not a complex number is at the zero pole of the
@@ -71,19 +78,6 @@
   [^Complex z]
   (or (u/nan? (.-re z))
       (u/nan? (.-im z))))
-
-(defn finite?
-  "Determines whether a complex number is not at the infinity pole of the
-    Riemann sphere."
-  [z]
-  (and (u/finite? (.-re z))
-       (u/finite? (.-im z))))
-
-(defn infinite?
-  "Determines whether or not a complex number is at the infinity pole of the Riemann sphere."
-  [z]
-  (not
-   (or (nan? z) (finite? z))))
 
 (comment
   (require '[emmy.series :as s])
@@ -156,7 +150,7 @@
                 (< _b 3000)) (g// (g/log (g/+ (g/* a a) (g/* b b))) 2)
            :else (let [a (g// a 2)
                        b (g// b 2)]
-                   (g/+ LN2 (g/* 0.5 (Math/log (g/+ (g/* a a) (g/* b b))))))))))
+                   (g/+ LN2 (g// (g/log (g/+ (g/* a a) (g/* b b))) 2)))))))
 
 (let [complex-re #"([+-]?\d+(\.\d*)?([Ee][+-]?\d+)?)(\s?([+-])\s?(\d+(\.\d*)?([Ee][+-]?\d+)?)[Ii])?"]
   (defn parse
@@ -185,11 +179,11 @@
 (defn mul
   "Compute the complex product."
   [^Complex l ^Complex r]
-  (cond (or (and (infinite? l) (zero? r))
-            (and (zero? l) (infinite? r)))
+  (cond (or (and (g/infinite? l) (zero? r))
+            (and (zero? l) (g/infinite? r)))
         NAN
 
-        (or (infinite? l) (infinite? r))
+        (or (g/infinite? l) (g/infinite? r))
         INFINITY  ;; NB: some libraries are more careful with the sign of infinity than this one
 
         :else (let [a (.-re l)
@@ -205,13 +199,13 @@
   "Compute the complex quotient."
   [^Complex l ^Complex r]
   (cond (or (and (zero? l) (zero? r))
-            (and (infinite? l) (infinite? r)))
+            (and (g/infinite? l) (g/infinite? r)))
         NAN
 
-        (or (infinite? l) (zero? r))
+        (or (g/infinite? l) (zero? r))
         INFINITY
 
-        (or (zero? l) (infinite? r))
+        (or (zero? l) (g/infinite? r))
         ZERO
 
         :else
@@ -348,12 +342,12 @@
   [^Complex z]
   (let [a (.-re z)
         b (.-im z)]
-   (->Complex (log-hypot z) (Math/atan2 b a))))
+   (->Complex (log-hypot z) (g/atan b a))))
 
 (defn arg
   "Calculate the angle of the complex number."
   [^Complex z]
-  (Math/atan2 (.-im z) (.-re z)))
+  (g/atan (.-im z) (.-re z)))
 
 (defn sin
   "Calculate the complex sine."
@@ -362,8 +356,8 @@
   ;;        = sin(a)cosh(b) + i cos(a)sinh(b)
   (let [a (.-re z)
         b (.-im z)]
-    (->Complex (* (Math/sin a) (Math/cosh b))
-               (* (Math/cos a) (Math/sinh b)))))
+    (->Complex (g/* (g/sin a) (g/cosh b))
+               (g/* (g/cos a) (g/sinh b)))))
 
 (defn cos
   [^Complex z]
@@ -371,8 +365,8 @@
   ;;        = cos(a)cosh(b) - i sin(a)sinh(b)
   (let [a (.-re z)
         b (.-im z)]
-    (->Complex (* (Math/cos a) (Math/cosh b))
-               (* -1 (Math/sin a) (Math/sinh b)))))
+    (->Complex (g/* (g/cos a) (g/cosh b))
+               (g/* -1 (g/sin a) (g/sinh b)))))
 
 (defn tan
   [^Complex z]
@@ -399,30 +393,30 @@
   [^Complex z]
   (let [a (.-re z)
         b (.-im z)
-        d (* 0.5 (+ (Math/cosh (* 2 b)) (Math/cos (* 2 a))))]
+        d (g// (g/+ (g/cosh (g/* 2 b)) (g/cos (g/* 2 a))) 2)]
     ;; sec(c) = 2 / (e^(ci) + e^(-ci))
-    (->Complex (/ (* (Math/cos a) (Math/cosh b)) d)
-               (/ (* (Math/sin a) (Math/sinh b)) d))))
+    (->Complex (g// (g/* (g/cos a) (g/cosh b)) d)
+               (g// (g/* (g/sin a) (g/sinh b)) d))))
 
 (defn csc
   [^Complex z]
   ;; csc(c) = 2i / (e^(ci) - e^(-ci))
   (let [a (.-re z)
         b (.-im z)
-        d (* 0.5 (- (Math/cosh (* 2 b)) (Math/cos (* 2 a))))]
-    (->Complex (/ (* (Math/sin a) (Math/cosh b)) d)
-               (/ (* -1 (Math/cos a) (Math/sinh b)) d))))
+        d (g// (g/- (g/cosh (g/* 2 b)) (g/cos (g/* 2 a))) 2)]
+    (->Complex (g// (g/* (g/sin a) (g/cosh b)) d)
+               (g// (g/* -1 (g/cos a) (g/sinh b)) d))))
 
 (defn asin
   "Calculate the complex arc sine"
   [^Complex z]
   (let [a (.-re z)
         b (.-im z)
-        t1 (sqrt (->Complex (- (* b b) (* a a) -1)
-                            (* -2 a b)))
-        t2 (log (->Complex (- (.-re t1) b)
-                           (+ (.-im t1) a)))]
-    (->Complex (.-im t2) (- (.-re t2)))))
+        t1 (sqrt (->Complex (g/- (g/* b b) (g/* a a) -1)
+                            (g/* -2 a b)))
+        t2 (log (->Complex (g/- (.-re t1) b)
+                           (g/+ (.-im t1) a)))]
+    (->Complex (.-im t2) (g/negate (.-re t2)))))
 
 (defn acos
   "Calculate the complex arc cosine"
@@ -430,11 +424,11 @@
   ;; acos(c) = i * log(c - i * sqrt(1 - c^2))
   (let [a (.-re z)
         b (.-im z)
-        t1 (sqrt (->Complex (- (* b b) (* a a) -1)
-                            (* -2 a b)))
-        t2 (log (->Complex (- (.-re t1) b)
-                           (+ (.-im t1) a)))]
-    (->Complex (- (/ Math/PI 2) (.-im t2))
+        t1 (sqrt (->Complex (g/- (g/* b b) (g/* a a) -1)
+                            (g/* -2 a b)))
+        t2 (log (->Complex (g/- (.-re t1) b)
+                           (g/+ (.-im t1) a)))]
+    (->Complex (- PI:2 (.-im t2))
                (.-re t2))))
 
 (defn atan
@@ -491,7 +485,7 @@
   [^Complex z]
   ;; acsc(c) = -i * log(i / c + sqrt(1 - 1 / c^2))
   (if (zero? z)
-    (->Complex (/ Math/PI 2) ##Inf)
+    (->Complex PI:2 ##Inf)
     (let [a (.-re z)
           b (.-im z)
           d (g/+ (g/square a) (g/square b))]
@@ -596,7 +590,7 @@
   [^Complex z]
   ;; acoth(c) = log((c+1) / (c-1)) / 2
   (if (zero? z)
-    (->Complex 0 (g// Math/PI 2))
+    (->Complex 0 PI:2)
     (let [a (.-re z)
           b (.-im z)
           d (g/+ (g/square a) (g/square b))]
@@ -636,7 +630,7 @@
   "Calculate the complex inverse 1/z"
   [^Complex z]
   (cond (zero? z) INFINITY
-        (infinite? z) ZERO
+        (g/infinite? z) ZERO
         :else (let [a (.-re z)
                     b (.-im z)
                     d (g/+ (g/* a a) (g/* b b))]
@@ -672,3 +666,15 @@
      (->Complex
       (-> (.-re z) (* places) (Math/floor) (/ places))
       (-> (.-im z) (* places) (Math/floor) (/ places))))))
+
+(defn one-like
+  "Constructs an identity-like complex number of the same kind as the example"
+  [^Complex c]
+  (->Complex (g/one-like (.-re c))
+             (g/zero-like (.-im c))))
+
+(defn zero-like
+  "Constructs an identity-like complex number of the same kind as the example"
+  [^Complex c]
+  (->Complex (g/zero-like (.-re c))
+             (g/zero-like (.-im c))))

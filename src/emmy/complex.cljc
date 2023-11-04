@@ -106,12 +106,12 @@
   or (* -1 z)), whichever number has a positive real component."
   [z]
   (cond (complex? z)
-        (if (neg? (real z))
+        (if (g/negative? (real z))
           (g/negate z)
           z)
 
         (v/real? z)
-        (Math/abs ^double (u/double z))
+        (g/abs z)
 
         :else (u/illegal "not supported!")))
 
@@ -154,9 +154,9 @@
 (defmethod g/one? [::complex] [c] (and (g/one? (real c))
                                        (g/zero? (imaginary c))))
 (defmethod g/identity? [::complex] [c] (g/one? c))
-(defmethod g/zero-like [::complex] [_] ZERO)
-(defmethod g/one-like [::complex] [_] ONE)
-(defmethod g/identity-like [::complex] [_] ONE)
+(defmethod g/zero-like [::complex] [c] (c/zero-like c))
+(defmethod g/one-like [::complex] [c] (c/one-like c))
+(defmethod g/identity-like [::complex] [c] (c/one-like c))
 (defmethod g/freeze [::complex] [c]
   (let [re (real c)
         im (imaginary c)]
@@ -195,16 +195,16 @@
 
 (defmethod v/= [::complex ::complex] [a b] (c/equal? a b))
 (defmethod v/= [::complex ::v/real] [a n]
-  (and (zero? (imaginary a))
+  (and (g/zero? (imaginary a))
        (v/= (real a) n)))
 
 (defmethod v/= [::v/real ::complex] [n a]
-  (and (zero? (imaginary a))
+  (and (g/zero? (imaginary a))
        (v/= n (real a))))
 
 (defmethod g/add [::complex ::complex] [a b] (c/add a b))
 ;; XXX consider making these methods in impl to avoid an allocation
-(defmethod g/add [::complex ::v/real] [a n] (c/add a (complex n)))
+(defmethod g/add [::complex ::v/real] [a n] (c/add a (complex n)))x
 (defmethod g/add [::v/real ::complex] [n a] (c/add (complex n) a))
 
 (defmethod g/sub [::complex ::complex] [a b] (c/sub a b))

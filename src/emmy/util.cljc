@@ -193,8 +193,3 @@
   [x]
   #?(:clj (Double/isNaN x)
      :cljs (. js/Number isNaN x)))
-
-(defn finite?
-  [x]
-  #?(:clj (Double/isFinite x)
-     :cljs (. js/Number isFinite x)))

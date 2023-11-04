@@ -128,15 +128,15 @@
             (is (= m (g/make-rectangular m {}))
                 "make-rectangular with no imaginary parts is identity.")
 
-            (is (ish? (g/* m I)
-                      (g/make-rectangular {} m))
-                "every entry turns turns imaginary!")
+            (is (v/= (g/* m I)
+                     (g/make-rectangular {} m))
+                "every entry turns imaginary!")
 
             (is (= m (g/make-polar m {}))
                 "make-polar with no angles is identity.")
 
-            (is (ish? (g/zero-like m)
-                      (g/make-polar {} m))
+            (is (v/= (g/zero-like m)
+                     (g/make-polar {} m))
                 "if all angles comes from m, but every radius is 0, then the
                 resulting entries will be zero.")
 
@@ -145,7 +145,7 @@
 
             (is (ish? (g/zero-like m)
                       (g/imag-part m))
-                "imag-part on all real is zeor-like.")
+                "imag-part on all real is zero-like.")
 
             (is (ish? m (g/imag-part
                          (g/make-rectangular m m)))
