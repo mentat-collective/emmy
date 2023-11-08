@@ -652,3 +652,33 @@
 
     (is (= (take 20 s/tan-series)
            (take 20 (g/div s/sin-series s/cos-series))))))
+
+(deftest cos-1-square-terms
+  (testing "Generate terms for the power series expansion of $cos(z)-1$."
+  ;; (take 10 (g/- s/cos-series 1))
+  ;; => (0 0 -1/2 0 1/24 0 -1/720 0 1/40320 0)
+  ;; From this we can see that we may regard the expansion as a series in x^2, with a
+  ;; zero constant term.
+    (let [cosm1-series (->> (g/- s/cos-series 1)
+                            (remove g/zero?)  ;; eliminate the useless zero coefficients of the odd powers of x
+                            (map double)      ;; we don't want the rational arithmetic to survive
+                            (take 8)          ;; the filtered series now has coefficients for x^2, x^4 ... x^16
+                            (cons 0.)         ;; cons 0 and reverse facilitate evaluation with Horner's method
+                            (reverse))]
+      (let [near (v/within 1e-10)
+            horner-eval (fn [s x] (reduce (fn [a b] (+ (* a x) b)) s))]
+        (is (every? #(near 0 %) (map - [4.779477332387385E-14
+                                        -1.147074559772972E-11
+                                        2.08767569878681E-9
+                                        -2.755731922398589E-7
+                                        2.48015873015873E-5
+                                        -0.001388888888888889
+                                        0.04166666666666667
+                                        -0.5
+                                        0.0]
+                                     cosm1-series)))
+        (checking "series is accurate" 100 [d (sg/reasonable-double {:min (- (/ Math/PI 4))
+                                                                     :max (/ Math/PI 4)
+                                                                     :excluded-lower 0
+                                                                     :excluded-upper 0})]
+                  (is (near (- (Math/cos d) 1) (horner-eval cosm1-series (g/square d)))))))))

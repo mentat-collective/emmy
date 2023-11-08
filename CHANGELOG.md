@@ -2,7 +2,7 @@
 
 ## [unreleased]
 
-- #XXX
+- #151
 
   - By porting `complex.js` to Clojure, we can remove the dependency on
     this library on the JavaScript side as well as the Apache Commons

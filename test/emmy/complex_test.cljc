@@ -597,4 +597,7 @@
                 (is (ish? (g/real-part z)
                           (g/real-part rt)))
                 (is (ish? (g/imag-part z)
-                          (g/imag-part rt)))))))
+                          (g/imag-part rt))))))
+
+  (checking "exp-1" 100 [z (sg/reasonable-complex)]
+            (is (near (g/- (g/exp z) 1) (ci/exp-1 z)))))

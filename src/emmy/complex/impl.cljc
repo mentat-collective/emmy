@@ -79,26 +79,9 @@
   (or (u/nan? (.-re z))
       (u/nan? (.-im z))))
 
-(comment
-  (require '[emmy.series :as s])
-  (take 10 (g/- s/cos-series 1))
-  ;; => (0 0 -1/2 0 1/24 0 -1/720 0 1/40320 0)
-  ;; From this we can see that we may regard the expansion as a series in x^2, with a
-  ;; zero constant term.
-  (->> (g/- s/cos-series 1)
-       (remove g/zero?)  ;; eliminate the useless zero coefficients of the odd powers of x
-       (map double)      ;; we don't want the rational arithmetic to survive
-       (take 8)          ;; the filtered series now has coefficients for x^2, x^4 ... x^16
-       (cons 0.)         ;; cons 0 and reverse facilitate evaluation with Horner's method
-       (reverse))
-  ;; => (4.779477332387385E-14 -1.147074559772972E-11 2.08767569878681E-9 -2.755731922398589E-7
-  ;;     2.48015873015873E-5 -0.001388888888888889 0.04166666666666667 -0.5 0.0)
-  ;; We copy this sequence, in order to avoid the dependency complex -> series,
-  ;; which creates a cycle that would be difficult to break, and it's clear in
-  ;; this case that complex is lower in the abstraction hierarchy than series.
-  )
-
 (def ^:private cos-1-square-terms
+  "For the origin of these constants, see the related material
+   in [[emmy.series-test/cos-1-square-terms]]."
   [4.779477332387385E-14 -1.147074559772972E-11 2.08767569878681E-9 -2.755731922398589E-7
    2.48015873015873E-5 -0.001388888888888889 0.04166666666666667 -0.5 0.0])
 
@@ -230,74 +213,19 @@
 
 
 (defn pow
-  "Calculate the power of two complex numbers."
+  "Calculate the power of two complex numbers. 0 to any power is
+   zero, unless that power has an imaginary component, in which case NaN.
+   Integral powers of the imaginary unit are treated exactly; everything
+   else uses logarithms."
   [^Complex l ^Complex r]
-  (letfn [(power [a b c d]
-            ;; I couldn't find a good formula, so here is a derivation and optimization
-            ;;
-            ;; z_1^z_2 = (a + bi)^(c + di)
-            ;;         = exp((c + di) * log(a + bi)
-            ;;         = pow(a^2 + b^2, (c + di) / 2) * exp(i(c + di)atan2(b, a))
-            ;; =>...
-            ;; Re = (pow(a^2 + b^2, c / 2) * exp(-d * atan2(b, a))) * cos(d * log(a^2 + b^2) / 2 + c * atan2(b, a))
-            ;; Im = (pow(a^2 + b^2, c / 2) * exp(-d * atan2(b, a))) * sin(d * log(a^2 + b^2) / 2 + c * atan2(b, a))
-            ;;
-            ;; =>...
-            ;; Re = exp(c * log(sqrt(a^2 + b^2)) - d * atan2(b, a)) * cos(d * log(sqrt(a^2 + b^2)) + c * atan2(b, a))
-            ;; Im = exp(c * log(sqrt(a^2 + b^2)) - d * atan2(b, a)) * sin(d * log(sqrt(a^2 + b^2)) + c * atan2(b, a))
-            ;;
-            ;; =>
-            ;; Re = exp(c * logsq2 - d * arg(z_1)) * cos(d * logsq2 + c * arg(z_1))
-            ;; Im = exp(c * logsq2 - d * arg(z_1)) * sin(d * logsq2 + c * arg(z_1))
-            (if (and (g/zero? a)
-                     (g/zero? b)
-                     (not (or (g/zero? c) (g/negative? c)))
-                     (not (g/negative? d)))
-              ZERO
-              (let [arg (g/atan b a)
-                    loh (log-hypot a b)
-                    e (g/exp (g/- (g/* c loh) (g/* d arg)))
-                    f (g/+ (g/* d loh) (g/* c arg))]
-                (->Complex (g/* e (g/cos f))
-                           (g/* e (g/sin f))))))]
-    (if (g/zero? r)
-      ;; Mathematica considers 0^0 indeterminate. Knuth argues that ONE is correct here.
-      ;; Complex.js returns ONE in this case, and since there is some support for this
-      ;; position we will continue to do so.
-      ONE
-      (let [a (.-re l)
-            b (.-im l)
-            c (.-re r)
-            d (.-im r)]
-        (cond (g/zero? d)
-              ;; exponent is real
-              (cond (g/zero? b)
-                    ;; Note 1: complex.js conditioned this branch on `b === 0 && a > 0`.
-                    ;; The case where a === 0 as well was handled above, wherein 0^z == 1
-                    ;; for all z. There seems to be no reason to not handle the case
-                    ;; b == 0, a < 0, d == 0 here as well as the a > 0 case (i.e., we expect
-                    ;; the underlying g/expt function to work just fine with negative bases
-                    ;; in the purely real case).
+  (cond (g/zero? l) (if (g/zero? (.-im r)) l NAN)
 
-                    ;; Note 2: Should we "lower to real" in cases like this? How about in
-                    ;; general cases like addition? Previously, complex has been treated,
-                    ;; like floating point, as an absorptive arithmetic trap: once entered,
-                    ;; you can't escape without help. But if we regard complex as an ordered
-                    ;; pair of emmy objects with special multiplication and division, it might
-                    ;; make more sense to lower results that live on the real line.
-                    (->Complex (g/expt a, c) 0)
+        (and (= I l)
+             (g/zero? (.-im r))
+             (v/integral? (.-re r)))
+        (nth [1 I -1 -I] (mod (.-re r) 4))
 
-                    (and (g/zero? a)
-                         (g/one? b)
-                         (v/integral? c))
-                    (nth [1 I -1 -I] (mod c 4))
-
-                    :else
-                    (power a b c d))
-
-              ;; if we continue to nevermind about the i^r case we can simplify the cond
-              :else
-              (power a b c d))))))
+        :else (g/exp (g/* r (g/log l)))))
 
 (defn sqrt
   "Calculate the complex square root"

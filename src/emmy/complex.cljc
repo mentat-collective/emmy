@@ -120,7 +120,6 @@
                             [l r] [r l])]
                 (loop [a l
                        b r]
-                  (println "gcd" a b (if (g/zero? b) "done" [(g/div a b) (round (g/div a b))]))
                   (if (g/zero? b)
                     (abs-real a)
                     (recur b (g/sub a (g/mul (round (g/div a b)) b))))))))
