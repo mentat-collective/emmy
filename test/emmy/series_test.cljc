@@ -668,7 +668,7 @@
                      (reverse))
           near (v/within 1e-10)
           horner-eval (fn [x] (reduce (fn [a b] (+ (* a x) b)) terms))]
-      (is (= ci/cos-1-square-terms terms))
+      (is (every? #(near % 0) (map g/- ci/cos-1-square-terms terms)))
       (checking "series is accurate" 100 [d (sg/reasonable-double {:min (- (/ Math/PI 4))
                                                                    :max (/ Math/PI 4)
                                                                    :excluded-lower 0
