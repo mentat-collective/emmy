@@ -17,6 +17,13 @@
 (defn ^:private near [w z]
   (< (g/abs (g/- w z)) 1e-10))
 
+(defn ^:private near-enough
+  "A relaxed form of near used when reciprocal operations can
+  create some larger values which won't allow 10 matching figures
+  after the decimal"
+  [w z]
+  (< (g/abs (g/- z w)) 1e-6))
+
 (defn right-half-plane
   "If z is not in the right half plane, move it there by rotating it 180°
   (i.e., multiply by -1). This is used for inverse identity tests where the
@@ -444,34 +451,33 @@
       (is (near (:ArcSech expected) (g/asech z)))
       (is (near (:ArcCoth expected) (g/acoth z)))))
   (testing "reciprocal identities"
-    (let [near-enough (fn [w z] (< (g/abs (g/- z w)) 1e-6))]
-      ;; we relax `near` a bit because taking reciprocals moves
-      ;; some of the significance to the left of the decimal point
-      (checking "1/sin = csc" 100 [z (sg/reasonable-complex)]
-                (is (near-enough (g/invert (g/sin z)) (g/csc z))))
-      (checking "1/csc = sin" 100 [z (sg/reasonable-complex)]
-                (is (near-enough (g/invert (g/csc z)) (g/sin z))))
-      (checking "1/cos = sec" 100 [z (sg/reasonable-complex)]
-                (is (near-enough (g/invert (g/cos z)) (g/sec z))))
-      (checking "1/sec = cos" 100 [z (sg/reasonable-complex)]
-                (is (near-enough (g/invert (g/sec z)) (g/cos z))))
-      (checking "1/tan = cot" 100 [z (sg/reasonable-complex)]
-                (is (near-enough (g/invert (g/tan z)) (g/cot z))))
-      (checking "1/cot = tan" 100 [z (sg/reasonable-complex)]
-                (is (near-enough (g/invert (g/cot z)) (g/tan z))))
+    ;; we relax `near` a bit because taking reciprocals moves
+    ;; some of the significance to the left of the decimal point
+    (checking "1/sin = csc" 100 [z (sg/reasonable-complex)]
+              (is (near-enough (g/invert (g/sin z)) (g/csc z))))
+    (checking "1/csc = sin" 100 [z (sg/reasonable-complex)]
+              (is (near-enough (g/invert (g/csc z)) (g/sin z))))
+    (checking "1/cos = sec" 100 [z (sg/reasonable-complex)]
+              (is (near-enough (g/invert (g/cos z)) (g/sec z))))
+    (checking "1/sec = cos" 100 [z (sg/reasonable-complex)]
+              (is (near-enough (g/invert (g/sec z)) (g/cos z))))
+    (checking "1/tan = cot" 100 [z (sg/reasonable-complex)]
+              (is (near-enough (g/invert (g/tan z)) (g/cot z))))
+    (checking "1/cot = tan" 100 [z (sg/reasonable-complex)]
+              (is (near-enough (g/invert (g/cot z)) (g/tan z))))
 
-      (checking "1/sinh = csch" 100 [z (sg/reasonable-complex)]
-                (is (near-enough (g/invert (g/sinh z)) (g/csch z))))
-      (checking "1/csch = sinh" 100 [z (sg/reasonable-complex)]
-                (is (near-enough (g/invert (g/csch z)) (g/sinh z))))
-      (checking "1/cosh = sech" 100 [z (sg/reasonable-complex)]
-                (is (near-enough (g/invert (g/cosh z)) (g/sech z))))
-      (checking "1/sech = cosh" 100 [z (sg/reasonable-complex)]
-                (is (near-enough (g/invert (g/sech z)) (g/cosh z))))
-      (checking "1/tanh = coth" 100 [z (sg/reasonable-complex)]
-                (is (near-enough (g/invert (g/tanh z)) (g/coth z))))
-      (checking "1/coth = tanh" 100 [z (sg/reasonable-complex)]
-                (is (near-enough (g/invert (g/coth z)) (g/tanh z))))))
+    (checking "1/sinh = csch" 100 [z (sg/reasonable-complex)]
+              (is (near-enough (g/invert (g/sinh z)) (g/csch z))))
+    (checking "1/csch = sinh" 100 [z (sg/reasonable-complex)]
+              (is (near-enough (g/invert (g/csch z)) (g/sinh z))))
+    (checking "1/cosh = sech" 100 [z (sg/reasonable-complex)]
+              (is (near-enough (g/invert (g/cosh z)) (g/sech z))))
+    (checking "1/sech = cosh" 100 [z (sg/reasonable-complex)]
+              (is (near-enough (g/invert (g/sech z)) (g/cosh z))))
+    (checking "1/tanh = coth" 100 [z (sg/reasonable-complex)]
+              (is (near-enough (g/invert (g/tanh z)) (g/coth z))))
+    (checking "1/coth = tanh" 100 [z (sg/reasonable-complex)]
+              (is (near-enough (g/invert (g/coth z)) (g/tanh z)))))
   (testing "inverse identities"
     (checking "asin ∘ sin = id" 100 [z (sg/reasonable-complex)]
               (is (near z (g/asin (g/sin z)))))
@@ -523,6 +529,32 @@
     (checking "coth ∘ acoth = id" 100 [z (sg/reasonable-complex)]
               (is (near z (g/coth (g/acoth z))))))
 
+  (testing "Pythagorean identities"
+    (checking "sin^2 + cos^2 = 1" 100 [z (sg/reasonable-complex)]
+              (is (near 1 (g/+ (g/square (g/sin z)) (g/square (g/cos z))))))
+    (checking "cosh^2 - sinh^2 = 1" 100 [z (sg/reasonable-complex)]
+              (is (near 1 (g/- (g/square (g/cosh z)) (g/square (g/sinh z))))))
+    (checking "1 - tanh^2 = sech^2" 100 [z (sg/reasonable-complex)]
+              (is (near (g/- 1 (g/square (g/tanh z))) (g/square (g/sech z)))))
+    (checking "1 - coth^2 = csch^2" 100 [z (sg/reasonable-complex)]
+              (is (near-enough (g/- 1 (g/square (g/coth z)))
+                               (g/negate (g/square (g/csch z)))))))
+
+  (testing "parsing"
+    (is (= (c/complex 2 0) (ci/parse "2")))
+    (is (= (c/complex 2 0) (ci/parse "2+0i")))
+    (is (= (c/complex 0 2) (ci/parse "0+2i")))
+    (is (= (c/complex 1 -2) (ci/parse "1+-2i")))
+    (is (= (c/complex 0 2) (ci/parse "0+2i")))
+    (is (= (c/complex 0 -2) (ci/parse "0-2i")))
+    (is (= (c/complex 0 2) (ci/parse "0--2i")))
+    (is (= (c/complex 1 2) (ci/parse "1.0e0 + +2.0e0I")))
+    (is (= (c/complex 1 -2) (ci/parse "1.0e0 + -2.0e0I")))
+    (is (= (c/complex 1 -2) (ci/parse "1.0e0 - +2.0e0I")))
+    (is (= (c/complex 1 2) (ci/parse "1.0e0 - -2.0e0I")))
+    (is (thrown? #?(:clj clojure.lang.ExceptionInfo :cljs js/Error)
+                 (ci/parse "2i")))
+    )
   (testing "some corner cases"
     (is (g/infinite? (g/atan c/I)))
     (is (g/infinite? (g/atan (g/negate c/I))))
@@ -546,7 +578,10 @@
     (is (g/infinite? (g/* c/I ci/INFINITY)))
     (is (g/infinite? (g/* ci/INFINITY c/I)))
     (is (g/zero? (g/expt c/ZERO c/ONE)))
-    (is (ci/nan? (g/expt c/ZERO c/I)))))
+    (is (ci/nan? (g/expt c/ZERO c/I)))
+    (is (ci/equal? (c/complex 2 0) 2))
+    (is (ci/nan? (c/complex ##NaN 0)))
+    (is (ci/nan? (c/complex 0 ##NaN)))))
 
 
 (deftest promotions-from-real

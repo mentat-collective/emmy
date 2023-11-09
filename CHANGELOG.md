@@ -17,10 +17,6 @@
     complex unit to a real power, but it only worked for integral r, and
     threw an exception in other cases; this special case is removed.
 
-    The string input form for complex numbers used to allow the form
-    "1 + -2i". We now insist on only a single sign between the real and
-    imaginary parts ("1-2i").
-
 - #149
 
   - Retires the Value protocol in favor of MultiFns in the generic scope.

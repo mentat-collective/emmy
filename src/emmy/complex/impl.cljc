@@ -79,7 +79,7 @@
   (or (u/nan? (.-re z))
       (u/nan? (.-im z))))
 
-(def ^:private cos-1-square-terms
+(def ^:no-doc cos-1-square-terms
   "For the origin of these constants, see the related material
    in [[emmy.series-test/cos-1-square-terms]]."
   [4.779477332387385E-14 -1.147074559772972E-11 2.08767569878681E-9 -2.755731922398589E-7
@@ -135,17 +135,27 @@
                        b (g// b 2)]
                    (g/+ LN2 (g// (g/log (g/+ (g/* a a) (g/* b b))) 2)))))))
 
-(let [complex-re #"([+-]?\d+(\.\d*)?([Ee][+-]?\d+)?)(\s?([+-])\s?(\d+(\.\d*)?([Ee][+-]?\d+)?)[Ii])?"]
-  (defn parse
-    "Parse a complex number. We expect one or two floating point numbers.
-    If two, they must be separated by a sign (perhaps surrounded by at most
-    one space, the second number followed by I or i. Example: 1.2-3.4i)"
-    [s]
-    (if-let [[_ re re-frac re-expt _ sign im im-frac im-expt] (re-matches complex-re s)]
-      (->Complex ((if (or re-frac re-expt) u/parse-double u/parse-int) re)
-                 (* (if (= sign "-") -1 1)
-                    (if im ((if (or im-frac im-expt) u/parse-double u/parse-int) im) 0)))
-      (throw (ex-info "invalid complex number" {:input s})))))
+(def ^:private
+  complex-re
+  "Regular expression used to parse complex numbers"
+  #"([+-]?\d+(\.\d*)?([Ee][+-]?\d+)?)(\s?([+-])?\s?([+-]?\d+(\.\d*)?([Ee][+-]?\d+)?)[Ii])?")
+
+(comment
+  (re-matches complex-re "-1.2e3 + -4.5e6I")
+  (re-matches complex-re "0+3i")
+
+  )
+
+(defn parse
+  "Parse a complex number. We expect one or two floating point numbers.
+  If two, they must be separated by a sign (perhaps surrounded by at most
+  one space, the second number followed by I or i. Example: 1.2-3.4i)"
+  [s]
+  (if-let [[_ re re-frac re-expt _ sign im im-frac im-expt] (re-matches complex-re s)]
+    (->Complex ((if (or re-frac re-expt) u/parse-double u/parse-int) re)
+               (* (if (= sign "-") -1 1)
+                  (if im ((if (or im-frac im-expt) u/parse-double u/parse-int) im) 0)))
+    (throw (ex-info "invalid complex number" {:input s}))))
 
 (defn add
   "Compute the complex sum."
@@ -211,7 +221,6 @@
                   (->Complex (g// (g/+ a (g/* b x)) t)
                              (g// (g/- b (g/* a x)) t)))))))
 
-
 (defn pow
   "Calculate the power of two complex numbers. 0 to any power is
    zero, unless that power has an imaginary component, in which case NaN.
@@ -270,7 +279,7 @@
   [^Complex z]
   (let [a (.-re z)
         b (.-im z)]
-   (->Complex (log-hypot z) (g/atan b a))))
+    (->Complex (log-hypot z) (g/atan b a))))
 
 (defn arg
   "Calculate the angle of the complex number."
@@ -455,7 +464,6 @@
         d (g/- (g/cosh a) (g/cos b))]
     (->Complex (g// (g/sinh a) d)
                (g// (g/negate (g/sin b)) d))))
-
 
 (defn csch
   "Compute the complex hyperbolic cosecant."
