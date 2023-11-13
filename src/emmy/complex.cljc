@@ -62,14 +62,6 @@
   [z]
   (c/imaginary z))
 
-;; ## Type Extensions
-
-#?(:clj
-   (defmethod print-method emmy.complex.impl.Complex [v ^java.io.Writer w]
-     (.write w (str "#emmy/complex "
-                    [(c/real v)
-                     (c/imaginary v)]))))
-
 ;; ## Gaussian Integers
 
 (defn round

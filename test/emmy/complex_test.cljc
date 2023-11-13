@@ -566,6 +566,8 @@
     (is (ci/nan? (g// c/ZERO c/ZERO)))
     (is (ci/nan? (g// ci/INFINITY ci/INFINITY)))
     (is (g/infinite? (g// ci/INFINITY c/ZERO)))
+    (is (g/infinite? (g/invert c/ZERO)))
+    (is (g/zero? (g/invert ci/INFINITY)))
 
     ;; In Emmy a zero in a `*` expression annihilates everything,
     ;; preventing this particular behavior from being observed.

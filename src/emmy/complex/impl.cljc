@@ -26,6 +26,8 @@
   v/IKind
   (kind [_] :emmy.complex/complex)
 
+  v/INumericTower
+
   v/Numerical
   (numerical? [_] true)
 
@@ -42,6 +44,12 @@
                "#emmy/complex "
                (str [(.-re z) (.-im z)])))]))
 
+#?(:clj
+   (defmethod print-method Complex [^Complex v ^java.io.Writer w]
+     (.write w (str "#emmy/complex "
+                    [(.-re v)
+                     (.-im v)]))))
+
 (def ZERO (Complex. 0 0))
 (def ONE (Complex. 1 0))
 (def I (Complex. 0 1))
@@ -54,17 +62,33 @@
 (def ^:private PI:4 (/ Math/PI 4))
 
 (defn equal?
-  "Test for complex equality with another object."
-  [^Complex a b]
-  (cond (instance? Complex b)
-        (and (v/= (.-re a) (.-re b))
-             (v/= (.-im a) (.-im b)))
+  "Returns true if the supplied complex number `z` is equal to the value `w`. The
+  rules for [[eq]] are as follows:
 
-        (v/real? b)
-        (and (g/zero? (.-im a))
-             (v/= (.-re a) b))
+   - If `w` is complex, returns true if all coefficients match, false
+     otherwise
 
-        :else (v/= a b)))
+   - If `w` is sequential with a count of 2, it's interpreted as complex in the
+     obvious way
+
+  Else, if `z` is a [[real?]] complex number, returns true if the real component of
+  `z` is [[emmy.value/=]] to `w`, false otherwise."
+
+  [^Complex z w]
+  (let [r (.-re z)
+        i (.-im z)]
+    (cond (instance? Complex w)
+          (and (v/= r (.-re w))
+               (v/= i (.-im w)))
+
+          (sequential? w)
+          (and (= (count w) 2)
+               (v/= r (nth w 0))
+               (v/= i (nth w 1)))
+
+          :else (and (v/real? w)
+                     (g/zero? i)
+                     (v/= r w)))))
 
 (defn zero?
   "Determines whether or not a complex number is at the zero pole of the
@@ -105,46 +129,22 @@
   (.-im z))
 
 (defn abs
-  "Calculate the magnitude of the complex number"
+  "Calculate the magnitude of the complex number.
+  The implementation tactic used here (pre-dividing by the greater
+  of the components) comes from the GNU ISO C++ standard library."
   [^Complex z]
   (let [x (.-re z)
         y (.-im z)
-        a (g/abs x)
-        b (g/abs y)]
-    (cond (and (< a 3000) (< b 3000))
-          (g/sqrt (g/+ (g/* a a) (g/* b b)))
-
-          (< a b)
-          (g/* b (g/sqrt (g/+ 1 (g/expt (g// x y) 2))))
-
-          :else
-          (g/* a (g/sqrt (g/+ 1 (g/expt (g// y x) 2)))))))
-
-(defn log-hypot
-  "Calculates log(sqrt(a^2+b^2)) in a way to avoid overflows"
-  ([^Complex z]
-   (log-hypot (.-re z) (.-im z)))
-  ([a b]
-   (let [_a (g/abs a)
-         _b (g/abs b)]
-     (cond (g/zero? a) (g/log _b)
-           (g/zero? b) (g/log _a)
-           (and (< _a 3000)
-                (< _b 3000)) (g// (g/log (g/+ (g/* a a) (g/* b b))) 2)
-           :else (let [a (g// a 2)
-                       b (g// b 2)]
-                   (g/+ LN2 (g// (g/log (g/+ (g/* a a) (g/* b b))) 2)))))))
+        s (max (g/abs x) (g/abs y))]
+    (if (g/zero? s) s
+        (let [x (g// x s)
+              y (g// y s)]
+          (g/* s (g/sqrt (g/+ (g/square x) (g/square y))))))))
 
 (def ^:private
   complex-re
   "Regular expression used to parse complex numbers"
   #"([+-]?\d+(\.\d*)?([Ee][+-]?\d+)?)(\s?([+-])?\s?([+-]?\d+(\.\d*)?([Ee][+-]?\d+)?)[Ii])?")
-
-(comment
-  (re-matches complex-re "-1.2e3 + -4.5e6I")
-  (re-matches complex-re "0+3i")
-
-  )
 
 (defn parse
   "Parse a complex number. We expect one or two floating point numbers.
@@ -274,17 +274,15 @@
     (->Complex (+ (* (Math/expm1 a) (Math/cos b)) (cos-1 b))
                (* (Math/exp a) (Math/sin b)))))
 
-(defn log
-  "Calculate complex the natural log."
-  [^Complex z]
-  (let [a (.-re z)
-        b (.-im z)]
-    (->Complex (log-hypot z) (g/atan b a))))
-
 (defn arg
   "Calculate the angle of the complex number."
   [^Complex z]
   (g/atan (.-im z) (.-re z)))
+
+(defn log
+  "Calculate complex the natural log."
+  [^Complex z]
+  (->Complex (g/log (abs z)) (arg z)))
 
 (defn sin
   "Calculate the complex sine."
@@ -518,8 +516,8 @@
                        (if (g/zero? b) 0 (g// b 0)))
             (->Complex (g// (g/- (g/* op om) (g/square b)) d)
                        (g// (g/+ (g/* b om) (g/* op b)) d)))]
-    (->Complex (g// (log-hypot x) 2)
-               (g// (g/atan (.-im x) (.-re x)) (if noIM -2 2)))))
+    (->Complex (g// (g/log (abs x)) 2)
+               (g// (arg x) (if noIM -2 2)))))
 
 (defn acoth
   "Calculate the complex arc hyperbolic cotangent."

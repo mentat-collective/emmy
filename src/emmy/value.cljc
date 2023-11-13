@@ -23,6 +23,8 @@
 (defprotocol Numerical
   (^boolean numerical? [_]))
 
+(defprotocol INumericTower)
+
 (extend-protocol Numerical
   #?(:clj Object :cljs default)
   (numerical? [_] false))
@@ -90,13 +92,13 @@
   [x]
   #?(:clj
      (or (instance? Number x)
-         (core/= (kind x) :emmy.complex/complex))
+         (instance? emmy.value.INumericTower x))
      :cljs (or (cljs.core/number? x)
                (core/= "bigint" (goog/typeOf x))
                (instance? Fraction x)
                (instance? goog.math.Integer x)
                (instance? goog.math.Long x)
-               (core/= (kind x) :emmy.complex/complex))))
+               (instance? emmy.value.INumericTower x))))
 
 ;; `::scalar` is a thing that symbolic expressions AND actual numbers both
 ;; derive from.
