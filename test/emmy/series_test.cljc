@@ -5,6 +5,7 @@
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
             [emmy.calculus.derivative]
+            [emmy.complex.impl :as ci]
             [emmy.function :as f]
             [emmy.generators :as sg]
             [emmy.generic :as g]
@@ -652,3 +653,24 @@
 
     (is (= (take 20 s/tan-series)
            (take 20 (g/div s/sin-series s/cos-series))))))
+
+(deftest cos-1-square-terms
+  (testing "Generate terms for the power series expansion of $cos(z)-1$."
+  ;; (take 10 (g/- s/cos-series 1))
+  ;; => (0 0 -1/2 0 1/24 0 -1/720 0 1/40320 0)
+  ;; From this we can see that we may regard the expansion as a series in x^2, with a
+  ;; zero constant term.
+    (let [terms (->> (g/- s/cos-series 1)
+                     (remove g/zero?)  ;; eliminate the useless zero coefficients of the odd powers of x
+                     (map double)      ;; we don't want the rational arithmetic to survive
+                     (take 8)          ;; the filtered series now has coefficients for x^2, x^4 ... x^16
+                     (cons 0.)         ;; cons 0 and reverse facilitate evaluation with Horner's method
+                     (reverse))
+          near (v/within 1e-10)
+          horner-eval (fn [x] (reduce (fn [a b] (+ (* a x) b)) terms))]
+      (is (every? #(near % 0) (map g/- ci/cos-1-square-terms terms)))
+      (checking "series is accurate" 100 [d (sg/reasonable-double {:min (- (/ Math/PI 4))
+                                                                   :max (/ Math/PI 4)
+                                                                   :excluded-lower 0
+                                                                   :excluded-upper 0})]
+                (is (near (- (Math/cos d) 1) (horner-eval (g/square d))))))))

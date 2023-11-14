@@ -2,7 +2,7 @@
 
 (ns emmy.util
   "Shared utilities between clojure and clojurescript."
-  (:refer-clojure :exclude [bigint biginteger double long int uuid])
+  (:refer-clojure :exclude [bigint biginteger double long int uuid parse-double])
   (:require #?(:clj [clojure.core :as core])
             #?(:clj [clojure.math.numeric-tower :as nt])
             #?(:cljs goog.math.Integer)
@@ -178,3 +178,18 @@
 
 (def sqrt-machine-epsilon
   (Math/sqrt machine-epsilon))
+
+(defn parse-int
+  [s]
+  #?(:clj (Integer/parseInt s)
+     :cljs (. js/Number parseInt s)))
+
+(defn parse-double
+  [s]
+  #?(:clj (Double/parseDouble s)
+     :cljs (. js/Number parseFloat s)))
+
+(defn nan?
+  [x]
+  #?(:clj (Double/isNaN x)
+     :cljs (. js/Number isNaN x)))

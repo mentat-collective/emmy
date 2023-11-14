@@ -712,7 +712,7 @@
                 (is (v/= sym (g/make-polar sym n))
                     "an exact zero returns the symbolic radius.")
                 (is (= `(~'* ~sym (~'+ (~'cos ~(g/freeze n))
-                                   (~'* (~'complex 0.0 1.0)
+                                   (~'* (~'complex 0 1)
                                     (~'sin ~(g/freeze n)))))
                        (g/freeze
                         (g/make-polar sym n)))
@@ -757,8 +757,8 @@
                    (g/magnitude z))))
 
   (testing "dot-product"
-    (is (= '(+ (* 0.5 x (conjugate y))
-               (* 0.5 y (conjugate x)))
+    (is (= '(+ (* (/ 1 2) x (conjugate y))
+               (* (/ 1 2) y (conjugate x)))
            (g/freeze
             (g/simplify
              (g/dot-product 'x 'y)))))

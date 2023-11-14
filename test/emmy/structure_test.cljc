@@ -6,7 +6,6 @@
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
             [emmy.abstract.number]
-            [emmy.complex :as c]
             [emmy.expression :as x]
             [emmy.function :as f]
             [emmy.generators :as sg]
@@ -1248,8 +1247,8 @@
     (is (ish? (g/abs [3 4 5]) (g/sqrt 50)))
 
     (let [m (g/magnitude [#emmy/complex "3+4i" (g/sqrt 11)])]
-      (is (= (g/sqrt (g/square m))
-             (c/complex (g/abs m))))))
+      (is (v/= (g/sqrt (g/square m))
+               (g/abs m)))))
 
   (testing "g/real-part, g/imag-part, g/make-rectangular, g/make-polar"
     (let [s3      [3 (s/up 3) (s/down 3)]

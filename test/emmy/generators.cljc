@@ -6,6 +6,7 @@
   (:require [clojure.core :as core]
             [clojure.test.check.generators :as gen]
             [emmy.complex :as c]
+            #?(:cljs [emmy.complex.impl :refer [Complex]])
             [emmy.differential :as d]
             [emmy.generic :as g]
             [emmy.matrix :as m]
@@ -27,7 +28,7 @@
      (:import (clojure.lang Symbol)
               (emmy.structure Structure)
               (emmy.quaternion Quaternion)
-              (org.apache.commons.math3.complex Complex))))
+              (emmy.complex.impl Complex))))
 
 (def bigint
   "js/BigInt in cljs, clojure.lang.BigInt in clj."
@@ -69,6 +70,15 @@
                               :NaN? false
                               :min excluded-upper
                               :max max})])))
+
+(defn reasonable-complex
+  "A complex number in the unit square, bounded away from the axes,
+  in order to avoid branch points"
+  []
+  (let [bounds {:min -1 :max 1 :excluded-lower -1e-3 :excluded-upper 1e-3}]
+    (gen/let [re (reasonable-double bounds)
+              im (reasonable-double bounds)]
+      (c/complex re im))))
 
 (defn inexact-double
   ([] (inexact-double {}))
@@ -377,10 +387,10 @@
   In CLJS, `this` can be `js/BigInt`, `google.math.Long`, `goog.math.Real`,
   `Fraction` or any of the other types in the numeric tower."
   [this that]
-  (cond (c/complex? that) (and (si/*comparator* 0.0 (g/imag-part that))
+  (cond (c/complex? that) (and (si/*comparator* 0.0 (u/double (g/imag-part that)))
                                (si/*comparator*
                                 (u/double this)
-                                (g/real-part that)))
+                                (u/double (g/real-part that))))
         (v/real? that)    (si/*comparator*
                            (u/double this)
                            (u/double that))
@@ -413,21 +423,21 @@
        Number
        (ish [this that] (eq-delegate this that))])
 
-  #?(:cljs c/complextype :clj Complex)
+  Complex
   (ish [this that]
     (cond (c/complex? that)
-          (and (si/*comparator* (c/real this)
-                                (c/real that))
-               (si/*comparator* (c/imaginary this)
-                                (c/imaginary that)))
+          (and (si/*comparator* (u/double (c/real this))
+                                (u/double (c/real that)))
+               (si/*comparator* (u/double (c/imaginary this))
+                                (u/double (c/imaginary that))))
 
           (quat/quaternion? that)
           (si/ish that this)
 
           (v/real? that)
-          (and (si/*comparator* 0.0 (c/imaginary this))
+          (and (si/*comparator* 0.0 (u/double (c/imaginary this)))
                (si/*comparator*
-                (c/real this) (u/double that)))
+                (u/double (c/real this)) (u/double that)))
           :else (v/= this that)))
 
   Quaternion

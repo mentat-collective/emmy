@@ -2,6 +2,21 @@
 
 ## [unreleased]
 
+- #151
+
+  - By porting `complex.js` to Clojure, we can remove the dependency on
+    this library on the JavaScript side as well as the Apache Commons
+    complex implementation on the JVM side.
+
+    The JavaScript implementation is followed fairly closely and done with
+    generic Emmy arithmetic at the component level (except when that is
+    clearly unnecessary). The `(complex)` constructor has been made
+    equivalent to the reader parser.
+
+    The former implementation made a special case of i^r, raising the
+    complex unit to a real power, but it only worked for integral r, and
+    threw an exception in other cases; this special case is removed.
+
 - #149
 
   - Retires the Value protocol in favor of MultiFns in the generic scope.
