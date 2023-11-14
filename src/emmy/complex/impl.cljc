@@ -81,14 +81,12 @@
           (and (v/= r (.-re w))
                (v/= i (.-im w)))
 
-          (sequential? w)
-          (and (= (count w) 2)
-               (v/= r (nth w 0))
-               (v/= i (nth w 1)))
+          (v/real? w)
+          (and (g/zero? i)
+               (v/= r w))
 
-          :else (and (v/real? w)
-                     (g/zero? i)
-                     (v/= r w)))))
+          ;; Defer to `v/=` to support quaternion, octonion equality etc.
+          :else (v/= z w))))
 
 (defn zero?
   "Determines whether or not a complex number is at the zero pole of the

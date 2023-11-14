@@ -98,7 +98,7 @@
                (instance? Fraction x)
                (instance? goog.math.Integer x)
                (instance? goog.math.Long x)
-               (instance? emmy.value.INumericTower x))))
+               (satisfies? emmy.value.INumericTower x))))
 
 ;; `::scalar` is a thing that symbolic expressions AND actual numbers both
 ;; derive from.
