@@ -9,42 +9,79 @@
             [emmy.util :as u]
             [emmy.value :as v]))
 
-;; Start with a port of the DVL implementation.
+;; ## Reverse-mode AD
+;;
+;; This file contains an implementation of reverse-mode AD, based on Alexey
+;; Radul's implementation
+;; in [dvl](https://github.com/axch/dysvunctional-language).
+;;
+;; Relevant notes:
+;;
+;; - it's an invariant that any wrapped number (in primal, tangent or partial)
+;;   has an ID that is strictly less than the wrapping ID.
+;;
+;; - the old code has some replace-tag stuff that was superceded by the 2019
+;;   paper, we need to update the reverse mode here to not worry about that for
+;;   perturbation confusion.
 
+;; The `in->partial` map in a tape cell associates
+;;
+;; - tape cells representing inputs to the computation whose output this tape
+;;   cell represents
+;; - to the partial derivatives of said output with respect to those inputs.
+;;
+;; The reverse phase will use these after it has computed the sensitivity to
+;; said output.
+;;
+;; We can use Emmy's overloading to carry out the forward-mode phase for
+;; differential instances, or the forward pass of reverse-mode AD.
+;;
+;; TODO something is going on here, that is shared in common with JAX, where the
+;; AD overloads a jacobian instead of a single value.
+
+;; TODO should a tape be a scalar? I don't know yet... what would that get us?
 (derive ::tape ::f/cofunction)
 
+;; perturbation tag, cell-id, primal, then a map of input [[TapeCell]] to the
+;; partial derivative of the (primal?) with respect to that cell's input.
 (deftype TapeCell [tag id primal in->partial]
-  v/Value
-  (zero? [_]
-    (v/zero? primal))
-
-  (one? [_]
-    (and (v/one? primal)
-         (empty? in->partial)))
-
-  (identity? [_]
-    (and (v/identity? primal)
-         (empty? in->partial)))
-
-  (zero-like [_] 0)
-  (one-like [_] 1)
-  (identity-like [_] 1)
-  (freeze [_]
-    `[~'TapeCell ~tag ~id ~(v/freeze primal)
-      ~(mapv (fn [[k v]] [(v/freeze k) (v/freeze v)])
-             in->partial)])
-  (exact? [_] false)
-
+  v/IKind
   (kind [_] ::tape))
 
-;; These come from stdlib/ad-structures.dvl.
-
+;; accessors for internal fields.
 (defn tape-tag [^TapeCell tape] (.-tag tape))
 (defn tape-id [^TapeCell tape] (.-id tape))
 (defn tape-primal [^TapeCell tape] (.-primal tape))
 (defn tape-partials [^TapeCell tape] (.-in->partial tape))
 
-;; TODO do we want the "epsilon" or "tag" to be a protocol? no way...
+(defmethod g/zero? [::tape] [t]
+  (g/zero? (tape-primal t)))
+
+(defmethod g/one? [::tape] [t]
+  (and (g/one? (tape-primal t))
+       (empty? (tape-partials t))))
+
+(defmethod g/identity? [::tape] [t]
+  (and (g/identity? (tape-primal t))
+       (empty? (tape-partials t))))
+
+(defmethod g/zero-like [::tape] [_] 0)
+(defmethod g/one-like [::tape] [_] 1)
+(defmethod g/identity-like [::tape] [_] 1)
+(defmethod g/freeze [::tape] [t]
+  `[~'TapeCell
+    ~(tape-tag t)
+    ~(tape-id t)
+    ~(g/freeze (tape-primal t))
+    ~(mapv (fn [[k v]] [(g/freeze k) (g/freeze v)])
+           (tape-partials t))])
+
+;; TODO do we want the "epsilon" or "tag" to be a protocol? if we did, then
+;; `perturbation-of` becomes a multimethod.
+;;
+;; NOTE that this returns `least-gensym` currently, which is one created at
+;; startup, as a default. Maybe safer to make some sentinel that's always
+;; less-than, or -##Inf or something.
 
 (defn tape? [x]
   (instance? TapeCell x))
@@ -52,27 +89,32 @@
 (defn make
   "Make a `TapeCell` instance with a unique ID."
   ([tag primal]
-   (make tag primal []))
+   (make tag primal {}))
   ([tag primal partials]
    (->TapeCell tag (gensym) primal partials)))
 
+;; ## Interaction with bundles
+
 (defn primal-part
   "TODO THIS maybe could be a protocol if indeed the other implementations fall
-  down with it. This is a flag about how we're supposed to respond when FORWARD
-  mode tries to get our primal - do not give it up!!
+  down with it. This function's behavior is how we're supposed to respond when
+  FORWARD mode tries to get our primal - do not give it up to them!
 
   NOTE from dvl... This expects that primal is always called with the outermost
   available epsilon, and that bundles and tape cells are properly nested."
   [x _tag]
   x)
 
-(defn- reverse-primal
-  "This assumes that epsilon is greater than or equal to the perturbation of
-  thing, and is an epsilon associated with reverse mode."
-  [x tag]
-  (if (and (tape? x) (= tag (tape-tag x)))
-    (tape-primal x)
-    x))
+(defn tangent-part
+  "TODO so weird, we ALSO only return tangent part here... oh. That is probably
+  because with proper nesting, if we're on the OUTSIDE then...
+
+  Note from DVL:
+
+  TODO This expects that tangent is always called with the outermost available
+  epsilon, and that bundles and tape cells are properly nested. (What does
+  properly nested mean again?)"
+  [_x _tag] 0)
 
 (defn primal*
   "TODO this is also in ad-structures. This goes ahead and descends deep and
@@ -80,17 +122,16 @@
   if it's neither of these container types."
   [thing]
   (if (tape? thing)
-    (primal* thing)
+    (recur thing)
     thing))
 
-;; TODO BOOM we actually... do we need to be more careful about extracting the
-;; appropriate primal part? I think the deal is that we get primals out of
-;; bundles, and just straight-up return them if they are tapes.
-
-(defn tangent-part
-  "TODO so weird, we ALSO only return tangent part here... oh. That is probably
-  because with proper nesting, if we're on the OUTSIDE then..."
-  [_x _tag] 0)
+(defn- reverse-primal
+  "NOTE This assumes that epsilon is greater than or equal to the perturbation of
+  thing, and is an epsilon associated with reverse mode."
+  [x tag]
+  (if (and (tape? x) (= tag (tape-tag x)))
+    (tape-primal x)
+    x))
 
 (defn tag-of
   "TODO redo this and make it so it doesn't HAVE to have a tag; but right now
@@ -102,30 +143,49 @@
     (tape-tag x)
     0))
 
-(comment
-  ;; ALSO in primal-part we have this tag hiding thing. So looks like that does
-  ;; not have to change.
-  (hide-gensym-in-procedure epsilon
-                            (lambda (x)
-                                    (primal epsilon (thing x)))))
+;; Now we're on to reverse-mode.dvl, off of the basic ad-structures. Let's
+;; see...
 
-(defprotocol ITapify
-  (-tapify [this tag]))
-
-#_
 (comment
+  (defprotocol ITapify
+    (-tapify [this tag]))
+
   "TODO Do this later!"
-  (extend-protocol ITapify ...))
+  (extend-protocol ITapify
+    ,,,))
 
 (defn tapify
   "Down to business! This should be a protocol method."
   [x tag]
-  (cond (v/scalar? x)   (make tag x [])
+  (cond
+    ;; TODO more evidence that tape should be a scalar?
+    (v/scalar? x)    (make tag x)
+    (s/structure? x) (s/mapr #(tapify % tag) x)
+    (f/function? x)  (u/illegal "Can't do this yet.")
+    :else            x))
 
-        (s/structure? x) (s/mapr #(tapify % tag) x)
-        (f/function? x)  (u/illegal "Can't do this yet.")
+(declare compute-visiting-order*)
 
-        :else x))
+(defn ^:no-doc topological-sort-by-id
+  "`node` is the current node being visited
+   `seen` is a set of seen node IDs
+   `sorted` is the accumulating return value of sorted nodes."
+  [node]
+  (letfn [(compute-visiting-order
+            [[seen sorted] node]
+            (if (contains? seen (tape-id node))
+              [seen sorted]
+              (let [[seen sorted] (process-children
+                                   (map key (tape-partials node))
+                                   (conj seen (tape-id node))
+                                   sorted)]
+                [seen (cons node sorted)])))
+          (process-children [nodes seen sorted]
+            (reduce compute-visiting-order
+                    [seen sorted]
+                    nodes))]
+    (second
+     (compute-visiting-order [#{} []] node))))
 
 (defn reverse-phase
   "sensitivities is a map... nodes is a sequence."
@@ -147,27 +207,8 @@
                              (if v (g/+ v delta) delta)))
                    rest)))))))
 
-(declare compute-visiting-order*)
-
-(defn compute-visiting-order [node seen sorted]
-  (if (contains? seen (tape-id node))
-    [seen sorted]
-    (let [[seen sorted] (compute-visiting-order*
-                         (map first (tape-partials node))
-                         (conj seen (tape-id node))
-                         sorted)]
-      [seen (cons node sorted)])))
-
-(defn compute-visiting-order* [nodes seen sorted]
-  (if (empty? nodes)
-    [seen sorted]
-    (let [[seen sorted] (compute-visiting-order
-                         (first nodes) seen sorted)]
-      (compute-visiting-order* (rest nodes) seen sorted))))
-
 (defn interpret [thing tag sensitivities]
-  (cond (and (tape? thing)
-             (= tag (tape-tag thing)))
+  (cond (and (tape? thing) (= tag (tape-tag thing)))
         (get sensitivities (tape-id thing))
 
         (s/structure? thing)
@@ -177,22 +218,23 @@
         (f/function? thing)  (u/illegal "function return not yet supported.")
         :else 0))
 
-(defn gradient
+(defn gradient-r
   "Returns an function that returns the gradient of the supplied fn... still quite
   simplified."
   [f]
   (fn [x]
     (let [tag    (d/fresh-tag)
           inputs (tapify x tag)
-          fwd    (f inputs)
-          sensitivities (if (tape? fwd)
-                          (if (= tag (tape-tag fwd))
-                            (let [[_seen sorted] (compute-visiting-order fwd #{} [])]
-                              (reverse-phase sorted {(tape-id fwd) 1}))
-                            ;; f is not infinitesimally dependent on x, return
-                            ;; the empty sensitivity list.
-                            {})
-                          {})]
+          output (f inputs)
+          ;; No perturbation greater than eps should be observable in
+          ;; forward-phase-answer. TODO does this hold?
+          sensitivities
+          (if (and (tape? output) (= tag (tape-tag output)))
+            (let [sorted (topological-sort-by-id output)]
+              (reverse-phase sorted {(tape-id output) 1}))
+            ;; f is not infinitesimally dependent on x, return
+            ;; the empty sensitivity list.
+            {})]
       (interpret inputs tag sensitivities))))
 
 ;; ## Lifted Fns
@@ -210,7 +252,7 @@
        (let [primal (tape-primal x)]
          (make (tape-tag x)
                (call primal)
-               [[x (df:dx primal)]]))
+               {x (df:dx primal)}))
        (f x)))))
 
 (defn lift-2
@@ -226,17 +268,15 @@
      (letfn [(operate [tag]
                (let [prim-a (reverse-primal a tag)
                      prim-b (reverse-primal b tag)
-                     partial-a (if (and (tape? a)
-                                        (= tag (tape-tag a)))
-                                 [[a (df:dx1 prim-a prim-b)]]
-                                 [])
-                     partial-b (if (and (tape? b)
-                                        (= tag (tape-tag b)))
-                                 [[b (df:dx2 prim-a prim-b)]]
-                                 [])]
+                     partial-a (if (and (tape? a) (= tag (tape-tag a)))
+                                 {a (df:dx1 prim-a prim-b)}
+                                 {})
+                     partial-b (if (and (tape? b) (= tag (tape-tag b)))
+                                 {b (df:dx2 prim-a prim-b)}
+                                 {})]
                  (make tag
                        (call prim-a prim-b)
-                       (concat partial-a partial-b))))]
+                       (into partial-a partial-b))))]
        (let [tag-a (tag-of a)
              tag-b (tag-of b)]
          (cond (and (tape? a) (not (< tag-a tag-b)))
@@ -246,6 +286,8 @@
                (operate tag-b)
 
                :else (f a b)))))))
+
+;; TODO add binary versions.
 
 (defn- defunary [generic-op differential-op]
   (defmethod generic-op [::tape] [a] (differential-op a)))
@@ -290,7 +332,7 @@
 
 (defn- discont-at-integers [f dfdx]
   (let [f (lift-1 f (fn [_] dfdx))
-        f-name (v/freeze f)]
+        f-name (g/freeze f)]
     (fn [x]
       (if (v/integral? (primal* x))
         (u/illegal
