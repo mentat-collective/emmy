@@ -62,7 +62,7 @@
   ;;=> (* y z)
 
   (((partial 0) g/*) 'x 'y 'z))
-  ;;=> (* y z)
+;;=> (* y z)
 
 
 ;; To `extract-tangent` from a function, we need to compose the
@@ -450,8 +450,8 @@
   the [Jacobian](https://en.wikipedia.org/wiki/Jacobian_matrix_and_determinant)
   of `f`.
 
-  The related [[Grad]] returns a function that produces a structure of the
-  opposite orientation as [[D]]. Both of these functions use forward-mode
+  The related [[emmy.env/Grad]] returns a function that produces a structure of
+  the opposite orientation as [[D]]. Both of these functions use forward-mode
   automatic differentiation."
   (o/make-operator #(g/partial-derivative % [])
                    g/derivative-symbol))

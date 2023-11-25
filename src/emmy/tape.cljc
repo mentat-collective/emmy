@@ -44,7 +44,7 @@
 
 ;; perturbation tag, cell-id, primal, then a map of input [[TapeCell]] to the
 ;; partial derivative of the (primal?) with respect to that cell's input.
-(deftype TapeCell [tag id primal in->partial]
+(defrecord TapeCell [tag id primal in->partial]
   v/IKind
   (kind [_] ::tape))
 
@@ -73,8 +73,10 @@
     ~(tape-tag t)
     ~(tape-id t)
     ~(g/freeze (tape-primal t))
-    ~(mapv (fn [[k v]] [(g/freeze k) (g/freeze v)])
-           (tape-partials t))])
+    ~(reduce-kv (fn [acc k v]
+                  (assoc acc (g/freeze k) (g/freeze v)))
+                {}
+                (tape-partials t))])
 
 ;; TODO do we want the "epsilon" or "tag" to be a protocol? if we did, then
 ;; `perturbation-of` becomes a multimethod.
@@ -167,7 +169,10 @@
 (declare compute-visiting-order*)
 
 (defn ^:no-doc topological-sort-by-id
-  "`node` is the current node being visited
+  "Given some `node` of type [[TapeCell]], returns a sequence of [[TapeCell]]
+  instances sorted
+
+  is the current node being visited
    `seen` is a set of seen node IDs
    `sorted` is the accumulating return value of sorted nodes."
   [node]
@@ -176,47 +181,124 @@
             (if (contains? seen (tape-id node))
               [seen sorted]
               (let [[seen sorted] (process-children
-                                   (map key (tape-partials node))
                                    (conj seen (tape-id node))
-                                   sorted)]
+                                   sorted
+                                   (tape-partials node))]
                 [seen (cons node sorted)])))
-          (process-children [nodes seen sorted]
-            (reduce compute-visiting-order
-                    [seen sorted]
-                    nodes))]
+          (process-children [seen sorted in->partials]
+            (transduce (map key)
+                       (completing compute-visiting-order)
+                       [seen sorted]
+                       in->partials))]
     (second
      (compute-visiting-order [#{} []] node))))
 
 (defn reverse-phase
   "sensitivities is a map... nodes is a sequence."
   [nodes sensitivities]
-  (if (empty? nodes)
-    sensitivities
-    ;; Since you're going in topological sort order, when you reach
-    ;; a node you know you are done updating its sensitivity.
-    (let [sensitivity (get sensitivities (tape-id (first nodes)))]
-      (loop [sensitivities sensitivities
-             partials      (tape-partials (first nodes))]
-        (if (empty? partials)
-          (reverse-phase (rest nodes) sensitivities)
-          (let [[[partial-cell partial-factor] & rest] partials
-                delta (g/* partial-factor sensitivity)]
-            (recur (update sensitivities
-                           (tape-id partial-cell)
-                           (fn [v]
-                             (if v (g/+ v delta) delta)))
-                   rest)))))))
+  (letfn [(process [m node]
+            ;; Since you're going in reverse topological sort order, when you
+            ;; reach a node you know you are done updating its sensitivity.
+            (let [sensitivity (get m (tape-id node))]
+              (reduce-kv
+               (fn [acc cell factor]
+                 (let [id    (tape-id cell)
+                       delta (g/* factor sensitivity)]
+                   (assoc acc id (if-let [v (get acc id)]
+                                   (g/+ v delta)
+                                   delta))))
+               m
+               (tape-partials node))))]
+    (reduce process sensitivities nodes)))
 
-(defn interpret [thing tag sensitivities]
+(defn interpret
+  "TODO this has a parallel on the output. This one means, this was the input to
+  the function, and now we've backpropagated all of the sensitivities. Interpret
+  the input.
+
+  Next we need to actually
+
+  - turn the output "
+  [thing tag sensitivities]
   (cond (and (tape? thing) (= tag (tape-tag thing)))
-        (get sensitivities (tape-id thing))
+        (get sensitivities (tape-id thing) 0)
 
         (s/structure? thing)
+        ;; TODO use mapr?
         (s/opposite
          thing (map #(interpret % tag sensitivities) thing))
 
-        (f/function? thing)  (u/illegal "function return not yet supported.")
+        (f/function? thing) (u/illegal "function input not yet supported.")
         :else 0))
+
+;; TODO okay, this is wrong! To handle the multivariable case we can't just walk
+;; back from the output of each.
+;;
+;; the current way gets the structures wrong, by nesting copies of the partials
+;; into the output structure.
+;;
+;; We need to get a copy of the OUTPUT into each entry in the output structure,
+;; with orientations flipped.
+(defn handle-output [thing inputs tag]
+  (cond (and (tape? thing) (= tag (tape-tag thing)))
+        ;; No perturbation greater than eps should be observable in
+        ;; forward-phase-answer. TODO does this hold?
+        (let [sensitivities
+              (if (and (tape? thing) (= tag (tape-tag thing)))
+                (let [sorted (topological-sort-by-id thing)]
+                  (reverse-phase sorted {(tape-id thing) 1}))
+                ;; f is not infinitesimally dependent on x, return
+                ;; the empty sensitivity list.
+                {})]
+          (interpret inputs tag sensitivities))
+
+        (vector? thing)
+        (mapv #(handle-output % inputs tag) thing)
+
+        (s/structure? thing)
+        (s/mapr #(handle-output % inputs tag) thing)
+
+        (f/function? thing)
+        ;; TODO this needs to handle perturbation confusion with tag
+        ;; replacement. Make something similar to extract-tangent-fn.
+        (comp #(handle-output % inputs tag) thing)
+
+        ;; TODO this needs to be a protocol to handle quaternion return values
+        ;; etc...
+        :else thing))
+
+;; NOTE this is an attempt... but what do we do with the results? we have a combo of
+;; types of input and output.
+#_
+(defn ->sensitivities [thing tag]
+  (cond (and (tape? thing) (= tag (tape-tag thing)))
+        ;; No perturbation greater than eps should be observable in
+        ;; forward-phase-answer. TODO does this hold?
+        (let [sensitivities
+              (if (and (tape? thing) (= tag (tape-tag thing)))
+                (let [sorted (topological-sort-by-id thing)]
+                  (reverse-phase sorted {(tape-id thing) 1}))
+                ;; f is not infinitesimally dependent on x, return
+                ;; the empty sensitivity list.
+                {})]
+          {::sensitivities sensitivities
+           ::node thing})
+
+        (vector? thing)
+        (mapv #(->sensitivities % tag) thing)
+
+        (s/structure? thing)
+        (s/mapr #(->sensitivities % tag) thing)
+
+        (f/function? thing)
+        ;; TODO this needs to handle perturbation confusion with tag
+        ;; replacement. Make something similar to extract-tangent-fn.
+        (comp #(->sensitivities % tag) thing)
+
+        ;; TODO this needs to be a protocol to handle quaternion return values
+        ;; etc...
+        :else {::sensitivities {}
+               ::node thing}))
 
 (defn gradient-r
   "Returns an function that returns the gradient of the supplied fn... still quite
@@ -225,17 +307,8 @@
   (fn [x]
     (let [tag    (d/fresh-tag)
           inputs (tapify x tag)
-          output (f inputs)
-          ;; No perturbation greater than eps should be observable in
-          ;; forward-phase-answer. TODO does this hold?
-          sensitivities
-          (if (and (tape? output) (= tag (tape-tag output)))
-            (let [sorted (topological-sort-by-id output)]
-              (reverse-phase sorted {(tape-id output) 1}))
-            ;; f is not infinitesimally dependent on x, return
-            ;; the empty sensitivity list.
-            {})]
-      (interpret inputs tag sensitivities))))
+          output (f inputs)]
+      (handle-output output inputs tag))))
 
 ;; ## Lifted Fns
 
