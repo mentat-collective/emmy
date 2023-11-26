@@ -53,10 +53,10 @@
                       p06 (aget a09 0)
                       _10 (* p06 y01)]
                   _10))
-              (u/without-symbol-namespaces
-               (compile {:mode :clj
-                         :calling-convention :primitive
-                         :gensym-fn (a/monotonic-symbol-generator 2)}))))
+             (u/without-symbol-namespaces
+              (compile {:mode :clj
+                        :calling-convention :primitive
+                        :gensym-fn (a/monotonic-symbol-generator 2)}))))
       (is (= ["[y1, [y2, y3], [y4, y5]]" "[p6]" (s/join "\n" ["  const _7 = p6 * y1;"
                                                               "  return _7;"])]
              (compile {:mode :js :calling-convention :structure})))
@@ -180,12 +180,12 @@
 
           (doseq [[mode expected-source]
                   {:clj '(fn [[y01 [y02 [y03 [y04]]]] [p05]]
-                         (let [_06 (* p05 y01)
-                               _07 0.5
-                               _08 (* _07 p05)
-                               _09 (+ _06 _08)
-                               _10 (vector _09)]
-                           _10))
+                           (let [_06 (* p05 y01)
+                                 _07 0.5
+                                 _08 (* _07 p05)
+                                 _09 (+ _06 _08)
+                                 _10 (vector _09)]
+                             _10))
                    :js ["[y01, [y02, [y03, [y04]]]]" "[p05]"
                         (s/join "\n" ["  const _06 = p05 * y01;"
                                       "  const _07 = 0.5;"

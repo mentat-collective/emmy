@@ -22,9 +22,7 @@
 (deftest basic-tests
   (testing
       "simple simplification works. Everything works only with a single numeric
-      output now.
-
-      TODO handle structural outputs."
+      output now."
     (let [f (fn [[x y z]]
               (g/+ (g/expt x 4) (g/* x y z (g/cos x))))]
       (is (= '(down
@@ -35,10 +33,21 @@
                (* x y (cos x)))
              (g/freeze
               (g/simplify
-               ((t/gradient-r f) ['x 'y 'z])))))
+               ((t/gradient f) ['x 'y 'z])))))
 
       (is (= (g/simplify
-              ((t/gradient-r f) ['x 'y 'z]))
+              ((t/gradient f) ['x 'y 'z]))
              (g/simplify
               ((D f) ['x 'y 'z])))
-          "reverse-mode matches forward-mode."))))
+          "reverse-mode matches forward-mode."))
+
+    (let [f (fn [a b c d e f]
+              [(g/* (g/cos a) (g/cos b))
+               (g/* (g/cos c) (g/cos d))
+               (g/* (g/cos e) (g/cos f))])]
+      (is (=
+           (g/simplify
+            ((t/gradient (t/gradient f)) 'a 'b 'c 'd 'e 'f))
+           (g/simplify
+            ((D (D f)) 'a 'b 'c 'd 'e 'f)))
+          "multivariable derivatives match"))))

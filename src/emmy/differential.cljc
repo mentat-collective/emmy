@@ -1004,6 +1004,20 @@
     (and (g/one? p)
          (g/zero? t))))
 
+(defn- identity?
+  "Returns true if the supplied instance has a [[finite-part]] that responds true
+  to [[emmy.value/identity?]], and zero coefficients on any of its tangent
+  components; false otherwise.
+
+  NOTE: This means that [[identity?]] will not do what you expect as a
+  conditional inside some function. If you want to branch inside some function
+  you're taking the derivative of, prefer `(= <identity element> dx)`. This will
+  only look at the [[finite-part]] and ignore the values of the tangent parts."
+  [dx]
+  (let [[p t] (primal-tangent-pair dx)]
+    (and (g/identity? p)
+         (g/zero? t))))
+
 (defn eq
   "For non-differentials, this is identical to [[clojure.core/=]].
   For [[Differential]] instances, equality acts on tangent components too.
@@ -1093,7 +1107,8 @@
   and [[Differential]] instances.
 
   If called without `df:dx`, `df:dx` defaults to `(f :dfdx)`; this will return
-  the derivative registered to a generic function defined with [[g/defgeneric]].
+  the derivative registered to a generic function defined
+  with [[emmy.util.def/defgeneric]].
 
   NOTE: `df:dx` has to ALREADY be able to handle [[Differential]] instances. The
   best way to accomplish this is by building `df:dx` out of already-lifted
@@ -1187,26 +1202,32 @@
   "Given:
 
   - a generic unary multimethod `generic-op`
-  - a corresponding single-arity lifted function `differential-op`
+  - optionally, a corresponding single-arity lifted function
+    `differential-op` (defaults to `(lift-1 generic-op)`)
 
   installs an appropriate unary implementation of `generic-op` for
   `::differential` instances."
-  [generic-op differential-op]
-  (defmethod generic-op [::differential] [a] (differential-op a)))
+  ([generic-op]
+   (defunary generic-op (lift-1 generic-op)))
+  ([generic-op differential-op]
+   (defmethod generic-op [::differential] [a] (differential-op a))))
 
 (defn- defbinary
   "Given:
 
   - a generic binary multimethod `generic-op`
-  - a corresponding 2-arity lifted function `differential-op`
+  - optionally, a corresponding 2-arity lifted function
+    `differential-op` (defaults to `(lift-2 generic-op)`)
 
   installs an appropriate binary implementation of `generic-op` between
   `:differential` and `::v/scalar` instances."
-  [generic-op differential-op]
-  (doseq [signature [[::differential ::differential]
-                     [::v/scalar ::differential]
-                     [::differential ::v/scalar]]]
-    (defmethod generic-op signature [a b] (differential-op a b))))
+  ([generic-op]
+   (defbinary generic-op (lift-2 generic-op)))
+  ([generic-op differential-op]
+   (doseq [signature [[::differential ::differential]
+                      [::v/scalar ::differential]
+                      [::differential ::v/scalar]]]
+     (defmethod generic-op signature [a b] (differential-op a b)))))
 
 ;; And now we're off to the races. The rest of the namespace
 ;; provides [[defunary]] and [[defbinary]] calls for all of the generic
@@ -1219,19 +1240,19 @@
 (defbinary v/= equiv)
 
 (defbinary g/add d:+)
-(defunary g/negate (lift-1 g/negate))
-(defbinary g/sub (lift-2 g/sub))
+(defunary g/negate)
+(defbinary g/sub)
 
 (let [mul  (lift-2 g/mul)]
   (defbinary g/mul mul)
   (defbinary g/dot-product mul))
-(defbinary g/expt (lift-2 g/expt))
+(defbinary g/expt)
 
-(defunary g/square (lift-1 g/square))
-(defunary g/cube (lift-1 g/cube))
+(defunary g/square)
+(defunary g/cube)
 
-(defunary g/invert (lift-1 g/invert))
-(defbinary g/div (lift-2 g/div))
+(defunary g/invert)
+(defbinary g/div)
 
 (defunary g/negative?
   (comp g/negative? finite-term))
@@ -1254,7 +1275,7 @@
     (fn [x]
       (if (v/integral? (finite-term x))
         (u/illegal
-         (str "Derivative of g/" name " undefined at integral points."))
+         (str "Derivative of emmy.generic/" name " undefined at integral points."))
         (f x)))))
 
 (defunary g/floor
@@ -1273,50 +1294,54 @@
   (defbinary g/solve-linear (fn [l r] (div r l)))
   (defbinary g/solve-linear-right div))
 
-(defunary g/sqrt (lift-1 g/sqrt))
-(defunary g/log (lift-1 g/log))
-(defunary g/exp (lift-1 g/exp))
+(defunary g/sqrt)
+(defunary g/log)
+(defunary g/exp)
 
-(defunary g/cos (lift-1 g/cos))
-(defunary g/sin (lift-1 g/sin))
-(defunary g/tan (lift-1 g/tan))
-(defunary g/cot (lift-1 g/cot))
-(defunary g/sec (lift-1 g/sec))
-(defunary g/csc (lift-1 g/csc))
+(defunary g/cos)
+(defunary g/sin)
+(defunary g/tan)
+(defunary g/cot)
+(defunary g/sec)
+(defunary g/csc)
 
-(defunary g/atan (lift-1 g/atan))
-(defbinary g/atan (lift-2 g/atan))
-(defunary g/asin (lift-1 g/asin))
-(defunary g/acos (lift-1 g/acos))
-(defunary g/acot (lift-1 g/acot))
-(defunary g/asec (lift-1 g/asec))
-(defunary g/acsc (lift-1 g/acsc))
+(defunary g/atan)
+(defbinary g/atan)
+(defunary g/asin)
+(defunary g/acos)
+(defunary g/acot)
+(defunary g/asec)
+(defunary g/acsc)
 
-(defunary g/cosh (lift-1 g/cosh))
-(defunary g/sinh (lift-1 g/sinh))
-(defunary g/tanh (lift-1 g/tanh))
-(defunary g/sech (lift-1 g/sech))
-(defunary g/coth (lift-1 g/coth))
-(defunary g/csch (lift-1 g/csch))
+(defunary g/cosh)
+(defunary g/sinh)
+(defunary g/tanh)
+(defunary g/sech)
+(defunary g/coth)
+(defunary g/csch)
 
-(defunary g/acosh (lift-1 g/acosh))
-(defunary g/asinh (lift-1 g/asinh))
-(defunary g/atanh (lift-1 g/atanh))
-(defunary g/acoth (lift-1 g/acoth))
-(defunary g/asech (lift-1 g/asech))
-(defunary g/acsch (lift-1 g/acsch))
+(defunary g/acosh)
+(defunary g/asinh)
+(defunary g/atanh)
+(defunary g/acoth)
+(defunary g/asech)
+(defunary g/acsch)
 
-(defunary g/sinc (lift-1 g/sinc))
-(defunary g/sinhc (lift-1 g/sinhc))
-(defunary g/tanc (lift-1 g/tanc))
-(defunary g/tanhc (lift-1 g/tanhc))
+(defunary g/sinc)
+(defunary g/sinhc)
+(defunary g/tanc)
+(defunary g/tanhc)
 
 ;; Non-differentiable generic operations
 
-(defmethod g/simplify [::differential] [d] (map-coefficients g/simplify d))
-(defmethod g/zero? [::differential] [d] (every? (comp g/zero? coefficient) (bare-terms d)))
+(defmethod g/simplify [::differential] [d]
+  (map-coefficients g/simplify d))
+
+(defmethod g/zero? [::differential] [d]
+  (every? (comp g/zero? coefficient) (bare-terms d)))
+
 (defmethod g/one? [::differential] [d] (one? d))
-(defmethod g/identity? [::differential] [d] (one? d))
+(defmethod g/identity? [::differential] [d] (identity? d))
 (defmethod g/zero-like [::differential] [_] 0)
 (defmethod g/one-like [::differential] [_] 1)
 (defmethod g/identity-like [::differential] [_] 1)

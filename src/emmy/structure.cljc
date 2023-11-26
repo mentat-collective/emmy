@@ -606,8 +606,6 @@
             (orientation s))]
      (make o xs))))
 
-(def ^:dynamic *parallel?* true)
-
 (defn generate
   "Generate a structure with the given `orientation` whose elements are
 
@@ -616,9 +614,7 @@
   where i ranges from `[0..dimension)`."
   [dimension orientation f]
   {:pre [(valid-orientation? orientation)]}
-  (if *parallel?*
-    (->Structure orientation (into [] (pmap f (range dimension))) nil)
-    (->Structure orientation (mapv f (range dimension)) nil)))
+  (->Structure orientation (mapv f (range dimension)) nil))
 
 (defn literal
   "Generates a structure of the specified `orientation` and dimension `size`
