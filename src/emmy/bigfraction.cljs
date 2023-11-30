@@ -115,10 +115,13 @@
   (if (< a 0) (* -ONE a) a))
 
 (defn integer->
+  "Create a fraction with unit denominator."
   [n]
   (->Fraction (js/BigInt n) ONE))
 
 (defn ->real
+  "Coerce a fraction to real by performing the division
+   in the floating point domain"
   [^Fraction q]
   (/ (js/Number (.-n q)) (js/Number (.-d q))))
 
@@ -129,9 +132,9 @@
   (when (== ZERO b)
     (division-by-zero))
   (let [an (< a 0)
-        a (if an (* -ONE a) a)
+        a (bigint-abs a)
         bn (< b 0)
-        b (if bn (* -ONE b) b)
+        b (bigint-abs b)
         g (bigint-gcd a b)
         neg (not= an bn)
         abs_c (/ a g)

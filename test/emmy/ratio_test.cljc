@@ -39,7 +39,6 @@
   (testing "r/parse-ratio can round-trip Ratio instances in clj or cljs. "
     #?(:clj
        (is (= #emmy/ratio "10/3"
-              #emmy/ratio "+10/3"
               #emmy/ratio [10 3]
               (read-string {:readers {'emmy/ratio r/parse-ratio}}
                            (pr-str #emmy/ratio 10/3)))

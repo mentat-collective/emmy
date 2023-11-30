@@ -18,9 +18,9 @@
     which may lose exactness because of the unwanted floating-point
     conversion. For this reason, when we emit a ratio in string form,
     we quote the arguments: `#emmy/ratio "1/2"` to prevent the conversion.
-    Consider this a deprecation notice for the unquoted form. Another,
-    unambiguous possibility would be to imitate the Complex reader syntax which
-    allows a vector pair e.g. `#emmy/ratio [1 2]`.
+    Consider this a deprecation notice for the unquoted form. We alsw
+    now allow the form `#emmy/ratio [1 2]`, like Complex, and now no
+    longer allow an initial `+` on the numerator.
 
 - #154:
 

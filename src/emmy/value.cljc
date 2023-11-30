@@ -83,7 +83,6 @@
   [x]
   #?(:clj (instance? Number x)
      :cljs (or (cljs.core/number? x)
-               (satisfies? INumericTower x)
                (satisfies? IReal x)
                (instance? goog.math.Integer x)
                (instance? goog.math.Long x)

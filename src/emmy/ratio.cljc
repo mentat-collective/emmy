@@ -123,15 +123,6 @@
 
    :cljs
    (do
-     (defn- pow [r m]
-       (let [n (numerator r)
-             d (denominator r)]
-         (if (neg? m)
-           (rationalize (g/expt d (g/negate m))
-                        (g/expt n (g/negate m)))
-           (rationalize (g/expt n m)
-                        (g/expt d m)))))
-
      ;; The -equiv implementation handles equality with any number, so flip the
      ;; arguments around and invoke equiv.
      (defmethod v/= [::v/real ::ratio] [l r] (= r l))
