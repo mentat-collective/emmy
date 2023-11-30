@@ -51,7 +51,6 @@
 ;;   - a "tag", used as in [[emmy.differential]] to prevent confusion
 ;;     between [[TapeCell]] instances created for different nested runs of
 ;;     differentation
-;;   - a unique ID, used to de-duplicate work in the reverse pass
 ;;   - the "primal value" wrapped by this [[TapeCell]] instance
 ;;   - A map of the [[TapeCell]]'s inputs => the partial derivative of the
 ;;     primal value with respect to that input
@@ -64,7 +63,6 @@
 ;;
 ;; ```clojure
 ;; {:tag <input tag>
-;;  :id <fresh ID>
 ;;  :primal (f a b c ...)
 ;;  :in->partials {<tape-a> <(((partial 0) f) a b c ...)>
 ;;                 <tape-b> <(((partial 1) f) a b c ...)>
@@ -110,10 +108,6 @@
 ;;   and [[emmy.differential/Differential]] are both implemented in the same
 ;;   namespace and more tightly bound. We'll have to do that here too.
 ;;
-;; - NOTE: it's an invariant that any wrapped number (in primal, tangent or
-;;   partial) has an ID that is strictly less than the wrapping ID. Test for
-;;   this, and describe why it matters.
-;;
 ;; - This implementation doesn't handle perturbation confusion properly for
 ;; - functions, and I suspect that we'll see Alexey's Amazing Bug. In another
 ;; - pass I want to carefully test this and make sure it works well.
@@ -128,14 +122,12 @@
 
 ;; Here's the [[TapeCell]] type with the fields described above.
 
-(defrecord TapeCell [tag id primal in->partial]
+(defrecord TapeCell [tag primal in->partial]
   v/IKind
   (kind [_] ::tape)
 
   v/Numerical
   (numerical? [_]
-    ;; TODO do we care if in->partial is empty? Same question below for `one?`
-    ;; etc implementations.
     (and (v/numerical? primal)
          (empty? in->partial))))
 
@@ -147,20 +139,15 @@
   [x]
   (instance? TapeCell x))
 
-(defn ^:no-doc fresh-id
-  "Returns a new, unique ID for use with a new [[TapeCell]]."
-  []
-  (gensym))
-
 (defn make
   "Returns a [[TapeCell]] instance with the supplied `tag` and `primal` values.
 
   Optionally accepts `partials`, a map of input cell => the partial derivative
   of the output with respect to each input (defaults to `{}`)."
   ([tag primal]
-   (->TapeCell tag (fresh-id) primal {}))
+   (->TapeCell tag primal {}))
   ([tag primal partials]
-   (->TapeCell tag (fresh-id) primal partials)))
+   (->TapeCell tag primal partials)))
 
 ;; TODO making [[tapify]] extensible is the key to differentiating things like
 ;; quaternion-valued functions. Forward-mode handles this differently, since we
@@ -202,16 +189,6 @@
     (tape-tag x)
     0))
 
-(defn tape-id
-  "Returns the `-id` field of the supplied [[TapeCell]] object. Errors if any
-  other type is supplied.
-
-  IDs are used in the reverse pass of automatic differentiation to prevent
-  duplicating work for [[TapeCell]]s used as input to multiple
-  other [[TapeCell]]s."
-  [^TapeCell tape]
-  (.-id tape))
-
 (defn tape-primal
   "Given a [[TapeCell]], returns the `-primal` field of the supplied [[TapeCell]]
   object. For all other types, acts as identity.
@@ -248,17 +225,17 @@
 
 ;; ### Reverse-pass support
 
-(defn ^:no-doc topological-sort-by-id
+(defn ^:no-doc topological-sort
   "Given a `node` of type [[TapeCell]] (representing the root of a computation's
   directed acyclic dependency graph), returns a sequence of [[TapeCell]]
   instances sorted in topological order, starting with `node`."
   [node]
   (letfn [(compute-visiting-order
             [[seen sorted] node]
-            (if (contains? seen (tape-id node))
+            (if (contains? seen node)
               [seen sorted]
               (let [[seen sorted] (process-children
-                                   (conj seen (tape-id node))
+                                   (conj seen node)
                                    sorted
                                    (tape-partials node))]
                 [seen (cons node sorted)])))
@@ -286,21 +263,21 @@
   - each intermediate value seen in the computation to
   - the partial derivative of the output with respect to that value."
   [root]
-  (let [nodes   (topological-sort-by-id root)
-        acc     {(tape-id root) 1}
+  (let [nodes   (topological-sort root)
+        acc     {root 1}
         process (fn [m node]
                   ;; Since we're processing in topological sort order, when we
                   ;; reach a node we know we're done updating its
                   ;; sensitivity (it can't be affected by nodes that come
                   ;; after).
-                  (let [sensitivity (get m (tape-id node))]
+                  (let [sensitivity (get m node)]
                     (reduce-kv
                      (fn [acc cell factor]
-                       (let [id    (tape-id cell)
-                             delta (g/* factor sensitivity)]
-                         (assoc acc id (if-let [v (get acc id)]
-                                         (g/+ v delta)
-                                         delta))))
+                       (let [delta (g/* factor sensitivity)]
+                         (update acc cell (fn [v]
+                                            (if v
+                                              (g/+ v delta)
+                                              delta)))))
                      m
                      (tape-partials node))))]
     (->Completed
@@ -399,7 +376,7 @@
   computation at that leaf."
   [input output tag]
   (cond (and (tape? input) (= tag (tape-tag input)))
-        (extract output (tape-id input))
+        (extract output input)
 
         (s/structure? input)
         ;; TODO if we don't care about flipping for gradient, then use mapr.
@@ -540,7 +517,7 @@
                        (into partial-x partial-y))))]
        (let [tag-x (tag-of x)
              tag-y (tag-of y)]
-         (cond (and (tape? x) (not (< tag-x tag-y)))
+         (cond (and (tape? x) (>= tag-x tag-y))
                (operate tag-x)
 
                (and (tape? y) (< tag-x tag-y))
@@ -687,6 +664,7 @@
 ;; Non-differentiable generic operations
 
 (defbinary v/= (by-primal v/=))
+(defunary g/zero? (by-primal g/one?))
 (defunary g/one? (by-primal g/one?))
 (defunary g/identity? (by-primal g/identity?))
 (defunary g/negative? (by-primal g/negative?))
@@ -698,7 +676,6 @@
 (defmethod g/freeze [::tape] [t]
   `[~'TapeCell
     ~(tape-tag t)
-    ~(tape-id t)
     ~(g/freeze (tape-primal t))
     ~(reduce-kv (fn [acc k v]
                   (assoc acc (g/freeze k) (g/freeze v)))

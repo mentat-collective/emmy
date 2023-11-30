@@ -11,13 +11,13 @@
 (use-fixtures :each hermetic-simplify-fixture)
 
 (deftest sort-tests
-  (is (= [1 3 2 4]
-         (map t/tape-id
-              (t/topological-sort-by-id
-               (t/->TapeCell 0 1 0
-                             {(t/->TapeCell 0 2 0 {(t/->TapeCell 0 4 0 []) 10}) 10
-                              (t/->TapeCell 0 3 0 {}) 10
-                              (t/->TapeCell 0 4 0 {}) 10}))))))
+  (let [x (t/make 0 'x)
+        y (t/make 0 'y)
+        a (g/mul x y)
+        b (g/sin x)
+        z (g/add a b)]
+    (is (= [z b a y x]
+           (t/topological-sort z)))))
 
 (deftest basic-tests
   (testing

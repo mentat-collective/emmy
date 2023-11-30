@@ -21,7 +21,9 @@
       (clojure.lang BigInt Sequential))))
 
 (defprotocol Numerical
-  (^boolean numerical? [_]))
+  (^boolean numerical? [_]
+   "TODO document about how this is used; numerical things can play with
+   simplificatins like * 0 etc in mul"))
 
 (defprotocol INumericTower)
 
