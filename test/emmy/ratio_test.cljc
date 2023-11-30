@@ -40,7 +40,7 @@
     #?(:clj
        (is (= #emmy/ratio "10/3"
               #emmy/ratio "+10/3"
-              #emmy/ratio 10/3
+              #emmy/ratio [10 3]
               (read-string {:readers {'emmy/ratio r/parse-ratio}}
                            (pr-str #emmy/ratio 10/3)))
            "Ratio parses from numbers and strings.")

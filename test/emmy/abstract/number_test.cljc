@@ -131,12 +131,9 @@
                  (is (not (v/real? wrapped)))
                  (is (v/real? (.valueOf wrapped)))
                  (if (r/ratio? n)
-                   (is (not= n (.valueOf wrapped))
-                       "ratios turn into doubles when you call valueOf, so
-                           the passthrough valueOf on literal-number kills
-                           equality.")
-                   (is (= n (.valueOf wrapped))
-                       "other real numbers respond the same way."))
+                   (is (ish? n (.valueOf wrapped))
+                       "valueOf will force a rational to a double, but it should be pretty close.")
+                   (is (= n (.valueOf wrapped))))
 
                  (is (= (.valueOf n) (.valueOf wrapped))
                      "valueOf on both sides always matches.")))))

@@ -9,8 +9,7 @@
   for a detailed discussion of how to use and extend the generic operations
   defined in [[emmy.generic]] and [[emmy.value]]."
   (:refer-clojure :exclude [zero? number? = compare])
-  (:require #?@(:cljs [["fraction.js/bigfraction.js" :as Fraction]
-                       [emmy.util :as u]
+  (:require #?@(:cljs [[emmy.util :as u]
                        [goog.array :as garray]
                        [goog.object :as gobject]
                        [goog.math.Long]
@@ -30,6 +29,8 @@
    structure that should be preserved."))
 
 (defprotocol INumericTower)
+
+(defprotocol IReal)
 
 (extend-protocol Numerical
   #?(:clj Object :cljs default)
@@ -82,10 +83,11 @@
   [x]
   #?(:clj (instance? Number x)
      :cljs (or (cljs.core/number? x)
+               (satisfies? INumericTower x)
+               (satisfies? IReal x)
                (instance? goog.math.Integer x)
                (instance? goog.math.Long x)
-               (core/= "bigint" (goog/typeOf x))
-               (instance? Fraction x))))
+               (core/= "bigint" (goog/typeOf x)))))
 
 (defn number?
   "Returns true if `x` is any number type in the numeric tower:
@@ -93,18 +95,18 @@
   - integral
   - floating point
   - complex
+  - fraction
 
   false otherwise."
   [x]
   #?(:clj
      (or (instance? Number x)
-         (instance? emmy.value.INumericTower x))
+         (satisfies? INumericTower x))
      :cljs (or (cljs.core/number? x)
                (core/= "bigint" (goog/typeOf x))
-               (instance? Fraction x)
                (instance? goog.math.Integer x)
                (instance? goog.math.Long x)
-               (satisfies? emmy.value.INumericTower x))))
+               (satisfies? INumericTower x))))
 
 ;; `::scalar` is a thing that symbolic expressions AND actual numbers both
 ;; derive from.

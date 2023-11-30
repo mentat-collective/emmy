@@ -176,9 +176,7 @@
 
 (defn ^:private is* [eq actual expected]
   (is (eq actual expected)
-      #?(:clj (format "expected: %s\n  actual: %s"
-                      (pr-str expected)
-                      (pr-str actual)))))
+      (str "expected: " (pr-str expected) "\n  actual: " (pr-str actual))))
 
 (defn integral-unary-tests
   [int->a & {:keys [exclusions eq]

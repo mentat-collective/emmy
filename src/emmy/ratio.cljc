@@ -12,23 +12,20 @@
   (:refer-clojure :exclude [ratio? numerator denominator rationalize])
   (:require #?(:clj [clojure.core :as core])
             #?(:clj [clojure.edn] :cljs [cljs.reader])
-            #?(:cljs ["fraction.js/bigfraction.js" :as Fraction])
-            #?(:cljs [emmy.complex :as c])
-            #?(:cljs [goog.array :as garray])
-            #?(:cljs [goog.object :as obj])
+            #?(:cljs [emmy.bigfraction :as bf])
             [emmy.generic :as g]
             [emmy.util :as u]
             [emmy.value :as v])
   #?(:clj (:import (clojure.lang Ratio))))
 
 (def ^:no-doc ratiotype
-  #?(:clj Ratio :cljs Fraction))
+  #?(:clj Ratio :cljs ::ratio))
 
 (derive ratiotype ::v/real)
 
 (def ratio?
   #?(:clj core/ratio?
-     :cljs (fn [r] (instance? Fraction r))))
+     :cljs (fn [r] (instance? bf/Fraction r))))
 
 (defprotocol IRational
   (numerator [_])
@@ -45,52 +42,23 @@
        (denominator [r] (core/denominator r))]
 
       :cljs
-      [Fraction
-       (numerator
-        [x]
-        (if (pos? (obj/get x "s"))
-          (obj/get x "n")
-          (- (obj/get x "n"))))
-       (denominator
-        [x]
-        (obj/get x "d"))]))
-
-#?(:cljs
-   (defn- promote [x]
-     (if (g/one? (denominator x))
-       (numerator x)
-       x)))
+      [bf/Fraction
+       (numerator [x] (bf/numerator x))
+       (denominator [x] (bf/denominator x))]))
 
 (defn rationalize
   "Construct a ratio."
   ([x]
-   #?(:cljs (if (v/integral? x)
-              x
-              (Fraction. x))
+   #?(:cljs (cond (v/integral? x) x
+                  (instance? bf/Fraction x) x
+                  (v/real? x) (bf/real-> x)
+                  :else (u/arithmetic-ex (str "Cannot rationalize " x)))
       :clj (core/rationalize x)))
   ([n d]
-   #?(:cljs (if (g/one? d)
-              n
-              (promote (Fraction. n d)))
+   #?(:cljs (bf/promote (bf/make n d))
       :clj (core/rationalize (/ n d)))))
 
-(def ^:private ratio-pattern #"([-+]?[0-9]+)/([0-9]+)")
-
-(defn matches? [pattern s]
-  (let [[match] (re-find pattern s)]
-    (identical? match s)))
-
-(defn ^:private match-ratio
-  [s]
-  (let [m (vec (re-find ratio-pattern s))
-        numerator   (m 1)
-        denominator (m 2)
-        numerator (if (re-find #"^\+" numerator)
-                    (subs numerator 1)
-                    numerator)]
-    `(rationalize
-      (u/bigint ~numerator)
-      (u/bigint ~denominator))))
+(def ^:private ratio-pattern #"(-?\d+)/(\d+)")
 
 (defn parse-ratio
   "Parser for the `#emmy/ratio` literal."
@@ -102,93 +70,28 @@
                (u/bigint ~(str (denominator x))))])
 
         (v/number? x) `(emmy.ratio/rationalize ~x)
-        (string? x)    (if (matches? ratio-pattern x)
-                         (match-ratio x)
-                         (recur
-                          #?(:clj  (clojure.edn/read-string x)
-                             :cljs (cljs.reader/read-string x))))
+        (string? x)    (if-let [[_ numerator denominator] (re-matches ratio-pattern x)]
+                         `(rationalize (u/bigint ~numerator) (u/bigint ~denominator))
+                         (u/illegal (str "Invalid ratio: " x)))
+        (and (vector? x) (= 2 (count x))) `(rationalize ~@x)
+
         :else (u/illegal (str "Invalid ratio: " x))))
 
+(defmethod g/exact? [ratiotype] [_] true)
+(defmethod g/freeze [ratiotype] [x]
+  (let [n (numerator x)
+        d (denominator x)]
+    (if (g/one? d)
+      n
+      `(~'/ ~(g/freeze n) ~(g/freeze d)))))
+
 #?(:clj
-   (do
-     (defmethod g/exact? [Ratio] [_] true)
-     (defmethod g/freeze [Ratio] [x]
-       (let [n (numerator x)
-             d (denominator x)]
-         (if (g/one? d)
-           n
-           `(~'/ ~n ~d))))
-     (extend-type Ratio
-       v/Numerical
-       (numerical? [_] true)
+   (extend-type Ratio
+     v/Numerical
+     (numerical? [_] true)
 
-       v/IKind
-       (kind [_] Ratio)))
-
-   :cljs
-   (do
-     (defmethod g/exact? [Fraction] [_] true)
-     (defmethod g/freeze [Fraction] [x]
-       (let [n (numerator x)
-             d (denominator x)]
-         (if (g/one? d)
-           (g/freeze n)
-           `(~'/
-             ~(g/freeze n)
-             ~(g/freeze d)))))
-     (extend-type Fraction
-       v/Numerical
-       (numerical? [_] true)
-
-       v/IKind
-       (kind [_] Fraction)
-
-       IEquiv
-       (-equiv [this other]
-         (cond (ratio? other) (.equals this other)
-               (v/integral? other)
-               (and (g/one? (denominator this))
-                    (v/= (numerator this) other))
-
-               ;; Enabling this would work, but would take us away from
-               ;; Clojure's behavior.
-               #_(v/number? other)
-               #_(.equals this (rationalize other))
-
-               :else false))
-
-       IComparable
-       (-compare [this other]
-         (if (ratio? other)
-           (.compare this other)
-           (let [o-value (.valueOf other)]
-             (if (v/real? o-value)
-               (garray/defaultCompare this o-value)
-               (throw (js/Error. (str "Cannot compare " this " to " other)))))))
-
-       IHash
-       (-hash [this]
-         (bit-xor
-          (-hash (numerator this))
-          (-hash (denominator this))))
-
-       Object
-       (toString [r]
-         (let [x (g/freeze r)]
-           (if (number? x)
-             x
-             (let [[_ n d] x]
-               (str n "/" d)))))
-
-       IPrintWithWriter
-       (-pr-writer [x writer opts]
-         (let [n (numerator x)
-               d (denominator x)]
-           (if (g/one? d)
-             (-pr-writer n writer opts)
-             (write-all writer "#emmy/ratio \""
-                        (str n) "/" (str d)
-                        "\"")))))))
+     v/IKind
+     (kind [_] Ratio)))
 
 #?(:clj
    (do
@@ -219,8 +122,7 @@
        (defmethod op [::v/integral Ratio] [a b] (f a b))))
 
    :cljs
-   (let [ZERO (Fraction. 0)
-         ONE  (Fraction. 1)]
+   (do
      (defn- pow [r m]
        (let [n (numerator r)
              d (denominator r)]
@@ -232,95 +134,81 @@
 
      ;; The -equiv implementation handles equality with any number, so flip the
      ;; arguments around and invoke equiv.
-     (defmethod v/= [::v/real Fraction] [l r] (= r l))
+     (defmethod v/= [::v/real ::ratio] [l r] (= r l))
 
-     (defmethod g/add [Fraction Fraction] [a b] (promote (.add ^js a b)))
-     (defmethod g/sub [Fraction Fraction] [a b] (promote (.sub ^js a b)))
+     ;; Note that fraction arithmetic automatically downcasts integral results
+     ;; to the underlying bigint type.
+     (defmethod g/add [::ratio ::ratio] [a b] (bf/promote (bf/add a b)))
+     (defmethod g/sub [::ratio ::ratio] [a b] (bf/promote (bf/sub a b)))
+     (defmethod g/mul [::ratio ::ratio] [a b] (bf/promote (bf/mul a b)))
+     (defmethod g/div [::ratio ::ratio] [a b] (bf/promote (bf/div a b)))
+     (defmethod g/exact-divide [::ratio ::ratio] [a b] (bf/promote (bf/div a b)))
 
-     (defmethod g/mul [Fraction Fraction] [a b]
-       (promote (.mul ^js a b)))
+     ;; In principle, one should not find an integral fraction object in the wild
+     ;; due to the automatic downcasting. In theory the following three could just
+     ;; return false, but let's test for a while with some assert statements.
+     ;;
+     (defmethod g/zero? [::ratio] [c] (bf/zero? c))
+     (defmethod g/one? [::ratio] [c] (bf/one? c))
+     (defmethod g/identity? [::ratio] [c] (bf/one? c))
+     (defmethod g/zero-like [::ratio] [_] 0)
+     (defmethod g/one-like [::ratio] [_] 1)
+     (defmethod g/identity-like [::ratio] [_] 1)
 
-     (defmethod g/div [Fraction Fraction] [a b]
-       (promote (.div ^js a b)))
+     (defmethod g/negate [::ratio] [a] (bf/promote (bf/neg a)))
+     (defmethod g/negative? [::ratio] [a] (bf/neg? a))
+     (defmethod g/infinite? [::ratio] [_] false)
+     (defmethod g/invert [::ratio] [a] (bf/promote (bf/invert a)))
+     (defmethod g/square [::ratio] [a] (bf/promote (bf/mul a a)))
+     (defmethod g/cube [::ratio] [a] (bf/promote (bf/integer-power a 3)))
+     (defmethod g/abs [::ratio] [a] (bf/promote (bf/abs a)))
+     (defmethod g/magnitude [::ratio] [a] (bf/promote (bf/abs a)))
 
-     (defmethod g/exact-divide [Fraction Fraction] [a b]
-       (promote (.div ^js a b)))
+     (defmethod g/expt [::ratio ::v/integral] [a b] (bf/promote (bf/integer-power a b)))
+     (defmethod g/expt [::ratio ::ratio] [a b]
+       (bf/promote
+        (if (g/one? (bf/denominator b))
+          (bf/integer-power a (bf/numerator b))
+          (g/expt (bf/->real a) (bf/->real b)))))
 
-     (defmethod g/zero? [Fraction] [^Fraction c] (.equals c ZERO))
-     (defmethod g/one? [Fraction] [^Fraction c] (.equals c ONE))
-     (defmethod g/identity? [Fraction] [^Fraction c] (.equals c ONE))
-     (defmethod g/zero-like [Fraction] [_] 0)
-     (defmethod g/one-like [Fraction] [_] 1)
-     (defmethod g/identity-like [Fraction] [_] 1)
-
-     (defmethod g/negate [Fraction] [a] (promote (.neg ^js a)))
-     (defmethod g/negative? [Fraction] [a] (neg? (obj/get a "s")))
-     (defmethod g/infinite? [Fraction] [_] false)
-     (defmethod g/invert [Fraction] [a] (promote (.inverse ^js a)))
-     (defmethod g/square [Fraction] [a] (promote (.mul ^js a a)))
-     (defmethod g/cube [Fraction] [a] (promote (.pow ^js a 3)))
-     (defmethod g/abs [Fraction] [a] (promote (.abs ^js a)))
-     (defmethod g/magnitude [Fraction] [a] (promote (.abs ^js a)))
-
-     (defmethod g/gcd [Fraction Fraction] [a b]
-       (promote (.gcd ^js a b)))
-
-     (defmethod g/lcm [Fraction Fraction] [a b]
-       (promote (.lcm ^js a b)))
-
-     (defmethod g/expt [Fraction ::v/integral] [a b] (pow a b))
-     (defmethod g/sqrt [Fraction] [a]
+     (defmethod g/sqrt [::ratio] [a]
        (if (neg? a)
-         (g/sqrt (c/complex (.valueOf a)))
-         (g/div (g/sqrt (u/double (numerator a)))
-                (g/sqrt (u/double (denominator a))))))
+         (g/sqrt (bf/->real a))
+         (g/div (g/sqrt (numerator a))
+                (g/sqrt (denominator a)))))
 
-     (defmethod g/modulo [Fraction Fraction] [a b]
-       (promote
-        (.mod (.add (.mod ^js a b) b) b)))
+     (defmethod g/quotient [::ratio ::ratio] [a b] (bf/promote (bf/quotient a b)))
+     (defmethod g/remainder [::ratio ::ratio] [a b] (bf/promote (bf/remainder a b)))
+     (defmethod g/modulo [::ratio ::ratio] [a b]
+       (bf/promote
+        (bf/remainder (bf/add (bf/remainder a b) b) b)))
+     (defmethod g/gcd [::ratio ::ratio] [a b] (bf/promote (bf/gcd a b)))
 
-     ;; Only integral ratios let us stay exact. If a ratio appears in the
-     ;; exponent, convert the base to a number and call g/expt again.
-     (defmethod g/expt [Fraction Fraction] [a b]
-       (if (g/one? (denominator b))
-         (promote (.pow ^js a (numerator b)))
-         (g/expt (.valueOf a)
-                 (.valueOf b))))
-
-     (defmethod g/quotient [Fraction Fraction] [a b]
-       (promote
-        (let [x (.div ^js a b)]
-          (if (pos? (obj/get x "s"))
-            (.floor ^js x)
-            (.ceil ^js x)))))
-
-     (defmethod g/remainder [Fraction Fraction] [a b]
-       (promote (.mod ^js a b)))
-
-     ;; Cross-compatibility with numbers in CLJS.
+;; Cross-compatibility with numbers in CLJS.
      (defn- downcast-fraction
        "Anything that `upcast-number` doesn't catch will hit this and pull a floating
-  point value out of the ratio."
+        point value out of the ratio."
        [op]
-       (defmethod op [Fraction ::v/real] [a b]
-         (op (.valueOf ^js a) b))
+       (defmethod op [::ratio ::v/real] [a b]
+         (op (bf/->real a) b))
 
-       (defmethod op [::v/real Fraction] [a b]
-         (op a (.valueOf ^js b))))
+       (defmethod op [::v/real ::ratio] [a b]
+         (op a (bf/->real b))))
 
      (defn- upcast-number
        "Integrals can stay exact, so they become ratios before op."
        [op]
-       (defmethod op [Fraction ::v/integral] [a b]
-         (op a (Fraction. b 1)))
+       (defmethod op [::ratio ::v/integral] [a b]
+         (op a (bf/integer-> b)))
 
-       (defmethod op [::v/integral Fraction] [a b]
-         (op (Fraction. a 1) b)))
+       (defmethod op [::v/integral ::ratio] [a b]
+         (op (bf/integer-> a) b)))
 
      ;; An exact number should become a ratio rather than erroring out, if one
      ;; side of the calculation is already rational (but not if neither side
      ;; is).
      (upcast-number g/exact-divide)
+     (upcast-number g/gcd)
 
      ;; We handle the cases above where the exponent connects with integrals and
      ;; stays exact.
