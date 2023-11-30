@@ -35,7 +35,10 @@
             (equals [a b] (equal? a b))
             (toString [a] (->string a))]
 
-      :cljs [IEquiv
+      :cljs [Object
+             (toString [a] (->string a))
+
+             IEquiv
              (-equiv [a b] (equal? a b))
 
              IPrintWithWriter
