@@ -143,12 +143,12 @@
   v/IKind
   (kind [_] ::tape)
 
-  ;; A [[TapeCell]] as implemented can act as a chain-rule accounting device for
-  ;; all sorts of types, not just numbers. A [[TapeCell]] is
-  ;; only [[v/numerical?]] if its primal component is numerical.
+  ;; A [[TapeCell]] has to respond `false` to all [[emmy.value/numerical?]]
+  ;; inquiries; if we didn't do this, then [[emmy.generic/*]] and friends would
+  ;; attempt to apply shortcuts like `(* x <tape-with-1>) => x`, stripping off
+  ;; the [[TapeCell]] identity of the result and ruining the derivative.
   v/Numerical
-  (numerical? [_]
-    (v/numerical? primal))
+  (numerical? [_] false)
 
   Object
   ;; Comparing [[TapeCell]] objects using `equals` defaults to [[equiv]], which
@@ -306,59 +306,15 @@
 ;; whenever a non-[[TapeCell]] `x` would return true. To make this work, these
 ;; operations look only at the [[tape-primal]].
 ;;
-;; HOWEVER! [[g/one?]] and [[g/zero?]] are examples of Emmy functions that
-;; are used to skip operations that we _want_ to happen, like multiplication.
+;; If you need full comparison:
 ;;
-;; `(g/* x y)` will return `y` if `(g/one? x)` is true... but to propagate the
-;; derivative through we need this multiplication to occur. The compromise is:
-;;
-;; - [[g/zero?]], [[g/one?]] and [[g/identity?]] return true only when
-;;   ALL [[tape-partials]] are zero and the [[tape-primal]] is either [[g/one?]]
-;;   or [[g/zero?]] respectively
+;; - [[clojure.core/=]] compares instances with instance equality
 ;; - [[eq]] compares [[TapeCell]] instances by tag, primal and partials
 ;;
 ;; while:
 ;;
-;; - [[equiv]] and [[compare]] only examine the [[tape-primal]] of either side.
-
-(defn ^:no-doc zero?
-  "Returns true if the supplied instance has a [[tape-primal]] that responds true
-  to [[emmy.value/zero?]], and no inputs with non-zero partial derivatives;
-  false otherwise.
-
-  NOTE: This means that [[zero?]] will not do what you expect as a conditional
-  inside some function. If you want to branch inside some function you're taking
-  the derivative of, prefer `(= 0 dx)`. This will only look at
-  the [[tape-primal]] and ignore the values of [[tape-partials]]."
-  [dx]
-  (and (g/zero? (tape-primal dx))
-       (empty? (tape-partials dx))))
-
-(defn ^:no-doc one?
-  "Returns true if the supplied instance has a [[tape-primal]] that responds true
-  to [[emmy.value/one?]], and no inputs with non-zero partial derivatives; false
-  otherwise.
-
-  NOTE: This means that [[one?]] will not do what you expect as a conditional
-  inside some function. If you want to branch inside some function you're taking
-  the derivative of, prefer `(= 1 dx)`. This will only look at
-  the [[tape-primal]] and ignore the values of [[tape-partials]]."
-  [dx]
-  (and (g/one? (tape-primal dx))
-       (empty? (tape-partials dx))))
-
-(defn ^:no-doc identity?
-  "Returns true if the supplied instance has a [[tape-primal]] that responds true
-  to [[emmy.value/identity?]], and no inputs with non-zero partial derivatives;
-  false otherwise.
-
-  NOTE: This means that [[identity?]] will not do what you expect as a
-  conditional inside some function. If you want to branch inside some function
-  you're taking the derivative of, prefer `(= <identity element> dx)`. This will
-  only look at the [[tape-primal]] and ignore the values of [[tape-partials]]."
-  [dx]
-  (and (g/identity? (tape-primal dx))
-       (empty? (tape-partials dx))))
+;; - [[g/zero?]], [[g/one?]], [[g/identity?]], [[equiv]] and [[compare]] only
+;;   examine the [[tape-primal]] of either side.
 
 (defn eq
   "For non-[[TapeCell]]s, identical to [[emmy.value/=]].
@@ -469,7 +425,7 @@
                   (let [sensitivity (get m node)]
                     (reduce
                      (fn [acc [cell factor]]
-                       (let [delta (g/* factor sensitivity)]
+                       (let [delta (g/* sensitivity factor)]
                          (update acc cell (fn [v]
                                             (if v
                                               (g/+ v delta)
@@ -886,9 +842,9 @@
 ;; Non-differentiable generic operations
 
 (defbinary v/= (by-primal v/=))
-(defunary g/zero? zero?)
-(defunary g/one? one?)
-(defunary g/identity? identity?)
+(defunary g/zero? (by-primal g/zero?))
+(defunary g/one? (by-primal g/one?))
+(defunary g/identity? (by-primal g/identity?))
 (defunary g/negative? (by-primal g/negative?))
 (defunary g/infinite? (by-primal g/infinite?))
 

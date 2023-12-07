@@ -4,12 +4,12 @@
   (:require [clojure.test :refer [is deftest testing use-fixtures]]
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
-            [emmy.abstract.number]
             [emmy.calculus.derivative :refer [D]]
             [emmy.generators :as sg]
             [emmy.generic :as g]
             [emmy.numerical.derivative :refer [D-numeric]]
             [emmy.simplify :refer [hermetic-simplify-fixture]]
+            [emmy.structure :as s]
             [emmy.tape :as t]
             #?(:cljs [emmy.util :as u])
             [emmy.value :as v]
@@ -23,10 +23,11 @@
 
   (defmethod g/zero? [#?(:clj String :cljs js/String)] [_] false)
 
-  (testing "v/numerical?"
-    (checking "tapecell with numerical primal is numerical" 100
+  (testing "v/numerical? is always false"
+    (checking "tapecell with numerical primal is STILL not numerical, so we stay
+               excluded from numerical simplifications." 100
               [t (sg/tapecell sg/real)]
-              (is (v/numerical? t)))
+              (is (not (v/numerical? t))))
 
     (is (not (v/numerical? (t/make 0 "face")))
         "tapecell with non-numerical primal is not numerical"))
@@ -64,9 +65,8 @@
       (is (g/zero? zero)
           "zero? returns true for an empty term list")
 
-      (is (not (g/zero? dx))
-          "the finite term is 0, but `g/zero?` fails if any perturbation is
-          non-zero.")
+      (is (g/zero? dx)
+          "returns true even if we have partials recorded")
 
       (is (v/= dx 0)
           "subtly, `dx` IS in fact equal to zero (using v/=); this can be used
@@ -75,14 +75,13 @@
       (is (not (= dx 0))
           "but clojure.core/= equality still returns 0.")
 
-      (testing "g/one? only responds true to a one primal if all tangents are zero."
+      (testing "g/one? responds true to a one primal"
         (is (g/one? (t/make 0 1)))
-        (is (not (g/one? (t/make 0 1 {(t/make 0 'x) 1})))))
+        (is (g/one? (t/make 0 1 {(t/make 0 'x) 1}))))
 
-      (testing "g/identity? only responds true to an `identity` primal if all
-      tangents are zero."
+      (testing "g/identity? responds true to an `identity` primal"
         (is (g/identity? (t/make 0 1)))
-        (is (not (g/identity? (t/make 0 1 {(t/make 0 'x) 1})))))
+        (is (g/identity? (t/make 0 1 {(t/make 0 'x) 1}))))
 
       (checking "*-like works" 100 [t (sg/tapecell)]
                 (is (g/zero? (g/zero-like t)))
@@ -202,37 +201,6 @@
       (is (= [z b a y x]
              (t/topological-sort z))
           "topological-sort returns the graph in reverse order."))))
-
-(deftest derivative-tests
-  (testing "vector input, scalar output"
-    (let [f (fn [[x y z]]
-              (g/+ (g/expt x 4) (g/* x y z (g/cos x))))]
-      (is (= '(down
-               (+ (* -1 x y z (sin x))
-                  (* 4 (expt x 3))
-                  (* y z (cos x)))
-               (* x z (cos x))
-               (* x y (cos x)))
-             (g/freeze
-              (g/simplify
-               ((t/gradient f) ['x 'y 'z])))))
-
-      (is (= (g/simplify
-              ((t/gradient f) ['x 'y 'z]))
-             (g/simplify
-              ((D f) ['x 'y 'z])))
-          "reverse-mode matches forward-mode.")))
-
-  (testing "multiple input, vector output"
-    (let [f (fn [a b c d e f]
-              [(g/* (g/cos a) (g/cos b))
-               (g/* (g/cos c) (g/cos d))
-               (g/* (g/cos e) (g/cos f))])]
-      (is (= (g/simplify
-              ((t/gradient (t/gradient f)) 'a 'b 'c 'd 'e 'f))
-             (g/simplify
-              ((D (D f)) 'a 'b 'c 'd 'e 'f)))
-          "multivariable derivatives match"))))
 
 (deftest lifted-fn-tests
   (letfn [(breaks? [f x]
@@ -367,3 +335,109 @@
       (checking "acsch" 100 [n (gen-double 2 10)]
                 (is (ish? ((D-numeric g/acsch) n)
                           ((t/gradient g/acsch) n)))))))
+
+(deftest basic-gradient-tests
+  (is (= 0 ((t/gradient (fn [] 100))))
+      "gradient of no-arg returns zero")
+
+  (testing "gradient of linear returns slope"
+    (is (= 2 ((t/gradient #(g/* 2 %)) 1)))
+    (is (= 2 ((t/gradient #(g/* 2 %)) 'w))))
+
+  (testing "square, cube"
+    (is (= (g/* 2 'z) ((t/gradient g/square) 'z)))
+    (is (= (g/* 3 (g/expt 'z 2)) ((t/gradient g/cube) 'z)))
+    (is (= (g/* 3 (g/expt 'y 2))
+           ((t/gradient #(g/expt % 3)) 'y))))
+
+  (is (= (g// 1 (g/expt (g/cos 'x) 2))
+         ((t/gradient g/tan) 'x)))
+
+  (testing "gradient of a fn returning a structure returns the componentwise
+            derivative"
+    (is (= (s/up 2 (g/+ 't 't))
+           ((t/gradient #(s/up (g/* 2 %) (g/* % %))) 't)))
+
+    (is (= (s/up (g/- (g/sin 't)) (g/cos 't))
+           ((t/gradient #(s/up (g/cos %) (g/sin %))) 't))))
+
+  (testing "trig derivatives"
+    (is (= '(/ 1 (sqrt (+ (* -1 (expt x 2)) 1)))
+           (g/freeze
+            (g/simplify ((t/gradient g/asin) 'x)))))
+
+    (is (= '(/ -1 (sqrt (+ (* -1 (expt x 2)) 1)))
+           (g/freeze
+            (g/simplify ((t/gradient g/acos) 'x))))))
+
+  (testing "log"
+    (is (= '(/ 1 x)
+           (g/freeze
+            (g/simplify ((t/gradient g/log) 'x))))))
+
+  (testing "chain rule"
+    (is (= (g/* (g/cos (g/* 2 'u)) 2)
+           ((t/gradient #(g/sin (g/* 2 %))) 'u)))
+
+    (let [s g/sqrt
+          u (fn [t] (g/expt (g/- (g/* 3 (s t)) 1) (g// 2 3)))
+          y (fn [t] (g// (g/+ (u t) 2) (g/- (u t) 1)))]
+      (is (ish? (/ -1 18)
+                ((t/gradient y) 9)))))
+
+  (testing "structural-functions"
+    (is (= '(up (cos t) (* -1 (sin t)))
+           (g/freeze
+            (g/simplify ((t/gradient (s/up g/sin g/cos)) 't))))))
+
+  (testing "structure / x works"
+    (letfn [(f [x]
+              (g// (s/up 1 2 3) x))]
+      (is (= '(up (/ -1 (expt x 2))
+                  (/ -2 (expt x 2))
+                  (/ -3 (expt x 2)))
+             (g/freeze
+              (g/simplify
+               ((t/gradient f) 'x))))))))
+
+(deftest gradient-tests
+  (testing "vector input, scalar output"
+    (let [f (fn [[x y z]]
+              (g/+ (g/expt x 4) (g/* x y z (g/cos x))))]
+      (is (= '(down
+               (+ (* -1 x y z (sin x))
+                  (* 4 (expt x 3))
+                  (* y z (cos x)))
+               (* x z (cos x))
+               (* x y (cos x)))
+             (g/freeze
+              (g/simplify
+               ((t/gradient f) ['x 'y 'z])))))
+
+      (is (= (g/simplify
+              ((D f) ['x 'y 'z]))
+             (g/simplify
+              ((t/gradient f) ['x 'y 'z])))
+          "reverse-mode matches forward-mode.")))
+
+  (testing "multiple input, vector output"
+    (let [f (fn [a b c d e f]
+              [(g/* (g/cos a) (g/cos b))
+               (g/* (g/cos c) (g/cos d))
+               (g/* (g/cos e) (g/cos f))])
+          expected (g/simplify
+                    ((D (D f)) 'a 'b 'c 'd 'e 'f))]
+      (is (= expected
+             (g/simplify
+              ((t/gradient (t/gradient f)) 'a 'b 'c 'd 'e 'f)))
+          "multivariable derivatives match (reverse-over-reverse)")
+
+      (is (= expected
+             (g/simplify
+              ((D (t/gradient f)) 'a 'b 'c 'd 'e 'f)))
+          "forward-over-reverse")
+
+      (is (= expected
+             (g/simplify
+              ((t/gradient (D f)) 'a 'b 'c 'd 'e 'f)))
+          "reverse-over-forward"))))

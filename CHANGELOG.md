@@ -2,6 +2,20 @@
 
 ## [unreleased]
 
+- #154:
+
+  - Adds `emmy.tape` with an implementation of reverse-mode automatic
+    differentiation. The implementation is based on Alexey Radul's
+    [implementation in dvl](https://github.com/axch/dysvunctional-language), and
+    seems to be higher-performance by quite a bit and capable of replacing our
+    forward-mode implementation.
+
+    - The centerpiece of the implementation is `emmy.tape/gradient`, which can
+      handle $R^n \to R^m$ functions, as well as nested derivatives.
+
+    - All operations supported by [[emmy.differential/Differential]] are
+      supported by the backing [[emmy.tape/TapeCell]] instance.
+
 - #151
 
   - By porting `complex.js` to Clojure, we can remove the dependency on

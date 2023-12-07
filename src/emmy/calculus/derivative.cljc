@@ -293,7 +293,7 @@
    (let [entry (get-in structure path)]
      (deep-partial f structure path entry)))
   ([f structure path entry]
-   (if (v/numerical? entry)
+   (if (v/scalar? entry)
      (letfn [(f-entry [x]
                (f (assoc-in structure path x)))]
        ((derivative f-entry) entry))

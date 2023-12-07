@@ -983,7 +983,6 @@
 ;; - [[g/zero?]], [[g/one?]] and [[g/zero?]] return true only when
 ;;   ALL [[tangent-part]]s are zero and the [[finite-part]] is either [[g/one?]]
 ;;   or [[g/zero?]] respectively
-
 ;; - [[eq]] and [[compare-full]] similarly looks at every component in
 ;;   the [[Differential]] supplied to both sides
 ;;
@@ -1040,7 +1039,7 @@
   non-differentials using all tangent terms each instance. Matches the response
   of [[eq]].
 
-  Acts as [[clojure.core/compare]] for non-differentials."
+  Acts as [[emmy.value/compare]] for non-differentials."
   [a b]
   (v/compare
    (->terms a)
@@ -1069,7 +1068,7 @@
   non-differentials using only the [[finite-part]] of each instance. Matches the
   response of [[equiv]].
 
-  Acts as [[clojure.core/compare]] for non-differentials."
+  Acts as [[emmy.value/compare]] for non-differentials."
   [a b]
   (v/compare
    (finite-term a)
