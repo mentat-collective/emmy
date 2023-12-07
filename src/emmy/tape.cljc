@@ -3,8 +3,13 @@
 (ns emmy.tape
   "This namespace contains an implementation of [[TapeCell]], a type that forms
   the basis for the reverse-mode automatic differentiation implementation in
-  Emmy."
-  (:require [emmy.differential :as d]
+  Emmy.
+
+  NOTE that this type currently can't handle any interaction with forward-mode
+  AD! Don't nest [[gradient]] calls inside [[emmy.env/D]] calls."
+  (:refer-clojure :exclude [compare zero?])
+  (:require [clojure.pprint :as pprint]
+            [emmy.differential :as d]
             [emmy.function :as f]
             [emmy.generic :as g]
             [emmy.matrix :as matrix]
@@ -38,7 +43,11 @@
 ;; linear scaling is not great.
 
 ;; "Reverse-mode" AD is an alternative way of building up all of the partial
-;; derivatives for such a function in a single pass.
+;; derivatives for such a function in a single pass. Rather than accumulating
+;; the chain rule values forward, we build up a tree representing the full
+;; computation and then walk backward along each path in the computation graph
+;; from a single output variable back to every input, multiplying the chain rule
+;; entries in reverse order as we go.
 ;;
 ;; > NOTE I plan on fleshing out a full, worked example of the how the chain
 ;; > rule works in reverse-mode... but please accept this sketch for now.
@@ -52,28 +61,29 @@
 ;;     between [[TapeCell]] instances created for different nested runs of
 ;;     differentation
 ;;   - the "primal value" wrapped by this [[TapeCell]] instance
-;;   - A map of the [[TapeCell]]'s inputs => the partial derivative of the
-;;     primal value with respect to that input
+;;   - A vector of pairs of each [[TapeCell]] input paired with the partial
+;;     derivative of the primal value with respect to that input
 ;;
-;; Pass the augmented inputs into the original function, which should be built
-;; out of primitives that are overloaded to deal with [[TapeCell]] instances.
+;; Next, pass the augmented inputs into the original function, which should be
+;; built out of primitives that are overloaded to deal with [[TapeCell]]
+;; instances.
 ;;
-;; A primitive `f` of `n` arguments, given [[TapeCell]] inputs, should return a
+;; Given [[TapeCell]] inputs, a primitive `f` of `n` arguments, will return a
 ;; new [[TapeCell]] of the form:
 ;;
 ;; ```clojure
 ;; {:tag <input tag>
 ;;  :primal (f a b c ...)
-;;  :in->partials {<tape-a> <(((partial 0) f) a b c ...)>
-;;                 <tape-b> <(((partial 1) f) a b c ...)>
-;;                 <tape-c> <(((partial 2) f) a b c ...)>
-;;                 ...}
+;;  :in->partials [[<tape-a> <(((partial 0) f) a b c ...)>]
+;;                 [<tape-b> <(((partial 1) f) a b c ...)>]
+;;                 [<tape-c> <(((partial 2) f) a b c ...)]>
+;;                 ...]
 ;; }
 ;; ```
 ;;
 ;; The output will be either a final [[TapeCell]] instance, or some structure
 ;; composed of [[TapeCell]]s. (Any other kind of output means that the output
-;; doesn't depend on the inputs, so the derivative of that entry should be 0.)
+;; doesn't depend on the inputs, so the derivative of `f` should be 0.)
 ;;
 ;; Let's stick with the case of a single [[TapeCell]] output. The [[TapeCell]]
 ;; represents a directed acyclic graph of the computation. The edges point from
@@ -122,14 +132,67 @@
 
 ;; Here's the [[TapeCell]] type with the fields described above.
 
-(defrecord TapeCell [tag primal in->partial]
+(declare compare)
+
+
+(fn [x]
+  (cond (>= x 0) (g/sin x)
+        (< x 0)  (g/atan x)))
+
+(deftype TapeCell [tag primal in->partial]
   v/IKind
   (kind [_] ::tape)
 
+  ;; A [[TapeCell]] as implemented can act as a chain-rule accounting device for
+  ;; all sorts of types, not just numbers. A [[TapeCell]] is
+  ;; only [[v/numerical?]] if its primal component is numerical.
   v/Numerical
   (numerical? [_]
-    (and (v/numerical? primal)
-         (empty? in->partial))))
+    (v/numerical? primal))
+
+  Object
+  ;; Comparing [[TapeCell]] objects using `equals` defaults to [[equiv]], which
+  ;; compares instances only using their non-tagged ('finite') components. If
+  ;; you want to compare two instances using `tag` and `in->partial`,
+  ;; See [[eq]].
+  #?(:cljs (valueOf [_] (.valueOf primal)))
+  (toString [_]
+    (str "#emmy.tape.TapeCell"
+         {:tag tag
+          :primal primal
+          :in->partial in->partial}))
+
+  #?@(:clj
+      ;; The motivation for this override is subtle. To participate in control
+      ;; flow operations, like comparison with both [[TapeCell]] and
+      ;; non-[[TapeCell]] instances, [[TapeCell]] instances should compare using
+      ;; ONLY their primal terms. This means that comparison will ignore any
+      ;; difference in `in->partials`.
+      [Comparable
+       (compareTo [a b] (compare a b))]
+
+      :cljs
+      [IComparable
+       (-compare [a b]  (compare a b))
+
+       IPrintWithWriter
+       (-pr-writer [x writer _]
+                   (write-all writer (.toString x)))]))
+
+#?(:clj
+   (defmethod print-method TapeCell
+     [^TapeCell t ^java.io.Writer w]
+     (.write w (.toString t))))
+
+;; When pretty-printing we want a properly formatted map representation, so we
+;; ditch the `emmy.tape.TapeCell` prefix that `toString` prints and act more
+;; like a `defrecord` would.
+
+(defmethod pprint/simple-dispatch TapeCell [^TapeCell t]
+  (pprint/simple-dispatch
+   {:tag         (.-tag t)
+    :primal      (.-primal t)
+    :in->partial (.-in->partial t)}))
 
 ;; ## Non-generic API
 
@@ -142,10 +205,16 @@
 (defn make
   "Returns a [[TapeCell]] instance with the supplied `tag` and `primal` values.
 
-  Optionally accepts `partials`, a map of input cell => the partial derivative
-  of the output with respect to each input (defaults to `{}`)."
+  Optionally accepts `partials`, a vector of pairs of the form
+
+  ```
+  [<input cell> <partial>]
+  ```
+
+  where `<partial>` is the partial derivative of the output with respect to each
+  input (defaults to `[]`)."
   ([tag primal]
-   (->TapeCell tag primal {}))
+   (->TapeCell tag primal []))
   ([tag primal partials]
    (->TapeCell tag primal partials)))
 
@@ -187,10 +256,10 @@
   [x]
   (if (tape? x)
     (tape-tag x)
-    0))
+    ##-Inf))
 
 (defn tape-primal
-  "Given a [[TapeCell]], returns the `-primal` field of the supplied [[TapeCell]]
+  "Given a [[TapeCell]], returns the `primal` field of the supplied [[TapeCell]]
   object. For all other types, acts as identity.
 
   If the optional `tag` argument is supplied, only returns `-primal`
@@ -205,11 +274,14 @@
      x)))
 
 (defn tape-partials
-  "Returns the `in->partials` map of the supplied [[TapeCell]] object. Errors if
-  any other type is supplied.
+  "Returns the `in->partials` vector of the supplied [[TapeCell]] object. Errors
+  if any other type is supplied.
 
-  This map maps from each of the `tape`'s inputs to the partial derivative
-  of `(tape-primal tape)` with respect to the input."
+  This vector holds pairs with these two entries:
+
+  - some input to `tape`
+  - the partial derivative of `tape`'s [[tape-primal]] with respect to that
+    input"
   [^TapeCell tape]
   (.-in->partial tape))
 
@@ -223,7 +295,131 @@
     (recur (tape-primal v))
     v))
 
-;; ### Reverse-pass support
+;; ### Comparison, Control Flow
+;;
+;; Functions like `=`, `<` and friends don't have derivatives; instead, they're
+;; used for control flow inside of Clojure functions. To play nicely with these
+;; functions, the [[TapeCell]] API exposes a number of methods for comparing
+;; numbers on ONLY their finite parts.
+;;
+;; Why? If `x` is a [[TapeCell]] instance, `(< x 10)` needs to return true
+;; whenever a non-[[TapeCell]] `x` would return true. To make this work, these
+;; operations look only at the [[tape-primal]].
+;;
+;; HOWEVER! [[g/one?]] and [[g/zero?]] are examples of Emmy functions that
+;; are used to skip operations that we _want_ to happen, like multiplication.
+;;
+;; `(g/* x y)` will return `y` if `(g/one? x)` is true... but to propagate the
+;; derivative through we need this multiplication to occur. The compromise is:
+;;
+;; - [[g/zero?]], [[g/one?]] and [[g/identity?]] return true only when
+;;   ALL [[tape-partials]] are zero and the [[tape-primal]] is either [[g/one?]]
+;;   or [[g/zero?]] respectively
+;; - [[eq]] compares [[TapeCell]] instances by tag, primal and partials
+;;
+;; while:
+;;
+;; - [[equiv]] and [[compare]] only examine the [[tape-primal]] of either side.
+
+(defn ^:no-doc zero?
+  "Returns true if the supplied instance has a [[tape-primal]] that responds true
+  to [[emmy.value/zero?]], and no inputs with non-zero partial derivatives;
+  false otherwise.
+
+  NOTE: This means that [[zero?]] will not do what you expect as a conditional
+  inside some function. If you want to branch inside some function you're taking
+  the derivative of, prefer `(= 0 dx)`. This will only look at
+  the [[tape-primal]] and ignore the values of [[tape-partials]]."
+  [dx]
+  (and (g/zero? (tape-primal dx))
+       (empty? (tape-partials dx))))
+
+(defn ^:no-doc one?
+  "Returns true if the supplied instance has a [[tape-primal]] that responds true
+  to [[emmy.value/one?]], and no inputs with non-zero partial derivatives; false
+  otherwise.
+
+  NOTE: This means that [[one?]] will not do what you expect as a conditional
+  inside some function. If you want to branch inside some function you're taking
+  the derivative of, prefer `(= 1 dx)`. This will only look at
+  the [[tape-primal]] and ignore the values of [[tape-partials]]."
+  [dx]
+  (and (g/one? (tape-primal dx))
+       (empty? (tape-partials dx))))
+
+(defn ^:no-doc identity?
+  "Returns true if the supplied instance has a [[tape-primal]] that responds true
+  to [[emmy.value/identity?]], and no inputs with non-zero partial derivatives;
+  false otherwise.
+
+  NOTE: This means that [[identity?]] will not do what you expect as a
+  conditional inside some function. If you want to branch inside some function
+  you're taking the derivative of, prefer `(= <identity element> dx)`. This will
+  only look at the [[tape-primal]] and ignore the values of [[tape-partials]]."
+  [dx]
+  (and (g/identity? (tape-primal dx))
+       (empty? (tape-partials dx))))
+
+(defn eq
+  "For non-[[TapeCell]]s, identical to [[emmy.value/=]].
+  For [[TapeCell]] instances, equality acts on [[tape-tag]]
+  and [[tape-partials]] too.
+
+  If you want to ignore the tangent components, use [[equiv]]."
+  ([_] true)
+  ([a b]
+   (let [ta? (tape? a) tb? (tape? b)]
+     (cond (and ta? tb?)
+           (let [a ^TapeCell a
+                 b ^TapeCell b]
+             (and (v/= (.-primal a) (.-primal b))
+                  (v/= (.-tag a) (.-tag b))
+                  (v/= (.-in->partial a) (.-in->partial b))))
+
+           ta? (and (empty? (tape-partials a))
+                    (v/= (tape-primal a) b))
+
+           tb? (and (empty? (tape-partials b))
+                    (v/= (tape-primal b) a))
+
+           :else (v/= a b))))
+  ([a b & more]
+   (if (eq a b)
+     (if (next more)
+       (recur b (first more) (next more))
+       (eq b (first more)))
+     false)))
+
+(defn equiv
+  "Returns true if all of the supplied objects have equal [[tape-primal]]s, false
+  otherwise.
+
+  Use [[equiv]] if you want to compare non-[[TapeCell]]s with
+  [[TapeCell]]s and ignore all tangent components. If you _do_ want to take the
+  tangent components into account, prefer [[eq]]."
+  ([_] true)
+  ([a b]
+   (v/= (tape-primal a)
+        (tape-primal b)))
+  ([a b & more]
+   (if (equiv a b)
+     (if (next more)
+       (recur b (first more) (next more))
+       (equiv b (first more)))
+     false)))
+
+(defn compare
+  "Comparator that compares [[Differential]] instances with each other or
+  non-differentials using only the [[finite-part]] of each instance. Matches the
+  response of [[equiv]].
+
+  Acts as [[emmy.value/compare]] for non-[[TapeCell]]s."
+  [a b]
+  (v/compare
+   (tape-primal a)
+   (tape-primal b)))
+
+;; ## Reverse-pass support
 
 (defn ^:no-doc topological-sort
   "Given a `node` of type [[TapeCell]] (representing the root of a computation's
@@ -240,7 +436,7 @@
                                    (tape-partials node))]
                 [seen (cons node sorted)])))
           (process-children [seen sorted in->partials]
-            (transduce (map key)
+            (transduce (map first)
                        (completing compute-visiting-order)
                        [seen sorted]
                        in->partials))]
@@ -271,8 +467,8 @@
                   ;; sensitivity (it can't be affected by nodes that come
                   ;; after).
                   (let [sensitivity (get m node)]
-                    (reduce-kv
-                     (fn [acc cell factor]
+                    (reduce
+                     (fn [acc [cell factor]]
                        (let [delta (g/* factor sensitivity)]
                          (update acc cell (fn [v]
                                             (if v
@@ -393,7 +589,7 @@
   point can multiply an increment in the arguments to produce the best linear
   estimate of the increment in the function value.
 
-  For scalar-valued functions, [[gradient]] computes a derivative. For
+  For univariate functions, [[gradient]] computes a derivative. For
   vector-valued functions, [[gradient]] computes
   the [Jacobian](https://en.wikipedia.org/wiki/Jacobian_matrix_and_determinant)
   of `f`.
@@ -476,7 +672,7 @@
        (let [primal (tape-primal x)]
          (make (tape-tag x)
                (call primal)
-               {x (df:dx primal)}))
+               [[x (df:dx primal)]]))
        (f x)))))
 
 (defn lift-2
@@ -507,11 +703,11 @@
                (let [primal-x  (tape-primal x tag)
                      primal-y  (tape-primal y tag)
                      partial-x (if (and (tape? x) (= tag (tape-tag x)))
-                                 {x (df:dx primal-x primal-y)}
-                                 {})
+                                 [[x (df:dx primal-x primal-y)]]
+                                 [])
                      partial-y (if (and (tape? y) (= tag (tape-tag y)))
-                                 {y (df:dy primal-x primal-y)}
-                                 {})]
+                                 [[y (df:dy primal-x primal-y)]]
+                                 [])]
                  (make tag
                        (call primal-x primal-y)
                        (into partial-x partial-y))))]
@@ -524,6 +720,32 @@
                (operate tag-y)
 
                :else (f x y)))))))
+
+(defn lift-n
+  "Given:
+
+  - some function `f` that can handle 0, 1 or 2 arguments
+  - `df:dx`, a fn that returns the derivative wrt the single arg in the unary case
+  - `df:dx1` and `df:dx2`, fns that return the derivative with respect to the
+    first and second args in the binary case
+
+  Returns a new any-arity function that operates on both the original type of
+  `f` and [[TapeCell]] instances.
+
+  NOTE: The n-ary case of `f` is populated by nested calls to the binary case.
+  That means that this is NOT an appropriate lifting method for an n-ary
+  function that isn't built out of associative binary calls. If you need this
+  ability, please file an issue at the [emmy issue
+  tracker](https://github.com/mentat-collective/emmy/issues)."
+  [f df:dx df:dx1 df:dx2]
+  (let [f1 (lift-1 f df:dx)
+        f2 (lift-2 f df:dx1 df:dx2)]
+    (fn call
+      ([] (f))
+      ([x] (f1 x))
+      ([x y] (f2 x y))
+      ([x y & more]
+       (reduce call (call x y) more)))))
 
 ;; ## Generic Method Installation
 ;;
@@ -664,9 +886,9 @@
 ;; Non-differentiable generic operations
 
 (defbinary v/= (by-primal v/=))
-(defunary g/zero? (by-primal g/one?))
-(defunary g/one? (by-primal g/one?))
-(defunary g/identity? (by-primal g/identity?))
+(defunary g/zero? zero?)
+(defunary g/one? one?)
+(defunary g/identity? identity?)
 (defunary g/negative? (by-primal g/negative?))
 (defunary g/infinite? (by-primal g/infinite?))
 
@@ -677,7 +899,11 @@
   `[~'TapeCell
     ~(tape-tag t)
     ~(g/freeze (tape-primal t))
-    ~(reduce-kv (fn [acc k v]
-                  (assoc acc (g/freeze k) (g/freeze v)))
-                {}
-                (tape-partials t))])
+    ~(mapv (fn [[node partial]]
+             [(g/freeze node) (g/freeze partial)])
+           (tape-partials t))])
+
+;; `simplify` explicitly does nothing because we don't want to lose our identity
+;; for the topological sort.
+
+(defmethod g/simplify [::tape] [t] t)

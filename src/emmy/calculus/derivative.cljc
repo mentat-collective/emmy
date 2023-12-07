@@ -446,7 +446,7 @@
   at some point can multiply an increment in the arguments to produce the best
   linear estimate of the increment in the function value.
 
-  For scalar-valued functions, [[D]] computes a derivative. For vector-valued
+  For univariate functions, [[D]] computes a derivative. For vector-valued
   functions, [[D]] computes
   the [Jacobian](https://en.wikipedia.org/wiki/Jacobian_matrix_and_determinant)
   of `f`.

@@ -47,6 +47,9 @@
                     (g/cube x)))))))))
 
 (deftest basic-D-tests
+  (is (= 0 ((D (fn [] 100))))
+      "D of no-arg returns zero")
+
   (testing "D of linear returns slope"
     (is (= 2 ((D #(* 2 %)) 1)))
     (is (= 2 ((D #(* 2 %)) 'w))))

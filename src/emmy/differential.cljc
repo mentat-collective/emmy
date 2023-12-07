@@ -562,7 +562,7 @@
 ;; Now the actual type. The `terms` field is a term-list vector that will
 ;; remain (contractually!) sorted by its list of tags.
 
-(declare compare equiv finite-term from-terms one?)
+(declare compare equiv finite-term from-terms)
 
 (deftype Differential [terms]
   ;; A [[Differential]] as implemented can act as a chain-rule accounting device
@@ -980,9 +980,10 @@
 ;; `(g/* x y)` will return `y` if `(g/one? x)` is true... but to propagate the
 ;; derivative through we need this multiplication to occur. The compromise is:
 ;;
-;; - [[g/one?]] and [[g/zero?]] return true only when ALL [[tangent-part]]s are
-;;   zero and the [[finite-part]] is either [[g/one?]] or [[g/zero?]]
-;;   respectively
+;; - [[g/zero?]], [[g/one?]] and [[g/zero?]] return true only when
+;;   ALL [[tangent-part]]s are zero and the [[finite-part]] is either [[g/one?]]
+;;   or [[g/zero?]] respectively
+
 ;; - [[eq]] and [[compare-full]] similarly looks at every component in
 ;;   the [[Differential]] supplied to both sides
 ;;
@@ -990,7 +991,7 @@
 ;;
 ;; - [[equiv]] and [[compare]] only examine the [[finite-part]] of either side.
 
-(defn- one?
+(defn ^:no-doc one?
   "Returns true if the supplied instance has a [[finite-part]] that responds true
   to [[emmy.value/one?]], and zero coefficients on any of its tangent
   components; false otherwise.
@@ -1004,7 +1005,7 @@
     (and (g/one? p)
          (g/zero? t))))
 
-(defn- identity?
+(defn ^:no-doc identity?
   "Returns true if the supplied instance has a [[finite-part]] that responds true
   to [[emmy.value/identity?]], and zero coefficients on any of its tangent
   components; false otherwise.
@@ -1019,7 +1020,7 @@
          (g/zero? t))))
 
 (defn eq
-  "For non-differentials, this is identical to [[clojure.core/=]].
+  "For non-differentials, this is identical to [[emmy.value/=]].
   For [[Differential]] instances, equality acts on tangent components too.
 
   If you want to ignore the tangent components, use [[equiv]]."
