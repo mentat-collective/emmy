@@ -62,7 +62,7 @@
   ;;=> (* y z)
 
   (((partial 0) g/*) 'x 'y 'z))
-  ;;=> (* y z)
+;;=> (* y z)
 
 
 ;; To `extract-tangent` from a function, we need to compose the
@@ -247,9 +247,10 @@
   see [[emmy.numerical.derivative/D-numeric]].
 
   `f` must be built out of generic operations that know how to
-  handle [[d/Differential]] inputs in addition to any types that a normal `(f
-  x)` call would present. This restriction does _not_ apply to operations like
-  putting `x` into a container or destructuring; just primitive function calls."
+  handle [[emmy.differential/Differential]] inputs in addition to any types that
+  a normal `(f x)` call would present. This restriction does _not_ apply to
+  operations like putting `x` into a container or destructuring; just primitive
+  function calls."
   [f]
   (fn [x]
     (let [tag    (d/fresh-tag)
@@ -292,7 +293,7 @@
    (let [entry (get-in structure path)]
      (deep-partial f structure path entry)))
   ([f structure path entry]
-   (if (v/numerical? entry)
+   (if (v/scalar? entry)
      (letfn [(f-entry [x]
                (f (assoc-in structure path x)))]
        ((derivative f-entry) entry))
@@ -396,7 +397,7 @@
          df (d f)
          df* (d (fn [args] (apply f args)))]
      (-> (fn
-           ([] (constantly 0))
+           ([] 0)
            ([x] (df x))
            ([x & more]
             (df* (matrix/seq-> (cons x more)))))
@@ -441,17 +442,17 @@
 ;; instances.
 
 (def D
-  "Derivative operator. Takes some function `f` and returns a function
-  whose value at some point can multiply an increment in the arguments, to
-  produce the best linear estimate of the increment in the function value.
+  "Derivative operator. Takes some function `f` and returns a function whose value
+  at some point can multiply an increment in the arguments to produce the best
+  linear estimate of the increment in the function value.
 
   For univariate functions, [[D]] computes a derivative. For vector-valued
   functions, [[D]] computes
   the [Jacobian](https://en.wikipedia.org/wiki/Jacobian_matrix_and_determinant)
   of `f`.
 
-  The related [[Grad]] returns a function that produces a structure of the
-  opposite orientation as [[D]]. Both of these functions use forward-mode
+  The related [[emmy.env/Grad]] returns a function that produces a structure of
+  the opposite orientation as [[D]]. Both of these functions use forward-mode
   automatic differentiation."
   (o/make-operator #(g/partial-derivative % [])
                    g/derivative-symbol))

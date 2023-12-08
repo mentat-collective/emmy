@@ -28,9 +28,9 @@
   "Operator that takes a function `f` and returns a new function that
   calculates the [Gradient](https://en.wikipedia.org/wiki/Gradient) of `f`.
 
-  The related [[D]] operator returns a function that produces a structure of the
-  opposite orientation as [[Grad]]. Both of these functions use forward-mode
-  automatic differentiation."
+  The related [[emmy.env/D]] operator returns a function that produces a
+  structure of the opposite orientation as [[Grad]]. Both of these functions use
+  forward-mode automatic differentiation."
   (-> (fn [f]
         (f/compose s/opposite
                    (g/partial-derivative f [])))

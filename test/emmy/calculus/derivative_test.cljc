@@ -47,6 +47,9 @@
                     (g/cube x)))))))))
 
 (deftest basic-D-tests
+  (is (= 0 ((D (fn [] 100))))
+      "D of no-arg returns zero")
+
   (testing "D of linear returns slope"
     (is (= 2 ((D #(* 2 %)) 1)))
     (is (= 2 ((D #(* 2 %)) 'w))))
@@ -1094,7 +1097,7 @@
 
         ;; Before the fix, every call to `D` generated (and froze, closed over)
         ;; a new tag. Now every invocation generates a new tag.
-)))
+        )))
 
   (testing "more subtle amazing bug!"
     ;; Here's an example of a variant on the bug above that shows why the
@@ -1149,7 +1152,7 @@
     ;; in will stay tagged as `old` if it happens to leak out of this level, and
     ;; stay tagged as `fresh` internally so it can never get confused if someone
     ;; ELSE passes `old` in.
-)
+    )
 
   (testing "church box example"
     ;; According to [Manzyuk et al.

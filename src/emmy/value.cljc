@@ -21,7 +21,13 @@
       (clojure.lang BigInt Sequential))))
 
 (defprotocol Numerical
-  (^boolean numerical? [_]))
+  (^boolean numerical? [x]
+   "Returns true if `x` is a purely numerical value and should be considered for
+   numerical simplifications, such as $x * 1 == x$ or $x * 0 ==
+   0$.
+
+  [[numerical?]] should return `false` if `x` has additional, non-numerical
+   structure that should be preserved."))
 
 (defprotocol INumericTower)
 
