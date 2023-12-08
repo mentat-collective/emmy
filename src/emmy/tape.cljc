@@ -280,7 +280,7 @@
   [^TapeCell tape]
   (.-in->partial tape))
 
-(defn ^:no-doc tape->map
+(defn ^:no-doc tapecell->map
   "Given a [[TapeCell]] `t`, returns a map of the form
 
   ```clojure

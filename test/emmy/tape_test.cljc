@@ -35,7 +35,7 @@
                      (pprint/pprint t))
                    (with-out-str
                      (pprint/pprint
-                      (t/tape->map t))))))
+                      (t/tapecell->map t))))))
 
   (defmethod g/zero? [#?(:clj String :cljs js/String)] [_] false)
 
