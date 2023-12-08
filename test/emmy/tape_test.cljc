@@ -486,9 +486,6 @@
               ((D (t/gradient f)) 'a 'b 'c 'd 'e 'f)))
           "forward-over-reverse")
 
-      ;; TODO enable this when we add support for tape and gradient comms in
-      ;; lift-2.
-      #_
       (is (= expected
              (g/simplify
               ((t/gradient (D f)) 'a 'b 'c 'd 'e 'f)))
