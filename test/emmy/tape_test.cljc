@@ -40,10 +40,10 @@
 
   #?(:cljs
      (testing "comparison unit tests"
-       (is (= 0 (t/make 0 0)))
-       (is (= (u/bigint 0) (t/make 0 0)))
-       (is (= (u/long 0) (t/make 0 0)))
-       (is (= (u/int 0) (t/make 0 0)))))
+       (is (v/= 0 (t/make 0 0)))
+       (is (v/= (u/bigint 0) (t/make 0 0)))
+       (is (v/= (u/long 0) (t/make 0 0)))
+       (is (v/= (u/int 0) (t/make 0 0)))))
 
   #?(:cljs
      ;; NOTE: JVM Clojure won't allow non-numbers on either side of < and
