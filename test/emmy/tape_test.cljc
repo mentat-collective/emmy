@@ -30,12 +30,13 @@
   (checking "tape? works" 100 [t (sg/tapecell gen/symbol)]
             (is (t/tape? t)))
 
-  (checking "pprint matches tape->map" 10 [t (sg/tapecell gen/symbol)]
-            (is (= (with-out-str
-                     (pprint/pprint t))
-                   (with-out-str
-                     (pprint/pprint
-                      (t/tapecell->map t))))))
+  #?(:clj
+     (checking "pprint matches tape->map" 10 [t (sg/tapecell gen/symbol)]
+               (is (= (with-out-str
+                        (pprint/pprint t))
+                      (with-out-str
+                        (pprint/pprint
+                         (t/tapecell->map t)))))))
 
   (defmethod g/zero? [#?(:clj String :cljs js/String)] [_] false)
 

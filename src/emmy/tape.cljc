@@ -179,15 +179,17 @@
      [^TapeCell t ^java.io.Writer w]
      (.write w (.toString t))))
 
-;; When pretty-printing we want a properly formatted map representation, so we
-;; ditch the `emmy.tape.TapeCell` prefix that `toString` prints and act more
-;; like a `defrecord` would.
-
-(declare tapecell->map)
-
-(defmethod pprint/simple-dispatch TapeCell [t]
-  (pprint/simple-dispatch
-   (tapecell->map t)))
+#?(:clj
+   ;; When pretty-printing we want a properly formatted map representation, so we
+   ;; ditch the `emmy.tape.TapeCell` prefix that `toString` prints and act more
+   ;; like a `defrecord` would.
+   ;;
+   ;; NOTE that this override only works in Clojure. In cljs, `simple-dispatch`
+   ;; isn't extensible.
+   (do (declare tapecell->map)
+       (defmethod pprint/simple-dispatch TapeCell [t]
+         (pprint/simple-dispatch
+          (tapecell->map t)))))
 
 ;; ## Non-generic API
 
