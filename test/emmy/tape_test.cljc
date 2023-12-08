@@ -1,7 +1,7 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
 (ns emmy.tape-test
-  (:require [clojure.pprint :as pprint]
+  (:require #?(:clj [clojure.pprint :as pprint])
             [clojure.test :refer [is deftest testing use-fixtures]]
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]

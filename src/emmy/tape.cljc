@@ -8,7 +8,7 @@
   NOTE that this type currently can't handle any interaction with forward-mode
   AD! Don't nest [[gradient]] calls inside [[emmy.env/D]] calls."
   (:refer-clojure :exclude [compare zero?])
-  (:require [clojure.pprint :as pprint]
+  (:require #?(:clj [clojure.pprint :as pprint])
             [emmy.differential :as d]
             [emmy.function :as f]
             [emmy.generic :as g]
