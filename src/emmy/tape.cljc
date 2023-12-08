@@ -134,11 +134,6 @@
 
 (declare compare)
 
-
-(fn [x]
-  (cond (>= x 0) (g/sin x)
-        (< x 0)  (g/atan x)))
-
 (deftype TapeCell [tag primal in->partial]
   v/IKind
   (kind [_] ::tape)
@@ -188,11 +183,11 @@
 ;; ditch the `emmy.tape.TapeCell` prefix that `toString` prints and act more
 ;; like a `defrecord` would.
 
-(defmethod pprint/simple-dispatch TapeCell [^TapeCell t]
+(declare tapecell->map)
+
+(defmethod pprint/simple-dispatch TapeCell [t]
   (pprint/simple-dispatch
-   {:tag         (.-tag t)
-    :primal      (.-primal t)
-    :in->partial (.-in->partial t)}))
+   (tapecell->map t)))
 
 ;; ## Non-generic API
 
@@ -284,6 +279,19 @@
     input"
   [^TapeCell tape]
   (.-in->partial tape))
+
+(defn ^:no-doc tape->map
+  "Given a [[TapeCell]] `t`, returns a map of the form
+
+  ```clojure
+  {:tag         (tape-tag t)
+   :primal      (tape-primal t)
+   :in->partial (tape-partials t)}
+  ```"
+  [^TapeCell t]
+  {:tag         (.-tag t)
+   :primal      (.-primal t)
+   :in->partial (.-in->partial t)})
 
 (defn deep-primal
   "Version of [[tape-primal]] that will descend recursively into any [[TapeCell]]
@@ -534,9 +542,13 @@
         ;; TODO if we don't care about flipping for gradient, then use mapr.
         (s/opposite input (mapv #(interpret % output tag) input))
 
-        (f/function? input) (u/illegal "function input not yet supported.")
+        (f/function? input)
+        (throw
+         (ex-info "function inputs not supported." {:input input}))
 
-        :else 0))
+        :else
+        (throw
+         (ex-info "unknown input type!" {:input input}))))
 
 ;; ## Gradient
 

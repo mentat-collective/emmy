@@ -1,7 +1,8 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
 (ns emmy.tape-test
-  (:require [clojure.test :refer [is deftest testing use-fixtures]]
+  (:require [clojure.pprint :as pprint]
+            [clojure.test :refer [is deftest testing use-fixtures]]
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
             [emmy.calculus.derivative :refer [D]]
@@ -18,8 +19,23 @@
 (use-fixtures :each hermetic-simplify-fixture)
 
 (deftest tapecell-type-tests
+  (is (= (str "#emmy.tape.TapeCell{"
+              ":tag 0, :primal (cos x), "
+              ":in->partial "
+              "[[#emmy.tape.TapeCell{:tag 0, :primal x, :in->partial []} (- (sin x))]]"
+              "}")
+         (pr-str (g/cos (t/make 0 'x))))
+      "string representation")
+
   (checking "tape? works" 100 [t (sg/tapecell gen/symbol)]
             (is (t/tape? t)))
+
+  (checking "pprint matches tape->map" 10 [t (sg/tapecell gen/symbol)]
+            (is (= (with-out-str
+                     (pprint/pprint t))
+                   (with-out-str
+                     (pprint/pprint
+                      (t/tape->map t))))))
 
   (defmethod g/zero? [#?(:clj String :cljs js/String)] [_] false)
 
@@ -123,10 +139,16 @@
                   (is (v/= n (t/make 0 n))
                       "tapecell on the right works.")
 
+                  (testing "t/equiv 1 arity returns true always"
+                    (is (true? (t/equiv n))))
+
                   (is (t/equiv (t/make 0 n) n n (t/make 0 n) n)
                       "t/equiv matches = behavior, varargs"))
 
         (checking "eq uses tangent parts" 100 [n sg/real]
+                  (testing "t/eq 1 arity returns true always"
+                    (is (true? (t/eq n))))
+
                   (is (t/eq (t/make 0 n) n n (t/make 0 n) n)
                       "eq is true with no tangent, varargs")
 
@@ -208,8 +230,16 @@
 
 (deftest lifted-fn-tests
   (letfn [(breaks? [f x]
-            (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
+            (is (thrown? #?(:clj Exception :cljs js/Error)
                          ((t/gradient f) x))))]
+
+    (testing "function inputs throw, as they can't be perturbed"
+      (breaks? g/square g/sin))
+
+    (testing "function inputs throw, as they can't be perturbed"
+      (breaks? (fn [{:keys [x]}] (g/square x))
+               {:x 1}))
+
     (checking "integer-discontinuous derivatives work" 100 [x sg/real]
               (if (v/integral? x)
                 (do (breaks? g/floor x)
@@ -258,6 +288,20 @@
                   (is (ish? (Df-numeric n)
                             (Df n))
                       "Does numeric match autodiff?"))))))
+
+(deftest amazing-bug
+  (testing "alexey's amazing bug"
+    (let [shift (fn [offset]
+                  (fn [g]
+                    (fn [a]
+                      (g (g/+ a offset)))))
+          f-hat ((t/gradient shift) 3)]
+      (is (= (g/exp 8) ((f-hat g/exp) 5))
+          "Nothing tough expected in this case.")
+
+      ;; We'll update this once we fix the amazing bug for reverse-mode.
+      (is (= 0 ((f-hat (f-hat g/exp)) 5))
+          "This is the amazing bug, and SHOULD actually equal (g/exp 11)."))))
 
 (deftest sinc-etc-tests
   (is (zero? ((t/gradient g/sinc) 0)))
