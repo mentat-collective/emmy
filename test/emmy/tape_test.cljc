@@ -302,7 +302,15 @@
 
       ;; We'll update this once we fix the amazing bug for reverse-mode.
       (is (= 0 ((f-hat (f-hat g/exp)) 5))
-          "This is the amazing bug, and SHOULD actually equal (g/exp 11)."))))
+          "This is the amazing bug, and SHOULD actually equal (g/exp 11).")))
+
+  (testing "nested reverse mode"
+    ;; TODO this is currently returning 0. Do a careful pass, looking at
+    (let [f (fn [x]
+              (fn [y]
+                (g/* (g/square x) (g/square y))))]
+      (g/simplify
+       ((t/gradient ((t/gradient f) 'x)) 'y)))))
 
 (deftest sinc-etc-tests
   (is (zero? ((t/gradient g/sinc) 0)))
