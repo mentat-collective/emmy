@@ -2,7 +2,7 @@
 
 ## [unreleased]
 
-- #XXX
+- #155
 
   - Replace the implementation of arbitrary-precision rational arithmetic
     provided by `fraction.js` with Clojure code, allowing us to remove
@@ -18,7 +18,7 @@
     which may lose exactness because of the unwanted floating-point
     conversion. For this reason, when we emit a ratio in string form,
     we quote the arguments: `#emmy/ratio "1/2"` to prevent the conversion.
-    Consider this a deprecation notice for the unquoted form. We alsw
+    Consider this a deprecation notice for the unquoted form. We also
     now allow the form `#emmy/ratio [1 2]`, like Complex, and now no
     longer allow an initial `+` on the numerator.
 

@@ -6,7 +6,6 @@
   (:refer-clojure :exclude [abs zero? neg?])
   (:require
    [clojure.core :as core]
-   [emmy.value :as v]
    [goog.array :as garray]))
 
 (def ^:private ZERO (js/BigInt 0))
@@ -28,18 +27,6 @@
   (valueOf [this] (->real this))
   (toString [_] (str n "/" d))
 
-  ;; these are the remaining dependencies on value.
-  ;; Maybe they should be part of extend-type in the ratio library.
-  v/IKind
-  (kind [_] :emmy.ratio/ratio)
-
-  v/INumericTower
-
-  v/IReal
-
-  v/Numerical
-  (numerical? [_] true)
-
   IHash
   (-hash [x]
     (bit-xor
@@ -56,18 +43,9 @@
 
           :else
           (let [o-value (.valueOf other)]
-            (if (v/real? o-value)
-              (garray/defaultCompare this o-value)
-              (throw (js/Error (str "Cannot compare " this " to " o-value " : " (v/kind o-value) " (" (type o-value) ")")))))))
+            (garray/defaultCompare this o-value))))
 
-  IEquiv
-  (-equiv [this other]
-    (cond (instance? Fraction other) (eq this other)
-          (v/integral? other) (and (== ONE d) (v/= n other))
-          :else false))
-
-  IPrintWithWriter
-  (-pr-writer [_ writer _] (write-all writer "#emmy/ratio \"" n "/" d "\"")))
+)
 
 (def ^:private F_ONE (Fraction. ONE ONE))
 
@@ -109,7 +87,7 @@
   (loop [a a
          b b]
     (if (== b ZERO) a
-        (recur b (core/mod a b)))))
+        (recur b (js-mod a b)))))
 
 (defn- bigint-abs [a]
   (if (< a 0) (* -ONE a) a))
@@ -266,8 +244,6 @@
     (cond
       (= n ZERO) F_ONE
       (= n ONE) x
-      ;; We skip to-normal-form, since if the input fractions are in
-      ;; normal form, so will their exponentiation be.
       (> N ZERO) (->normal-form (js-expt a N) (js-expt b N))
       :else (->normal-form (js-expt b (- N)) (js-expt a (- N))))))
 

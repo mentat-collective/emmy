@@ -9,7 +9,8 @@
   for a detailed discussion of how to use and extend the generic operations
   defined in [[emmy.generic]] and [[emmy.value]]."
   (:refer-clojure :exclude [zero? number? = compare])
-  (:require #?@(:cljs [[emmy.util :as u]
+  (:require #?@(:cljs [[emmy.bigfraction :as bf]
+                       [emmy.util :as u]
                        [goog.array :as garray]
                        [goog.object :as gobject]
                        [goog.math.Long]
@@ -84,6 +85,7 @@
   #?(:clj (instance? Number x)
      :cljs (or (cljs.core/number? x)
                (satisfies? IReal x)
+               (instance? bf/Fraction x)
                (instance? goog.math.Integer x)
                (instance? goog.math.Long x)
                (core/= "bigint" (goog/typeOf x)))))

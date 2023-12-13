@@ -19,7 +19,7 @@
   #?(:clj (:import (clojure.lang Ratio))))
 
 (def ^:no-doc ratiotype
-  #?(:clj Ratio :cljs ::ratio))
+  #?(:clj Ratio :cljs bf/Fraction))
 
 (derive ratiotype ::v/real)
 
@@ -123,76 +123,93 @@
 
    :cljs
    (do
+
+     (extend-type bf/Fraction
+       v/INumericTower
+
+       v/IReal
+
+       v/Numerical
+       (numerical? [_] true)
+
+       #?@(:cljs [IEquiv
+                  (-equiv [x other]
+                          (cond (instance? bf/Fraction other) (bf/eq x other)
+                                :else (and (g/one? (.-d x)) (v/= (.-n x) other))))
+
+                  IPrintWithWriter
+                  (-pr-writer [x writer _] (write-all writer "#emmy/ratio \"" (.-n x) "/" (.-d x) "\""))]))
+
      ;; The -equiv implementation handles equality with any number, so flip the
      ;; arguments around and invoke equiv.
-     (defmethod v/= [::v/real ::ratio] [l r] (= r l))
+     (defmethod v/= [::v/real bf/Fraction] [l r] (= r l))
 
      ;; Note that fraction arithmetic automatically downcasts integral results
      ;; to the underlying bigint type.
-     (defmethod g/add [::ratio ::ratio] [a b] (bf/promote (bf/add a b)))
-     (defmethod g/sub [::ratio ::ratio] [a b] (bf/promote (bf/sub a b)))
-     (defmethod g/mul [::ratio ::ratio] [a b] (bf/promote (bf/mul a b)))
-     (defmethod g/div [::ratio ::ratio] [a b] (bf/promote (bf/div a b)))
-     (defmethod g/exact-divide [::ratio ::ratio] [a b] (bf/promote (bf/div a b)))
+     (defmethod g/add [bf/Fraction bf/Fraction] [a b] (bf/promote (bf/add a b)))
+     (defmethod g/sub [bf/Fraction bf/Fraction] [a b] (bf/promote (bf/sub a b)))
+     (defmethod g/mul [bf/Fraction bf/Fraction] [a b] (bf/promote (bf/mul a b)))
+     (defmethod g/div [bf/Fraction bf/Fraction] [a b] (bf/promote (bf/div a b)))
+     (defmethod g/exact-divide [bf/Fraction bf/Fraction] [a b] (bf/promote (bf/div a b)))
 
      ;; In principle, one should not find an integral fraction object in the wild
      ;; due to the automatic downcasting. In theory the following three could just
      ;; return false, but let's test for a while with some assert statements.
      ;;
-     (defmethod g/zero? [::ratio] [c] (bf/zero? c))
-     (defmethod g/one? [::ratio] [c] (bf/one? c))
-     (defmethod g/identity? [::ratio] [c] (bf/one? c))
-     (defmethod g/zero-like [::ratio] [_] 0)
-     (defmethod g/one-like [::ratio] [_] 1)
-     (defmethod g/identity-like [::ratio] [_] 1)
+     (defmethod g/zero? [bf/Fraction] [c] (bf/zero? c))
+     (defmethod g/one? [bf/Fraction] [c] (bf/one? c))
+     (defmethod g/identity? [bf/Fraction] [c] (bf/one? c))
+     (defmethod g/zero-like [bf/Fraction] [_] 0)
+     (defmethod g/one-like [bf/Fraction] [_] 1)
+     (defmethod g/identity-like [bf/Fraction] [_] 1)
 
-     (defmethod g/negate [::ratio] [a] (bf/promote (bf/neg a)))
-     (defmethod g/negative? [::ratio] [a] (bf/neg? a))
-     (defmethod g/infinite? [::ratio] [_] false)
-     (defmethod g/invert [::ratio] [a] (bf/promote (bf/invert a)))
-     (defmethod g/square [::ratio] [a] (bf/promote (bf/mul a a)))
-     (defmethod g/cube [::ratio] [a] (bf/promote (bf/integer-power a 3)))
-     (defmethod g/abs [::ratio] [a] (bf/promote (bf/abs a)))
-     (defmethod g/magnitude [::ratio] [a] (bf/promote (bf/abs a)))
+     (defmethod g/negate [bf/Fraction] [a] (bf/promote (bf/neg a)))
+     (defmethod g/negative? [bf/Fraction] [a] (bf/neg? a))
+     (defmethod g/infinite? [bf/Fraction] [_] false)
+     (defmethod g/invert [bf/Fraction] [a] (bf/promote (bf/invert a)))
+     (defmethod g/square [bf/Fraction] [a] (bf/promote (bf/mul a a)))
+     (defmethod g/cube [bf/Fraction] [a] (bf/promote (bf/integer-power a 3)))
+     (defmethod g/abs [bf/Fraction] [a] (bf/promote (bf/abs a)))
+     (defmethod g/magnitude [bf/Fraction] [a] (bf/promote (bf/abs a)))
 
-     (defmethod g/expt [::ratio ::v/integral] [a b] (bf/promote (bf/integer-power a b)))
-     (defmethod g/expt [::ratio ::ratio] [a b]
+     (defmethod g/expt [bf/Fraction ::v/integral] [a b] (bf/promote (bf/integer-power a b)))
+     (defmethod g/expt [bf/Fraction bf/Fraction] [a b]
        (bf/promote
         (if (g/one? (bf/denominator b))
           (bf/integer-power a (bf/numerator b))
           (g/expt (bf/->real a) (bf/->real b)))))
 
-     (defmethod g/sqrt [::ratio] [a]
+     (defmethod g/sqrt [bf/Fraction] [a]
        (if (neg? a)
          (g/sqrt (bf/->real a))
          (g/div (g/sqrt (numerator a))
                 (g/sqrt (denominator a)))))
 
-     (defmethod g/quotient [::ratio ::ratio] [a b] (bf/promote (bf/quotient a b)))
-     (defmethod g/remainder [::ratio ::ratio] [a b] (bf/promote (bf/remainder a b)))
-     (defmethod g/modulo [::ratio ::ratio] [a b]
+     (defmethod g/quotient [bf/Fraction bf/Fraction] [a b] (bf/promote (bf/quotient a b)))
+     (defmethod g/remainder [bf/Fraction bf/Fraction] [a b] (bf/promote (bf/remainder a b)))
+     (defmethod g/modulo [bf/Fraction bf/Fraction] [a b]
        (bf/promote
         (bf/remainder (bf/add (bf/remainder a b) b) b)))
-     (defmethod g/gcd [::ratio ::ratio] [a b] (bf/promote (bf/gcd a b)))
+     (defmethod g/gcd [bf/Fraction bf/Fraction] [a b] (bf/promote (bf/gcd a b)))
 
 ;; Cross-compatibility with numbers in CLJS.
      (defn- downcast-fraction
        "Anything that `upcast-number` doesn't catch will hit this and pull a floating
         point value out of the ratio."
        [op]
-       (defmethod op [::ratio ::v/real] [a b]
+       (defmethod op [bf/Fraction ::v/real] [a b]
          (op (bf/->real a) b))
 
-       (defmethod op [::v/real ::ratio] [a b]
+       (defmethod op [::v/real bf/Fraction] [a b]
          (op a (bf/->real b))))
 
      (defn- upcast-number
        "Integrals can stay exact, so they become ratios before op."
        [op]
-       (defmethod op [::ratio ::v/integral] [a b]
+       (defmethod op [bf/Fraction ::v/integral] [a b]
          (op a (bf/integer-> b)))
 
-       (defmethod op [::v/integral ::ratio] [a b]
+       (defmethod op [::v/integral bf/Fraction] [a b]
          (op (bf/integer-> a) b)))
 
      ;; An exact number should become a ratio rather than erroring out, if one
