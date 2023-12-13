@@ -5,6 +5,7 @@
   (:refer-clojure :exclude [bigint biginteger double long symbol])
   (:require [clojure.core :as core]
             [clojure.test.check.generators :as gen]
+            #?(:cljs [emmy.bigfraction :refer [Fraction]])
             [emmy.complex :as c]
             #?(:cljs [emmy.complex.impl :refer [Complex]])
             [emmy.differential :as d]
@@ -430,7 +431,7 @@
 
 (extend-protocol si/Approximate
   #?@(:cljs
-      [r/ratiotype
+      [Fraction
        (ish [this that] (eq-delegate this that))
 
        u/inttype

@@ -9,7 +9,7 @@
   for a detailed discussion of how to use and extend the generic operations
   defined in [[emmy.generic]] and [[emmy.value]]."
   (:refer-clojure :exclude [zero? number? = compare])
-  (:require #?@(:cljs [["fraction.js/bigfraction.js" :as Fraction]
+  (:require #?@(:cljs [[emmy.bigfraction :as bf]
                        [emmy.util :as u]
                        [goog.array :as garray]
                        [goog.object :as gobject]
@@ -30,6 +30,8 @@
    structure that should be preserved."))
 
 (defprotocol INumericTower)
+
+(defprotocol IReal)
 
 (extend-protocol Numerical
   #?(:clj Object :cljs default)
@@ -85,7 +87,7 @@
                (instance? goog.math.Integer x)
                (instance? goog.math.Long x)
                (core/= "bigint" (goog/typeOf x))
-               (instance? Fraction x))))
+               (instance? bf/Fraction x))))
 
 (defn number?
   "Returns true if `x` is any number type in the numeric tower:
@@ -93,6 +95,7 @@
   - integral
   - floating point
   - complex
+  - fraction
 
   false otherwise."
   [x]
@@ -100,11 +103,11 @@
      (or (instance? Number x)
          (instance? emmy.value.INumericTower x))
      :cljs (or (cljs.core/number? x)
-               (core/= "bigint" (goog/typeOf x))
-               (instance? Fraction x)
                (instance? goog.math.Integer x)
                (instance? goog.math.Long x)
-               (satisfies? emmy.value.INumericTower x))))
+               (core/= "bigint" (goog/typeOf x))
+               (instance? bf/Fraction x)
+               (satisfies? INumericTower x))))
 
 ;; `::scalar` is a thing that symbolic expressions AND actual numbers both
 ;; derive from.

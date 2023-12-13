@@ -20,7 +20,7 @@
             [emmy.util :as u]
             [emmy.value :as v]))
 
-(declare equal?)
+(declare equal? ->string)
 
 (deftype Complex [re im]
   v/IKind
@@ -32,23 +32,27 @@
   (numerical? [_] true)
 
   #?@(:clj [Object
-            (equals [a b] (equal? a b))]
-      :cljs [IEquiv
+            (equals [a b] (equal? a b))
+            (toString [a] (->string a))]
+
+      :cljs [Object
+             (toString [a] (->string a))
+
+             IEquiv
              (-equiv [a b] (equal? a b))
 
              IPrintWithWriter
              (-pr-writer
               [z writer _]
-              (write-all
-               writer
-               "#emmy/complex "
-               (str [(.-re z) (.-im z)])))]))
+              (write-all writer (->string z)))]))
 
 #?(:clj
-   (defmethod print-method Complex [^Complex v ^java.io.Writer w]
-     (.write w (str "#emmy/complex "
-                    [(.-re v)
-                     (.-im v)]))))
+   (defmethod print-method Complex [^Complex z ^java.io.Writer w]
+     (.write w (->string z))))
+
+(defn- ->string
+  [^Complex c]
+  (str "#emmy/complex " [(.-re c) (.-im c)]))
 
 (def ZERO (Complex. 0 0))
 (def ONE (Complex. 1 0))

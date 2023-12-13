@@ -39,11 +39,10 @@
   (testing "r/parse-ratio can round-trip Ratio instances in clj or cljs. "
     #?(:clj
        (is (= #emmy/ratio "10/3"
-              #emmy/ratio "+10/3"
-              #emmy/ratio 10/3
+              #emmy/ratio [10 3]
               (read-string {:readers {'emmy/ratio r/parse-ratio}}
                            (pr-str #emmy/ratio 10/3)))
-           "Ratio parses from numbers and strings.")
+           "Ratio parses from strings and vectors.")
        :cljs (is (= `(r/rationalize
                       (u/bigint "10")
                       (u/bigint "3"))
@@ -56,7 +55,14 @@
                       (u/bigint "999999999999999999999999")))
            (read-string {:readers {'emmy/ratio r/parse-ratio}}
                         (pr-str #emmy/ratio "1/999999999999999999999999")))
-        "Parsing #emmy/ratio works with big strings too.")))
+        "Parsing #emmy/ratio works with big strings too."))
+  (testing "expected ratio parse failures"
+    (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
+                 (r/parse-ratio [1 2 3])))
+    (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
+                 (r/parse-ratio 'foo)))
+    (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
+                 (r/parse-ratio "1/2/3")))))
 
 (deftest rationalize-test
   (testing "r/rationalize promotes to bigint if evenly divisible"

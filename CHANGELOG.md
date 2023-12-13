@@ -2,6 +2,26 @@
 
 ## [unreleased]
 
+- #155
+
+  - Replace the implementation of arbitrary-precision rational arithmetic
+    provided by `fraction.js` with Clojure code, allowing us to remove
+    a JavaScript dependency.
+
+  - We note here a subtlety with fraction reader syntax. When the CLJS
+    compiler runs and encounters input like  `#emmy/ratio 1/2`, since
+    the compilation occurs in a JVM Clojure environment the 1/2 will
+    deserialize as a Ratio, which is then transformed by the reader into
+    code which will generate a ClojureScript `Fraction`. The ClojureScript
+    reader, however, evaluates the input as q JS expression resulting
+    in 0.5, which is then rationalized with an expensive algorithm
+    which may lose exactness because of the unwanted floating-point
+    conversion. For this reason, when we emit a ratio in string form,
+    we quote the arguments: `#emmy/ratio "1/2"` to prevent the conversion.
+    Consider this a deprecation notice for the unquoted form. We also
+    now allow the form `#emmy/ratio [1 2]`, like Complex, and now no
+    longer allow an initial `+` on the numerator.
+
 - #154:
 
   - Adds `emmy.tape` with an implementation of reverse-mode automatic

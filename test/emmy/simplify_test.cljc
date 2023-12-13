@@ -38,7 +38,7 @@
 
 (deftest simplify-expressions
   (is (= 6 (simplify-expression '(* 1 2 3))))
-  (is (= #emmy/ratio 2/3
+  (is (= #emmy/ratio "2/3"
          (simplify-expression '(/ 2 3)))))
 
 (deftest trivial-simplifications

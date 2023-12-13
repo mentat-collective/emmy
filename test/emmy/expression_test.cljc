@@ -160,8 +160,11 @@
       (is (= 0 (e/compare () ()))))
 
     (testing "for types that don't play nice we resort to hashing."
-      (is (= -1 (e/compare '(+ x y) #emmy/complex "1+2i")))
-      (is (= 1 (e/compare #emmy/complex "1+2i" '(+ x y)))))))
+      (let [ab (e/compare '(+ x y) #emmy/complex "1+2i")
+            ba (e/compare #emmy/complex "1+2i" '(+ x y))]
+        (is (not= ab 0))
+        (is (not= ba 0))
+        (is (neg? (* ab ba)))))))
 
     ;; TODO add more tests as we start to explore this function.
 

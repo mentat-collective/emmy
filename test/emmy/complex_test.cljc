@@ -133,6 +133,10 @@
         (gt/integral-tests c/complex :exclusions skip :eq near)
         (gt/floating-point-tests c/complex :eq near)))
 
+    (testing "printing"
+      (is (= "#emmy/complex [1 -1]" (pr-str (c/complex 1 -1))))
+      (is (= "#emmy/complex [1 -1]" (.toString (c/complex 1 -1)))))
+
     (checking "g/negative?, g/infinite?" 100 [x sg/real]
               (let [z (c/complex x 0)]
                 (is (= (g/negative? x)
