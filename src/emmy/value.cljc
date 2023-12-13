@@ -84,11 +84,10 @@
   [x]
   #?(:clj (instance? Number x)
      :cljs (or (cljs.core/number? x)
-               (satisfies? IReal x)
-               (instance? bf/Fraction x)
                (instance? goog.math.Integer x)
                (instance? goog.math.Long x)
-               (core/= "bigint" (goog/typeOf x)))))
+               (core/= "bigint" (goog/typeOf x))
+               (instance? bf/Fraction x))))
 
 (defn number?
   "Returns true if `x` is any number type in the numeric tower:
@@ -102,11 +101,12 @@
   [x]
   #?(:clj
      (or (instance? Number x)
-         (satisfies? INumericTower x))
+         (instance? emmy.value.INumericTower x))
      :cljs (or (cljs.core/number? x)
-               (core/= "bigint" (goog/typeOf x))
                (instance? goog.math.Integer x)
                (instance? goog.math.Long x)
+               (core/= "bigint" (goog/typeOf x))
+               (instance? bf/Fraction x)
                (satisfies? INumericTower x))))
 
 ;; `::scalar` is a thing that symbolic expressions AND actual numbers both
