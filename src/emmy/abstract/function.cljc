@@ -267,7 +267,7 @@
   the exemplar expected."
   [f provided expected indexes]
   (cond (number? expected)
-        (when-not (v/numerical? provided)
+        (when-not (v/scalar? provided)
           (u/illegal (str "expected numerical quantity in argument " indexes
                           " of function call " f
                           " but got " provided)))

@@ -74,10 +74,10 @@
 ;; ```clojure
 ;; {:tag <input tag>
 ;;  :primal (f a b c ...)
-;;  :in->partials [[<tape-a> <(((partial 0) f) a b c ...)>]
-;;                 [<tape-b> <(((partial 1) f) a b c ...)>]
-;;                 [<tape-c> <(((partial 2) f) a b c ...)]>
-;;                 ...]
+;;  :in->partial [[<tape-a> <(((partial 0) f) a b c ...)>]
+;;                [<tape-b> <(((partial 1) f) a b c ...)>]
+;;                [<tape-c> <(((partial 2) f) a b c ...)]>
+;;                ...]
 ;; }
 ;; ```
 ;;
@@ -87,10 +87,10 @@
 ;;
 ;; Let's stick with the case of a single [[TapeCell]] output. The [[TapeCell]]
 ;; represents a directed acyclic graph of the computation. The edges point from
-;; each cell down into its `:in->partials` entries, and point to the nodes that
+;; each cell down into its `:in->partial` entries, and point to the nodes that
 ;; affected the current node.
 ;;
-;; Nodes that are re-used can show up in many `:in->partials` entries, so we
+;; Nodes that are re-used can show up in many `:in->partial` entries, so we
 ;; start by sorting the [[TapeCell]]s of the graph in topological order, with
 ;; the output node at the root. This gives us a sequence of nodes with the
 ;; property that when we encounter a node, no node we see afterward can affect
@@ -145,6 +145,28 @@
   v/Numerical
   (numerical? [_] false)
 
+  d/IPerturbed
+  ;; TODO why did I do this? do I need to check the primal?
+  (perturbed? [_] false)
+
+  ;; TODO is this why the zero is happening??
+  (replace-tag [_ old new]
+    (TapeCell. (if (= old tag) new tag)
+               (d/replace-tag primal old new)
+               (mapv (fn [[node partial]]
+                       [node (d/replace-tag partial old new)])
+                     in->partial)))
+
+  ;; TODO alexey does NOT have this... but this feels wrong, why wouldn't you be
+  ;; able to put a differential inside of a tape?
+  (extract-tangent [_ tag]
+    (TapeCell. tag
+               (d/extract-tangent primal tag)
+               (mapv (fn [[node partial]]
+                       [node (d/extract-tangent partial tag)])
+                     in->partial)))
+
+
   Object
   ;; Comparing [[TapeCell]] objects using `equals` defaults to [[equiv]], which
   ;; compares instances only using their non-tagged ('finite') components. If
@@ -162,7 +184,7 @@
       ;; flow operations, like comparison with both [[TapeCell]] and
       ;; non-[[TapeCell]] instances, [[TapeCell]] instances should compare using
       ;; ONLY their primal terms. This means that comparison will ignore any
-      ;; difference in `in->partials`.
+      ;; difference in `in->partial`.
       [Comparable
        (compareTo [a b] (compare a b))]
 
@@ -245,15 +267,11 @@
 
 (defn tag-of
   "More permissive version of [[tape-tag]] that returns ##-Inf, the 'least
-  possible tag', when passed a non-[[TapeCell]] instance.
-
-  TODO this will need to be extended to
-  handle [[emmy.differential/Differential]] instances when these namespaces
-  merge."
+  possible tag', when passed a non-[[TapeCell]] instance."
   [x]
-  (if (tape? x)
-    (tape-tag x)
-    ##-Inf))
+  (cond (tape? x)           (tape-tag x)
+        (d/differential? x) (d/max-order-tag x)
+        :else ##-Inf))
 
 (defn tape-primal
   "Given a [[TapeCell]], returns the `primal` field of the supplied [[TapeCell]]
@@ -271,7 +289,7 @@
      x)))
 
 (defn tape-partials
-  "Returns the `in->partials` vector of the supplied [[TapeCell]] object. Errors
+  "Returns the `in->partial` vector of the supplied [[TapeCell]] object. Errors
   if any other type is supplied.
 
   This vector holds pairs with these two entries:
@@ -301,9 +319,9 @@
 
   Given a non-[[TapeCell]], acts as identity."
   [v]
-  (if (tape? v)
-    (recur (tape-primal v))
-    v))
+  (cond (tape? v)           (recur (tape-primal v))
+        (d/differential? v) (recur (d/primal-part v))
+        :else               v))
 
 ;; ### Comparison, Control Flow
 ;;
@@ -401,11 +419,11 @@
                                    sorted
                                    (tape-partials node))]
                 [seen (cons node sorted)])))
-          (process-children [seen sorted in->partials]
+          (process-children [seen sorted in->partial]
             (transduce (map first)
                        (completing compute-visiting-order)
                        [seen sorted]
-                       in->partials))]
+                       in->partial))]
     (second
      (compute-visiting-order [#{} []] node))))
 
@@ -415,7 +433,11 @@
 ;; phase for every value; rather than store a new map at each slot, we create a
 ;; new [[Completed]] type to distinguish nested maps from sensitivity maps.
 ;;
-(defrecord Completed [v->partial])
+(defrecord Completed [v->partial]
+  d/IPerturbed
+  (perturbed? [_] (boolean (some d/perturbed? (vals v->partial))))
+  (replace-tag [_ old new] (u/map-vals #(d/replace-tag % old new) v->partial))
+  (extract-tangent [_ tag] (u/map-vals #(d/extract-tangent % tag) v->partial)))
 
 (defn ^:no-doc reverse-phase
   "Accepts a [[TapeCell]] `root` representing the final value, or output, of a
@@ -455,6 +477,20 @@
 ;; values like maps or quaternions. [[emmy.differential/extract-tangent]] does
 ;; this for forward-mode, I believe.
 
+(declare ->partials)
+
+(defn- ->partials-fn
+  [f tag]
+  (-> (fn [& args]
+        (if (d/tag-active? tag)
+          (let [fresh (d/fresh-tag)]
+            (-> (d/with-active-tag tag f (map #(d/replace-tag % tag fresh) args))
+                (->partials tag)
+                (d/replace-tag fresh tag)))
+          (-> (d/with-active-tag tag f args)
+              (->partials tag))))
+      (f/with-arity (f/arity f))))
+
 (defn ^:no-doc ->partials
   "Given some possibly-structured `output` of the forward pass and a `tag`,
   returns either
@@ -477,11 +513,7 @@
         (s/mapr #(->partials % tag) output)
 
         (f/function? output)
-
-        ;; TODO this needs to handle perturbation confusion with tag
-        ;; replacement. Make something similar to extract-tangent-fn and test
-        ;; this so we don't allow an amazing bug.
-        (comp #(->partials % tag) output)
+        (->partials-fn output tag)
 
         :else (->Completed {})))
 
@@ -577,8 +609,16 @@
     ([x]
      (let [tag       (d/fresh-tag)
            inputs    (tapify x tag)
-           output    (f inputs)
+           output    (d/with-active-tag tag f [inputs])
            completed (->partials output tag)]
+       (when (fn? output)
+         (prn tag)
+         (clojure.pprint/pprint
+          (output (tapify 'y (inc tag))))
+         #_(clojure.pprint/pprint
+            (->partials (output (tapify 'y (inc tag))) (inc tag)))
+         #_(clojure.pprint/pprint
+            (->partials (output (tapify 'y (inc tag))) tag)))
        (interpret inputs completed tag)))
     ([x & more]
      ((gradient (fn [args]
@@ -669,7 +709,18 @@
         "No df:dx, df:dy supplied for `f` or registered generically."))))
   ([f df:dx df:dy]
    (fn call [x y]
-     (letfn [(operate [tag]
+     (letfn [(operate-forward [tag]
+               (let [[xe dx] (d/primal-tangent-pair x tag)
+                     [ye dy] (d/primal-tangent-pair y tag)
+                     a       (call xe ye)
+                     b       (if (g/numeric-zero? dx)
+                               a
+                               (d/d:+* a (df:dx xe ye) dx))]
+                 (if (g/numeric-zero? dy)
+                   b
+                   (d/d:+* b (df:dy xe ye) dy))))
+
+             (operate-reverse [tag]
                (let [primal-x  (tape-primal x tag)
                      primal-y  (tape-primal y tag)
                      partial-x (if (and (tape? x) (= tag (tape-tag x)))
@@ -683,11 +734,15 @@
                        (into partial-x partial-y))))]
        (let [tag-x (tag-of x)
              tag-y (tag-of y)]
-         (cond (and (tape? x) (>= tag-x tag-y))
-               (operate tag-x)
+         (cond (>= tag-x tag-y)
+               (cond (tape? x)           (operate-reverse tag-x)
+                     (d/differential? x) (operate-forward tag-x)
+                     :else               (f x y))
 
-               (and (tape? y) (< tag-x tag-y))
-               (operate tag-y)
+               (< tag-x tag-y)
+               (cond (tape? y)           (operate-reverse tag-y)
+                     (d/differential? y) (operate-forward tag-y)
+                     :else               (f x y))
 
                :else (f x y)))))))
 
@@ -750,7 +805,9 @@
   ([generic-op differential-op]
    (doseq [signature [[::tape ::tape]
                       [::v/scalar ::tape]
-                      [::tape ::v/scalar]]]
+                      [::tape ::v/scalar]
+                      [::tape ::d/differential]
+                      [::d/differential ::tape]]]
      (defmethod generic-op signature [a b] (differential-op a b)))))
 
 (defn ^:no-doc by-primal
