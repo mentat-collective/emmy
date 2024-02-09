@@ -242,7 +242,7 @@
            (= this (.valueOf other)))))))
 
 #?(:cljs
-   (extend-type js/BigInt
+   (extend-type bigint
      IHash
      (-hash [this] (hash (.toString this 16)))
 
@@ -288,7 +288,7 @@
            (garray/defaultCompare this other)
            (throw (js/Error. (str "Cannot compare " this " to " o))))))
 
-     js/BigInt
+     bigint
      (-compare [this o]
        (let [other (.valueOf o)]
          (if (real? other)
@@ -313,7 +313,7 @@
    ;; ClojureScript-specific implementations of Value.
    (do
      (extend-protocol Numerical
-       js/BigInt
+       bigint
        (numerical? [_] true)
 
        goog.math.Integer
@@ -323,7 +323,7 @@
        (numerical? [_] true))
 
      (extend-protocol IKind
-       js/BigInt
+       bigint
        (kind [_] js/BigInt)
 
        goog.math.Integer
