@@ -631,7 +631,7 @@
      (s->m ls ms rs)))
   ([ls ms rs]
    (when *careful-conversion*
-     (assert (v/numerical? (g/* ls (g/* ms rs)))))
+     (assert (v/scalar? (g/* ls (g/* ms rs)))))
    (let [ndowns (s/dimension ls)
          nups   (s/dimension rs)]
      (generate ndowns nups
@@ -720,7 +720,7 @@
                           (s/unflatten (nth-col m j) col-shape))
                         (s/compatible-shape rs))]
     (when *careful-conversion*
-      (assert (v/numerical? (g/* ls (g/* ms rs)))
+      (assert (v/scalar? (g/* ls (g/* ms rs)))
               (str "product is not numerical: " ls ms rs)))
     ms))
 

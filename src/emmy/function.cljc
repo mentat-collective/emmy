@@ -403,12 +403,12 @@
       (with-arity [:exactly 1])))
 
 (defn coerce-to-fn
-  "Given a [[value/numerical?]] input `x`, returns a function of arity `arity`
+  "Given an [[emmy.value/scalar?]] input `x`, returns a function of arity `arity`
   that always returns `x` no matter what input it receives.
 
   For non-numerical `x`, returns `x`."
   ([x arity]
-   (if (v/numerical? x)
+   (if (v/scalar? x)
      (-> (constantly x)
          (with-arity arity))
      x)))
@@ -426,8 +426,8 @@
   ```"
   [op]
   (letfn [(h [f g]
-            (let [f-arity (if (v/numerical? f) (arity g) (arity f))
-                  g-arity (if (v/numerical? g) f-arity   (arity g))
+            (let [f-arity (if (v/scalar? f) (arity g) (arity f))
+                  g-arity (if (v/scalar? g) f-arity   (arity g))
                   f1      (coerce-to-fn f f-arity)
                   g1      (coerce-to-fn g g-arity)
                   arity   (joint-arity [f-arity g-arity])]

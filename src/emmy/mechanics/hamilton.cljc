@@ -53,9 +53,9 @@
   (and (s/up? s)
        (= (count s) 3)
        (let [[t q v] s]
-         (and (v/numerical? t)
-              (or (and (v/numerical? q)
-                       (v/numerical? v))
+         (and (v/scalar? t)
+              (or (and (v/scalar? q)
+                       (v/scalar? v))
                   (and (s/up? q)
                        (s/down? v)
                        (= (s/dimension q)

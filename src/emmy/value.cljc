@@ -226,7 +226,7 @@
        number
        (-equiv [this other]
          (cond (core/number? other) (identical? this other)
-               (numerical? other)   (= this (.valueOf other))
+               (scalar? other)      (= this (.valueOf other))
                :else false))
 
        goog.math.Integer

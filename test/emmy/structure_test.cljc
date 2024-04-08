@@ -510,10 +510,10 @@
         about the entries.")))
 
 (deftest mapper-tests
-  (testing "sumr"
+  (testing "sumr, fold-chain"
     (with-comparator (v/within 1e-7)
       (checking "sumr sums all entries when passed a single structure" 100
-                [s (-> (gen/fmap #(g/modulo % 100) sg/real)
+                [s (-> (sg/reasonable-real 100)
                        (sg/structure 3))]
                 (is (ish? (reduce g/+ (flatten s))
                           (s/sumr identity s)))))
@@ -541,6 +541,20 @@
                     (s/up (s/down 'e 'f)
                           (s/down 'g 'h)))))
         "sumr uses g/+, so symbols etc can be added too."))
+
+  (testing "fold-chain"
+    (is (= [{:s 1, :chain [0 0], :orientations [::s/down ::s/up]}
+            {:s 2, :chain [0 1], :orientations [::s/down ::s/up]}
+            {:s 3, :chain [1 0], :orientations [::s/down ::s/up]}
+            {:s 4, :chain [1 1], :orientations [::s/down ::s/up]}]
+           (s/fold-chain
+            (fn ([] [])
+              ([acc] acc)
+              ([acc [s chain orientations]]
+               (conj acc {:s s
+                          :chain chain
+                          :orientations orientations})))
+            (s/down (s/up 1 2) (s/up 3 4))))))
 
   (testing "mapr"
     (is (= (s/up (s/down 1  4  9)

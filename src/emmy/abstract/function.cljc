@@ -10,7 +10,8 @@
   The namespace also contains an implementation of a small language for
   declaring the input and output types of [[literal-function]] instances."
   (:refer-clojure :exclude [name])
-  (:require [emmy.abstract.number :as an]
+  (:require #?(:clj [clojure.pprint :as pprint])
+            [emmy.abstract.number :as an]
             [emmy.differential :as d]
             [emmy.function :as f]
             [emmy.generic :as g]
@@ -138,6 +139,13 @@
 #?(:clj
    (defmethod print-method Function [^Function f ^java.io.Writer w]
      (.write w (.toString f))))
+
+#?(:clj
+   ;; NOTE that this override only works in Clojure. In cljs, `simple-dispatch`
+   ;; isn't extensible.
+   (defmethod pprint/simple-dispatch Function [f]
+     (pprint/simple-dispatch
+      (.-f-name ^Function f))))
 
 (derive Function ::function)
 
@@ -267,10 +275,11 @@
   the exemplar expected."
   [f provided expected indexes]
   (cond (number? expected)
-        (when-not (v/numerical? provided)
+        (when-not (v/scalar? provided)
           (u/illegal (str "expected numerical quantity in argument " indexes
                           " of function call " f
                           " but got " provided)))
+
         (s/structure? expected)
         (do (when-not (and (or (s/structure? provided) (sequential? provided))
                            (= (s/orientation provided) (s/orientation expected))
@@ -279,6 +288,7 @@
                               " but got " provided)))
             (doseq [[provided expected sub-index] (map list provided expected (range))]
               (check-argument-type f provided expected (conj indexes sub-index))))
+
         (keyword? expected) ;; a keyword has to match the argument's kind
         (when-not (= (v/kind provided) expected)
           (u/illegal (str "expected argument of type " expected " but got " (v/kind provided)
