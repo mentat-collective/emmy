@@ -49,7 +49,7 @@
 ;; First, a function that will print nicely rendered infix versions
 ;; of (simplified) symbolic expressions:
 
-(->clerk-only
+(->clerk
  (defn- show [e]
    (nextjournal.clerk/tex
     (->TeX
@@ -57,7 +57,7 @@
 
 ;; And a function to play with:
 
-(->clerk-only
+(->clerk
  (def func
    (af/literal-function 'f)))
 
@@ -70,7 +70,7 @@
 
 ;; Here's the taylor series expansions of $f(x + h)$:
 
-(->clerk-only
+(->clerk
  (def fx+h
    (-> ((d/taylor-series func 'x) 'h)
        (series/sum 4))))
@@ -110,7 +110,7 @@
 
 ;; We could also expand $f(x - h)$:
 
-(->clerk-only
+(->clerk
  (def fx-h
    (-> ((d/taylor-series func 'x) (g/negate 'h))
        (series/sum 4))))
