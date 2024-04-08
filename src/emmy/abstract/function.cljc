@@ -19,6 +19,7 @@
             [emmy.numsymb :as sym]
             [emmy.polynomial]
             [emmy.structure :as s]
+            [emmy.tape :as tape]
             [emmy.util :as u]
             [emmy.value :as v])
   #?(:clj
@@ -250,25 +251,41 @@
     (->Function
      fexp (f/arity f) (domain-types f) (range-type f))))
 
+(defn- forward-mode-fold [f primal-s tag]
+  (fn
+    ([] (apply f primal-s))
+    ([acc] acc)
+    ([acc [x path _]]
+     (let [dx (d/tangent-part x tag)]
+       (if (g/zero? dx)
+         acc
+         (let [partial (literal-partial f path)]
+           (d/d:+ acc (d/d:* (literal-apply partial primal-s)
+                             dx))))))))
+
+(defn- reverse-mode-fold [f primal-s tag]
+  (fn
+    ([] [])
+    ([partials]
+     (tape/make tag (apply f primal-s) partials))
+    ([partials [entry path _]]
+     (if (and (tape/tape? entry) (= tag (tape/tape-tag entry)))
+       (let [partial (literal-partial f path)]
+         (conj partials [entry (literal-apply partial primal-s)]))
+       partials))))
+
 (defn- literal-derivative
-  "Takes a literal function `f` and a sequence of arguments `xs`, and generates an
+  "TODO fix this, not true anymore...
+
+  Takes a literal function `f` and a sequence of arguments `xs`, and generates an
   expanded `((D f) xs)` by applying the chain rule and summing the partial
   derivatives for each differential argument in the input structure."
-  [f xs]
-  (let [v        (m/seq-> xs)
-        flat-v   (flatten v)
-        tag      (apply d/max-order-tag flat-v)
-        ve       (s/mapr #(d/primal-part % tag) v)
-        partials (s/map-chain
-                  (fn [x path _]
-                    (let [dx (d/tangent-part x tag)]
-                      (if (g/zero? dx)
-                        0
-                        (d/d:* (literal-apply
-                                (literal-partial f path) ve)
-                               dx))))
-                  v)]
-    (apply d/d:+ (apply f ve) (flatten partials))))
+  [f s tag dx]
+  (let [fold-fn  (cond (tape/tape? dx)      reverse-mode-fold
+                       (d/differential? dx) forward-mode-fold
+                       :else                (u/illegal "No tape or differential inputs."))
+        primal-s (s/mapr (fn [x] (tape/primal-of x tag)) s)]
+    (s/fold-chain (fold-fn f primal-s tag) s)))
 
 (defn- check-argument-type
   "Check that the argument provided at index i has the same type as
@@ -298,9 +315,15 @@
 
 (defn- literal-apply [f xs]
   (check-argument-type f xs (domain-types f) [0])
-  (if (some d/perturbed? xs)
-    (literal-derivative f xs)
-    (an/literal-number `(~(name f) ~@(map g/freeze xs)))))
+  (let [s (m/seq-> xs)]
+    (if-let [[tag dx] (s/fold-chain
+                       (fn
+                         ([] [])
+                         ([acc]     (apply tape/tag+perturbation acc))
+                         ([acc [d]] (conj acc d)))
+                       s)]
+      (literal-derivative f s tag dx)
+      (an/literal-number `(~(name f) ~@(map g/freeze xs))))))
 
 ;; ## Specific Generics
 ;;

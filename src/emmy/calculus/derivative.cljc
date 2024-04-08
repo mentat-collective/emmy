@@ -15,6 +15,7 @@
             [emmy.operator :as o]
             [emmy.series :as series]
             [emmy.structure :as s]
+            [emmy.tape :as tape]
             [emmy.util :as u]
             [emmy.value :as v])
   #?(:clj
@@ -431,15 +432,19 @@
 
 (doseq [t [::v/function ::s/structure]]
   (defmethod g/partial-derivative [t v/seqtype] [f selectors]
+    #_(tape/gradient f selectors)
     (multivariate f selectors))
 
   (defmethod g/partial-derivative [t nil] [f _]
+    #_(tape/gradient f [])
     (multivariate f [])))
 
 ;; ## Operators
 ;;
 ;; This section exposes various differential operators as [[o/Operator]]
 ;; instances.
+
+;; TODO note that this will now go to reverse mode.
 
 (def D
   "Derivative operator. Takes some function `f` and returns a function whose value
@@ -470,6 +475,14 @@
   provided via `selectors`."
   [& selectors]
   (o/make-operator #(g/partial-derivative % selectors)
+                   `(~'partial ~@selectors)))
+
+(def D-fwd
+  (o/make-operator #(multivariate % [])
+                   g/derivative-symbol))
+
+(defn partial-fwd [& selectors]
+  (o/make-operator #(multivariate % selectors)
                    `(~'partial ~@selectors)))
 
 ;; ## Derivative Utilities

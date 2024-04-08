@@ -13,6 +13,7 @@
             [emmy.function :as f]
             [emmy.generic :as g]
             [emmy.matrix :as matrix]
+            [emmy.operator :as o]
             [emmy.structure :as s]
             [emmy.util :as u]
             [emmy.value :as v]))
@@ -60,6 +61,7 @@
 ;;   - a "tag", used as in [[emmy.differential]] to prevent confusion
 ;;     between [[TapeCell]] instances created for different nested runs of
 ;;     differentation
+;;   - a unique ID, used to de-duplicate work in the reverse pass
 ;;   - the "primal value" wrapped by this [[TapeCell]] instance
 ;;   - A vector of pairs of each [[TapeCell]] input paired with the partial
 ;;     derivative of the primal value with respect to that input
@@ -73,11 +75,12 @@
 ;;
 ;; ```clojure
 ;; {:tag <input tag>
+;;  :id <fresh ID>
 ;;  :primal (f a b c ...)
-;;  :in->partials [[<tape-a> <(((partial 0) f) a b c ...)>]
-;;                 [<tape-b> <(((partial 1) f) a b c ...)>]
-;;                 [<tape-c> <(((partial 2) f) a b c ...)]>
-;;                 ...]
+;;  :in->partial [[<tape-a> <(((partial 0) f) a b c ...)>]
+;;                [<tape-b> <(((partial 1) f) a b c ...)>]
+;;                [<tape-c> <(((partial 2) f) a b c ...)]>
+;;                ...]
 ;; }
 ;; ```
 ;;
@@ -87,10 +90,10 @@
 ;;
 ;; Let's stick with the case of a single [[TapeCell]] output. The [[TapeCell]]
 ;; represents a directed acyclic graph of the computation. The edges point from
-;; each cell down into its `:in->partials` entries, and point to the nodes that
+;; each cell down into its `:in->partial` entries, and point to the nodes that
 ;; affected the current node.
 ;;
-;; Nodes that are re-used can show up in many `:in->partials` entries, so we
+;; Nodes that are re-used can show up in many `:in->partial` entries, so we
 ;; start by sorting the [[TapeCell]]s of the graph in topological order, with
 ;; the output node at the root. This gives us a sequence of nodes with the
 ;; property that when we encounter a node, no node we see afterward can affect
@@ -111,17 +114,7 @@
 ;; - for the multivariable output case, walk the output structure and replace
 ;;   each map with the value for the input entry's [[TapeCell]].
 ;;
-;; ### Notes for Implementation
 ;;
-;; - I don't think that the implementation here will play well when nested with
-;;   forward-mode AD. In Alexey Radul's DVL implementation, [[TapeCell]]
-;;   and [[emmy.differential/Differential]] are both implemented in the same
-;;   namespace and more tightly bound. We'll have to do that here too.
-;;
-;; - This implementation doesn't handle perturbation confusion properly for
-;; - functions, and I suspect that we'll see Alexey's Amazing Bug. In another
-;; - pass I want to carefully test this and make sure it works well.
-
 ;; ## TapeCell Implementation
 ;;
 ;; A [[TapeCell]] will respond to [[v/kind]] with `::tape`. To
@@ -134,7 +127,7 @@
 
 (declare compare)
 
-(deftype TapeCell [tag primal in->partial]
+(deftype TapeCell [tag id primal in->partial]
   v/IKind
   (kind [_] ::tape)
 
@@ -145,6 +138,31 @@
   v/Numerical
   (numerical? [_] false)
 
+  d/IPerturbed
+  ;; NOTE the reason we need this is for the arguments to literal function.
+  ;; Those need to tell if there is some tape coming in.
+  (perturbed? [_] true)
+
+  (replace-tag [_ old new]
+    (TapeCell. (if (= old tag) new tag)
+               id
+               (d/replace-tag primal old new)
+               (mapv (fn [[node partial]]
+                       [(d/replace-tag node old new)
+                        (d/replace-tag partial old new)])
+                     in->partial)))
+
+  ;; This implementation is called if a tape ever makes it out of
+  ;; forward-mode-differentiated function.
+  (extract-tangent [_ tag]
+    (TapeCell. tag
+               id
+               (d/extract-tangent primal tag)
+               (mapv (fn [[node partial]]
+                       [node (d/extract-tangent partial tag)])
+                     in->partial)))
+
+
   Object
   ;; Comparing [[TapeCell]] objects using `equals` defaults to [[equiv]], which
   ;; compares instances only using their non-tagged ('finite') components. If
@@ -154,6 +172,7 @@
   (toString [_]
     (str "#emmy.tape.TapeCell"
          {:tag tag
+          :id id
           :primal primal
           :in->partial in->partial}))
 
@@ -162,7 +181,7 @@
       ;; flow operations, like comparison with both [[TapeCell]] and
       ;; non-[[TapeCell]] instances, [[TapeCell]] instances should compare using
       ;; ONLY their primal terms. This means that comparison will ignore any
-      ;; difference in `in->partials`.
+      ;; difference in `in->partial`.
       [Comparable
        (compareTo [a b] (compare a b))]
 
@@ -199,6 +218,11 @@
   [x]
   (instance? TapeCell x))
 
+(defn ^:no-doc fresh-id
+  "Returns a new, unique ID for use with a new [[TapeCell]]."
+  []
+  (gensym))
+
 (defn make
   "Returns a [[TapeCell]] instance with the supplied `tag` and `primal` values.
 
@@ -211,9 +235,9 @@
   where `<partial>` is the partial derivative of the output with respect to each
   input (defaults to `[]`)."
   ([tag primal]
-   (->TapeCell tag primal []))
+   (->TapeCell tag (fresh-id) primal []))
   ([tag primal partials]
-   (->TapeCell tag primal partials)))
+   (->TapeCell tag (fresh-id) primal partials)))
 
 ;; TODO making [[tapify]] extensible is the key to differentiating things like
 ;; quaternion-valued functions. Forward-mode handles this differently, since we
@@ -243,18 +267,6 @@
   [^TapeCell tape]
   (.-tag tape))
 
-(defn tag-of
-  "More permissive version of [[tape-tag]] that returns ##-Inf, the 'least
-  possible tag', when passed a non-[[TapeCell]] instance.
-
-  TODO this will need to be extended to
-  handle [[emmy.differential/Differential]] instances when these namespaces
-  merge."
-  [x]
-  (if (tape? x)
-    (tape-tag x)
-    ##-Inf))
-
 (defn tape-primal
   "Given a [[TapeCell]], returns the `primal` field of the supplied [[TapeCell]]
   object. For all other types, acts as identity.
@@ -270,8 +282,18 @@
      (.-primal ^TapeCell x)
      x)))
 
+(defn tape-id
+  "Returns the `-id` field of the supplied [[TapeCell]] object. Errors if any
+  other type is supplied.
+
+  IDs are used in the reverse pass of automatic differentiation to prevent
+  duplicating work for [[TapeCell]]s used as input to multiple
+  other [[TapeCell]]s."
+  [^TapeCell tape]
+  (.-id tape))
+
 (defn tape-partials
-  "Returns the `in->partials` vector of the supplied [[TapeCell]] object. Errors
+  "Returns the `in->partial` vector of the supplied [[TapeCell]] object. Errors
   if any other type is supplied.
 
   This vector holds pairs with these two entries:
@@ -287,23 +309,45 @@
 
   ```clojure
   {:tag         (tape-tag t)
+   :id          (tape-id t)
    :primal      (tape-primal t)
    :in->partial (tape-partials t)}
   ```"
   [^TapeCell t]
   {:tag         (.-tag t)
+   :id          (.-id t)
    :primal      (.-primal t)
    :in->partial (.-in->partial t)})
+
+;; More permissive accessors...
+
+(defn tag-of
+  "More permissive version of [[tape-tag]] that returns `nil` when passed a
+  non-[[TapeCell]] instance."
+  [x]
+  (cond (tape? x)           (tape-tag x)
+        (d/differential? x) (d/max-order-tag x)
+        :else nil))
+
+(defn primal-of
+  "More permissive version of [[tape-primal]] that returns `v` when passed a
+  non-[[TapeCell]]-or-[[emmy.differential/Differential]] instance."
+  ([v]
+   (primal-of v (tag-of v)))
+  ([v tag]
+   (cond (tape? v)           (tape-primal v tag)
+         (d/differential? v) (d/primal-part v tag)
+         :else               v)))
 
 (defn deep-primal
   "Version of [[tape-primal]] that will descend recursively into any [[TapeCell]]
   instance returned by [[tape-primal]] until encountering a non-[[TapeCell]].
 
   Given a non-[[TapeCell]], acts as identity."
-  [v]
-  (if (tape? v)
-    (recur (tape-primal v))
-    v))
+  ([v]
+   (cond (tape? v)           (recur (tape-primal v))
+         (d/differential? v) (recur (d/primal-part v))
+         :else               v)))
 
 ;; ### Comparison, Control Flow
 ;;
@@ -387,6 +431,27 @@
 
 ;; ## Reverse-pass support
 
+(defn inner-tag
+  [& tags]
+  (or (some (apply hash-set tags)
+            (rseq d/*active-tags*))
+      (apply max tags)))
+
+(defn tag+perturbation
+  "TODO we could change `perturbed?` into something like `possible-perturbations`,
+  to get collection types to return sequence of inputs for this. Then we could
+  handle map-shaped inputs etc into literal functions, if we had the proper
+  descriptor language for it."
+  ([& dxs]
+   (let [m (into {} (mapcat
+                     (fn [dx]
+                       (when-let [t (tag-of dx)]
+                         {t dx})))
+                 dxs)]
+     (when (seq m)
+       (let [tag (apply inner-tag (keys m))]
+         [tag (m tag)])))))
+
 (defn ^:no-doc topological-sort
   "Given a `node` of type [[TapeCell]] (representing the root of a computation's
   directed acyclic dependency graph), returns a sequence of [[TapeCell]]
@@ -394,18 +459,18 @@
   [node]
   (letfn [(compute-visiting-order
             [[seen sorted] node]
-            (if (contains? seen node)
+            (if (contains? seen (tape-id node))
               [seen sorted]
               (let [[seen sorted] (process-children
-                                   (conj seen node)
+                                   (conj seen (tape-id node))
                                    sorted
                                    (tape-partials node))]
                 [seen (cons node sorted)])))
-          (process-children [seen sorted in->partials]
+          (process-children [seen sorted in->partial]
             (transduce (map first)
                        (completing compute-visiting-order)
                        [seen sorted]
-                       in->partials))]
+                       in->partial))]
     (second
      (compute-visiting-order [#{} []] node))))
 
@@ -415,7 +480,50 @@
 ;; phase for every value; rather than store a new map at each slot, we create a
 ;; new [[Completed]] type to distinguish nested maps from sensitivity maps.
 ;;
-(defrecord Completed [v->partial])
+
+(defrecord Completed [v->partial]
+  d/IPerturbed
+  (perturbed? [_] (boolean (some d/perturbed? (vals v->partial))))
+
+  ;; TODO note that this can happen because these can pop out from inside of
+  ;; ->partial-fn. And that is currently where the tag-rewriting has to occur.
+  ;;
+  ;; But that is going to be inefficient for lots of intermediate values...
+  ;; ideally we could call this AFTER we select out the IDs. That implies that
+  ;; we want to shove that inside of extract.
+  ;;
+  ;; TODO TODO TODO definitely do this, we definitely want that to happen, don't
+  ;; have those stacked levels, otherwise super inefficient to walk multiple
+  ;; times.
+  ;;
+  ;; TODO AND THEN if that's true then we can delete this implementation, since
+  ;; we'll already be pulled OUT of the completed map.
+  (replace-tag [_ old new]
+    (Completed.
+     (u/map-vals #(d/replace-tag % old new) v->partial)))
+
+  ;; TODO note that this can never happen... because that means that
+  ;; a [[Completed]] instance has been returned somehow from a gradient call.
+  (extract-tangent [_ _]
+    (assert "Impossible!")))
+
+(defn process [sensitivities tape]
+  ;; Since we're processing in topological sort order, when we
+  ;; reach a node we know we're done updating its
+  ;; sensitivity (it can't be affected by nodes that come
+  ;; after).
+  (let [sensitivity (get sensitivities (tape-id tape))]
+    (reduce
+     (fn [sensitivities in-to-partial-entry]
+       (let [[tape local-partial] in-to-partial-entry
+             id                   (tape-id tape)
+             delta                (g/* sensitivity local-partial)
+             new-entry            (if-let [v (get sensitivities id)]
+                                    (g/+ v delta)
+                                    delta)]
+         (assoc sensitivities id new-entry)))
+     sensitivities
+     (tape-partials tape))))
 
 (defn ^:no-doc reverse-phase
   "Accepts a [[TapeCell]] `root` representing the final value, or output, of a
@@ -425,25 +533,14 @@
   - each intermediate value seen in the computation to
   - the partial derivative of the output with respect to that value."
   [root]
-  (let [nodes   (topological-sort root)
-        acc     {root 1}
-        process (fn [m node]
-                  ;; Since we're processing in topological sort order, when we
-                  ;; reach a node we know we're done updating its
-                  ;; sensitivity (it can't be affected by nodes that come
-                  ;; after).
-                  (let [sensitivity (get m node)]
-                    (reduce
-                     (fn [acc [cell factor]]
-                       (let [delta (g/* sensitivity factor)]
-                         (update acc cell (fn [v]
-                                            (if v
-                                              (g/+ v delta)
-                                              delta)))))
-                     m
-                     (tape-partials node))))]
+  (let [nodes         (topological-sort root)
+
+        ;; TODO this is the spot where we want to wire in many sensitivities. So
+        ;; how would it work, if we set all of the sensitivities for the outputs
+        ;; at once? What would the ordering be as we walked backwards?
+        sensitivities {(tape-id root) 1}]
     (->Completed
-     (reduce process acc nodes))))
+     (reduce process sensitivities nodes))))
 
 ;; [[reverse-phase]] above operates on a single [[TapeCell]]. For structured
 ;; outputs, we need to walk the output until we hit a [[TapeCell]] instance and
@@ -454,6 +551,38 @@
 ;; things in the library. Without this we can't generically support output
 ;; values like maps or quaternions. [[emmy.differential/extract-tangent]] does
 ;; this for forward-mode, I believe.
+
+(declare ->partials)
+
+;; TODO fix the docstring, and think of how we can combine this into the
+;; narrative of what we find in derivative. Maybe this should be the main
+;; version?
+
+(defn- ->partials-fn
+  "Returns a new function that composes a 'tag extraction' step with `f`. The
+  returned fn will
+
+  - call the underlying `f`, producing `result`
+  - return `(->partials result tag)`
+
+  If called within the scope of a function waiting for the same `tag`, the
+  returned function will remap any instance of `tag` that appears in any
+  differential argument passed to it to a private `fresh` tag, to prevent
+  internal perturbation confusion. Any tangent components in the final result
+  tagged with `fresh` will be remapped in the final result back to `tag`.
+
+  If called _outside_ of a function waiting for `tag` no tag remapping will
+  occur."
+  [f tag]
+  (-> (fn [& args]
+        (if (d/tag-active? tag)
+          (let [fresh (d/fresh-tag)]
+            (-> (d/with-active-tag tag f (map #(d/replace-tag % tag fresh) args))
+                (->partials tag)
+                (d/replace-tag fresh tag)))
+          (-> (d/with-active-tag tag f args)
+              (->partials tag))))
+      (f/with-arity (f/arity f))))
 
 (defn ^:no-doc ->partials
   "Given some possibly-structured `output` of the forward pass and a `tag`,
@@ -473,17 +602,28 @@
         (vector? output)
         (mapv #(->partials % tag) output)
 
+        ;; Here is an example of the subtlety. We MAY want to go one at a
+        ;; time... or we may want to insert some sensitivity entry into the
+        ;; entire structure and roll the entire structure back. We don't do that
+        ;; YET so I bet we can get away with ignoring it for this first PR. But
+        ;; we are close to needing that.
         (s/structure? output)
         (s/mapr #(->partials % tag) output)
 
         (f/function? output)
+        (->partials-fn output tag)
 
-        ;; TODO this needs to handle perturbation confusion with tag
-        ;; replacement. Make something similar to extract-tangent-fn and test
-        ;; this so we don't allow an amazing bug.
-        (comp #(->partials % tag) output)
+        (o/operator? output)
+        (o/->Operator (->partials (o/procedure output) tag)
+                      (o/arity output)
+                      (o/name output)
+                      (o/context output)
+                      (meta output))
 
-        :else (->Completed {})))
+        (v/scalar? output)
+        (->Completed {})
+
+        :else (u/unsupported "Output not handled yet!")))
 
 ;; Unfortunately we require two passes over the output structure. The first one
 ;; generates the maps of partials, and the second pass extracts the partial we
@@ -512,9 +652,15 @@
         (s/mapr #(extract % id) output)
 
         (f/function? output)
-        ;; TODO this needs to handle perturbation confusion with tag
-        ;; replacement. Make something similar to extract-tangent-fn.
         (comp #(extract % id) output)
+
+        (o/operator? output)
+        (o/->Operator (extract (o/procedure output) id)
+                      (o/arity output)
+                      (o/name output)
+                      (o/context output)
+                      (meta output))
+
 
         :else 0))
 
@@ -537,20 +683,20 @@
   leaf replaced by copies of `output` representing the partial derivative of the
   computation at that leaf."
   [input output tag]
-  (cond (and (tape? input) (= tag (tape-tag input)))
-        (extract output input)
+  (cond
+    (and (tape? input) (= tag (tape-tag input)))
+    (extract output (tape-id input))
 
-        (s/structure? input)
-        ;; TODO if we don't care about flipping for gradient, then use mapr.
-        (s/opposite input (mapv #(interpret % output tag) input))
+    (s/structure? input)
+    (s/opposite input (mapv #(interpret % output tag) input))
 
-        (f/function? input)
-        (throw
-         (ex-info "function inputs not supported." {:input input}))
+    (f/function? input)
+    (throw
+     (ex-info "function inputs not supported." {:input input}))
 
-        :else
-        (throw
-         (ex-info "unknown input type!" {:input input}))))
+    :else
+    (throw
+     (ex-info "unknown input type!" {:input input}))))
 
 ;; ## Gradient
 
@@ -571,19 +717,65 @@
   normal `(f x)` call would present. This restriction does _not_ apply to
   operations like putting `x` into a container or destructuring; just primitive
   function calls."
-  [f]
-  (fn
-    ([] 0)
-    ([x]
-     (let [tag       (d/fresh-tag)
-           inputs    (tapify x tag)
-           output    (f inputs)
-           completed (->partials output tag)]
-       (interpret inputs completed tag)))
-    ([x & more]
-     ((gradient (fn [args]
-                  (apply f args)))
-      (matrix/seq-> (cons x more))))))
+  ([f] (gradient f []))
+  ([f selectors]
+   (fn
+     ([] 0)
+     ([x]
+      (when (and (seq selectors) (not (s/structure? x)))
+        (u/illegal
+         (str "Selectors " selectors
+              " not allowed for non-structural input " x)))
+
+      (let [tag       (d/fresh-tag)
+            inputs    (if (empty? selectors)
+                        (tapify x tag)
+                        (update-in x selectors tapify tag))
+            output    (d/with-active-tag tag f [inputs])
+            ;; TODO there is an implicit sensitivity here for each run.
+            completed (->partials output tag)]
+        (if (empty? selectors)
+          (interpret inputs completed tag)
+          (interpret (get-in inputs selectors) completed tag))))
+     ([x & more]
+      ((gradient (fn [args]
+                   (apply f args))
+                 selectors)
+       (matrix/seq-> (cons x more)))))))
+
+;; starting to work on the one that returns a pair of primal and fn.
+
+#_
+(defn gradient-fn
+  ([f] (gradient-fn f []))
+  ([f selectors]
+   (fn
+     ([] 0)
+     ([x]
+      (when (and (seq selectors) (not (s/structure? x)))
+        (u/illegal
+         (str "Selectors " selectors
+              " not allowed for non-structural input " x)))
+
+      (let [tag       (d/fresh-tag)
+            inputs    (if (empty? selectors)
+                        (tapify x tag)
+                        (update-in x selectors tapify tag))
+            output    (d/with-active-tag tag f [inputs])]
+        [(tape-primal output)
+         (if (empty? selectors)
+           (fn []
+             (let [completed (->partials output tag)]
+               (interpret inputs completed tag)))
+           (fn []
+             (let [completed (->partials output tag)]
+               (interpret (get-in inputs selectors) completed tag))))]))
+     ([x & more]
+      ((gradient-fn (fn [args]
+                      (apply f args))
+                    selectors)
+       (matrix/seq-> (cons x more)))))))
+;; TODO try the version where we
 
 ;; ## Lifted Functions
 ;;
@@ -669,7 +861,18 @@
         "No df:dx, df:dy supplied for `f` or registered generically."))))
   ([f df:dx df:dy]
    (fn call [x y]
-     (letfn [(operate [tag]
+     (letfn [(operate-forward [tag]
+               (let [[xe dx] (d/primal-tangent-pair x tag)
+                     [ye dy] (d/primal-tangent-pair y tag)
+                     a       (call xe ye)
+                     b       (if (g/numeric-zero? dx)
+                               a
+                               (d/d:+* a (df:dx xe ye) dx))]
+                 (if (g/numeric-zero? dy)
+                   b
+                   (d/d:+* b (df:dy xe ye) dy))))
+
+             (operate-reverse [tag]
                (let [primal-x  (tape-primal x tag)
                      primal-y  (tape-primal y tag)
                      partial-x (if (and (tape? x) (= tag (tape-tag x)))
@@ -678,18 +881,16 @@
                      partial-y (if (and (tape? y) (= tag (tape-tag y)))
                                  [[y (df:dy primal-x primal-y)]]
                                  [])]
+
                  (make tag
                        (call primal-x primal-y)
                        (into partial-x partial-y))))]
-       (let [tag-x (tag-of x)
-             tag-y (tag-of y)]
-         (cond (and (tape? x) (>= tag-x tag-y))
-               (operate tag-x)
-
-               (and (tape? y) (< tag-x tag-y))
-               (operate tag-y)
-
-               :else (f x y)))))))
+       (if-let [[tag dx] (tag+perturbation x y)]
+         (cond (tape? dx)           (operate-reverse tag)
+               (d/differential? dx) (operate-forward tag)
+               :else
+               (u/illegal "Non-tape or differential perturbation!"))
+         (f x y))))))
 
 (defn lift-n
   "Given:
@@ -750,7 +951,11 @@
   ([generic-op differential-op]
    (doseq [signature [[::tape ::tape]
                       [::v/scalar ::tape]
-                      [::tape ::v/scalar]]]
+                      [::tape ::v/scalar]
+
+                      ;; TODO does nested work if we don't have these overrides?
+                      [::tape ::d/differential]
+                      [::d/differential ::tape]]]
      (defmethod generic-op signature [a b] (differential-op a b)))))
 
 (defn ^:no-doc by-primal
@@ -868,12 +1073,23 @@
 (defmethod g/freeze [::tape] [t]
   `[~'TapeCell
     ~(tape-tag t)
+    ~(tape-id t)
     ~(g/freeze (tape-primal t))
     ~(mapv (fn [[node partial]]
              [(g/freeze node) (g/freeze partial)])
            (tape-partials t))])
 
 ;; `simplify` explicitly does nothing because we don't want to lose our identity
-;; for the topological sort.
+;; for the topological sort. TODO this can change now... add this impl
 
 (defmethod g/simplify [::tape] [t] t)
+
+#_(defn foo [c d f]
+    (let [b (g/* c d)
+          e (g/+ b f)
+          a (g/* e b)]
+      a))
+
+#_(g/simplify
+   (g/- ((emmy.env/D foo) 'a 'b 'c 'd)
+        ((gradient foo) 'c 'd 'f)))

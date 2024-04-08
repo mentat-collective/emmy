@@ -335,7 +335,10 @@
 
 (defprotocol IPerturbed
   (perturbed? [this]
-    "Returns true if the supplied object has some known non-zero tangent to be
+    "TODO clear this up, this is part of combining the interfaces for tape and
+    differential. This is here so that literal functions can handle tape or
+    differential instances..."
+    #_"Returns true if the supplied object has some known non-zero tangent to be
     extracted via [[extract-tangent]], false otherwise. (Return `false` by
     default if you can't detect a perturbation.)")
 
