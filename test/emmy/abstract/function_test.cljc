@@ -2,7 +2,8 @@
 
 (ns emmy.abstract.function-test
   (:refer-clojure :exclude [partial =])
-  (:require [clojure.test :refer [is deftest testing use-fixtures]]
+  (:require [clojure.pprint :as pprint]
+            [clojure.test :refer [is deftest testing use-fixtures]]
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
             [emmy.abstract.function :as af]
@@ -56,6 +57,20 @@
     (let [kind (v/kind (af/literal-function 'f))]
       (is (= ::af/function kind))
       (is (isa? kind ::v/function)))))
+
+(deftest printing-tests
+  #?(:clj
+     (let [f-name '(D f)
+           f      (af/literal-function f-name)]
+       (is (= (with-out-str
+                (pprint/pprint f))
+              (with-out-str
+                (pprint/pprint f-name)))
+           "pprint prints the fn name")
+       (is (= (str f "\n")
+              (with-out-str
+                (pprint/pprint f)))
+           "pprint matches the string rep for short names"))))
 
 (deftest equations-moved-from-simplify
   (testing "moved-from-simplify"

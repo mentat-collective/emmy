@@ -516,7 +516,22 @@
                 [s (-> (sg/reasonable-real 100)
                        (sg/structure 3))]
                 (is (ish? (reduce g/+ (flatten s))
-                          (s/sumr identity s)))))
+                          (s/sumr identity s))))
+
+      (checking "fold-chain matches sumr" 100
+                [s (-> (sg/reasonable-real 100)
+                       (sg/structure  3))]
+                (let [f (fn
+                          ([] 0)
+                          ([acc] acc)
+                          ([acc [x _ _]] (g/+ acc x)))]
+                  (is (ish? (s/sumr identity s)
+                            (s/fold-chain f s)))
+
+                  (is (= (s/fold-chain f 0.0 identity s)
+                         (s/fold-chain f 0.0 s)
+                         (s/fold-chain f s))
+                      "All fold-chain arities match"))))
 
     (is (== (ua/sum g/square 0 10)
             (s/sumr g/square
