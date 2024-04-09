@@ -508,3 +508,14 @@
              (g/simplify
               ((t/gradient (D f)) 'a 'b 'c 'd 'e 'f)))
           "reverse-over-forward"))))
+
+
+#_(defn foo [c d f]
+    (let [b (g/* c d)
+          e (g/+ b f)
+          a (g/* e b)]
+      a))
+
+#_(g/simplify
+   (g/- ((emmy.env/D foo) 'a 'b 'c 'd)
+        ((gradient foo) 'c 'd 'f)))
