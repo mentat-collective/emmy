@@ -34,6 +34,7 @@
 ;; derivatives of entire programs in a similar way by building them out of the
 ;; derivatives of the smaller pieces of those programs.
 ;;
+
 ;; ### Forward-Mode Automatic Differentiation
 ;;
 ;; For many scientific computing applications, it's valuable be able to generate

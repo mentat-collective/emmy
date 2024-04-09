@@ -255,9 +255,14 @@
   [f]
   (fn [x]
     (let [tag    (d/fresh-tag)
-          lifted (d/bundle-element x 1 tag)]
+          lifted
+          (d/bundle-element x 1 tag)
+
+          ;; TODO this is the only change we need to get this working. Also implement comparable.
+          #_(emmy.tape/->Dual tag x 1)]
       (-> (d/with-active-tag tag f [lifted])
-          (d/extract-tangent tag)))))
+          (d/extract-tangent tag))
+      )))
 
 ;; The result of applying the derivative `(D f)` of a multivariable function `f`
 ;; to a sequence of `args` is a structure of the same shape as `args` with all

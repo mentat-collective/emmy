@@ -257,10 +257,22 @@
     ([acc] acc)
     ([acc [x path _]]
      (let [dx (d/tangent-part x tag)]
-       (if (g/zero? dx)
+       (if (g/numeric-zero? dx)
          acc
          (let [partial (literal-partial f path)]
            (d/d:+ acc (d/d:* (literal-apply partial primal-s)
+                             dx))))))))
+
+(defn- dual-forward-mode-fold [f primal-s tag]
+  (fn
+    ([] 0)
+    ([tangent] (tape/->Dual tag (apply f primal-s) tangent))
+    ([tangent [x path _]]
+     (let [dx (tape/dual-tangent x tag)]
+       (if (g/numeric-zero? dx)
+         tangent
+         (let [partial (literal-partial f path)]
+           (g/+ tangent (g/* (literal-apply partial primal-s)
                              dx))))))))
 
 (defn- reverse-mode-fold [f primal-s tag]
@@ -282,6 +294,7 @@
   derivatives for each differential argument in the input structure."
   [f s tag dx]
   (let [fold-fn  (cond (tape/tape? dx)      reverse-mode-fold
+                       (tape/dual? dx)      dual-forward-mode-fold
                        (d/differential? dx) forward-mode-fold
                        :else                (u/illegal "No tape or differential inputs."))
         primal-s (s/mapr (fn [x] (tape/primal-of x tag)) s)]
