@@ -44,9 +44,6 @@
       (is (not (g/one? (g/one-like x2))))
       (is (g/identity? (g/identity-like x2))))
 
-    (testing "v/numerical?"
-      (is (not (v/numerical? x2))))
-
     (testing "g/freeze"
       (is (= 'double (g/freeze x2)))
       (is (= '(- double) (g/freeze (g/negate x2))))

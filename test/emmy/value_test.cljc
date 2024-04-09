@@ -91,13 +91,6 @@
             [n (gen/one-of [sg/any-integral (sg/reasonable-double)])]
             (is (= n (g/freeze n))))
 
-  (checking "all numbers are numerical" 100
-            [n sg/number]
-            (is (v/numerical? n)))
-
-  (is (v/numerical? 'x)
-      "Symbols are abstract numerical things.")
-
   (is (isa? (v/kind 10) ::v/real))
   (is (g/exact? 10))
   (is (not (g/exact? 10.1))))

@@ -569,13 +569,6 @@
 (declare compare equiv finite-term from-terms)
 
 (deftype Differential [terms]
-  ;; A [[Differential]] has to respond `false` to all [[emmy.value/numerical?]]
-  ;; inquiries; if we didn't do this, then [[emmy.generic/*]] and friends would
-  ;; attempt to apply shortcuts like `(* x <dx-with-1>) => x`, stripping off
-  ;; the [[Differential]] identity of the result and ruining the derivative.
-  v/Numerical
-  (numerical? [_] false)
-
   IPerturbed
   (perturbed? [_] true)
 

@@ -48,9 +48,6 @@
             (is (g/one? (g/one-like n)))
             (is (g/identity? (g/identity-like n))))
 
-  (checking "v/numerical? returns true for all literal-number instances" 100 [n gen-literal]
-            (is (v/numerical? n)))
-
   (checking "exact? mirrors input" 100 [n gen-literal-element]
             (if (g/exact? n)
               (is (g/exact? (an/literal-number n)))

@@ -28,9 +28,6 @@
 
   v/INumericTower
 
-  v/Numerical
-  (numerical? [_] true)
-
   #?@(:clj [Object
             (equals [a b] (equal? a b))
             (toString [a] (->string a))]

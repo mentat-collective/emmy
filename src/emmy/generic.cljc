@@ -199,8 +199,13 @@
   ([] 1)
   ([x] x)
   ([x y]
-   (let [numx? (v/numerical? x)
-         numy? (v/numerical? y)]
+   ;; TODO document the change for this in the PR.
+   ;; (g/cos (g/+ 10 (g/* (emmy.env/literal-number 0) 10)))
+   ;;
+   ;; I think it is BETTER that we ignore wrapped numbers actually and get (cos
+   ;; 10) vs the float.
+   (let [numx? (v/number? x)
+         numy? (v/number? y)]
      (cond (and numx? (zero? x)) (zero-like y)
            (and numy? (zero? y)) (zero-like x)
            (and numx? (one? x)) y

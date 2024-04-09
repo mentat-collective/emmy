@@ -32,9 +32,6 @@
 ;; other abstract structures referenced in [[abstract-types]].
 
 (deftype Literal [type expression m]
-  v/Numerical
-  (numerical? [_] (= type ::numeric))
-
   v/IKind
   (kind [_] type)
 

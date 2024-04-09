@@ -42,15 +42,6 @@
 
   (defmethod g/zero? [#?(:clj String :cljs js/String)] [_] false)
 
-  (testing "v/numerical? is always false"
-    (checking "tapecell with numerical primal is STILL not numerical, so we stay
-               excluded from numerical simplifications." 100
-              [t (sg/tapecell sg/real)]
-              (is (not (v/numerical? t))))
-
-    (is (not (v/numerical? (t/make 0 "face")))
-        "tapecell with non-numerical primal is not numerical"))
-
   (checking "native comparison operators work with tapecell" 100
             [l sg/real, r sg/real]
             (is (= (v/compare l r)

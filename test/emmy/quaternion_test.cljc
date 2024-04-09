@@ -182,10 +182,6 @@
       (is (g/exact? (q/make 1 2 3 #emmy/ratio 3/2)))
       (is (not (g/exact? (q/make 0 0 0 0.00001)))))
 
-    (testing "numerical?"
-      (is (not (v/numerical? (s/up 1 2 3 4)))
-          "no structure is numerical."))
-
     (testing "freeze"
       (is (= '(quaternion (/ 1 2) 2 3 x)
              (g/freeze (q/make #emmy/ratio 1/2

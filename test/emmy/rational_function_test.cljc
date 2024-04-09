@@ -75,9 +75,6 @@
                  (polynomial 1 [[{} -1] [{0 1} 1]]))
              (g/freeze x+1:x-1))))
 
-    (testing "v/numerical?"
-      (is (not (v/numerical? x+1:x-1))))
-
     (testing "v/kind"
       (is (= ::rf/rational-function
              (v/kind x+1:x-1))))

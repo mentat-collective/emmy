@@ -33,12 +33,6 @@
     (is (not (g/identity? identity))
         "We go conservative and say that EVEN the actual identity function is not identity."))
 
-  (testing "v/numerical? returns false for fns"
-    (is (not (v/numerical? neg?)))
-    (is (not (v/numerical? #'neg?)))
-    (is (not (v/numerical? g/add)))
-    (is (not (v/numerical? identity))))
-
   (checking "zero-like, one-like returns 0, 1 for fns, vars" 100
             [f (gen/elements [g/abs g/sin g/cos
                               #'g/abs #'g/sin #'g/cos])

@@ -28,9 +28,6 @@
   (testing "g/one? returns false for fns"
     (is (not (g/one? (af/literal-function 'f)))))
 
-  (testing "v/numerical? returns false for fns"
-    (is (not (v/numerical? (af/literal-function 'f)))))
-
   (let [f (af/literal-function 'f)]
     (checking "zero-like, one-like passes through for literal fns"
               100 [n sg/real]
