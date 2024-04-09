@@ -134,12 +134,18 @@
 
   d/IPerturbed
   ;; NOTE the reason we need this is for the arguments to literal function.
-  ;; Those need to tell if there is some tape coming in.
+  ;; Those need to tell if there is some tape coming in. So we can probably
+  ;; delete this now...
   (perturbed? [_] true)
-  (replace-tag [_ old new]
-    (Dual. (if (= old tag) new tag)
-           (d/replace-tag primal old new)
-           (d/replace-tag tangent old new)))
+
+  (replace-tag [this old new]
+    ;; TODO think about why we don't have to recursively descend?? can
+    ;; these show up more than one level deep? And... do I therefore not
+    ;; need to do this for tapes either?
+    (if (= old tag)
+      (Dual. new primal tangent)
+      this))
+
   (extract-tangent [_ t]
     (if (= t tag)
       tangent
@@ -189,14 +195,11 @@
   ;; Those need to tell if there is some tape coming in.
   (perturbed? [_] true)
 
-  (replace-tag [_ old new]
-    (TapeCell. (if (= old tag) new tag)
-               id
-               (d/replace-tag primal old new)
-               (mapv (fn [[node partial]]
-                       [(d/replace-tag node old new)
-                        (d/replace-tag partial old new)])
-                     in->partial)))
+  (replace-tag [this old new]
+    ;; TODO think about why I don't have to do anything hard here...
+    (if (= old tag)
+      (TapeCell. new id primal in->partial)
+      this))
 
   ;; This implementation is called if a tape ever makes it out of
   ;; forward-mode-differentiated function.
