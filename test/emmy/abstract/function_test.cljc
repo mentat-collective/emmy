@@ -2,7 +2,7 @@
 
 (ns emmy.abstract.function-test
   (:refer-clojure :exclude [partial =])
-  (:require [clojure.pprint :as pprint]
+  (:require #?(:clj [clojure.pprint :as pprint])
             [clojure.test :refer [is deftest testing use-fixtures]]
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
