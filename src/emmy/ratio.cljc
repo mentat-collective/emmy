@@ -120,11 +120,8 @@
 
    :cljs
    (do
-
      (extend-type bf/Fraction
        v/INumericTower
-
-       v/IReal
 
        #?@(:cljs [IEquiv
                   (-equiv [x other]

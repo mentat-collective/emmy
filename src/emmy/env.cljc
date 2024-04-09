@@ -581,4 +581,4 @@
  [emmy.special.elliptic elliptic-f]
  [emmy.special.factorial factorial]
  [emmy.value = compare
-  numerical? kind kind-predicate principal-value])
+  kind kind-predicate principal-value])
