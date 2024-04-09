@@ -7,7 +7,6 @@
             [emmy.abstract.number :refer [literal-number]]
             [emmy.calculus.derivative :as d :refer [D partial]]
             [emmy.complex :as c]
-            [emmy.differential :as sd]
             [emmy.expression :as x]
             [emmy.function :as f]
             [emmy.generic :as g :refer [acos asin atan cos sin tan
@@ -19,6 +18,7 @@
             [emmy.series :as series]
             [emmy.simplify :refer [hermetic-simplify-fixture]]
             [emmy.structure :as s]
+            [emmy.tape :as ad]
             [emmy.util :as u]
             [emmy.value :as v]
             [same.core :refer [ish? with-comparator]]))
@@ -32,16 +32,16 @@
   (testing "tag-active? responds appropriately"
     (let [tag 0
           f   (fn [x] (fn [g] (g x)))
-          Df  (-> (f (sd/bundle-element 'x 1 tag))
-                  (sd/extract-tangent tag))]
-      (is (not (sd/tag-active? tag))
+          Df  (-> (f (ad/->Dual tag 'x 1))
+                  (ad/extract-tangent tag))]
+      (is (not (ad/tag-active? tag))
           "Outside the context of a derivative, the tag is not marked as
           active.")
 
       (is (= '(* 3 (expt x 2))
              (simplify
               (Df (fn [x]
-                    (is (sd/tag-active? tag)
+                    (is (ad/tag-active? tag)
                         "Df is a function looking to extract `tag`, so inside a
                         call to Df the `tag` IS active.")
                     (g/cube x)))))))))
@@ -1334,15 +1334,14 @@
     ;; space.
     ;;
     ;; Doing work inside a continuation means you're actually working
-    ;; with [[emmy.differential/Differential]] instances whose tangents can
-    ;; interact. Once you break out of the continuation, as in "bug two", the
-    ;; two components separately drop their tangents, so they can't talk
-    ;; anymore.
+    ;; with [[emmy.tape/Dual]] instances whose tangents can interact. Once you
+    ;; break out of the continuation, as in "bug two", the two components
+    ;; separately drop their tangents, so they can't talk anymore.
     ;;
     ;; The "linear" comment matters because if you only combine the dropped-down
     ;; pieces linearly, then their tangents wouldn't have interacted anyway, so
     ;; you can't tell that there are different cases here.
-)
+    )
 
   (testing "amazing bug 4"
     ;; The same as amazing-bug-3.dvl, but supplies the arguments to f in the

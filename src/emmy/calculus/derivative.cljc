@@ -7,15 +7,14 @@
   "This namespace implements a number of differential operators like [[D]], and
   the machinery to apply [[D]] to various structures."
   (:refer-clojure :exclude [partial])
-  (:require [emmy.differential :as d]
-            [emmy.expression :as x]
+  (:require [emmy.expression :as x]
             [emmy.function :as f]
             [emmy.generic :as g]
             [emmy.matrix :as matrix]
             [emmy.operator :as o]
             [emmy.series :as series]
             [emmy.structure :as s]
-            [emmy.tape :as tape]
+            [emmy.tape :as ad]
             [emmy.util :as u]
             [emmy.value :as v])
   #?(:clj
@@ -23,16 +22,15 @@
 
 ;; ## IPerturbed Implementation for Functions
 ;;
-;; The following section, along with [[emmy.collection]]
-;; and [[emmy.differential]], rounds out the implementations
-;; of [[d/IPerturbed]] for native Clojure(script) data types. The function
-;; implementation is subtle, as described by [Manzyuk et al.
-;; 2019](https://arxiv.org/pdf/1211.4892.pdf).
+;; The following section, along with [[emmy.collection]] and [[emmy.tape]],
+;; rounds out the implementations of [[emmy.tape/IPerturbed]] for native
+;; Clojure(script) data types. The function implementation is subtle, as
+;; described by [Manzyuk et al. 2019](https://arxiv.org/pdf/1211.4892.pdf).
 ;; ([[emmy.derivative.calculus-test]], in the "Amazing Bug" sections,
 ;; describes the pitfalls at length.)
 ;;
-;; [[emmy.differential]] describes how each in-progress perturbed variable
-;; in a derivative is assigned a "tag" that accumulates the variable's partial
+;; [[emmy.tape]] describes how each in-progress perturbed variable in a
+;; derivative is assigned a "tag" that accumulates the variable's partial
 ;; derivative.
 ;;
 ;; How do we interpret the case where `((D f) x)` produces a _function_?
@@ -70,12 +68,12 @@
 ;; `extract-tangent` operation with the returned function.
 ;;
 ;; The returned function needs to capture an internal reference to the
-;; original [[d/Differential]] input. This is true for any Functor-shaped return
+;; original [[emmy.tape/Dual]] input. This is true for any Functor-shaped return
 ;; value, like a structure or Map. However! There is a subtlety present with
 ;; functions that's not present with vectors or other containers.
 ;;
 ;; The difference with functions is that they take _inputs_. If you contrive a
-;; situation where you can feed the original captured [[d/Differential]] into
+;; situation where you can feed the original captured [[emmy.tape/Dual]] into
 ;; the returned function, this can trigger "perturbation confusion", where two
 ;; different layers try to extract the tangent corresponding to the SAME tag,
 ;; and one is left with nothing.
@@ -115,8 +113,8 @@
 ;;
 ;; - it extracts the originally-injected tag when someone eventually calls the
 ;;   function
-;; - if some caller passes a new [[d/Differential]] instance into the function,
-;;   any tags in that [[d/Differential]] will survive on their way back out...
+;; - if some caller passes a new [[emmy.tape/Dual]] instance into the function,
+;;   any tags in that [[emmy.tape/Dual]] will survive on their way back out...
 ;;   even if they happen to contain the originally-injected tag.
 ;;
 ;; We do this by:
@@ -127,7 +125,7 @@
 ;;   `tag`, as requested (note now that the only instances of `tag` that can
 ;;   appear in the result come from variables captured in the function's
 ;;   closure)
-;; - remapping `fresh` back to `tag` inside the remaining [[d/Differential]]
+;; - remapping `fresh` back to `tag` inside the remaining [[emmy.tape/Dual]]
 ;;   instance.
 ;;
 ;; This last step ensures that any tangent tagged with `tag` in the input can
@@ -151,13 +149,13 @@
   occur."
   [f tag]
   (-> (fn [& args]
-        (if (d/tag-active? tag)
-          (let [fresh (d/fresh-tag)]
-            (-> (d/with-active-tag tag f (map #(d/replace-tag % tag fresh) args))
-                (d/extract-tangent tag)
-                (d/replace-tag fresh tag)))
-          (-> (d/with-active-tag tag f args)
-              (d/extract-tangent tag))))
+        (if (ad/tag-active? tag)
+          (let [fresh (ad/fresh-tag)]
+            (-> (ad/with-active-tag tag f (map #(ad/replace-tag % tag fresh) args))
+                (ad/extract-tangent tag)
+                (ad/replace-tag fresh tag)))
+          (-> (ad/with-active-tag tag f args)
+              (ad/extract-tangent tag))))
       (f/with-arity (f/arity f))))
 
 ;; NOTE: that the tag-remapping that the docstring for `extract-tag-fn`
@@ -184,14 +182,14 @@
   no tag-rerouting."
   [f old new]
   (-> (fn [& args]
-        (if (d/tag-active? old)
-          (let [fresh (d/fresh-tag)
-                args  (map #(d/replace-tag % old fresh) args)]
+        (if (ad/tag-active? old)
+          (let [fresh (ad/fresh-tag)
+                args  (map #(ad/replace-tag % old fresh) args)]
             (-> (apply f args)
-                (d/replace-tag old new)
-                (d/replace-tag fresh old)))
+                (ad/replace-tag old new)
+                (ad/replace-tag fresh old)))
           (-> (apply f args)
-              (d/replace-tag old new))))
+              (ad/replace-tag old new))))
       (f/with-arity (f/arity f))))
 
 ;; ## Protocol Implementation
@@ -200,8 +198,7 @@
 ;; ClojureScript, [[MetaFn]] instances. Metadata in the original function is
 ;; preserved through tag replacement and extraction.
 
-(extend-protocol d/IPerturbed
-
+(extend-protocol ad/IPerturbed
   MultiFn
   (perturbed? [_] false)
   (replace-tag [f old new] (replace-tag-fn f old new))
@@ -235,9 +232,53 @@
 
 ;; ## Single and Multivariable Calculus
 ;;
-;; These functions put together the pieces laid out
-;; in [[emmy.differential]] and declare an interface for taking
-;; derivatives.
+;; These functions put together the pieces laid out in [[emmy.tape]] and declare
+;; an interface for taking derivatives.
+
+;; TODO document and file.
+
+(defn gradient
+  "Given some differentiable function `f`, returns a function whose value at some
+  point can multiply an increment in the arguments to produce the best linear
+  estimate of the increment in the function value.
+
+  For univariate functions, [[gradient]] computes a derivative. For
+  vector-valued functions, [[gradient]] computes
+  the [Jacobian](https://en.wikipedia.org/wiki/Jacobian_matrix_and_determinant)
+  of `f`.
+
+  For numerical differentiation, see [[emmy.numerical.derivative/D-numeric]].
+
+  NOTE: `f` must be built out of generic operations that know how to
+  handle [[emmy.tape/TapeCell]] inputs in addition to any types that a
+  normal `(f x)` call would present. This restriction does _not_ apply to
+  operations like putting `x` into a container or destructuring; just primitive
+  function calls."
+  ([f] (gradient f []))
+  ([f selectors]
+   (fn
+     ([] 0)
+     ([x]
+      (when (and (seq selectors) (not (s/structure? x)))
+        (u/illegal
+         (str "Selectors " selectors
+              " not allowed for non-structural input " x)))
+
+      (let [tag       (ad/fresh-tag)
+            inputs    (if (empty? selectors)
+                        (ad/tapify x tag)
+                        (update-in x selectors ad/tapify tag))
+            output    (ad/with-active-tag tag f [inputs])
+            ;; TODO there is an implicit sensitivity here for each run.
+            completed (ad/->partials output tag)]
+        (if (empty? selectors)
+          (ad/interpret inputs completed tag)
+          (ad/interpret (get-in inputs selectors) completed tag))))
+     ([x & more]
+      ((gradient (fn [args]
+                   (apply f args))
+                 selectors)
+       (matrix/seq-> (cons x more)))))))
 
 (defn derivative
   "Returns a single-argument function of that, when called with an argument `x`,
@@ -248,21 +289,15 @@
   see [[emmy.numerical.derivative/D-numeric]].
 
   `f` must be built out of generic operations that know how to
-  handle [[emmy.differential/Differential]] inputs in addition to any types that
-  a normal `(f x)` call would present. This restriction does _not_ apply to
-  operations like putting `x` into a container or destructuring; just primitive
-  function calls."
+  handle [[emmy.tape/Dual]] inputs in addition to any types that a normal `(f
+  x)` call would present. This restriction does _not_ apply to operations like
+  putting `x` into a container or destructuring; just primitive function calls."
   [f]
   (fn [x]
-    (let [tag    (d/fresh-tag)
-          lifted
-          ;; TODO if we want to do this, we can kill differentials and move the
-          ;; tests over...
-          #_(d/bundle-element x 1 tag)
-          (emmy.tape/->Dual tag x 1)]
-      (-> (d/with-active-tag tag f [lifted])
-          (d/extract-tangent tag))
-      )))
+    (let [tag    (ad/fresh-tag)
+          lifted (ad/->Dual tag x 1)]
+      (-> (ad/with-active-tag tag f [lifted])
+          (ad/extract-tangent tag)))))
 
 ;; The result of applying the derivative `(D f)` of a multivariable function `f`
 ;; to a sequence of `args` is a structure of the same shape as `args` with all
@@ -437,11 +472,11 @@
 
 (doseq [t [::v/function ::s/structure]]
   (defmethod g/partial-derivative [t v/seqtype] [f selectors]
-    #_(tape/gradient f selectors)
+    #_(ad/gradient f selectors)
     (multivariate f selectors))
 
   (defmethod g/partial-derivative [t nil] [f _]
-    #_(tape/gradient f [])
+    #_(ad/gradient f [])
     (multivariate f [])))
 
 ;; ## Operators
@@ -548,13 +583,12 @@
      (letfn [(process-term [term]
                (g/simplify
                 (s/mapr (fn rec [x]
-                          (cond (d/differential? x) (d/map-coefficients rec x)
-                                (tape/dual? x)
-                                (tape/->Dual (tape/dual-tag x)
-                                             (rec (tape/dual-primal x))
-                                             (rec (tape/dual-tangent x)))
+                          (cond (ad/dual? x)
+                                (ad/->Dual (ad/dual-tag x)
+                                           (rec (ad/dual-primal x))
+                                           (rec (ad/dual-tangent x)))
 
-                                (tape/tape? x)
+                                (ad/tape? x)
                                 (u/illegal "TODO implement this using fmap style.")
 
                                 :else (-> (g/simplify x)

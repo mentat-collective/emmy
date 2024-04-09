@@ -13,7 +13,6 @@
             [emmy.matrix :as m]
             [emmy.quaternion :as q]
             [emmy.simplify]
-            [emmy.structure :as s]
             [emmy.util.logic :as ul]
             [emmy.value :as v]
             [same.core :refer [ish? with-comparator]]))

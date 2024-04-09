@@ -8,7 +8,7 @@
             #?(:cljs [emmy.bigfraction :refer [Fraction]])
             [emmy.complex :as c]
             #?(:cljs [emmy.complex.impl :refer [Complex]])
-            [emmy.differential :as d]
+
             [emmy.generic :as g]
             [emmy.matrix :as m]
             [emmy.modint :as mi]
@@ -21,9 +21,8 @@
             [emmy.rational-function :as rf]
             [emmy.series :as ss]
             [emmy.structure :as s]
-            [emmy.tape :as tape]
+            [emmy.tape :as ad]
             [emmy.util :as u]
-            [emmy.util.vector-set :as vs]
             [emmy.value :as v]
             [same.ish :as si])
   #?(:clj
@@ -281,39 +280,19 @@
   ([entry-gen]
    (gen/fmap ss/power-series* (gen/vector entry-gen))))
 
-;; ## Vector Set
-;;
-;; These are used in the implementation of [[emmy.differential]].
+;; ## Dual Numbers
 
-(defn vector-set
-  "Generates a sorted vector of distinct elements drawn from `entry-gen`.
-  `entry-gen` must produce comparable elements.
+;; TODO make this recursive?
 
-  `entry-gen` defaults to [[gen/nat]]."
-  ([] (vector-set gen/nat))
-  ([entry-gen]
-   (gen/fmap vs/make (gen/set entry-gen))))
-
-;; ## Differential
-
-(defn differential
+(defn dual
   "Returns a generator that produces proper instances
   of [[emmy.differential/Differential]]."
-  ([] (differential real))
-  ([coeff-gen]
-   (let [term-gen   (gen/let [tags (vector-set gen/nat)
-                              coef coeff-gen]
-                      (let [tags (if (empty? tags) [0] tags)
-                            coef (if (g/zero? coef) 1 coef)]
-                        (#'d/make-term tags coef)))]
-     (gen/let [terms  (gen/vector term-gen 1 5)
-               primal coeff-gen]
-       (let [tangent-part (d/from-terms terms)
-             ret          (d/d:+ primal tangent-part)]
-         (cond (d/differential? ret)          ret
-               (d/differential? tangent-part) tangent-part
-               :else (d/from-terms [(#'d/make-term [] primal)
-                                    (#'d/make-term [0] 1)])))))))
+  ([] (dual real))
+  ([primal-gen]
+   (gen/let [tag    gen/nat
+             primal primal-gen
+             tangent primal-gen]
+     (ad/->Dual tag primal tangent))))
 
 ;; ## TapeCell
 
@@ -327,7 +306,7 @@
   ([primal-gen] (tapecell 0 primal-gen))
   ([tag primal-gen]
    (let [prim   (gen/let [primal primal-gen]
-                  (tape/make tag primal))
+                  (ad/make tag primal))
          unary  (fn [inner]
                   (gen/let [x  inner
                             y  inner

@@ -8,12 +8,12 @@
   to the [[Matrix]] datatype."
   (:refer-clojure :exclude [get-in some])
   (:require [clojure.core :as core]
-            [emmy.differential :as d]
             [emmy.function :as f]
             [emmy.generic :as g]
             [emmy.polynomial :as poly]
             [emmy.series :as series]
             [emmy.structure :as s]
+            [emmy.tape :as ad]
             [emmy.util :as u]
             [emmy.util.aggregate :as ua]
             [emmy.value :as v])
@@ -34,10 +34,10 @@
                   (= c 1) ::column-matrix
                   :else ::matrix))
 
-  d/IPerturbed
-  (perturbed? [_] (boolean (core/some d/perturbed? v)))
-  (replace-tag [M old new] (fmap #(d/replace-tag % old new) M))
-  (extract-tangent [M tag] (fmap #(d/extract-tangent % tag) M))
+  ad/IPerturbed
+  (perturbed? [_] (boolean (core/some ad/perturbed? v)))
+  (replace-tag [M old new] (fmap #(ad/replace-tag % old new) M))
+  (extract-tangent [M tag] (fmap #(ad/extract-tangent % tag) M))
 
   f/IArity
   (arity [_] (transduce (map f/seq-arity) f/combine-arities v))

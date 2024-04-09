@@ -7,9 +7,9 @@
   "This namespace contains implementations of various Emmy protocols for
   native Clojure collections."
   (:require [clojure.set :as cs]
-            [emmy.differential :as d]
             [emmy.function :as f]
             [emmy.generic :as g]
+            [emmy.tape :as ad]
             [emmy.util :as u]
             [emmy.value :as v])
   #?(:clj
@@ -54,12 +54,12 @@
   (arity [_] [:between 1 2])
 
   ;; Vectors are functors, so they can be perturbed if any of their elements are
-  ;; perturbed. [[d/replace-tag]] and [[d/extract-tangent]] pass the buck down
+  ;; perturbed. [[ad/replace-tag]] and [[ad/extract-tangent]] pass the buck down
   ;; the vector's elements.
-  d/IPerturbed
-  (perturbed? [v] (boolean (some d/perturbed? v)))
-  (replace-tag [v old new] (mapv #(d/replace-tag % old new) v))
-  (extract-tangent [v tag] (mapv #(d/extract-tangent % tag) v)))
+  ad/IPerturbed
+  (perturbed? [v] (boolean (some ad/perturbed? v)))
+  (replace-tag [v old new] (mapv #(ad/replace-tag % old new) v))
+  (extract-tangent [v tag] (mapv #(ad/extract-tangent % tag) v)))
 
 ;; ## Sequences
 ;;
@@ -83,10 +83,10 @@
     v/IKind
     (kind [xs] (type xs))
 
-    d/IPerturbed
+    ad/IPerturbed
     (perturbed? [_] false)
-    (replace-tag [xs old new] (map #(d/replace-tag % old new) xs))
-    (extract-tangent [xs tag] (map #(d/extract-tangent % tag) xs))))
+    (replace-tag [xs old new] (map #(ad/replace-tag % old new) xs))
+    (extract-tangent [xs tag] (map #(ad/extract-tangent % tag) xs))))
 
 ;; ## Maps
 ;;
@@ -171,22 +171,22 @@
      (extend klass
        v/IKind
        {:kind (fn [m] (if (sorted? m)
-                        (type m)
-                        (:type m (type m))))}
+                       (type m)
+                       (:type m (type m))))}
 
        f/IArity
        {:arity (fn [_] [:between 1 2])}
 
-       d/IPerturbed
-       {:perturbed? (fn [m] (boolean (some d/perturbed? (vals m))))
-        :replace-tag (fn [m old new] (u/map-vals #(d/replace-tag % old new) m))
+       ad/IPerturbed
+       {:perturbed? (fn [m] (boolean (some ad/perturbed? (vals m))))
+        :replace-tag (fn [m old new] (u/map-vals #(ad/replace-tag % old new) m))
         :extract-tangent
         (fn [m tag]
           (if-let [t (:type m)]
             ;; Do NOT attempt to recurse into the values if this map is being used as a
             ;; simple representation for some other type, like a manifold point.
             (u/unsupported (str "`extract-tangent` not supported for type " t "."))
-            (u/map-vals #(d/extract-tangent % tag) m)))})
+            (u/map-vals #(ad/extract-tangent % tag) m)))})
 
      :cljs
      (extend-type klass
@@ -198,15 +198,15 @@
        f/IArity
        (arity [_] [:between 1 2])
 
-       d/IPerturbed
-       (perturbed? [m] (boolean (some d/perturbed? (vals m))))
-       (replace-tag [m old new] (u/map-vals #(d/replace-tag % old new) m))
+       ad/IPerturbed
+       (perturbed? [m] (boolean (some ad/perturbed? (vals m))))
+       (replace-tag [m old new] (u/map-vals #(ad/replace-tag % old new) m))
        (extract-tangent [m tag]
          (if-let [t (:type m)]
            ;; Do NOT attempt to recurse into the values if this map is being used as a
            ;; simple representation for some other type, like a manifold point.
            (u/unsupported (str "`extract-tangent` not supported for type " t "."))
-           (u/map-vals #(d/extract-tangent % tag) m))))))
+           (u/map-vals #(ad/extract-tangent % tag) m))))))
 
 ;; ## Sets
 ;;

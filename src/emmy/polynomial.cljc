@@ -8,7 +8,6 @@
   (:require [clojure.set :as set]
             [clojure.string :as cs]
             [emmy.collection]
-            [emmy.differential :as sd]
             [emmy.expression :as x]
             [emmy.expression.analyze :as a]
             [emmy.function :as f]
@@ -21,6 +20,7 @@
             [emmy.series :as series]
             [emmy.special.factorial :as sf]
             [emmy.structure :as ss]
+            [emmy.tape :as ad]
             [emmy.util :as u]
             [emmy.util.aggregate :as ua]
             [emmy.value :as v])
@@ -124,16 +124,16 @@
   f/IArity
   (arity [_] [:between 0 arity])
 
-  sd/IPerturbed
+  ad/IPerturbed
   (perturbed? [_]
     (let [coefs (map i/coefficient terms)]
-      (boolean (some sd/perturbed? coefs))))
+      (boolean (some ad/perturbed? coefs))))
 
   (replace-tag [this old new]
-    (map-coefficients #(sd/replace-tag % old new) this))
+    (map-coefficients #(ad/replace-tag % old new) this))
 
   (extract-tangent [this tag]
-    (map-coefficients #(sd/extract-tangent % tag) this))
+    (map-coefficients #(ad/extract-tangent % tag) this))
 
   v/IKind
   (kind [_] ::polynomial)

@@ -5,7 +5,7 @@
             [clojure.test :refer [is deftest testing use-fixtures]]
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
-            [emmy.calculus.derivative :refer [D]]
+            [emmy.calculus.derivative :as d :refer [D]]
             [emmy.expression.analyze :as a]
             [emmy.generators :as sg]
             [emmy.generic :as g]
@@ -227,7 +227,7 @@
 (deftest lifted-fn-tests
   (letfn [(breaks? [f x]
             (is (thrown? #?(:clj Exception :cljs js/Error)
-                         ((t/gradient f) x))))]
+                         ((d/gradient f) x))))]
 
     (testing "function inputs throw, as they can't be perturbed"
       (breaks? g/square g/sin))
@@ -243,17 +243,17 @@
                     (breaks? g/integer-part x)
                     (breaks? g/fractional-part x))
 
-                (do (is (zero? ((t/gradient g/floor) x)))
-                    (is (zero? ((t/gradient g/ceiling) x)))
-                    (is (zero? ((t/gradient g/integer-part) x)))
-                    (is (g/one? ((t/gradient g/fractional-part) x)))))))
+                (do (is (zero? ((d/gradient g/floor) x)))
+                    (is (zero? ((d/gradient g/ceiling) x)))
+                    (is (zero? ((d/gradient g/integer-part) x)))
+                    (is (g/one? ((d/gradient g/fractional-part) x)))))))
 
   (testing "lift-n"
     (let [*   (t/lift-n g/* (fn [_] 1) (fn [_ y] y) (fn [x _] x))
-          Df7 (t/gradient
+          Df7 (d/gradient
                (fn x**7 [x] (* x x x x x x x)))
-          Df1 (t/gradient *)
-          Df0 (t/gradient (fn [_] (*)))]
+          Df1 (d/gradient *)
+          Df0 (d/gradient (fn [_] (*)))]
       (is (v/= '(* 7 (expt x 6))
                (g/simplify (Df7 'x)))
           "functions created with lift-n can take many args (they reduce via the
@@ -272,7 +272,7 @@
                    (g/+ (g/sin x) (g/expt x 2))
                    (g/+ (g/sin x) x)
                    (g/log (g/abs x))))
-          Df         (t/gradient f)
+          Df         (d/gradient f)
           Df-numeric (D-numeric f)]
       (with-comparator (v/within 1e-6)
         (checking "exercise some lifted fns" 100
@@ -291,7 +291,7 @@
                   (fn [g]
                     (fn [a]
                       (g (g/+ a offset)))))
-          f-hat ((t/gradient shift) 3)]
+          f-hat ((d/gradient shift) 3)]
       (is (= (g/exp 8) ((f-hat g/exp) 5))
           "Nothing tough expected in this case.")
 
@@ -303,9 +303,9 @@
     (let [f (fn [x]
               (fn [y]
                 (g/* (g/square x) (g/square y))))]
-      (is (= ((D ((t/gradient f) 'x)) 'y)
-             ((t/gradient ((D f) 'x)) 'y)
-             ((t/gradient ((t/gradient f) 'x)) 'y))
+      (is (= ((D ((d/gradient f) 'x)) 'y)
+             ((d/gradient ((D f) 'x)) 'y)
+             ((d/gradient ((d/gradient f) 'x)) 'y))
           "reverse-mode nests with forward-mode"))))
 
 ;; So what should happen?
@@ -314,10 +314,10 @@
 ;; yet, just a nested with a function involved.
 
 (deftest sinc-etc-tests
-  (is (zero? ((t/gradient g/sinc) 0)))
-  (is (zero? ((t/gradient g/tanc) 0)))
-  (is (zero? ((t/gradient g/sinhc) 0)))
-  (is (zero? ((t/gradient g/tanhc) 0)))
+  (is (zero? ((d/gradient g/sinc) 0)))
+  (is (zero? ((d/gradient g/tanc) 0)))
+  (is (zero? ((d/gradient g/sinhc) 0)))
+  (is (zero? ((d/gradient g/tanhc) 0)))
 
   (letfn [(gen-double [min max]
             (gen/double*
@@ -328,125 +328,125 @@
     (with-comparator (v/within 1e-4)
       (checking "sinc" 100 [n (gen-double 1 50)]
                 (is (ish? ((D-numeric g/sinc) n)
-                          ((t/gradient g/sinc) n))))
+                          ((d/gradient g/sinc) n))))
 
       ;; attempting to limit to a region where we avoid the infinities at
       ;; multiples of pi/2 (other than 0).
       (checking "tanc" 100 [n (gen-double 0.01 (- (/ Math/PI 2) 0.01))]
                 (is (ish? ((D-numeric g/tanc) n)
-                          ((t/gradient g/tanc) n))))
+                          ((d/gradient g/tanc) n))))
 
       (checking "tanhc" 100 [n (gen-double 1 50)]
                 (is (ish? ((D-numeric g/tanhc) n)
-                          ((t/gradient g/tanhc) n)))))
+                          ((d/gradient g/tanhc) n)))))
 
     (with-comparator (v/within 1e-4)
       (checking "sinhc" 100 [n (gen-double 1 10)]
                 (is (ish? ((D-numeric g/sinhc) n)
-                          ((t/gradient g/sinhc) n)))))
+                          ((d/gradient g/sinhc) n)))))
 
     (with-comparator (v/within 1e-8)
       (checking "acot" 100 [n (gen-double 0.01 (- (/ Math/PI 2) 0.01))]
                 (is (ish? ((D-numeric g/acot) n)
-                          ((t/gradient g/acot) n))))
+                          ((d/gradient g/acot) n))))
 
       (checking "asec" 100 [n (gen-double 3 100)]
                 (is (ish? ((D-numeric g/asec) n)
-                          ((t/gradient g/asec) n))))
+                          ((d/gradient g/asec) n))))
 
       (checking "acsc" 100 [n (gen-double 3 100)]
                 (is (ish? ((D-numeric g/acsc) n)
-                          ((t/gradient g/acsc) n))))
+                          ((d/gradient g/acsc) n))))
 
       (checking "sech" 100 [n (gen-double 3 100)]
                 (is (ish? ((D-numeric g/sech) n)
-                          ((t/gradient g/sech) n))))
+                          ((d/gradient g/sech) n))))
 
       (checking "coth" 100 [n (gen-double 1 3)]
                 (is (ish? ((D-numeric g/coth) n)
-                          ((t/gradient g/coth) n))))
+                          ((d/gradient g/coth) n))))
 
       (checking "csch" 100 [n (gen-double 0.5 10)]
                 (is (ish? ((D-numeric g/csch) n)
-                          ((t/gradient g/csch) n))))
+                          ((d/gradient g/csch) n))))
 
       (checking "acosh" 100 [n (gen-double 2 10)]
                 (is (ish? ((D-numeric g/acosh) n)
-                          ((t/gradient g/acosh) n))))
+                          ((d/gradient g/acosh) n))))
 
       (checking "asinh" 100 [n (gen-double 2 10)]
                 (is (ish? ((D-numeric g/asinh) n)
-                          ((t/gradient g/asinh) n))))
+                          ((d/gradient g/asinh) n))))
 
       (checking "atanh" 100 [n (gen-double 0.1 0.9)]
                 (is (ish? ((D-numeric g/atanh) n)
-                          ((t/gradient g/atanh) n))))
+                          ((d/gradient g/atanh) n))))
 
       (checking "acoth" 100 [n (gen-double 2 10)]
                 (is (ish? ((D-numeric g/acoth) n)
-                          ((t/gradient g/acoth) n))))
+                          ((d/gradient g/acoth) n))))
 
       (checking "asech" 100 [n (gen-double 0.1 0.9)]
                 (is (ish? ((D-numeric g/asech) n)
-                          ((t/gradient g/asech) n))))
+                          ((d/gradient g/asech) n))))
 
       (checking "acsch" 100 [n (gen-double 2 10)]
                 (is (ish? ((D-numeric g/acsch) n)
-                          ((t/gradient g/acsch) n)))))))
+                          ((d/gradient g/acsch) n)))))))
 
 (deftest basic-gradient-tests
-  (is (= 0 ((t/gradient (fn [] 100))))
+  (is (= 0 ((d/gradient (fn [] 100))))
       "gradient of no-arg returns zero")
 
   (testing "gradient of linear returns slope"
-    (is (= 2 ((t/gradient #(g/* 2 %)) 1)))
-    (is (= 2 ((t/gradient #(g/* 2 %)) 'w))))
+    (is (= 2 ((d/gradient #(g/* 2 %)) 1)))
+    (is (= 2 ((d/gradient #(g/* 2 %)) 'w))))
 
   (testing "square, cube"
-    (is (= (g/* 2 'z) ((t/gradient g/square) 'z)))
-    (is (= (g/* 3 (g/expt 'z 2)) ((t/gradient g/cube) 'z)))
+    (is (= (g/* 2 'z) ((d/gradient g/square) 'z)))
+    (is (= (g/* 3 (g/expt 'z 2)) ((d/gradient g/cube) 'z)))
     (is (= (g/* 3 (g/expt 'y 2))
-           ((t/gradient #(g/expt % 3)) 'y))))
+           ((d/gradient #(g/expt % 3)) 'y))))
 
   (is (= (g// 1 (g/expt (g/cos 'x) 2))
-         ((t/gradient g/tan) 'x)))
+         ((d/gradient g/tan) 'x)))
 
   (testing "gradient of a fn returning a structure returns the componentwise
             derivative"
     (is (= (s/up 2 (g/+ 't 't))
-           ((t/gradient #(s/up (g/* 2 %) (g/* % %))) 't)))
+           ((d/gradient #(s/up (g/* 2 %) (g/* % %))) 't)))
 
     (is (= (s/up (g/- (g/sin 't)) (g/cos 't))
-           ((t/gradient #(s/up (g/cos %) (g/sin %))) 't))))
+           ((d/gradient #(s/up (g/cos %) (g/sin %))) 't))))
 
   (testing "trig derivatives"
     (is (= '(/ 1 (sqrt (+ (* -1 (expt x 2)) 1)))
            (g/freeze
-            (g/simplify ((t/gradient g/asin) 'x)))))
+            (g/simplify ((d/gradient g/asin) 'x)))))
 
     (is (= '(/ -1 (sqrt (+ (* -1 (expt x 2)) 1)))
            (g/freeze
-            (g/simplify ((t/gradient g/acos) 'x))))))
+            (g/simplify ((d/gradient g/acos) 'x))))))
 
   (testing "log"
     (is (= '(/ 1 x)
            (g/freeze
-            (g/simplify ((t/gradient g/log) 'x))))))
+            (g/simplify ((d/gradient g/log) 'x))))))
 
   (testing "chain rule"
     (is (= (g/* (g/cos (g/* 2 'u)) 2)
-           ((t/gradient #(g/sin (g/* 2 %))) 'u)))
+           ((d/gradient #(g/sin (g/* 2 %))) 'u)))
 
     (let [s g/sqrt
           u (fn [t] (g/expt (g/- (g/* 3 (s t)) 1) (g// 2 3)))
           y (fn [t] (g// (g/+ (u t) 2) (g/- (u t) 1)))]
       (is (ish? (/ -1 18)
-                ((t/gradient y) 9)))))
+                ((d/gradient y) 9)))))
 
   (testing "structural-functions"
     (is (= '(up (cos t) (* -1 (sin t)))
            (g/freeze
-            (g/simplify ((t/gradient (s/up g/sin g/cos)) 't))))))
+            (g/simplify ((d/gradient (s/up g/sin g/cos)) 't))))))
 
   (testing "structure / x works"
     (letfn [(f [x]
@@ -456,7 +456,7 @@
                   (/ -3 (expt x 2)))
              (g/freeze
               (g/simplify
-               ((t/gradient f) 'x))))))))
+               ((d/gradient f) 'x))))))))
 
 (deftest gradient-tests
   (testing "vector input, scalar output"
@@ -470,12 +470,12 @@
                (* x y (cos x)))
              (g/freeze
               (g/simplify
-               ((t/gradient f) ['x 'y 'z])))))
+               ((d/gradient f) ['x 'y 'z])))))
 
       (is (= (g/simplify
               ((D f) ['x 'y 'z]))
              (g/simplify
-              ((t/gradient f) ['x 'y 'z])))
+              ((d/gradient f) ['x 'y 'z])))
           "reverse-mode matches forward-mode.")))
 
   (testing "multiple input, vector output"
@@ -487,17 +487,17 @@
                     ((D (D f)) 'a 'b 'c 'd 'e 'f))]
       (is (= expected
              (g/simplify
-              ((t/gradient (t/gradient f)) 'a 'b 'c 'd 'e 'f)))
+              ((d/gradient (d/gradient f)) 'a 'b 'c 'd 'e 'f)))
           "multivariable derivatives match (reverse-over-reverse)")
 
       (is (= expected
              (g/simplify
-              ((D (t/gradient f)) 'a 'b 'c 'd 'e 'f)))
+              ((D (d/gradient f)) 'a 'b 'c 'd 'e 'f)))
           "forward-over-reverse")
 
       (is (= expected
              (g/simplify
-              ((t/gradient (D f)) 'a 'b 'c 'd 'e 'f)))
+              ((d/gradient (D f)) 'a 'b 'c 'd 'e 'f)))
           "reverse-over-forward"))))
 
 

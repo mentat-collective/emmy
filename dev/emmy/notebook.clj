@@ -425,6 +425,7 @@ clojure -Sdeps '{:deps {io.github.mentat-collective/emmy {:git/sha \"%s\"}}}' \\
 ;; - [emmy.special.factorial](src/emmy/special/factorial.html)
 ;; - [emmy.sr.boost](src/emmy/sr/boost.html)
 ;; - [emmy.sr.frames](src/emmy/sr/frames.html)
+;; - [emmy.tape](src/emmy/tape.html)
 ;; - [emmy.util](src/emmy/util.html)
 ;; - [emmy.util.aggregate](src/emmy/util/aggregate.html)
 ;; - [emmy.util.def](src/emmy/util/def.html)
@@ -432,7 +433,6 @@ clojure -Sdeps '{:deps {io.github.mentat-collective/emmy {:git/sha \"%s\"}}}' \\
 ;; - [emmy.util.permute](src/emmy/util/permute.html)
 ;; - [emmy.util.stopwatch](src/emmy/util/stopwatch.html)
 ;; - [emmy.util.stream](src/emmy/util/stream.html)
-;; - [emmy.util.vector-set](src/emmy/util/vector_set.html)
 
 ;; ## Who is using Emmy?
 

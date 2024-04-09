@@ -9,10 +9,8 @@
   AD! Don't nest [[gradient]] calls inside [[emmy.env/D]] calls."
   (:refer-clojure :exclude [compare zero?])
   (:require #?(:clj [clojure.pprint :as pprint])
-            [emmy.differential :as d]
             [emmy.function :as f]
             [emmy.generic :as g]
-            [emmy.matrix :as matrix]
             [emmy.operator :as o]
             [emmy.structure :as s]
             [emmy.util :as u]
@@ -25,10 +23,10 @@
 ;; > dvl](https://github.com/axch/dysvunctional-language).
 ;;
 ;; This namespace develops an implementation of "reverse-mode" automatic
-;; differentation, in contrast with the forward mode AD implementation
-;; in [[emmy.differential]]. These two are closely related, and the
-;; implementations could merge once I get around to reading and
-;; implementing [the YOLO paper](https://arxiv.org/abs/2204.10923).
+;; differentation, in contrast with the forward mode AD implementation TODO
+;; below!. These two are closely related, and the implementations could merge
+;; once I get around to reading and implementing [the YOLO
+;; paper](https://arxiv.org/abs/2204.10923).
 ;;
 ;; The core idea of forward-mode AD is that we can use the chain rule to
 ;; mechanically build up a partial derivative by wrapping one of the dependent
@@ -58,9 +56,8 @@
 ;; First, wrap all inputs to the function in an instance of a type called
 ;; a [[TapeCell]]. This type holds
 ;;
-;;   - a "tag", used as in [[emmy.differential]] to prevent confusion
-;;     between [[TapeCell]] instances created for different nested runs of
-;;     differentation
+;;   - a "tag", used to prevent confusion between [[TapeCell]] instances created
+;;     for different nested runs of differentation
 ;;   - a unique ID, used to de-duplicate work in the reverse pass
 ;;   - the "primal value" wrapped by this [[TapeCell]] instance
 ;;   - A vector of pairs of each [[TapeCell]] input paired with the partial
@@ -114,7 +111,56 @@
 ;; - for the multivariable output case, walk the output structure and replace
 ;;   each map with the value for the input entry's [[TapeCell]].
 ;;
+
+;; ## IPerturbed Impl, stolen!
+
+;; for some known `g` and `x`, but with the ability to store `(derivative
+;; offset-fn)` and call it later with many different `g`.
 ;;
+;; > NOTE: We might accomplish this by composing `extract-tangent` with the
+;; > returned function, so that the extraction happens later, when the
+;; > function's called... but that will fail. The real implementation is more
+;; > subtle! See the [[emmy.calculus.derivative]] namespace for the actual
+;; > implementation of [[IPerturbed]] for functions and multimethods.
+;;
+;; All of this suggests that we need to make [[extract-tangent]] an open
+;; function that other folks can extend for other container-like
+;; types ([functors](https://en.wikipedia.org/wiki/Functor), specifically).
+;;
+;; The [[IPerturbed]] protocol accomplishes this, along with two other functions
+;; that we'll use later:
+
+(defprotocol IPerturbed
+  (perturbed? [this]
+    "TODO clear this up, this is part of combining the interfaces for tape and
+    differential. This is here so that literal functions can handle tape or
+    differential instances..."
+    #_"Returns true if the supplied object has some known non-zero tangent to be
+    extracted via [[extract-tangent]], false otherwise. (Return `false` by
+    default if you can't detect a perturbation.)")
+
+  (replace-tag [this old-tag new-tag]
+    "If `this` is perturbed, Returns a similar object with the perturbation
+    modified by replacing any appearance of `old-tag` with `new-tag`. Else,
+    return `this`.")
+
+  (extract-tangent [this tag]
+    "If `this` is perturbed, return the tangent component paired with the
+    supplied tag. Else, returns `([[emmy.value/zero-like]] this)`."))
+
+;; `replace-tag` exists to handle subtle bugs that can arise in the case of
+;; functional return values. See the "Amazing Bug" sections
+;; in [[emmy.calculus.derivative-test]] for detailed examples on how this
+;; might bite you.
+;;
+;; The default implementations are straightforward, and match the docstrings:
+
+(extend-protocol IPerturbed
+  #?(:clj Object :cljs default)
+  (perturbed? [_] false)
+  (replace-tag [this _ _] this)
+  (extract-tangent [this _] (g/zero-like this)))
+
 ;; ## TapeCell Implementation
 ;;
 ;; A [[TapeCell]] will respond to [[v/kind]] with `::tape`. To
@@ -124,7 +170,7 @@
 (derive ::dual ::v/scalar)
 (derive ::tape ::v/scalar)
 
-;; Here's the [[TapeCell]] type with the fields described above.
+;; TODO describe dual:
 
 (declare compare compare-dual dual-primal)
 
@@ -132,7 +178,7 @@
   v/IKind
   (kind [_] ::dual)
 
-  d/IPerturbed
+  IPerturbed
   ;; NOTE the reason we need this is for the arguments to literal function.
   ;; Those need to tell if there is some tape coming in. So we can probably
   ;; delete this now...
@@ -178,12 +224,13 @@
        (-pr-writer [x writer _]
                    (write-all writer (.toString x)))]))
 
+;; Here's the [[TapeCell]] type with the fields described above.
 
 (deftype TapeCell [tag id primal in->partial]
   v/IKind
   (kind [_] ::tape)
 
-  d/IPerturbed
+  IPerturbed
   ;; NOTE the reason we need this is for the arguments to literal function.
   ;; Those need to tell if there is some tape coming in.
   (perturbed? [_] true)
@@ -392,18 +439,16 @@
   [x]
   (cond (tape? x)           (tape-tag x)
         (dual? x)           (dual-tag x)
-        (d/differential? x) (d/max-order-tag x)
         :else nil))
 
 (defn primal-of
   "More permissive version of [[tape-primal]] that returns `v` when passed a
-  non-[[TapeCell]]-or-[[emmy.differential/Differential]] instance."
+  non-[[TapeCell]]-or-[[Dual]] instance."
   ([v]
    (primal-of v (tag-of v)))
   ([v tag]
    (cond (tape? v)           (tape-primal v tag)
          (dual? v)           (dual-primal v tag)
-         (d/differential? v) (d/primal-part v tag)
          :else               v)))
 
 (defn deep-primal
@@ -414,7 +459,6 @@
   ([v]
    (cond (tape? v)           (recur (tape-primal v))
          (dual? v)           (recur (dual-primal v))
-         (d/differential? v) (recur (d/primal-part v))
          :else               v)))
 
 ;; ### Comparison, Control Flow
@@ -488,7 +532,7 @@
 
 (defn compare
   ;; TODO bad docstring
-  "Comparator that compares [[Differential]] instances with each other or
+  "Comparator that compares [[Tape]] instances with each other or
   non-differentials using only the [[finite-part]] of each instance. Matches the
   response of [[equiv]].
 
@@ -506,10 +550,44 @@
 
 ;; ## Reverse-pass support
 
+;; These first two functions create a way to globally declare, via a dynamic
+;; binding, the stack of tags that are currently in play. If three nested
+;; derivatives are being taken, [[*active-tags*]] will contain three entries
+;; from a perspective inside the function at the deepest level.
+;;
+;; The [[IPerturbed]] implementation for functions uses this information to
+;; determine whether or not to use [[replace-tag]] to protect its tag from
+;; perturbation confusion. If some higher level is not trying to extract the
+;; same tag, there's no need.
+
+(def ^:dynamic *active-tags* [])
+
+(let [next-tag (atom -1)]
+  (defn fresh-tag
+    "Returns a new, unique tag."
+    []
+    (swap! next-tag inc)))
+
+(defn with-active-tag
+  "Like `apply`, but conj-es `tag` onto the dynamic variable [[*active-tags*]]
+  inside the scope of `f`.
+
+  Returns the result of applying `f` to `args`."
+  [tag f args]
+  (binding [*active-tags* (conj *active-tags* tag)]
+    (apply f args)))
+
+(defn tag-active?
+  "Returns true if `tag` is an element of [[*active-tags*]] (and therefore pending
+  for extraction by some nested derivative), false otherwise."
+  [tag]
+  (boolean
+   (some #{tag} (rseq *active-tags*))))
+
 (defn inner-tag
   [& tags]
   (or (some (apply hash-set tags)
-            (rseq d/*active-tags*))
+            (rseq *active-tags*))
       (apply max tags)))
 
 (defn tag+perturbation
@@ -557,8 +635,8 @@
 ;;
 
 (defrecord Completed [v->partial]
-  d/IPerturbed
-  (perturbed? [_] (boolean (some d/perturbed? (vals v->partial))))
+  IPerturbed
+  (perturbed? [_] (boolean (some perturbed? (vals v->partial))))
 
   ;; TODO note that this can happen because these can pop out from inside of
   ;; ->partial-fn. And that is currently where the tag-rewriting has to occur.
@@ -575,7 +653,7 @@
   ;; we'll already be pulled OUT of the completed map.
   (replace-tag [_ old new]
     (Completed.
-     (u/map-vals #(d/replace-tag % old new) v->partial)))
+     (u/map-vals #(replace-tag % old new) v->partial)))
 
   ;; TODO note that this can never happen... because that means that
   ;; a [[Completed]] instance has been returned somehow from a gradient call.
@@ -624,8 +702,8 @@
 ;;
 ;; TODO [[->partials]] really should depend on `fmap`, as should so many other
 ;; things in the library. Without this we can't generically support output
-;; values like maps or quaternions. [[emmy.differential/extract-tangent]] does
-;; this for forward-mode, I believe.
+;; values like maps or quaternions. [[extract-tangent]] does this for
+;; forward-mode, I believe.
 
 (declare ->partials)
 
@@ -650,12 +728,12 @@
   occur."
   [f tag]
   (-> (fn [& args]
-        (if (d/tag-active? tag)
-          (let [fresh (d/fresh-tag)]
-            (-> (d/with-active-tag tag f (map #(d/replace-tag % tag fresh) args))
+        (if (tag-active? tag)
+          (let [fresh (fresh-tag)]
+            (-> (with-active-tag tag f (map #(replace-tag % tag fresh) args))
                 (->partials tag)
-                (d/replace-tag fresh tag)))
-          (-> (d/with-active-tag tag f args)
+                (replace-tag fresh tag)))
+          (-> (with-active-tag tag f args)
               (->partials tag))))
       (f/with-arity (f/arity f))))
 
@@ -744,8 +822,7 @@
 ;; output-walking.
 ;;
 ;; I am sure we are going to need to glom on to the [[replace-tag]] machinery as
-;; well. [[emmy.differential/extract-tangent]] is similar to what we want. Maybe
-;; we can share?
+;; well. [[extract-tangent]] is similar to what we want. Maybe we can share?
 
 (defn ^:no-doc interpret
   "Given
@@ -775,64 +852,9 @@
 
 ;; ## Gradient
 
-(defn gradient
-  "Given some differentiable function `f`, returns a function whose value at some
-  point can multiply an increment in the arguments to produce the best linear
-  estimate of the increment in the function value.
-
-  For univariate functions, [[gradient]] computes a derivative. For
-  vector-valued functions, [[gradient]] computes
-  the [Jacobian](https://en.wikipedia.org/wiki/Jacobian_matrix_and_determinant)
-  of `f`.
-
-  For numerical differentiation, see [[emmy.numerical.derivative/D-numeric]].
-
-  NOTE: `f` must be built out of generic operations that know how to
-  handle [[emmy.tape/TapeCell]] inputs in addition to any types that a
-  normal `(f x)` call would present. This restriction does _not_ apply to
-  operations like putting `x` into a container or destructuring; just primitive
-  function calls."
-  ([f] (gradient f []))
-  ([f selectors]
-   (fn
-     ([] 0)
-     ([x]
-      (when (and (seq selectors) (not (s/structure? x)))
-        (u/illegal
-         (str "Selectors " selectors
-              " not allowed for non-structural input " x)))
-
-      (let [tag       (d/fresh-tag)
-            inputs    (if (empty? selectors)
-                        (tapify x tag)
-                        (update-in x selectors tapify tag))
-            output    (d/with-active-tag tag f [inputs])
-            ;; TODO there is an implicit sensitivity here for each run.
-            completed (->partials output tag)]
-        (if (empty? selectors)
-          (interpret inputs completed tag)
-          (interpret (get-in inputs selectors) completed tag))))
-     ([x & more]
-      ((gradient (fn [args]
-                   (apply f args))
-                 selectors)
-       (matrix/seq-> (cons x more)))))))
-
-(defn fwd
-  ([f]
-   (fn
-     ([] 0)
-     ([x]
-      (let [tag       (d/fresh-tag)
-            inputs    (->Dual tag x 1)
-            output    (d/with-active-tag tag f [inputs])]
-        (d/extract-tangent output tag)))
-     ([x & more]
-      ((fwd (fn [args]
-              (apply f args)))
-       (matrix/seq-> (cons x more)))))))
-
 ;; starting to work on the one that returns a pair of primal and fn.
+
+;; TODO try the version where we allow both...
 
 #_
 (defn gradient-fn
@@ -846,11 +868,11 @@
          (str "Selectors " selectors
               " not allowed for non-structural input " x)))
 
-      (let [tag       (d/fresh-tag)
+      (let [tag       (fresh-tag)
             inputs    (if (empty? selectors)
                         (tapify x tag)
                         (update-in x selectors tapify tag))
-            output    (d/with-active-tag tag f [inputs])]
+            output    (with-active-tag tag f [inputs])]
         [(tape-primal output)
          (if (empty? selectors)
            (fn []
@@ -864,14 +886,8 @@
                       (apply f args))
                     selectors)
        (matrix/seq-> (cons x more)))))))
-;; TODO try the version where we
 
 ;; ## Lifted Functions
-;;
-;; NOTE these next two functions are similar to the functions
-;; in [[emmy.differential]]; both of these should be merged and install methods
-;; that can handle the interaction between [[TapeCell]]
-;; and [[emmy.differential/Differential]] instances.
 ;;
 ;; To support reverse-mode automatic differentiation, When a unary or binary
 ;; function `f` encounters a [[TapeCell]] `x` (and `y` in the binary case) it
@@ -890,10 +906,6 @@
 ;; ````
 ;;
 ;;  in the binary case.
-;;
-;; The partial derivative implementations are passed in directly or retrieved
-;; from the generic implementation using the same method as in
-;; the [[emmy.differential]] versions, hinting again that we should unify these.
 
 (defn lift-1
   "Given:
@@ -903,16 +915,16 @@
     single argument
 
   Returns a new unary function that operates on both the original type of
-  `f`, [[TapeCell]] and [[emmy.differential/Differential]] instances.
+  `f`, [[TapeCell]] and [[Dual]] instances.
 
   If called without `df:dx`, `df:dx` defaults to `(f :dfdx)`; this will return
   the derivative registered to a generic function defined
   with [[emmy.util.def/defgeneric]].
 
-  NOTE: `df:dx` has to ALREADY be able to handle [[TapeCell]]
-  and [[emmy.differential/Differential]] instances. The best way to accomplish
-  this is by building `df:dx` out of already-lifted functions, and declaring
-  them by forward reference if you need to."
+  NOTE: `df:dx` has to ALREADY be able to handle [[TapeCell]] and [[Dual]]
+  instances. The best way to accomplish this is by building `df:dx` out of
+  already-lifted functions, and declaring them by forward reference if you need
+  to."
   ([f]
    (if-let [df:dx (f :dfdx)]
      (lift-1 f df:dx)
@@ -928,22 +940,14 @@
                    [[x partial]]))
 
            (dual? x)
-           (let [px (dual-primal x)
-                 tx (dual-tangent x)
+           (let [px      (dual-primal x)
+                 tx      (dual-tangent x)
                  partial (df:dx px)]
              (->Dual (dual-tag x)
                      (call px)
                      (if (g/numeric-zero? tx)
                        tx
                        (g/* partial tx))))
-
-
-           (d/differential? x)
-           (let [[px tx] (d/primal-tangent-pair x)
-                 fx      (call px)]
-             (if (g/numeric-zero? tx)
-               fx
-               (d/d:+* fx (df:dx px) tx)))
 
            :else (f x)))))
 
@@ -956,12 +960,12 @@
   - a function `df:dy`, similar to `df:dx` for the second arg
 
   Returns a new binary function that operates on both the original type of
-  `f`, [[TapeCell]] and [[emmy.differential/Differential]] instances.
+  `f`, [[TapeCell]] and [[Dual]] instances.
 
   NOTE: `df:dx` and `df:dy` have to ALREADY be able to handle [[TapeCell]]
-  and [[emmy.differential/Differential]] instances. The best way to accomplish
-  this is by building `df:dx` and `df:dy` out of already-lifted functions, and
-  declaring them by forward reference if you need to."
+  and [[Dual]] instances. The best way to accomplish this is by building `df:dx`
+  and `df:dy` out of already-lifted functions, and declaring them by forward
+  reference if you need to."
   ([f]
    (let [df:dx (f :dfdx)
          df:dy (f :dfdy)]
@@ -972,17 +976,6 @@
   ([f df:dx df:dy]
    (fn call [x y]
      (letfn [(operate-forward [tag]
-               (let [[xe dx] (d/primal-tangent-pair x tag)
-                     [ye dy] (d/primal-tangent-pair y tag)
-                     a       (call xe ye)
-                     b       (if (g/numeric-zero? dx)
-                               a
-                               (d/d:+* a (df:dx xe ye) dx))]
-                 (if (g/numeric-zero? dy)
-                   b
-                   (d/d:+* b (df:dy xe ye) dy))))
-
-             (operate-dual [tag]
                (let [xe (dual-primal x tag)
                      ye (dual-primal y tag)
                      dx (dual-tangent x tag)
@@ -1010,10 +1003,9 @@
                        (into partial-x partial-y))))]
        (if-let [[tag dx] (tag+perturbation x y)]
          (cond (tape? dx)           (operate-reverse tag)
-               (dual? dx)           (operate-dual tag)
-               (d/differential? dx) (operate-forward tag)
+               (dual? dx)           (operate-forward tag)
                :else
-               (u/illegal "Non-tape or differential perturbation!"))
+               (u/illegal "Non-tape or dual perturbation!"))
          (f x y))))))
 
 (defn lift-n
@@ -1045,8 +1037,7 @@
 ;; ## Generic Method Installation
 ;;
 ;; Armed with [[lift-1]] and [[lift-2]], we can install [[TapeCell]]
-;; and [[emmy.differential/Differential]] into the Emmy generic arithmetic
-;; system.
+;; and [[Dual]] into the Emmy generic arithmetic system.
 ;;
 ;; Any function built out of these components will work with
 ;; the [[emmy.calculus.derivative/D]] operator.
@@ -1079,21 +1070,13 @@
    (defbinary generic-op (lift-2 generic-op)))
   ([generic-op differential-op]
    (doseq [signature [[::tape ::tape]
-                      [::tape ::d/differential]
-                      [::d/differential ::tape]
-                      [::tape ::v/scalar]
-                      [::v/scalar ::tape]
-
-
                       [::dual ::dual]
                       [::tape ::dual]
                       [::dual ::tape]
+                      [::tape ::v/scalar]
+                      [::v/scalar ::tape]
                       [::dual ::v/scalar]
-                      [::v/scalar ::dual]
-                      #_#_#_
-                      [::d/differential ::d/differential]
-                      [::d/differential ::v/scalar]
-                      [::v/scalar ::d/differential]]]
+                      [::v/scalar ::dual]]]
      (defmethod generic-op signature [a b] (differential-op a b)))))
 
 (defn ^:no-doc by-primal
@@ -1241,3 +1224,302 @@
   (Dual. (.-tag t)
          (g/simplify (.-primal t))
          (g/simplify (.-tangent t))))
+
+;; TODO merge into the above:
+
+;; ## Differentials, Dual Numbers and Automatic Differentiation
+;;
+;; This namespace develops an implementation of a type called [[Differential]].
+;; A [[Differential]] is a generalization of a type called a ["dual
+;; number"](https://en.wikipedia.org/wiki/Dual_number).
+;;
+;; As we'll discuss, passing these numbers as arguments to some function $f$
+;; built out of the [[emmy.generic]] operators allows us to build up the
+;; _derivative_ of $f$ in parallel to our evaluation of $f$. Complex programs
+;; are built out of simple pieces that we know how to evaluate; we can build up
+;; derivatives of entire programs in a similar way by building them out of the
+;; derivatives of the smaller pieces of those programs.
+;;
+
+;; ### Forward-Mode Automatic Differentiation
+;;
+;; For many scientific computing applications, it's valuable be able to generate
+;; a "derivative" of a function; given some tiny increment in the inputs, what
+;; tiny increment will the function produce in the output values?
+;;
+;; we know how to take derivatives of many of the generic functions exposed by
+;; Emmy, like [[+]], [[*]], [[g/sin]] and friends. It turns out that we can
+;; take the derivatives of large, complicated functions by combining the
+;; derivatives of these smaller functions using the [chain
+;; rule]((https://en.wikipedia.org/wiki/Automatic_differentiation#The_chain_rule,_forward_and_reverse_accumulation))
+;; as a clever bookkeeping device.
+;;
+;; The technique of evaluating a function and its derivative in parallel is
+;; called "forward-mode [Automatic
+;; Differentiation](https://en.wikipedia.org/wiki/Automatic_differentiation)".
+;; The [Emmy
+;; wiki](https://github.com/mentat-collective/emmy/wiki/Automatic-Differentiation)
+;; has more information on the history of this technique, and links to the many
+;; other implementations you'll find in different languages. See the [cljdocs
+;; Automatic Differentiation
+;; page](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/calculus/automatic-differentiation)
+;; for "how do I use this?"-style questions.
+;;
+;; > NOTE: The other flavor of automatic differentiation (AD) is "reverse-mode
+;; > AD". See [[emmy.tape]] for an implementation of this style, coming soon!
+;;
+;; ### Dual Numbers and AD
+;;
+;; Our goal is to build up derivatives of complex functions out of the
+;; derivatives of small pieces. A [dual
+;; number](https://en.wikipedia.org/wiki/Dual_number) is a relatively simple
+;; piece of machinery that will help us accomplish this goal.
+
+;; A [dual number](https://en.wikipedia.org/wiki/Dual_number) is a pair of
+;; numbers of the form
+;;
+;; $$a + b \varepsilon$$
+;;
+;; where $a$ and $b$ are real numbers, and $\varepsilon$ is an abstract thing,
+;; with the property that $\varepsilon^2 = 0$.
+
+;; > NOTE: This might remind you of the definition of a complex number of the
+;; > form $a + bi$, where $i$ is also a new thing with the property that $i^2 =
+;; > -1$. You are very wise! The bigger idea lurking here is the ["generalized
+;; > complex
+;; > number"](https://people.rit.edu/harkin/research/articles/generalized_complex_numbers.pdf).
+;;
+;; Why are dual numbers useful (in Emmy)? If you pass $a+b\varepsilon$ in
+;; to a function $f$, the result is a dual number $f(a) + Df(a) b \varepsilon$;
+;; the result contains both the function evaluation and the derivative
+;; evaluation at $a$!
+
+;; To see why, look at what happens when you pass a dual number into the [Taylor
+;; series expansion](https://en.wikipedia.org/wiki/Taylor_series) of some
+;; arbitrary function $f$. As a reminder, the Taylor series expansion of $f$
+;; around some point $a$ is:
+;;
+;; $$f(x) = f(a)+\frac{Df(a)}{1!}(x-a)+\frac{D^2f(a)}{2!}(x-a)^{2}+\frac{D^3f(a)}{3!}(x-a)^{3}+\cdots$$
+;;
+;; > NOTE: See this nice overview of [Taylor series
+;; > expansion](https://medium.com/@andrew.chamberlain/an-easy-way-to-remember-the-taylor-series-expansion-a7c3f9101063)
+;; > by Andrew Chamberlain if you want to understand this idea and why we can
+;; > approximate (smooth) functions this way.
+;;
+;; If you evaluate the expansion of $f(x)$ around $a$ with a dual number
+;; argument whose first component is $a$ -- take $x=a+b\varepsilon$, for example
+;; -- watch how the expansion simplifies:
+;;
+;; $$f(a+b\varepsilon) = f(a)+\frac{Df(a)}{1!}(b\varepsilon)+\frac{D^2f(a)}{2!}(b\varepsilon)^2+\cdots$$
+;;
+;; Since $\varepsilon^2=0$ we can ignore all terms beyond the first two:
+;;
+;; $$f(a+b\varepsilon) = f(a)+ (Df(a)b)\varepsilon$$
+;;
+;; > NOTE: See [[lift-1]] for an implementation of this idea.
+;;
+;; This justifies our claim above: applying a function to some dual number
+;; $a+\varepsilon$ returns a new dual number, where
+;;
+;; - the first component is $f(a)$, the normal function evaluation
+;; - the second component is $Df(a)$, the derivative.
+;;
+;; If we do this twice, the second component of the returned dual number
+;; beautifully recreates the [Chain
+;; Rule](https://en.wikipedia.org/wiki/Chain_rule):
+;;
+;; $$
+;; \begin{aligned}
+;; g(f(a+\varepsilon)) &= g(f(a) + Df(a)\varepsilon) \\
+;; &= g(f(a)) + (Dg(f(a)))(Df(a))\varepsilon
+;; \end{aligned}
+;; $$
+;;
+;; ### Terminology Change
+;;
+;; A "dual number" is a very general idea. Because we're interested in dual
+;; numbers as a bookkeeping device for derivatives, we're going to specialize
+;; our terminology. From now on, we'll rename $a$ and $b$ to $x$ and $x'$. Given
+;; a dual number of the form $x+x'\varepsilon$: we'll refer to:
+;;
+;; - $x$ as the "primal" part of the dual number
+;; - $x'$ as the "tangent" part
+;; - $\varepsilon$ as the "tag"
+;;
+;; > NOTE: "primal" means $x$ is tracking the "primal", or "primary", part of
+;; > the computation. "tangent" is a synonym for "derivative". "tag" is going to
+;; > make more sense shortly, when we start talking about mixing together
+;; > multiple $\varepsilon_1$, $\varepsilon_2$ from different computations.
+;;
+;; ### Binary Functions
+;;
+;; What about functions of more than one variable? We can use the same approach
+;; by leaning on the [multivariable Taylor series
+;; expansion](https://en.wikipedia.org/wiki/Taylor_series#Taylor_series_in_several_variables).
+;; Take $f(x, y)$ as a binary example. If we pass dual numbers in to the taylor
+;; series expansion of $f$, the $\varepsilon$ multiplication rule will erase all
+;; higher-order terms, leaving us with:
+;;
+;; $$f(x+x'\varepsilon, y+y'\varepsilon) = f(x,y) + \left[\partial_1 f(x,y)x' + \partial_2 f(x,y)y'\right]\varepsilon$$
+;;
+;; > NOTE: See [[lift-2]] for an implementation of this idea.
+;;
+;; This expansion generalizes for n-ary functions; every new argument $x_n +
+;; x'_n\varepsilon$ contributes $\partial_n f(...)x'_n$ to the result.
+;;
+;; We can check this with the simple cases of addition, subtraction and
+;; multiplication.
+;;
+;; The real parts of a dual number add commutatively, so we can rearrange the
+;; components of a sum to get a new dual number:
+;;
+;; $$(x+x'\varepsilon)+(y+y'\varepsilon) == (x+y)+(x'+y')\varepsilon$$
+;;
+;; This matches the [sum
+;; rule](https://en.wikipedia.org/wiki/Differentiation_rules#Differentiation_is_linear)
+;; of differentiation, since the partials of $x + y$ with respect to either $x$
+;; or $y$ both equal 1.
+;;
+;; Subtraction is almost identical and agrees with the [subtraction
+;; rule](https://en.wikipedia.org/wiki/Differentiation_rules#Differentiation_is_linear):
+;;
+;; $$(x+x'\varepsilon)-(y+y'\varepsilon) == (x-y)+(x'-y')\varepsilon$$
+;;
+;; Multiplying out the components of two dual numbers again gives us a new dual
+;; number, whose tangent component agrees with the [product
+;; rule](https://en.wikipedia.org/wiki/Product_rule):
+;;
+;; $$
+;; \begin{aligned}
+;; (x+ x'\varepsilon)*(y+y'\epsilon) &= xy+(xy')\varepsilon+(x'y)\varepsilon+(x'y')\epsilon^2 \\
+;; &= xy+(xy'+x'y)\varepsilon
+;; \end{aligned}
+;; $$
+;;
+;; Stare at these smaller derivations and convince yourself that they agree with
+;; the Taylor series expansion method for binary functions.
+;;
+;; The upshot is that, armed with these techniques, we can implement a
+;; higher-order `derivative` function (almost!) as simply as this:
+
+(comment
+  (defn derivative [f]
+    (fn [x]
+      (extract-tangent
+       (f (make-dual x 1))))))
+
+;; As long as `f` is built out of functions that know how to apply themselves to
+;; dual numbers, this will all Just Work.
+;;
+;; ### Multiple Variables, Nesting
+;;
+;; All of the examples above are about first-order derivatives. Taking
+;; higher-order derivatives is, in theory, straightforward:
+
+(comment
+  (derivative
+   (derivative f)))
+
+;; But this guess hits one of many subtle problems with the implementation of
+;; forward-mode AD. The double-call to `derivative` will expand out to this:
+
+(comment
+  (fn [x]
+    (letfn [(inner-d [x]
+              (extract-tangent
+               (f (make-dual x 1))))]
+      (extract-tangent
+       (inner-d
+        (make-dual x 1))))))
+
+;; the `x` received by `inner-d` will ALREADY be a dual number $x+\varepsilon$!
+;; This will cause two immediate problems:
+;;
+;; - `(make-dual x 1)` will return $(x+\varepsilon)+\varepsilon = x+2\varepsilon$,
+;;    which is not what we we want
+
+;; - The `extract-tangent` call inside `inner-d` will return the `Df(x)`
+;;   component of the dual number... which, remember, is no longer a dual
+;;   number! So the SECOND call to `extract-tangent` have nothing to extract,
+;;   and can only sensibly return 0.
+;;
+;; The problem here is called "perturbation confusion", and is covered in great
+;; detail in
+;; ["Confusion of Tagged Perturbations in Forward Automatic Differentiation of
+;; Higher-Order Functions"](https://arxiv.org/abs/1211.4892), by Manzyuk et
+;; al. (2019).
+;;
+;; The solution is to introduce a new $\varepsilon$ for every level, and allow
+;; different $\varepsilon$ instances to multiply without annihilating. Each
+;; $\varepsilon$ is called a "tag". [[Differential]] (implemented below) is a
+;; generalized dual number that can track many tags at once, allowing nested
+;; derivatives like the one described above to work.
+;;
+;; This implies that `extract-tangent` needs to take a tag, to determine _which_
+;; tangent to extract:
+
+(comment
+  (defn derivative [f]
+    (let [tag (fresh-tag)]
+      (fn [x]
+        (-> (f (make-dual x 1 tag))
+            (extract-tangent tag))))))
+
+;; This is close to the final form you'll find
+;; at [[emmy.calculus.derivative/derivative]].
+;;
+;; ### What Return Values are Allowed?
+;;
+;; Before we discuss the implementation of dual
+;; numbers (called [[Differential]]), [[lift-1]], [[lift-2]] and the rest of the
+;; machinery that makes this all possible; what sorts of objects is `f` allowed
+;; to return?
+;;
+;; The dual number approach is beautiful because we can bring to bear all sorts
+;; of operations in Clojure that never even _see_ dual numbers. For example,
+;; `square-and-cube` called with a dual number returns a PAIR of dual numbers:
+
+(comment
+  (defn square-and-cube [x]
+    (let [x2 (g/square x)
+          x3 (g/cube x)]
+      [x2 x3])))
+
+;; Vectors don't care what they contain! We want the derivative of
+;; `square-and-cube` to also return a vector, whose entries represent the
+;; derivative of _that entry_ with respect to the function's input.
+;;
+;; But this implies that [[extract-tangent]] from the example above needs to
+;; know how to handle vectors and other collections; in the case of a vector `v`
+;; by returning `(mapv extract-tangent v)`.
+;;
+;; What about higher-order functions?
+
+(comment
+  (defn offset-fn
+    "Returns a function that takes a single-argument function `g`, and returns a new
+  function like `g` that offsets its input by `offset`."
+    [offset]
+    (fn [g]
+      (fn [x]
+        (g (+ x offset))))))
+
+;; `(derivative offset-fn)` here returns a function! Manzyuk et al. 2019 makes
+;; the reasonable claim that, if `(f x)` returns a function, then `(derivative
+;; f)` should treat `f` as a multi-argument function with its first argument
+;; curried.
+;;
+;; Let's say `f` takes a number `x` and returns a function `g` that maps number
+;; => number. `(((derivative f) x) y)` should act just like the partial
+;; derivative of the equivalent multi-argument function, with respect to the
+;; first argument:
+;;
+;;```clj
+;;(((partial 0) f-flattened) x y)
+;;```
+;;
+;; In other words, `(derivative offset-fn)` should act just like:
+
+(comment
+  (derivative
+   (fn [offset] (g (+ x offset)))))

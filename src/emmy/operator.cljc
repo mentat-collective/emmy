@@ -3,12 +3,12 @@
 (ns emmy.operator
   (:refer-clojure :exclude [get identity name])
   (:require [clojure.core :as core]
-            [emmy.differential :as d]
             [emmy.function :as f]
             [emmy.generic :as g]
             [emmy.pattern.rule :refer [rule-simplifier]]
             [emmy.series :as series]
             [emmy.simplify.rules :as rules]
+            [emmy.tape :as ad]
             [emmy.util :as u]
             [emmy.value :as v])
   #?(:clj
@@ -32,12 +32,12 @@
   f/IArity
   (arity [_] arity)
 
-  d/IPerturbed
+  ad/IPerturbed
   (perturbed? [_] false)
   (replace-tag [_ old new]
-    (Operator. (d/replace-tag o old new) arity name context m))
+    (Operator. (ad/replace-tag o old new) arity name context m))
   (extract-tangent [_ tag]
-    (Operator. (d/extract-tangent o tag) arity name context m))
+    (Operator. (ad/extract-tangent o tag) arity name context m))
 
   #?@(:clj
       [ILookup

@@ -12,14 +12,13 @@
   (:refer-clojure :exclude [name])
   (:require #?(:clj [clojure.pprint :as pprint])
             [emmy.abstract.number :as an]
-            [emmy.differential :as d]
             [emmy.function :as f]
             [emmy.generic :as g]
             [emmy.matrix :as m]
             [emmy.numsymb :as sym]
             [emmy.polynomial]
             [emmy.structure :as s]
-            [emmy.tape :as tape]
+            [emmy.tape :as ad]
             [emmy.util :as u]
             [emmy.value :as v])
   #?(:clj
@@ -251,12 +250,13 @@
     (->Function
      fexp (f/arity f) (domain-types f) (range-type f))))
 
+#_
 (defn- forward-mode-fold [f primal-s tag]
   (fn
     ([] (apply f primal-s))
     ([acc] acc)
     ([acc [x path _]]
-     (let [dx (d/tangent-part x tag)]
+     (let [dx (ad/tangent-part x tag)]
        (if (g/numeric-zero? dx)
          acc
          (let [partial (literal-partial f path)]
@@ -266,9 +266,9 @@
 (defn- dual-forward-mode-fold [f primal-s tag]
   (fn
     ([] 0)
-    ([tangent] (tape/->Dual tag (apply f primal-s) tangent))
+    ([tangent] (ad/->Dual tag (apply f primal-s) tangent))
     ([tangent [x path _]]
-     (let [dx (tape/dual-tangent x tag)]
+     (let [dx (ad/dual-tangent x tag)]
        (if (g/numeric-zero? dx)
          tangent
          (let [partial (literal-partial f path)]
@@ -279,9 +279,9 @@
   (fn
     ([] [])
     ([partials]
-     (tape/make tag (apply f primal-s) partials))
+     (ad/make tag (apply f primal-s) partials))
     ([partials [entry path _]]
-     (if (and (tape/tape? entry) (= tag (tape/tape-tag entry)))
+     (if (and (ad/tape? entry) (= tag (ad/tape-tag entry)))
        (let [partial (literal-partial f path)]
          (conj partials [entry (literal-apply partial primal-s)]))
        partials))))
@@ -293,11 +293,10 @@
   expanded `((D f) xs)` by applying the chain rule and summing the partial
   derivatives for each differential argument in the input structure."
   [f s tag dx]
-  (let [fold-fn  (cond (tape/tape? dx)      reverse-mode-fold
-                       (tape/dual? dx)      dual-forward-mode-fold
-                       (d/differential? dx) forward-mode-fold
-                       :else                (u/illegal "No tape or differential inputs."))
-        primal-s (s/mapr (fn [x] (tape/primal-of x tag)) s)]
+  (let [fold-fn  (cond (ad/tape? dx) reverse-mode-fold
+                       (ad/dual? dx) dual-forward-mode-fold
+                       :else         (u/illegal "No tape or differential inputs."))
+        primal-s (s/mapr (fn [x] (ad/primal-of x tag)) s)]
     (s/fold-chain (fold-fn f primal-s tag) s)))
 
 (defn- check-argument-type
@@ -332,7 +331,7 @@
     (if-let [[tag dx] (s/fold-chain
                        (fn
                          ([] [])
-                         ([acc]     (apply tape/tag+perturbation acc))
+                         ([acc]     (apply ad/tag+perturbation acc))
                          ([acc [d]] (conj acc d)))
                        s)]
       (literal-derivative f s tag dx)

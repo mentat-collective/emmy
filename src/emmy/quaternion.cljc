@@ -12,11 +12,11 @@
   and [[emmy.numbers]]."
   (:refer-clojure :exclude [zero?])
   (:require [emmy.complex :as sc]
-            [emmy.differential :as d]
             [emmy.function :as f]
             [emmy.generic :as g]
             [emmy.matrix :as m]
             [emmy.structure :as ss]
+            [emmy.tape :as ad]
             [emmy.util :as u]
             [emmy.util.logic :as ul]
             [emmy.value :as v])
@@ -109,27 +109,27 @@
   f/IArity
   (arity [this] (arity this))
 
-  d/IPerturbed
+  ad/IPerturbed
   (perturbed? [_]
-    (or (d/perturbed? r)
-        (d/perturbed? i)
-        (d/perturbed? j)
-        (d/perturbed? k)))
+    (or (ad/perturbed? r)
+        (ad/perturbed? i)
+        (ad/perturbed? j)
+        (ad/perturbed? k)))
 
   (replace-tag [_ old new]
     (Quaternion.
-     (d/replace-tag r old new)
-     (d/replace-tag i old new)
-     (d/replace-tag j old new)
-     (d/replace-tag k old new)
+     (ad/replace-tag r old new)
+     (ad/replace-tag i old new)
+     (ad/replace-tag j old new)
+     (ad/replace-tag k old new)
      m))
 
   (extract-tangent [_ tag]
     (Quaternion.
-     (d/extract-tangent r tag)
-     (d/extract-tangent i tag)
-     (d/extract-tangent j tag)
-     (d/extract-tangent k tag)
+     (ad/extract-tangent r tag)
+     (ad/extract-tangent i tag)
+     (ad/extract-tangent j tag)
+     (ad/extract-tangent k tag)
      m))
 
   v/IKind
