@@ -1569,8 +1569,7 @@
   (is (v/= [0 1 0 0]
            (take 4 ((D (fn [y]
                          (d/symbolic-taylor-series
-                          (fn [x] (g/* x y))
-                          0)))
+                          (fn [x] (g/* x y)))))
                     'a)))
       "proper function when symbolic-taylor-series is used INSIDE of a call to
       `D`; this shows that it can do proper symbolic replacement inside of
@@ -1578,8 +1577,8 @@
 
   (testing "compare, one stays symbolic:"
     (letfn [(f [[a b]]
-             (* (sin (* 3 a))
-                (cos (* 4 b))))]
+              (* (sin (* 3 a))
+                 (cos (* 4 b))))]
 
       (is (ish? [-0.020532965943782493
                  (s/down 0.4321318251769156 -0.558472974950351)]

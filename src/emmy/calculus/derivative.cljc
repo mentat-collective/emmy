@@ -256,10 +256,10 @@
   (fn [x]
     (let [tag    (d/fresh-tag)
           lifted
-          (d/bundle-element x 1 tag)
-
-          ;; TODO this is the only change we need to get this working. Also implement comparable.
-          #_(emmy.tape/->Dual tag x 1)]
+          ;; TODO if we want to do this, we can kill differentials and move the
+          ;; tests over...
+          #_(d/bundle-element x 1 tag)
+          (emmy.tape/->Dual tag x 1)]
       (-> (d/with-active-tag tag f [lifted])
           (d/extract-tangent tag))
       )))
@@ -548,9 +548,16 @@
      (letfn [(process-term [term]
                (g/simplify
                 (s/mapr (fn rec [x]
-                          (if (d/differential? x)
-                            (d/map-coefficients rec x)
-                            (-> (g/simplify x)
-                                (x/substitute replace-m))))
+                          (cond (d/differential? x) (d/map-coefficients rec x)
+                                (tape/dual? x)
+                                (tape/->Dual (tape/dual-tag x)
+                                             (rec (tape/dual-primal x))
+                                             (rec (tape/dual-tangent x)))
+
+                                (tape/tape? x)
+                                (u/illegal "TODO implement this using fmap style.")
+
+                                :else (-> (g/simplify x)
+                                          (x/substitute replace-m))))
                         term)))]
        (series/fmap process-term series)))))

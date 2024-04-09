@@ -126,7 +126,7 @@
 
 ;; Here's the [[TapeCell]] type with the fields described above.
 
-(declare compare)
+(declare compare compare-dual dual-primal)
 
 (deftype Dual [tag primal tangent]
   v/IKind
@@ -147,6 +147,7 @@
 
   Object
   ;; TODO revisit all of this
+  #?(:clj (equals [_ b] (v/= primal (dual-primal b))))
   #?(:cljs (valueOf [_] (.valueOf primal)))
   (toString [_]
     (str "#emmy.tape.Dual"
@@ -154,8 +155,22 @@
           :primal primal
           :tangent tangent}))
 
-  ;; TODO add comparable block from below
-  )
+  #?@(:clj
+      ;; The motivation for this override is subtle. To participate in control
+      ;; flow operations, like comparison with both [[TapeCell]] and
+      ;; non-[[TapeCell]] instances, [[TapeCell]] instances should compare using
+      ;; ONLY their primal terms. This means that comparison will ignore any
+      ;; difference in `in->partial`.
+      [Comparable
+       (compareTo [a b] (compare-dual a b))]
+
+      :cljs
+      [IComparable
+       (-compare [a b]  (compare-dual a b))
+
+       IPrintWithWriter
+       (-pr-writer [x writer _]
+                   (write-all writer (.toString x)))]))
 
 
 (deftype TapeCell [tag id primal in->partial]
@@ -486,6 +501,12 @@
   (v/compare
    (tape-primal a)
    (tape-primal b)))
+
+(defn compare-dual
+  [a b]
+  (v/compare
+   (dual-primal a)
+   (dual-primal b)))
 
 ;; ## Reverse-pass support
 
