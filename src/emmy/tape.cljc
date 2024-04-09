@@ -127,7 +127,7 @@
 
 (declare compare)
 
-(deftype TapeCell [tag id primal in->partial]
+(deftype TapeCell [tag id primal dual in->partial]
   v/IKind
   (kind [_] ::tape)
 
@@ -147,20 +147,16 @@
     (TapeCell. (if (= old tag) new tag)
                id
                (d/replace-tag primal old new)
+               (d/replace-tag dual old new)
                (mapv (fn [[node partial]]
                        [(d/replace-tag node old new)
                         (d/replace-tag partial old new)])
                      in->partial)))
 
   ;; This implementation is called if a tape ever makes it out of
-  ;; forward-mode-differentiated function.
-  (extract-tangent [_ tag]
-    (TapeCell. tag
-               id
-               (d/extract-tangent primal tag)
-               (mapv (fn [[node partial]]
-                       [node (d/extract-tangent partial tag)])
-                     in->partial)))
+  ;; forward-mode-differentiated function. TODO if we like the dual number thing
+  ;; this should return `dual`.
+  (extract-tangent [_ _] 0)
 
 
   Object
@@ -235,9 +231,11 @@
   where `<partial>` is the partial derivative of the output with respect to each
   input (defaults to `[]`)."
   ([tag primal]
-   (->TapeCell tag (fresh-id) primal []))
+   (->TapeCell tag (fresh-id) primal 1 []))
   ([tag primal partials]
-   (->TapeCell tag (fresh-id) primal partials)))
+   (->TapeCell tag (fresh-id) primal 1 partials))
+  ([tag primal dual partials]
+   (->TapeCell tag (fresh-id) primal dual partials)))
 
 ;; TODO making [[tapify]] extensible is the key to differentiating things like
 ;; quaternion-valued functions. Forward-mode handles this differently, since we
@@ -317,6 +315,7 @@
   {:tag         (.-tag t)
    :id          (.-id t)
    :primal      (.-primal t)
+   :dual        (.-dual t)
    :in->partial (.-in->partial t)})
 
 ;; More permissive accessors...
@@ -832,10 +831,15 @@
   ([f df:dx]
    (fn call [x]
      (cond (tape? x)
-           (let [primal (tape-primal x)]
+           (let [primal  (tape-primal x)
+                 dual    (.-dual ^TapeCell x)
+                 partial (df:dx primal)]
              (make (tape-tag x)
                    (call primal)
-                   [[x (df:dx primal)]]))
+                   (if (g/numeric-zero? dual)
+                     dual
+                     (g/* partial dual))
+                   [[x partial]]))
 
            (d/differential? x)
            (let [[px tx] (d/primal-tangent-pair x)
@@ -884,15 +888,22 @@
              (operate-reverse [tag]
                (let [primal-x  (tape-primal x tag)
                      primal-y  (tape-primal y tag)
+                     dx        (delay (df:dx primal-x primal-y))
+                     dy        (delay (df:dy primal-x primal-y))
                      partial-x (if (and (tape? x) (= tag (tape-tag x)))
-                                 [[x (df:dx primal-x primal-y)]]
+                                 [[x @dx]]
                                  [])
                      partial-y (if (and (tape? y) (= tag (tape-tag y)))
-                                 [[y (df:dy primal-x primal-y)]]
+                                 [[y @dy]]
                                  [])]
-
                  (make tag
                        (call primal-x primal-y)
+                       (g/+ (if (and (tape? x) (= tag (tape-tag x)))
+                              (g/* @dx (.-dual ^TapeCell x))
+                              0)
+                            (if (and (tape? y) (= tag (tape-tag y)))
+                              (g/* @dy (.-dual ^TapeCell y))
+                              0))
                        (into partial-x partial-y))))]
        (if-let [[tag dx] (tag+perturbation x y)]
          (cond (tape? dx)           (operate-reverse tag)
@@ -1098,6 +1109,7 @@
   (TapeCell. (.-tag t)
              (.-id t)
              (g/simplify (.-primal t))
+             (.-dual t)
              (mapv (fn [[node partial]]
                      [(g/simplify node)
                       (g/simplify partial)])

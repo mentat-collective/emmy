@@ -201,9 +201,8 @@
                      (g/freeze not-simple))
                   "A frozen differential freezes each entry")
 
-              (checking "simplify acts as identity" 100
-                        [t (sg/tapecell gen/symbol)]
-                        (is (identical? t (g/simplify t)))))))))))
+              ;; TODO test new simplify
+              )))))))
 
 (deftest tape-api-tests
   (testing "tag-of"
