@@ -158,7 +158,6 @@
   ;; this should return `dual`.
   (extract-tangent [_ _] 0)
 
-
   Object
   ;; Comparing [[TapeCell]] objects using `equals` defaults to [[equiv]], which
   ;; compares instances only using their non-tagged ('finite') components. If

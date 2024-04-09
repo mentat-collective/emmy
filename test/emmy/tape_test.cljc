@@ -204,6 +204,7 @@
               ;; TODO test new simplify
               )))))))
 
+
 (deftest tape-api-tests
   (testing "tag-of"
     (checking "tag-of matches tape-tag for cells" 100 [tag gen/nat]
