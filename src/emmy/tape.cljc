@@ -154,14 +154,7 @@
 
   ;; This implementation is called if a tape ever makes it out of
   ;; forward-mode-differentiated function.
-  (extract-tangent [_ tag]
-    (TapeCell. tag
-               id
-               (d/extract-tangent primal tag)
-               (mapv (fn [[node partial]]
-                       [node (d/extract-tangent partial tag)])
-                     in->partial)))
-
+  (extract-tangent [_ _] 0)
 
   Object
   ;; Comparing [[TapeCell]] objects using `equals` defaults to [[equiv]], which
