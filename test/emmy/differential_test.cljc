@@ -210,7 +210,6 @@
                         (g/* x g/cube))]
                 (g x)))
           Df (derivative f)]
-
       (is (= ((derivative (g/* identity g/square)) 10)
              (Df 10))
           "providing 10 takes the x*g/square branch")
@@ -232,6 +231,11 @@
         "d/with-active-tag calls its fn with the supplied args.")))
 
 (deftest dual-arithmetic-tests
+  (let [Df (derivative (fn [_x]))]
+    (checking "derivative of nil-valued function is always zero" 100
+              [x sg/real]
+              (is (zero? (Df x)))))
+
   (checking "(a/b)*b == a, (a*b)/b == a" 100
             [x integral-dual-gen
              y (nonzero integral-dual-gen)]

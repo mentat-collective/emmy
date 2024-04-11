@@ -350,6 +350,11 @@
 ;; The default implementations are straightforward, and match the docstrings:
 
 (extend-protocol IPerturbed
+  nil
+  (perturbed? [_] false)
+  (replace-tag [_ _ _] nil)
+  (extract-tangent [_ _] 0)
+
   #?(:clj Object :cljs default)
   (perturbed? [_] false)
   (replace-tag [this _ _] this)
