@@ -108,58 +108,58 @@
           (e/determinant
            (((partial 2) ((partial 2) L1))
             (up 't (up 'x 'y) (up 'vx 'vy))))))
-        "mass matrix of L_1 has determinant 0")
+        "mass matrix of L_1 has determinant 0"))
 
-    (testing "page 141"
-      (letfn [(L1 [state]
-                (e/sqrt (square (e/velocity state))))]
-        (is (= '(down
-                 (/ (+ (* -1 ((D x) t) ((D y) t) (((expt D 2) y) t))
-                       (* (((expt D 2) x) t) (expt ((D y) t) 2)))
-                    (+ (* (expt ((D x) t) 2) (sqrt (+ (expt ((D x) t) 2) (expt ((D y) t) 2))))
-                       (* (expt ((D y) t) 2) (sqrt (+ (expt ((D x) t) 2) (expt ((D y) t) 2))))))
-                 (/ (+ (* (expt ((D x) t) 2) (((expt D 2) y) t))
-                       (* -1 ((D x) t) (((expt D 2) x) t) ((D y) t)))
-                    (+ (* (expt ((D x) t) 2) (sqrt (+ (expt ((D x) t) 2) (expt ((D y) t) 2))))
-                       (* (expt ((D y) t) 2) (sqrt (+ (expt ((D x) t) 2) (expt ((D y) t) 2)))))))
-               (simplify
-                (((e/Lagrange-equations L1)
-                  (up (e/literal-function 'x) (e/literal-function 'y)))
-                 't)))
-            "NOTE that the simplifier here and in the current version of
+  (testing "page 141"
+    (letfn [(L1 [state]
+              (e/sqrt (square (e/velocity state))))]
+      (is (= '(down
+               (/ (+ (* -1 ((D x) t) ((D y) t) (((expt D 2) y) t))
+                     (* (((expt D 2) x) t) (expt ((D y) t) 2)))
+                  (+ (* (expt ((D x) t) 2) (sqrt (+ (expt ((D x) t) 2) (expt ((D y) t) 2))))
+                     (* (expt ((D y) t) 2) (sqrt (+ (expt ((D x) t) 2) (expt ((D y) t) 2))))))
+               (/ (+ (* (expt ((D x) t) 2) (((expt D 2) y) t))
+                     (* -1 ((D x) t) (((expt D 2) x) t) ((D y) t)))
+                  (+ (* (expt ((D x) t) 2) (sqrt (+ (expt ((D x) t) 2) (expt ((D y) t) 2))))
+                     (* (expt ((D y) t) 2) (sqrt (+ (expt ((D x) t) 2) (expt ((D y) t) 2)))))))
+             (simplify
+              (((e/Lagrange-equations L1)
+                (up (e/literal-function 'x) (e/literal-function 'y)))
+               't)))
+          "NOTE that the simplifier here and in the current version of
              scmutils can't figure out that the denominators are to the 3/2
              power.")))
 
-    (e/with-literal-functions [x y f]
-      (let [E1 (e/Euler-Lagrange-operator L1)]
-        (is (= '(down 0 0)
-               (simplify
-                ((- (compose E1
-                             (e/Gamma (up (compose x f)
-                                          (compose y f))
-                                      4))
-                    (* (compose E1
-                                (e/Gamma (up x y) 4)
-                                f)
-                       (D f)))
-                 't)))
-            "page 142"))
+  (e/with-literal-functions [x y f]
+    (let [E1 (e/Euler-Lagrange-operator L1)]
+      (is (= '(down 0 0)
+             (simplify
+              ((- (compose E1
+                           (e/Gamma (up (compose x f)
+                                        (compose y f))
+                                    4))
+                  (* (compose E1
+                              (e/Gamma (up x y) 4)
+                              f)
+                     (D f)))
+               't)))
+          "page 142"))
 
-      (let [q (up x y)]
-        (is (= '(down
-                 (+ (* (m_00 (up (x (f t)) (y (f t)))) ((D x) (f t)) (((expt D 2) f) t))
-                    (* (m_01 (up (x (f t)) (y (f t)))) ((D y) (f t)) (((expt D 2) f) t)))
-                 (+ (* ((D x) (f t)) (m_01 (up (x (f t)) (y (f t)))) (((expt D 2) f) t))
-                    (* ((D y) (f t)) (m_11 (up (x (f t)) (y (f t)))) (((expt D 2) f) t))))
-               (simplify
-                ((- (compose (e/Euler-Lagrange-operator L2)
-                             (e/Gamma (compose q f) 4))
-                    (* (compose (e/Euler-Lagrange-operator L2)
-                                (e/Gamma q 4)
-                                f)
-                       (expt (D f) 2)))
-                 't)))
-            "page 143")))))
+    (let [q (up x y)]
+      (is (= '(down
+               (+ (* ((D x) (f t)) (m_00 (up (x (f t)) (y (f t)))) (((expt D 2) f) t))
+                  (* (m_01 (up (x (f t)) (y (f t)))) ((D y) (f t)) (((expt D 2) f) t)))
+               (+ (* ((D x) (f t)) (m_01 (up (x (f t)) (y (f t)))) (((expt D 2) f) t))
+                  (* ((D y) (f t)) (m_11 (up (x (f t)) (y (f t)))) (((expt D 2) f) t))))
+             (simplify
+              ((- (compose (e/Euler-Lagrange-operator L2)
+                           (e/Gamma (compose q f) 4))
+                  (* (compose (e/Euler-Lagrange-operator L2)
+                              (e/Gamma q 4)
+                              f)
+                     (expt (D f) 2)))
+               't)))
+          "page 143"))))
 
 (def spacetime-rect-basis
   (e/coordinate-system->basis spacetime-rect))

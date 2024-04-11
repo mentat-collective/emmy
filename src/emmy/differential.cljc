@@ -518,7 +518,9 @@
    (bundle-element primal 1 tag))
   ([primal tangent tag]
    {:pre [(v/scalar? primal)]}
-   (->Dual tag primal tangent)))
+   (if (g/zero? tangent)
+     primal
+     (->Dual tag primal tangent))))
 
 ;; ## Tag API
 ;;
@@ -738,12 +740,9 @@
      (if-not (dual? x)
        (f x)
        (let [[px tx] (primal-tangent-pair x)
-             fx      (call px)]
-         (->Dual (tag x)
-                 (call px)
-                 (if (g/numeric-zero? tx)
-                   fx
-                   (g/* (df:dx px) tx))))))))
+             primal  (call px)
+             tangent (g/* (df:dx px) tx)]
+         (bundle-element primal tangent (tag x)))))))
 
 (defn lift-2
   "Given:
@@ -770,15 +769,15 @@
    (fn call [x y]
      (if-let [[tag _] (tag+perturbation x y)]
        (let [[xe dx] (primal-tangent-pair x tag)
-             [ye dy] (primal-tangent-pair y tag)]
-         (->Dual tag
-                 (call xe ye)
-                 (g/+ (if (g/numeric-zero? dx)
-                        dx
-                        (g/* (df:dx xe ye) dx))
-                      (if (g/numeric-zero? dy)
-                        dy
-                        (g/* (df:dy xe ye) dy)))))
+             [ye dy] (primal-tangent-pair y tag)
+             primal  (call xe ye)
+             tangent (g/+ (if (g/numeric-zero? dx)
+                            dx
+                            (g/* (df:dx xe ye) dx))
+                          (if (g/numeric-zero? dy)
+                            dy
+                            (g/* (df:dy xe ye) dy)))]
+         (bundle-element primal tangent tag))
        (f x y)))))
 
 (defn lift-n

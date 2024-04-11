@@ -219,13 +219,14 @@
 
   (testing "L-sliding-pend"
     (is (= '(down
-             (+ (* -1 b m_2 (sin (theta t)) (expt ((D theta) t) 2))
+             (+ (* -1 b m_2 (expt ((D theta) t) 2) (sin (theta t)))
                 (* b m_2 (cos (theta t)) (((expt D 2) theta) t))
                 (* m_1 (((expt D 2) x) t))
                 (* m_2 (((expt D 2) x) t)))
              (+ (* (expt b 2) m_2 (((expt D 2) theta) t))
                 (* b g m_2 (sin (theta t)))
                 (* b m_2 (((expt D 2) x) t) (cos (theta t)))))
+
            (f/with-literal-functions [x theta]
              (simplify
               (((L/Lagrange-equations
