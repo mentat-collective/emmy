@@ -967,18 +967,12 @@
 
 (defunary g/zero?
   (fn [dx]
-    (and (g/zero? (primal dx))
-         (g/zero? (tangent dx)))))
+    (let [[p t] (primal-tangent-pair dx)]
+      (and (g/zero? p)
+           (g/zero? t)))))
 
-(defunary g/one?
-  (fn [dx]
-    (and (g/one? (primal dx))
-         (g/zero? (tangent dx)))))
-
-(defunary g/identity?
-  (fn [dx]
-    (and (g/identity? (primal dx))
-         (g/zero? (tangent dx)))))
+(defunary g/one? one?)
+(defunary g/identity? identity?)
 
 (defmethod g/zero-like [::dual] [_] 0)
 (defmethod g/one-like [::dual] [_] 1)
