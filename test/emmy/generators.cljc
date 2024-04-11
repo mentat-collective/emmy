@@ -23,7 +23,6 @@
             [emmy.structure :as s]
             [emmy.tape :as tape]
             [emmy.util :as u]
-            [emmy.util.vector-set :as vs]
             [emmy.value :as v]
             [same.ish :as si])
   #?(:clj
@@ -281,39 +280,17 @@
   ([entry-gen]
    (gen/fmap ss/power-series* (gen/vector entry-gen))))
 
-;; ## Vector Set
-;;
-;; These are used in the implementation of [[emmy.differential]].
-
-(defn vector-set
-  "Generates a sorted vector of distinct elements drawn from `entry-gen`.
-  `entry-gen` must produce comparable elements.
-
-  `entry-gen` defaults to [[gen/nat]]."
-  ([] (vector-set gen/nat))
-  ([entry-gen]
-   (gen/fmap vs/make (gen/set entry-gen))))
-
 ;; ## Differential
 
-(defn differential
+(defn dual
   "Returns a generator that produces proper instances
-  of [[emmy.differential/Differential]]."
-  ([] (differential real))
-  ([coeff-gen]
-   (let [term-gen   (gen/let [tags (vector-set gen/nat)
-                              coef coeff-gen]
-                      (let [tags (if (empty? tags) [0] tags)
-                            coef (if (g/zero? coef) 1 coef)]
-                        (#'d/make-term tags coef)))]
-     (gen/let [terms  (gen/vector term-gen 1 5)
-               primal coeff-gen]
-       (let [tangent-part (d/from-terms terms)
-             ret          (d/d:+ primal tangent-part)]
-         (cond (d/differential? ret)          ret
-               (d/differential? tangent-part) tangent-part
-               :else (d/from-terms [(#'d/make-term [] primal)
-                                    (#'d/make-term [0] 1)])))))))
+  of [[emmy.differential/Dual]]."
+  ([] (dual real))
+  ([primal-gen]
+   (gen/let [tag    gen/nat
+             primal primal-gen
+             tangent primal-gen]
+     (d/bundle-element primal tangent tag))))
 
 ;; ## TapeCell
 
