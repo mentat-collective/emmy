@@ -290,7 +290,7 @@
    (gen/let [tag    gen/nat
              primal primal-gen
              tangent primal-gen]
-     (d/bundle-element primal tangent tag))))
+     (d/->Dual tag primal tangent))))
 
 ;; ## TapeCell
 
