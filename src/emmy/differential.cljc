@@ -557,11 +557,11 @@
   via [[with-active-tag]] (i.e., the tag connected with the _innermost_ call
   to [[with-active-tag]]).
 
-  If none of the tags are bound, returns the first tag from `tags`."
+  If none of the tags are bound, returns `(apply max tags)`."
   [& tags]
   (or (some (apply hash-set tags)
             *active-tags*)
-      (first tags)))
+      (apply max tags)))
 
 (defn tag+perturbation
   "Given any number of [[Dual]] instances `dxs`, returns a pair of the form
