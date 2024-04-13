@@ -17,7 +17,7 @@
 
 (defn- derivative
   "A bare-bones derivative implementation, used for testing the functionality made
-  available by [[Differential]]. The real version lives
+  available by [[Dual]]. The real version lives
   at [[emmy.calculus.derivative/derivative]]"
   [f]
   (let [tag (d/fresh-tag)]
@@ -32,60 +32,15 @@
                 x))
             gen))
 
-(def real-diff-gen
-  (sg/differential))
+(def real-dual-gen
+  (sg/dual))
 
-(def integral-diff-gen
-  (sg/differential gen/nat))
+(def integral-dual-gen
+  (sg/dual gen/nat))
 
-(def terms-gen
-  (gen/fmap #'d/bare-terms real-diff-gen))
-
-(deftest term-arithmetic-tests
-  (checking "term accessors work" 100 [tags (sg/vector-set)
-                                       coef sg/real]
-            (let [term (d/make-term tags coef)]
-              (is (= tags (#'d/tags term)))
-              (is (= coef (#'d/coefficient term)))
-              (doseq [tag tags]
-                (is (#'d/tag-in-term? term tag)))))
-
-  (checking "terms:+ each term in random order returns original list" 100
-            [terms terms-gen]
-            (let [rebuilt (transduce (map vector)
-                                     #'d/terms:+
-                                     (shuffle terms))]
-              (is (vector? rebuilt))
-              (is (= terms rebuilt))))
-
-  (checking "terms:+ returns sorted, well-formed terms" 500
-            [l terms-gen, r terms-gen]
-            (let [sum (#'d/terms:+ l r)]
-              (is (= sum (sort-by #'d/tags sum)))))
-
-  (testing "terms:+ removes zero coefs"
-    (let [l [(d/make-term [1] 5)]
-          r [(d/make-term [1] -5)]]
-      (is (= [] (#'d/terms:+ l r)))))
-
-  (checking "terms:* returns sorted, well-formed terms" 500
-            [l terms-gen, r terms-gen]
-            (let [product (#'d/terms:* l r)]
-              (is (= product (sort-by #'d/tags product)))))
-
-  (testing "terms:* removes zeros"
-    (let [l [(d/make-term [1] 0)]
-          r [(d/make-term [1] -5)]]
-      (is (= [] (#'d/terms:* l r))))))
-
-(deftest differential-type-tests
+(deftest dual-type-tests
   (defmethod g/zero? [#?(:clj String :cljs js/String)] [_] false)
-  (testing "v/numerical? special cases"
-    (is (not (v/numerical? (d/from-terms {[] "face"}))))
-    (is (v/scalar? (d/->Differential []))
-        "An empty term list is interpreted as a 0-valued [[Differential]]."))
-
-  (checking "native comparison operators work with differential" 100
+  (checking "native comparison operators work with dual" 100
             [l sg/real, r sg/real]
             (is (= (v/compare l r)
                    (v/compare (d/bundle-element l 1 0) r)
@@ -103,7 +58,7 @@
      ;; friends. Once we implement `v/<` we can duplicate this test for those
      ;; overridden versions, which should piggyback on compare.
      (let [real-minus-rationals (gen/one-of [sg/any-integral (sg/reasonable-double)])]
-       (checking "[[Differential]] is transparent to native comparison operators" 100
+       (checking "[[Dual]] is transparent to native comparison operators" 100
                  [[l-num r-num] (gen/vector real-minus-rationals 2)]
                  (let [compare-bit (v/compare l-num r-num)]
                    (doseq [l [l-num (d/bundle-element l-num 1 0)]
@@ -112,22 +67,15 @@
                            (zero? compare-bit) (is (and (<= l r) (= l r) (>= l r)))
                            :else (is (> l r))))))))
 
-  (checking "v/numerical?, v/scalar?" 100 [diff (sg/differential sg/real)]
+  (checking "v/numerical?, v/scalar?" 100 [diff (sg/dual sg/real)]
             (is (v/scalar? diff)
-                "True for all differentials")
-
-            (is (not (v/numerical? diff))
-                "False for all differentials, even wrapping numerical things...
-                we don't want g/* and friends to simplify us away."))
+                "True for all duals"))
 
   (testing "value protocol implementation"
-    (let [zero (d/->Differential [])
-          dy (d/from-terms {[] 0, [1] 1})]
+    (let [zero (d/bundle-element 0 0 0)
+          dy   (d/bundle-element 0 1 0)]
       (is (g/zero? zero)
           "zero? returns true for an empty term list")
-
-      (is (g/zero? (d/from-terms [(d/make-term [] 0)]))
-          "zero? returns true for an explicit zero")
 
       (is (not (g/zero? dy))
           "the finite term is 0, but `g/zero?` fails if any perturbation is
@@ -137,18 +85,17 @@
           "subtly, `dy` IS in fact equal to zero; this can be used for control
       flow.")
 
-      (testing "g/one? only responds true to a one primal if all tangents are zero."
-        (is (g/one? (d/from-terms {[] 1})))
-        (is (g/one? (d/from-terms {[] 1 [1] 0})))
-        (is (not (g/one? (d/from-terms {[] 1 [1] 1})))))
+      (testing "g/one? only responds true to a one primal if tangent is zero."
+        (is (g/one? (d/bundle-element 1 0 0)))
+        (is (not (g/one?  (d/bundle-element 1 1 0)))))
 
-      (testing "g/identity? only responds true to an `identity` primal if all
-      tangents are zero."
-        (is (g/identity? (d/from-terms {[] 1})))
-        (is (g/identity? (d/from-terms {[] 1 [1] 0})))
-        (is (not (g/identity? (d/from-terms {[] 1 [1] 1})))))
+      (testing
+          "g/identity? only responds true to an `identity` primal if the tangent
+      is zero."
+        (is (g/identity? (d/bundle-element 1 0 0)))
+        (is (not (g/identity? (d/bundle-element 1 1 0)))))
 
-      (checking "*-like works" 100 [diff real-diff-gen]
+      (checking "*-like works" 100 [diff real-dual-gen]
                 (is (g/zero? (g/zero-like diff)))
                 (is (g/one? (g/one-like diff)))
                 (is (g/identity? (g/identity-like diff))))
@@ -158,7 +105,7 @@
                   (let [elem (d/bundle-element x 1 0)]
                     (is (= (g/negative? x)
                            (g/negative? elem))
-                        "negative? operates on finite-part only.")
+                        "negative? operates on primal only.")
 
                     (is (not (g/infinite? elem))
                         "infinite? is always false for real finite parts.")))
@@ -174,21 +121,21 @@
                [(d/bundle-element ##-Inf 1 0)
                 (d/bundle-element ##Inf 1 0)])
               "an infinite or negative infinite value in the finite part slot
-               makes the differential `g/infinite?`"))
+               makes the dual `g/infinite?`"))
 
         (checking "=, equiv ignore tangent parts" 100
                   [n sg/real-without-ratio]
                   (is (= (d/bundle-element n 1 0) n)
-                      "differential on the left works.")
+                      "dual on the left works.")
 
                   #?(:cljs
                      (is (= n (d/bundle-element n 1 0))
-                         "differential on the right works in CLJS."))
+                         "dual on the right works in CLJS."))
 
                   (is (d/equiv (d/bundle-element n 1 0) n n (d/bundle-element n 1 0) n)
                       "d/equiv matches = behavior, varargs"))
 
-        (checking "eq uses tangent parts" 100 [n sg/real]
+        (checking "eq uses tangent" 100 [n sg/real]
                   (is (d/eq (d/bundle-element n 0 0) n n (d/bundle-element n 0 0) n)
                       "eq is true with no tangent, varargs")
 
@@ -202,19 +149,19 @@
                       "d/eq handles equality")
 
                   (is (not (d/eq (d/bundle-element n 1 0) (d/bundle-element n 2 0)))
-                      "d/eq is false for [[Differential]]s with diff tags"))
+                      "d/eq is false for [[Dual]]s with diff tags"))
 
-        (checking "compare ignores tangent parts" 100
+        (checking "compare ignores tangent" 100
                   [l sg/real, r sg/real]
                   (is (= (v/compare l r)
                          (v/compare (d/bundle-element l 1 0) r)
                          (v/compare l (d/bundle-element r 1 0)))
-                      "differential works on either side.")
+                      "dual works on either side.")
 
                   (is (= (d/compare l r)
                          (d/compare (d/bundle-element l r 0) r)
                          (d/compare l (d/bundle-element r l 0)))
-                      "d/compare can handle non-differential on either side, also
+                      "d/compare can handle non-dual on either side, also
                     ignores tangents.")
 
                   (testing "{d,v}/compare l, l matches equals behavior, ignores tangents"
@@ -226,35 +173,35 @@
         (checking "compare-full takes tags into account" 100
                   [l sg/real]
                   (is (pos? (d/compare-full (d/bundle-element l 1 0) l))
-                      "a [[Differential]] with a positive tangent is ALWAYS
-                    greater than a non-[[Differential]] whatever the tangent.")
+                      "a [[Dual]] with a positive tangent is ALWAYS
+                    greater than a non-[[Dual]] whatever the tangent.")
 
                   (is (neg? (d/compare-full l (d/bundle-element l 1 0)))
-                      "a [[Differential]] with a positive tangent is ALWAYS
-                    greater than a non-[[Differential]] whatever the tangent."))
+                      "a [[Dual]] with a positive tangent is ALWAYS
+                    greater than a non-[[Dual]] whatever the tangent."))
 
         (testing "freeze, simplify, str"
           (let [not-simple (g/square
                             (g/square (d/bundle-element 'x 1 0)))]
-            (is (= '[Differential
-                     [[]  (expt x 4)]
-                     [[0] (* 2 (expt x 2) 2 x)]]
+            (is (= '[Dual 0
+                     (expt x 4)
+                     (* 2 (expt x 2) 2 x)]
                    (g/freeze not-simple))
-                "A frozen differential freezes each entry")
+                "A frozen dual freezes primal and tangent")
 
-            (is (= '[Differential
-                     [[]  (expt x 4)]
-                     [[0] (* 4 (expt x 3))]]
+            (is (= '[Dual 0
+                     (expt x 4)
+                     (* 4 (expt x 3))]
                    (g/freeze
                     (g/simplify not-simple)))
-                "simplify simplifies each tangent term")
+                "simplify simplifies primal and tangent")
 
-            (is (v/= "D[[] → (expt x 4) [0] → (* 4 (expt x 3))]"
-                     (str (g/simplify not-simple)))
+            (is (= "#emmy.tape.Dual{:tag 0, :primal (expt x 4), :tangent (* 4 (expt x 3))}"
+                   (str (g/simplify not-simple)))
                 "str representation properly simplifies.")))))))
 
-(deftest differential-fn-tests
-  (testing "differentials can take branches inside functions, PROVIDED (with
+(deftest dual-fn-tests
+  (testing "duals can take branches inside functions, PROVIDED (with
             clojure.core/=) the perturbed variable is on the
             left! (ClojureScript can handle equals on either side.)"
     (let [f (fn [x]
@@ -263,7 +210,6 @@
                         (g/* x g/cube))]
                 (g x)))
           Df (derivative f)]
-
       (is (= ((derivative (g/* identity g/square)) 10)
              (Df 10))
           "providing 10 takes the x*g/square branch")
@@ -284,120 +230,20 @@
                [1 2 3]))
         "d/with-active-tag calls its fn with the supplied args.")))
 
-(deftest differential-arithmetic-tests
-  (checking "(d:+ diff 0) == (d:+ 0 diff) == diff" 100 [diff real-diff-gen]
-            (is (d/eq diff
-                      (d/d:+ diff 0)
-                      (d/d:+ 0 diff))))
-
-  (checking "d:+ is associative given associative coefs"
-            100 [[a b c] (gen/vector integral-diff-gen 3)]
-            (is (d/eq (d/d:+ a (d/d:+ b c))
-                      (d/d:+ (d/d:+ a b) c))
-                "associative law"))
-
-  (checking "d:+ is commutative given commutative coefs"
-            100 [a real-diff-gen, b real-diff-gen]
-            (is (d/eq (d/d:+ a b) (d/d:+ b a))
-                "commutative law"))
-
-  (checking "(d:+ diff diff) == (d:* 2 diff)" 100
-            [diff integral-diff-gen]
-            (is (d/eq (d/d:+ diff diff)
-                      (d/d:* diff 2)
-                      (d/d:* 2 diff))))
-
-  (checking "(d:* diff 1) == (d:* 1 diff) == diff" 100
-            [diff integral-diff-gen]
-            (is (d/eq diff
-                      (d/d:* diff 1)
-                      (d/d:* 1 diff))
-                "1 is a multiplicative identity"))
-
-  (checking "(d:* diff 0) == (d:* 0 diff) == 0" 100 [diff real-diff-gen]
-            (is (d/eq 0
-                      (d/d:* diff 0)
-                      (d/d:* 0 diff))
-                "multiplying by 0 erases any diff"))
-
-  (checking "d:* is associative given associative coefs"
-            100 [[a b c] (gen/vector integral-diff-gen 3)]
-            (is (d/eq (d/d:* a (d/d:* b c))
-                      (d/d:* (d/d:* a b) c))
-                "associative law"))
-
-  (checking "d:* is commutative given commutative coefs"
-            100 [[a b] (gen/vector integral-diff-gen 2)]
-            (is (d/eq (d/d:* a b) (d/d:* b a))
-                "commutative law"))
-
-  (checking "adding primal and tangent separately matches adding full term" 100
-            [[l r] (gen/vector real-diff-gen 2)]
-            (let [[pl tl] (d/primal-tangent-pair l)
-                  [pr tr] (d/primal-tangent-pair r)]
-              (is (d/eq (d/d:+ l r)
-                        (reduce
-                         d/d:+ (shuffle [pl pr tl tr])))
-                  "adding the pieces in any order works!")))
-
-  (testing "map-coefficients"
-    (let [diff (d/from-terms {[0] 1 [1] 2 [2] 3})]
-      (is (= (d/from-terms {[1] 1 [2] 2})
-             (d/map-coefficients dec diff))
-          "the 0 coefficient term is filtered out.")))
-
-  (testing "differential +, - unit tests"
-    (let [dx     (d/from-terms {[0] 1})
-          -dx    (d/from-terms {[0] -1})
-          dy     (d/from-terms {[1] 1})
-          dz     (d/from-terms {[2] 1})
-          dxdy   (d/from-terms {[0 1] 1})
-          dxdydz (d/from-terms {[0 1 2] 1})
-          dx+dy  (d/from-terms {[0] 1, [1] 1})
-          dx+dz  (d/from-terms {[0] 1, [2] 1})]
-      (testing "d:+ is commutative"
-        (is (d/eq dx+dy
-                  (d/d:+ dx dy)
-                  (d/d:+ dy dx)))
-        (is (d/eq dx+dz
-                  (d/d:+ dx dz)
-                  (d/d:+ dz dx))))
-
-      (is (d/eq (d/from-terms {[0] 3, [1] 2, [2] 3})
-                (reduce d/d:+ [dx dy dz dy dz dx dz dx]))
-          "d:+ groups terms appropriately")
-
-      (testing "addition preserves primal"
-        (is (d/eq (d/from-terms {[] 1, [0] 1}) (d/d:+ dx 1)))
-        (is (d/eq (d/from-terms {[] 'k [0] 1}) (d/d:+ dx 'k))))
-
-      (testing "various ways to get to zero"
-        (is (g/zero? (d/d:+ dx -dx)))
-        (is (g/zero? (d/d:+ -dx dx)))
-        (is (g/zero? (d/d:* dx 0)))
-        (is (g/zero? (d/d:* 0 dx)))
-        (is (g/zero? (g/* dx dx))))
-
-      (testing "associative, commutative multiplication"
-        (is (d/eq dxdy (d/d:* dx dy)))
-        (is (d/eq dxdydz (d/d:* (d/d:* dx dy) dz)))
-        (is (d/eq dxdydz (d/d:* (d/d:* dz dx) dy)))
-        (is (d/eq dxdydz (d/d:* (d/d:* dy dz) dx))))
-
-      (testing "infinitesimals go to zero when multiplied!"
-        (is (g/zero? (d/d:* dx dx))
-            "dx^2==0")
-        (is (g/zero? (d/d:* dz (d/d:* dy dz)))
-            "dy*dz^2==0"))))
+(deftest dual-arithmetic-tests
+  (let [Df (derivative (fn [_x]))]
+    (checking "derivative of nil-valued function is always zero" 100
+              [x sg/real]
+              (is (zero? (Df x)))))
 
   (checking "(a/b)*b == a, (a*b)/b == a" 100
-            [x integral-diff-gen
-             y (nonzero integral-diff-gen)]
+            [x integral-dual-gen
+             y (nonzero integral-dual-gen)]
             (is (d/eq x (g/* (g// x y) y)))
             (is (d/eq x (g// (g/* x y) y))))
 
   (checking "solve-linear, div relationships" 100
-            [x  real-diff-gen
+            [x  real-dual-gen
              y (nonzero sg/real)]
             (let [y (d/bundle-element y 1 0)]
               (is (d/eq (g/solve-linear-left y x)
@@ -410,7 +256,7 @@
                         (g/solve-linear y x)))))
 
   (testing "various unit tests with more terms"
-    (let [tangent  (fn [dx] (d/extract-tangent dx 0))
+    (let [tangent  (fn [dx] (d/tangent dx 0))
           simplify (comp g/simplify tangent)]
       (is (v/= '(* 3 (expt x 2))
                (simplify
@@ -454,7 +300,16 @@
         (is (v/= '(* 4 (expt x 3))
                  (simplify (f x+dx))))))))
 
-(deftest differential-api-tests
+(deftest dual-api-tests
+  (checking "check accessors for bundle-element" 100
+            [primal  (sg/reasonable-double)
+             tangent (sg/reasonable-double)
+             tag     gen/nat]
+            (let [diff (d/bundle-element primal tangent tag)]
+              (is (= primal (d/primal diff)))
+              (is (= tangent (d/tangent diff)))
+              (is (= tag (d/tag diff)))))
+
   (testing "bundle-element can flatten bundle-element primal, tangent"
     (is (d/eq (g/+ (g/sin (d/bundle-element 1 1 0))
                    (g/* (g/cos (d/bundle-element 1 1 0))
@@ -463,82 +318,27 @@
                                 (g/cos (d/bundle-element 1 1 0))
                                 1))))
 
-  (checking "to, from terms == id" 100
-            [diff real-diff-gen]
-            (is (d/eq diff
-                      (-> (#'d/->terms diff)
-                          (#'d/terms->differential)))))
+  (checking "(primal-tangent-pair diff) == [(primal diff) (tangent diff)]" 100
+            [diff real-dual-gen]
+            (let [[primal tangent] (d/primal-tangent-pair diff)]
+              (is (d/eq primal (d/primal diff)))
+              (is (d/eq tangent (d/tangent diff))))
 
-  (checking "round-trip to terms and back" 100
-            [n sg/real]
-            (let [rt (-> (#'d/->terms n)
-                         (#'d/terms->differential))]
-              (is (d/eq n rt)
-                  "round tripping doesn't change equality")
-              (is (not (d/differential? rt))
-                  "round trip keeps non-differentials as non-diff")))
+            ;; with specified tag
+            (let [tag (d/tag diff)
+                  [primal tangent] (d/primal-tangent-pair diff tag)]
+              (is (d/eq primal (d/primal diff tag)))
+              (is (d/eq tangent (d/tangent diff tag)))))
 
-  (letfn [(all-tags [diff]
-            (into #{}
-                  (mapcat #'d/tags)
-                  (#'d/->terms diff)))]
-
-    (checking "max-order-tag picks from the greatest of SOME term's tags" 100
-              [diff real-diff-gen]
-              (if (seq (all-tags diff))
-                (let [top-tags (into #{} (map (comp peek #'d/tags)
-                                              (#'d/->terms diff)))]
-                  (is (contains?
-                       top-tags (d/max-order-tag diff))
-                      "the max order tag comes from the set of top tags,
-                      gathered across all terms.")
-                  (is (= (d/max-order-tag diff)
-                         (peek (#'d/tags (last (#'d/->terms diff)))))
-                      "the max tag of the LAST term matches the max order
-                      tag."))
-
-                (is (nil? (d/max-order-tag diff))
-                    "if the tag set is totally empty, `max-order-tag` returns
-                    nil.")))
-
-    (checking "(extract-tangent diff) == dx*(tangent-part diff)" 100
-              [diff real-diff-gen]
-              (doseq [tag (all-tags diff)
-                      :let [dx (d/bundle-element 0 1 tag)]]
-                (is (d/eq (d/tangent-part diff tag)
-                          (d/d:* dx (d/extract-tangent diff tag))))))
-
-    (checking "(primal-tangent-pair diff) == [(primal-part diff) (tangent-part diff)]" 100
-              [diff real-diff-gen]
-              (let [[primal tangent] (d/primal-tangent-pair diff)]
-                (is (d/eq primal (d/primal-part diff)))
-                (is (d/eq tangent (d/tangent-part diff))))
-
-              ;; with specified tag
-              (doseq [tag (all-tags diff)]
-                (let [[primal tangent] (d/primal-tangent-pair diff tag)]
-                  (is (d/eq primal (d/primal-part diff tag)))
-                  (is (d/eq tangent (d/tangent-part diff tag))))))
-
-    (checking "finite-term matches primal-part for 1-tag differentials" 100
-              [primal  (sg/reasonable-double)
-               tangent (sg/reasonable-double)
-               tag     gen/nat]
-              (let [diff (d/bundle-element primal tangent tag)]
-                (is (= primal (d/finite-term diff)))
-                (is (= (d/finite-term diff)
-                       (d/primal-part diff)))))
-
-    (checking "finite-term fetches bottom primal-part" 100
-              [diff real-diff-gen]
-              (loop [diff diff]
-                (let [primal (d/primal-part diff)]
-                  (if (d/differential? primal)
-                    (recur primal)
-                    (is (= primal (d/finite-term diff))
-                        "recursing to the bottom with primal-part gives the same
-                         result as jumping straight there with
-                         finite-term")))))))
+  (checking "deep-primal fetches bottom primal" 100
+            [diff real-dual-gen]
+            (loop [diff diff]
+              (let [primal (d/primal diff)]
+                (if (d/dual? primal)
+                  (recur primal)
+                  (is (= primal (d/primal diff))
+                      "recursing to the bottom with primal gives the same result
+                         as jumping straight there with deep-primal"))))))
 
 (deftest lifted-fn-tests
   (letfn [(breaks? [f x]

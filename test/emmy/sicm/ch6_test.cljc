@@ -43,9 +43,10 @@
              (/ (* (/ 1 2) α (expt β 2) (expt ε 2) (expt (sin theta) 2))
                 (expt p_theta 2))
              0
+             0
              0)
            (e/freeze
-            (simplify (take 5 E)))))
+            (simplify (take 6 E)))))
 
     (is (= '(/ (+ (* (/ 1 2)
                      (expt α 2)

@@ -69,15 +69,16 @@
 ;; `extract-tangent` operation with the returned function.
 ;;
 ;; The returned function needs to capture an internal reference to the
-;; original [[d/Differential]] input. This is true for any Functor-shaped return
-;; value, like a structure or Map. However! There is a subtlety present with
-;; functions that's not present with vectors or other containers.
+;; original [[emmy.differential/Dual]] input. This is true for any
+;; Functor-shaped return value, like a structure or Map. However! There is a
+;; subtlety present with functions that's not present with vectors or other
+;; containers.
 ;;
 ;; The difference with functions is that they take _inputs_. If you contrive a
-;; situation where you can feed the original captured [[d/Differential]] into
-;; the returned function, this can trigger "perturbation confusion", where two
-;; different layers try to extract the tangent corresponding to the SAME tag,
-;; and one is left with nothing.
+;; situation where you can feed the original captured [[emmy.differential/Dual]]
+;; into the returned function, this can trigger "perturbation confusion", where
+;; two different layers try to extract the tangent corresponding to the SAME
+;; tag, and one is left with nothing.
 ;;
 ;; If you engineer an
 ;; example (see [[emmy.calculus.derivative-test/amazing-bug]]) where:
@@ -114,9 +115,9 @@
 ;;
 ;; - it extracts the originally-injected tag when someone eventually calls the
 ;;   function
-;; - if some caller passes a new [[d/Differential]] instance into the function,
-;;   any tags in that [[d/Differential]] will survive on their way back out...
-;;   even if they happen to contain the originally-injected tag.
+;; - if some caller passes a new [[emmy.differential/Dual]] instance into the
+;;   function, any tags in that [[emmy.differential/Dual]] will survive on their
+;;   way back out... even if they happen to contain the originally-injected tag.
 ;;
 ;; We do this by:
 ;;
@@ -126,8 +127,8 @@
 ;;   `tag`, as requested (note now that the only instances of `tag` that can
 ;;   appear in the result come from variables captured in the function's
 ;;   closure)
-;; - remapping `fresh` back to `tag` inside the remaining [[d/Differential]]
-;;   instance.
+;; - remapping `fresh` back to `tag` inside the
+;;   remaining [[emmy.differential/Dual]] instance.
 ;;
 ;; This last step ensures that any tangent tagged with `tag` in the input can
 ;; make it back out without tangling with closure-captured `tag` instances that
@@ -530,8 +531,11 @@
      (letfn [(process-term [term]
                (g/simplify
                 (s/mapr (fn rec [x]
-                          (if (d/differential? x)
-                            (d/map-coefficients rec x)
+                          (if (d/dual? x)
+                            (d/bundle-element
+                             (rec (d/primal x))
+                             (rec (d/tangent x))
+                             (d/tag x))
                             (-> (g/simplify x)
                                 (x/substitute replace-m))))
                         term)))]

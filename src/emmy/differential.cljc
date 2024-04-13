@@ -1,24 +1,18 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
 ^#:nextjournal.clerk
-  {:toc true
-   :visibility :hide-ns}
+{:toc true
+ :visibility :hide-ns}
 (ns emmy.differential
-  "This namespace contains an implementation of [[Differential]], a generalized
-  dual number type that forms the basis for the forward-mode automatic
-  differentiation implementation in emmy.
+  "This namespace contains an implementation of [[Dual]], a type that forms the
+  basis for the forward-mode automatic differentiation implementation in emmy.
 
   See [[emmy.calculus.derivative]] for a fleshed-out derivative
-  implementation using [[Differential]]."
+  implementation using [[Dual]]."
   (:refer-clojure :exclude [compare])
-  (:require [clojure.core :as core]
-            [clojure.string :refer [join]]
-            [emmy.function]  ;; for the side effect of making kind: MultiFn -> ::v/function
+  (:require [emmy.function]  ;; for the side effect of making kind: MultiFn -> ::v/function
             [emmy.generic :as g]
             [emmy.util :as u]
-            [emmy.util.aggregate :as ua]
-            [emmy.util.stream :as us]
-            [emmy.util.vector-set :as uv]
             [emmy.value :as v]))
 
 ;; ## Differentials, Dual Numbers and Automatic Differentiation
@@ -41,8 +35,8 @@
 ;; tiny increment will the function produce in the output values?
 ;;
 ;; we know how to take derivatives of many of the generic functions exposed by
-;; Emmy, like [[+]], [[*]], [[g/sin]] and friends. It turns out that we can
-;; take the derivatives of large, complicated functions by combining the
+;; Emmy, like [[+]], [[*]], [[emmy.generic/sin]] and friends. It turns out that
+;; we can take the derivatives of large, complicated functions by combining the
 ;; derivatives of these smaller functions using the [chain
 ;; rule]((https://en.wikipedia.org/wiki/Automatic_differentiation#The_chain_rule,_forward_and_reverse_accumulation))
 ;; as a clever bookkeeping device.
@@ -356,286 +350,75 @@
 ;; The default implementations are straightforward, and match the docstrings:
 
 (extend-protocol IPerturbed
+  nil
+  (perturbed? [_] false)
+  (replace-tag [_ _ _] nil)
+  (extract-tangent [_ _] 0)
+
   #?(:clj Object :cljs default)
   (perturbed? [_] false)
   (replace-tag [this _ _] this)
   (extract-tangent [this _] (g/zero-like this)))
 
-;; ## Differential Implementation
+;; ## Dual Implementation
 ;;
 ;; We now have a template for how to implement `derivative`. What's left? We
 ;; need a dual number type that we can build and split back out into primal and
-;; tangent components, given some tag. We'll call this type a [[Differential]].
+;; tangent components, given some tag. We'll call this type a [[Dual]].
 ;;
-;; A [[Differential]] is a generalized dual number with a single primal
-;; component, and potentially many tagged terms. Identical tags cancel to 0 when
-;; multiplied, but are allowed to multiply by each other:
-;;
-;; $$a + b\varepsilon_1 + c\varepsilon_2 + d\varepsilon_1 \varepsilon_2 + \cdots$$
-;;
-;; Alternatively, you can view a [[Differential]] as a dual number with a
-;; specific tag, that's able to hold dual numbers with some _other_ tag in its
-;; primal and tangent slots. You can turn a [[Differential]] into a dual number
-;; by specifying one of its tags. Here are the primal and tangent components for
-;; $\varepsilon_2$:
-;;
-;; $$(a + b\varepsilon_1) + (c + d\varepsilon_1)\varepsilon_2$$
-;;
-;; And for $\varepsilon_1$:
-;;
-;; $$(a + c\varepsilon_2) + (b + d \varepsilon_2) \varepsilon_1$$
-;;
-;; A differential term is implemented as a pair whose first element is a set of
-;; tags and whose second is the coefficient.
-
-(defn- tags [term]
-  (nth term 0))
-
-(defn- coefficient [term]
-  (nth term 1))
-
-;; The set of tags is implemented as a "vector set",
-;; from [[emmy.util.vector-set]]. This is a sorted set data structure,
-;; backed by a Clojure vector. vector sets provide cheap "max" and "min"
-;; operations, and acceptable union, intersection and difference performance.
-
-(defn make-term
-  "Returns a [[Differential]] term with the supplied vector-set of `tags` paired
-  with coefficient `coef`.
-
-  `tags` defaults to [[uv/empty-set]]"
-  ([coef] [uv/empty-set coef])
-  ([tags coef] [tags coef]))
-
 ;; Since the only use of a tag is to distinguish each unnamed $\varepsilon_n$,
 ;; we'll assign a new, unique positive integer for each new tag:
 
 (let [next-tag (atom -1)]
   (defn fresh-tag
-    "Returns a new, unique tag for use inside of a [[Differential]] term list."
+    "Returns a new, unique tag for use by a perturbation in an automatic
+  differentiation pass."
     []
     (swap! next-tag inc)))
 
-(defn- tag-in-term?
-  "Return true if `t` is in the tag-set of the supplied `term`, false otherwise."
-  [term t]
-  (uv/contains? (tags term) t))
+;; A [[Dual]] will respond to [[emmy.value/kind]] with `::dual`. Because we
+;; want [[Dual]] instances to work in any place that real numbers or
+;; symbolic argument work, let's make `::dual` derive from
+;; `::emmy.value/scalar`:
 
-;; ## Term List Algebra
-;;
-;; The discussion above about Taylor series expansions revealed that for single
-;; variable functions, we can pass a dual number into any function whose
-;; derivative we already know:
-;;
-;; $$f(a+b\varepsilon) = f(a) + (Df(a)b)\varepsilon$$
-;;
-;; Because we can split a [[Differential]] into a primal and tangent component
-;; with respect to some tag, we can reuse this result. We'll default to
-;; splitting [[Differential]] instances by the highest-index tag:
-;;
-;; $$
-;; \begin{aligned}
-;; f(a &+ b\varepsilon_1 + c\varepsilon_2 + d\varepsilon_1 \varepsilon_2) \\
-;; &= f((a + b\varepsilon_1)+(c + d\varepsilon_1)\varepsilon_2) \\
-;; &= f(a + b\varepsilon_1)+Df(a + b\varepsilon_1)(c + d\varepsilon_1)\varepsilon_2 \\
-;; \end{aligned}
-;; $$
-;;
-;; Note that $f$ and $Df$ both received a dual number! One more expansion, this
-;; time in $\varepsilon_1$, completes the evaluation (and makes abundantly clear
-;; why we want the computer doing this, not pencil-and-paper):
-;;
-;; $$
-;; \begin{aligned}
-;; f(a &+ b\varepsilon_1)+Df(a+b\varepsilon_1)(c+d\varepsilon_1)\varepsilon_2 \\
-;; &= (f(a)+Df(a)b\varepsilon_1)+(Df(a)+D^2f(a)b\varepsilon_1)(c + d\varepsilon_1)\varepsilon_2 \\
-;; &= f(a)+(Df(a)b+D^2f(a)bc)\varepsilon_1+Df(a)c\varepsilon_2+Df(a)d\varepsilon_1\varepsilon_2
-;; \end{aligned}
-;; $$
-;;
-;; The only operations we need to implement between lists of terms are addition
-;; and multiplication.
-;;
-;; ### Add and Multiply
-;;
-;; To efficiently add two [[Differential]] instances (represented as lists of
-;; terms), we keep all terms in sorted order, sorted first by the length of each
-;; tag list (the "order" of the differential term), and secondarily by the
-;; values of the tags inside the tag list.
-;;
-;; > NOTE: Clojure vectors already implement this ordering properly, so we can
-;; > use [[clojure.core/compare]] to determine an ordering on a tag list.
+(derive ::dual ::v/scalar)
 
-(def ^:private terms:+
-  "Returns the sum of the two supplied sequences of differential terms; any terms
-  in the result with a zero coefficient will be removed.
+;; Now the actual type.
 
-  Each input must be sequence of `[tag-set, coefficient]` pairs, sorted by
-  `tag-set`."
-  (ua/merge-fn core/compare g/add g/zero? make-term))
+(declare compare equiv)
 
-;; Because we've decided to store terms as a vector, we can multiply two vectors
-;; of terms by:
-;;
-;; - taking the cartesian product of both term lists
-;; - discarding all pairs of terms that share any tag (since $\varepsilon^2=0$)
-;; - multiplying the coefficients of all remaining pairs and union-ing their tag
-;;   lists
-;; - grouping and adding any new terms with the SAME list of tags, and filtering
-;;   out zeros
-;;
-;; This final step is required by a number of different operations later, so we
-;; break it out into its own [[collect-terms]] function:
-
-(defn- collect-terms
-  "Build a term list up of pairs of tags => coefficients by grouping together and
-  summing coefficients paired with the same term list.
-
-  The result will be sorted by term list, and contain no duplicate term lists."
-  [tags->coefs]
-  (let [terms (for [[tags tags-coefs] (group-by tags tags->coefs)
-                    :let [c (transduce (map coefficient) g/+ tags-coefs)]
-                    :when (not (g/zero? c))]
-                [tags c])]
-    (into [] (sort-by tags terms))))
-
-(defn- terms:map-coefficients
-  "Given some function `f` and a sequence of `terms`, returns a vector of terms
-  with all each `c` mapped to `(f c)`. Any term where `(g/zero? (f c))` is true
-  will be filtered out."
-  [f terms]
-  (let [xform (mapcat
-               (fn [term]
-                 (let [c' (f (coefficient term))]
-                   (if (g/zero? c')
-                     []
-                     [(make-term (tags term) c')]))))]
-    (into [] xform terms)))
-
-;; [[terms:*]] implements the first three steps, and calls [[collect-terms]] on
-;; the resulting sequence:
-
-(defn- t*ts
-  "Multiplies a single term on the left by a vector of `terms` on the right.
-  Returns a new vector of terms."
-  [[tags coeff] terms]
-  (loop [acc []
-         i 0]
-    (let [t (nth terms i nil)]
-      (if (nil? t)
-        acc
-        (let [[tags1 coeff1] t]
-          (if (empty? (uv/intersection tags tags1))
-            (recur (conj acc (make-term
-                              (uv/union tags tags1)
-                              (g/* coeff coeff1)))
-                   (inc i))
-            (recur acc (inc i))))))))
-
-(defn terms:*
-  "Returns a vector of non-zero [[Differential]] terms that represent the product
-  of the differential term lists `xs` and `ys`.
-
-  NOTE that this function doesn't need to call [[collect-terms]] internally
-  because grouping is accomplished by the internal [[terms:+]] calls."
-  [xlist ylist]
-  (letfn [(call [i]
-            (let [x (nth xlist i nil)]
-              (if (nil? x)
-                []
-                (terms:+ (t*ts x ylist)
-                         (call (inc i))))))]
-    (call 0)))
-
-;; ## Differential Type Implementation
-;;
-;; Armed with our term list arithmetic operations, we can finally implement
-;; our [[Differential]] type and implement a number of important Clojure and
-;; Emmy protocols.
-;;
-;; A [[Differential]] will respond to [[v/kind]] with `::differential`. Because
-;; we want [[Differential]] instances to work in any place that real numbers or
-;; symbolic argument work, let's make `::differential` derive from `::v/scalar`:
-
-(derive ::differential ::v/scalar)
-
-;; Now the actual type. The `terms` field is a term-list vector that will
-;; remain (contractually!) sorted by its list of tags.
-
-(declare compare equiv finite-term from-terms)
-
-(deftype Differential [terms]
-  ;; A [[Differential]] has to respond `false` to all [[emmy.value/numerical?]]
-  ;; inquiries; if we didn't do this, then [[emmy.generic/*]] and friends would
-  ;; attempt to apply shortcuts like `(* x <dx-with-1>) => x`, stripping off
-  ;; the [[Differential]] identity of the result and ruining the derivative.
-  v/Numerical
-  (numerical? [_] false)
-
+(deftype Dual [tag primal tangent]
   IPerturbed
   (perturbed? [_] true)
 
-  ;; There are 3 cases to consider when replacing some tag in a term, annotated
-  ;; below:
-  (replace-tag [_ oldtag newtag]
-    (letfn [(process [term]
-              (let [tagv (tags term)]
-                (if-not (uv/contains? tagv oldtag)
-                  ;; if the term doesn't contain the old tag, ignore it.
-                  [term]
-                  (if (uv/contains? tagv newtag)
-                    ;; if the term _already contains_ the new tag
-                    ;; $\varepsilon_{new}$, then replacing $\varepsilon_1$
-                    ;; with a new instance of $\varepsilon_2$ would cause a
-                    ;; clash. Since $\varepsilon_2^2=0$, the term should be
-                    ;; removed.
-                    []
-                    ;; else, perform the replacement.
-                    [(make-term (-> tagv
-                                    (uv/disj oldtag)
-                                    (uv/conj newtag))
-                                (coefficient term))]))))]
-      (from-terms
-       (mapcat process terms))))
+  (replace-tag [this old new]
+    (if (= old tag)
+      (Dual. new primal tangent)
+      this))
 
-  ;; To extract the tangent (with respect to `tag`) from a differential, return
-  ;; all terms that contain the tag (with the tag removed!) This can create
-  ;; duplicate terms, so use [[from-terms]] to massage the result into
-  ;; well-formedness again.
-  (extract-tangent [_ tag]
-    (from-terms
-     (mapcat (fn [term]
-               (let [tagv (tags term)]
-                 (if (uv/contains? tagv tag)
-                   [(make-term (uv/disj tagv tag)
-                               (coefficient term))]
-                   [])))
-             terms)))
+  (extract-tangent [_ t]
+    (if (= t tag) tangent 0))
 
   v/IKind
-  (kind [_] ::differential)
+  (kind [_] ::dual)
 
   Object
-  ;; Comparing [[Differential]] objects using `equals` defaults to [[equiv]],
-  ;; which compares instances only using their non-tagged ('finite') components.
-  ;; If you want to compare two instances using their full term lists,
-  ;; See [[eq]].
+  ;; Comparing [[Dual]] objects using `equals` defaults to [[equiv]], which
+  ;; compares instances only using primal components. If you want to compare two
+  ;; instances using both primal and tangent components, see [[eq]].
   #?(:clj (equals [a b] (equiv a b)))
-  #?(:cljs (valueOf [this] (.valueOf (finite-term this))))
+  #?(:cljs (valueOf [_] (.valueOf primal)))
   (toString [_]
-    (let [term-strs (map (fn [term]
-                           (str (tags term)
-                                " → "
-                                (pr-str (coefficient term))))
-                         terms)]
-      (str "D[" (join " " term-strs) "]")))
+    (str "#emmy.tape.Dual"
+         {:tag tag
+          :primal primal
+          :tangent tangent}))
 
   #?@(:clj
       ;; This one is slightly subtle. To participate in control flow operations,
-      ;; like comparison with both [[Differential]] and non-[[Differential]]
-      ;; numbers, [[Differential]] instances should compare using ONLY their
-      ;; non-tagged ("finite") terms. This means that comparison will totally
-      ;; ignore any difference in tags.
+      ;; like comparison with both [[Dual]] and non-[[Dual]] numbers, [[Dual]]
+      ;; instances should compare using ONLY their primal terms. This means that
+      ;; comparison will totally ignore any difference in tangents or tags.
       [Comparable
        (compareTo [a b] (compare a b))]
 
@@ -651,90 +434,100 @@
                    (write-all writer (.toString x)))]))
 
 #?(:clj
-   (defmethod print-method Differential
-     [^Differential s ^java.io.Writer w]
+   (defmethod print-method Dual
+     [^Dual s ^java.io.Writer w]
      (.write w (.toString s))))
 
-;; ## Accessor Methods
-
-(defn differential?
-  "Returns true if the supplied object is an instance of [[Differential]], false
+(defn dual?
+  "Returns true if the supplied object is an instance of [[Dual]], false
   otherwise."
   [dx]
-  (instance? Differential dx))
+  (instance? Dual dx))
 
-(defn- bare-terms
-  "Returns the `-terms` field of the supplied [[Differential]] object. Errors if
-  any other type is supplied."
+(defn tag
+  "If `dx` is an instance of [[Dual]] returns the `tag` component. Else, acts
+  as nil."
   [dx]
-  {:pre [(differential? dx)]}
-  (.-terms ^Differential dx))
+  (when (dual? dx)
+    (.-tag ^Dual dx)))
 
-;; ## Constructors
-;;
-;; Because a [[Differential]] is really a wrapper around the idea of a
-;; generalized dual number represented as a term-list, we need to be able to get
-;; to and from the term list format from other types, not just [[Differential]]
-;; instances.
+(defn primal-tangent-pair
+  "Returns a pair of the primal and tangent components of the supplied `dx`, with
+  respect to the supplied `tag`. See the docs for [[primal]]
+  and [[tangent]] for more details.
 
-(defn- ->terms
-  "Returns a vector of terms that represent the supplied [[Differential]]; any
-  term with a [[g/zero?]] coefficient will be filtered out before return.
+  [[primal-tangent-pair]] is equivalent to
 
-  If you pass a non-[[Differential]], [[->terms]] will return a singleton term
-  list (or `[]` if the argument was zero)."
+  `[([[primal]] dx tag) ([[tangent]] dx tag)]`
+
+  but slightly more efficient if you need both."
+  ([dx]
+   (if (dual? dx)
+     [(.-primal ^Dual dx) (.-tangent ^Dual dx)]
+     [dx 0]))
+  ([dx t]
+   (if (and (dual? dx) (= t (tag dx)))
+     [(.-primal ^Dual dx) (.-tangent ^Dual dx)]
+     [dx 0])))
+
+(defn primal
+  "If `dx` is an instance of [[Dual]] returns the `primal` component. Else, acts
+  as identity.
+
+  If the optional `tag` is supplied, [[primal-part]] acts as identity
+  for [[Dual]] instances with a non-matching tag."
+  ([dx]
+   (-> (primal-tangent-pair dx)
+       (nth 0)))
+  ([dx tag]
+   (-> (primal-tangent-pair dx tag)
+       (nth 0))))
+
+(defn deep-primal
+  "Version of [[primal]] that will descend recursively into any [[Dual]] instance
+  returned by [[primal]] until encountering a non-[[Dual]].
+
+  Given a non-[[Dual]], acts as identity."
   [dx]
-  (cond (differential? dx) (bare-terms dx)
-        (vector? dx)       dx
-        (g/zero? dx)       []
-        :else              [(make-term dx)]))
+  (if (dual? dx)
+    (recur (.-primal ^Dual dx))
+    dx))
 
-(defn- terms->differential
-  "Returns a differential instance generated from a vector of terms. This method
-  will do some mild cleanup, or canonicalization:
+(defn tangent
+  "If `dx` is an instance of [[Dual]] returns the `tangent` component. Else, returns 0.
 
-  - any empty term list will return 0
-  - a singleton term list with no tags will return its coefficient
+  If the optional `tag` is supplied, [[primal-part]] returns 0 for [[Dual]]
+  instances with a non-matching tag."
+  ([dx]
+   (-> (primal-tangent-pair dx)
+       (nth 1)))
+  ([dx tag]
+   (-> (primal-tangent-pair dx tag)
+       (nth 1))))
 
-  NOTE this method assumes that the input is properly sorted, and contains no
-  zero coefficients."
-  [terms]
-  {:pre [(vector? terms)]}
-  (cond (empty? terms) 0
+;; ## Constructor
 
-        (and (= (count terms) 1)
-             (empty? (tags (nth terms 0))))
-        (coefficient (nth terms 0))
+(defn bundle-element
+  "Returns a new [[Dual]] object with the supplied `primal` and `tangent`
+  components, and the supplied internal `tag` that this [[Dual]] will
+  carry around to prevent perturbation confusion.
 
-        :else (->Differential terms)))
+  If the `tangent` component is `0`, acts as identity on `primal`. `tangent`
+  defaults to 1.
 
-(defn from-terms
-  "Accepts a sequence of terms (i.e., pairs of `[tag-list, coefficient]`), and
-  returns:
+  `tag` defaults to a side-effecting call to [[fresh-tag]]; you can retrieve
+  this unknown tag by calling [[tag]] on the returned [[Dual]]."
+  ([primal]
+   (bundle-element primal 1 (fresh-tag)))
+  ([primal tag]
+   (bundle-element primal 1 tag))
+  ([primal tangent tag]
+   {:pre [(v/scalar? primal)]}
+   (if (g/zero? tangent)
+     primal
+     (->Dual tag primal tangent))))
 
-  - a well-formed [[Differential]] instance, if the terms resolve to a
-    differential with non-zero infinitesimal terms
-  - the original input otherwise
-
-  Duplicate (by tag list) terms are allowed; their coefficients will be summed
-  together and removed if they sum to zero."
-  [tags->coefs]
-  (terms->differential
-   (collect-terms tags->coefs)))
-
-(defn map-coefficients
-  "Given a function `f` and [[Differential]] instance `d`, returns a
-  new [[Differential]] generated by transforming all coefficients `c` of `d`
-  to `(f c)`.
-
-  Any term in the returned instance with a `g/zero?` coefficient
-  will be filtered out."
-  [f d]
-  (let [terms (bare-terms d)]
-    (->Differential
-     (terms:map-coefficients f terms))))
-
-;; ## Differential API
+;; ## Tag API
 ;;
 ;; These first two functions create a way to globally declare, via a dynamic
 ;; binding, the stack of tags that are currently in play. If three nested
@@ -746,7 +539,7 @@
 ;; perturbation confusion. If some higher level is not trying to extract the
 ;; same tag, there's no need.
 
-(def ^:dynamic *active-tags* [])
+(def ^:dynamic *active-tags* ())
 
 (defn with-active-tag
   "Like `apply`, but conj-es `tag` onto the dynamic variable [[*active-tags*]]
@@ -754,7 +547,7 @@
 
   Returns the result of applying `f` to `args`."
   [tag f args]
-  (binding [*active-tags* (conj *active-tags* tag)]
+  (binding [*active-tags* (cons tag *active-tags*)]
     (apply f args)))
 
 (defn tag-active?
@@ -762,214 +555,48 @@
   for extraction by some nested derivative), false otherwise."
   [tag]
   (boolean
-   (some #{tag} (rseq *active-tags*))))
+   (some #{tag} *active-tags*)))
 
-;; ### Differential Arithmetic
-;;
-;; This next section lifts slightly-augmented versions of [[terms:+]]
-;; and [[terms:*]] up to operate on [[Differential]] instances. These work just
-;; as before, but handle wrapping and unwrapping the term list.
+(defn inner-tag
+  "Given any number of `tags`, returns the tag most recently bound
+  via [[with-active-tag]] (i.e., the tag connected with the _innermost_ call
+  to [[with-active-tag]]).
 
-(defn d:+
-  "Returns an object representing the sum of the two objects `dx` and `dy`. This
-  works by summing the coefficients of all terms with the same list of tags.
+  If none of the tags are bound, returns `(apply max tags)`."
+  [& tags]
+  (or (some (apply hash-set tags)
+            *active-tags*)
+      (apply max tags)))
 
-    Works with non-[[Differential]] instances on either or both sides, and returns
-  a [[Differential]] only if it contains any non-zero tangent components."
-  ([] 0)
-  ([dx] dx)
-  ([dx dy]
-   (terms->differential
-    (terms:+ (->terms dx)
-             (->terms dy))))
-  ([dx dy & more]
-   (terms->differential
-    (transduce (map ->terms)
-               terms:+
-               (cons dx (cons dy more))))))
+(defn tag+perturbation
+  "Given any number of [[Dual]] instances `dxs`, returns a pair of the form
 
-(defn d:*
-  "Returns an object representing the product of the two objects `dx` and `dy`.
+  [<tag> <dual number>]
 
-  This works by multiplying out all terms:
+  containing the tag and instance of [[Dual]] associated with the inner-most
+  call to [[with-active-tag]] in the current call stack.
 
-  $$(dx1 + dx2 + dx3 + ...)(dy1 + dy2 + dy3...)$$
-
-  and then collecting any duplicate terms by summing their coefficients.
-
-  Works with non-[[Differential]] instances on either or both sides, and returns
-  a [[Differential]] only if it contains any non-zero tangent components."
-  ([] 1)
-  ([dx] dx)
-  ([dx dy]
-   (terms->differential
-    (terms:* (->terms dx)
-             (->terms dy)))))
-
-(defn d:+*
-  "Identical to `(d:+ a) (d:* b c)`, but _slightly_ more efficient as the function
-  is able to skip creating a [[Differential]] instance during [[d:*]] and then
-  immediately tearing it down for [[d:+]]."
-  [a b c]
-  (terms->differential
-   (terms:+ (->terms a)
-            (terms:* (->terms b)
-                     (->terms c)))))
-
-;; Finally, the function we've been waiting for! [[bundle-element]] allows you
-;; to augment some non-[[Differential]] thing with a tag and push it through the
-;; generic arithmetic system, where it will accumulate the derivative of your
-;; original input (tagged with `tag`.)
-
-(defn bundle-element
-  "Generate a new [[Differential]] object with the supplied `primal` and `tangent`
-  components, and the supplied internal `tag` that this [[Differential]] will
-  carry around to prevent perturbation confusion.
-
-  If the `tangent` component is `0`, acts as identity on `primal`. `tangent`
-  defaults to 1.
-
-  `tag` defaults to a side-effecting call to [[fresh-tag]]; you can retrieve
-  this unknown tag by calling [[max-order-tag]]."
-  ([primal]
-   {:pre [(v/scalar? primal)]}
-   (bundle-element primal 1 (fresh-tag)))
-  ([primal tag]
-   {:pre [(v/scalar? primal)]}
-   (bundle-element primal 1 tag))
-  ([primal tangent tag]
-   (let [term (make-term (uv/make [tag]) 1)]
-     (d:+* primal tangent [term]))))
-
-;; ## Differential Parts API
-;;
-;; These functions give higher-level access to the components of
-;; a [[Differential]] you're typically interested in.
-
-(defn max-order-tag
-  "Given one or more well-formed [[Differential]] objects, returns the
-  maximum ('highest order') tag found in the highest-order term of any of
-  the [[Differential]] instances.
-
-  If there is NO maximal tag (i.e., if you provide [[Differential]] instances with
-  no non-zero tangent parts, or all non-[[Differential]]s), returns nil."
-  ([dx]
-   (when (differential? dx)
-     (let [last-term   (peek (bare-terms dx))
-           highest-tag (peek (tags last-term))]
-       highest-tag)))
-  ([dx & dxs]
-   (letfn [(max-termv [dx]
-             (if-let [max-order (max-order-tag dx)]
-               [max-order]
-               []))]
-     (when-let [orders (seq (mapcat max-termv (cons dx dxs)))]
-       (apply max orders)))))
-
-;; A reminder: the [[primal-part]] of a [[Differential]] is all terms except for
-;; terms containing [[max-order-tag]], and [[tangent-part]] is
-;; a [[Differential]] built out of the remaining terms, all of which contain
-;; that tag.
-
-(defn primal-part
-  "Returns a [[Differential]] containing only the terms of `dx` that do NOT
-  contain the supplied `tag`, i.e., the primal component of `dx` with respect to
-  `tag`.
-
-  If no tag is supplied, defaults to `([[max-order-tag]] dx)`.
-
-  NOTE: every [[Differential]] can be factored into a dual number of the form
-
-      primal + (tangent * tag)
-
-  For each tag in any of its terms. [[primal-part]] returns this first piece,
-  potentially simplified into a non-[[Differential]] if the primal part contains
-  no other tags."
-  ([dx] (primal-part dx (max-order-tag dx)))
-  ([dx tag]
-   (if (differential? dx)
-     (let [sans-tag? #(not (tag-in-term? % tag))]
-       (->> (bare-terms dx)
-            (filterv sans-tag?)
-            (terms->differential)))
-     dx)))
-
-(defn tangent-part
-  "Returns a [[Differential]] containing only the terms of `dx` that contain the
-  supplied `tag`, i.e., the tangent component of `dx` with respect to `tag`.
-
-  If no tag is supplied, defaults to `([[max-order-tag]] dx)`.
-
-  NOTE: Every [[Differential]] can be factored into a dual number of the form
-
-      primal + (tangent * tag)
-
-  For each tag in any of its terms. [[tangent-part]] returns a [[Differential]]
-  representing `(tangent * tag)`, or 0 if `dx` contains no terms with the
-  supplied `tag`.
-
-  NOTE: the 2-arity case is similar to `([[extract-tangent]] dx tag)`; the only
-  difference is that [[extract-tangent]] drops the `dx` tag from all terms in
-  the returned value. Call [[extract-tangent]] if you want to drop `tag`."
-  ([dx] (tangent-part dx (max-order-tag dx)))
-  ([dx tag]
-   (if (differential? dx)
-     (->> (bare-terms dx)
-          (filterv #(tag-in-term? % tag))
-          (terms->differential))
-     0)))
-
-(defn primal-tangent-pair
-  "Returns a pair of the primal and tangent components of the supplied `dx`, with
-  respect to the supplied `tag`. See the docs for [[primal-part]]
-  and [[tangent-part]] for more details.
-
-  [[primal-tangent-pair]] is equivalent to
-
-  `[([[primal-part]] dx tag) ([[tangent-part]] dx tag)]`
-
-  but slightly more efficient if you need both."
-  ([dx] (primal-tangent-pair dx (max-order-tag dx)))
-  ([dx tag]
-   (if-not (differential? dx)
-     [dx 0]
-     (let [[tangent-terms primal-terms]
-           (us/separatev #(tag-in-term? % tag)
-                         (bare-terms dx))]
-       [(terms->differential primal-terms)
-        (terms->differential tangent-terms)]))))
-
-(defn finite-term
-  "Returns the term of the supplied [[Differential]] `dx` that has no tags
-  attached to it, `0` otherwise.
-
-  [[Differential]] instances with many can be decomposed many times
-  into [[primal-part]] and [[tangent-part]]. Repeated calls
-  to [[primal-part]] (with different tags!) will eventually yield a
-  non-[[Differential]] value. If you know you want this, [[finite-term]] will
-  get you there in one shot.
-
-  NOTE that this will only work with a well-formed [[Differential]], i.e., an
-  instance with all terms sorted by their list of tags."
-  [dx]
-  (if (differential? dx)
-    (let [[head] (bare-terms dx)
-          ts     (tags head)]
-      (if (empty? ts)
-        (coefficient head)
-        0))
-    dx))
+  If none of `dxs` has an active tag, returns `nil`."
+  ([& dxs]
+   (let [m (into {} (mapcat
+                     (fn [dx]
+                       (when-let [t (tag dx)]
+                         {t dx})))
+                 dxs)]
+     (when (seq m)
+       (let [tag (apply inner-tag (keys m))]
+         [tag (m tag)])))))
 
 ;; ## Comparison, Control Flow
 ;;
 ;; Functions like `=`, `<` and friends don't have derivatives; instead, they're
 ;; used for control flow inside of Clojure functions. To play nicely with these
-;; functions, the [[Differential]] API exposes a number of methods for comparing
+;; functions, the [[Dual]] API exposes a number of methods for comparing
 ;; numbers on ONLY their finite parts.
 ;;
-;; Why? If `x` is a [[Differential]] instance, `(< x 10)` needs to return true
-;; whenever a non-[[Differential]] `x` would return true. To make this work,
-;; these operations look only at the [[finite-part]].
+;; Why? If `x` is a [[Dual]] instance, `(< x 10)` needs to return true whenever
+;; a non-[[Dual]] `x` would return true. To make this work, these operations
+;; look only at the [[primal]].
 ;;
 ;; HOWEVER! [[g/one?]] and [[g/zero?]] are examples of Emmy functions that
 ;; are used to skip operations that we _want_ to happen, like multiplication.
@@ -977,39 +604,38 @@
 ;; `(g/* x y)` will return `y` if `(g/one? x)` is true... but to propagate the
 ;; derivative through we need this multiplication to occur. The compromise is:
 ;;
-;; - [[g/zero?]], [[g/one?]] and [[g/zero?]] return true only when
-;;   ALL [[tangent-part]]s are zero and the [[finite-part]] is either [[g/one?]]
-;;   or [[g/zero?]] respectively
-;; - [[eq]] and [[compare-full]] similarly looks at every component in
-;;   the [[Differential]] supplied to both sides
+;; - [[g/zero?]], [[g/one?]] and [[g/identity?]] return true only when
+;;  [[tangent]] is zero and the [[primal]] is either [[g/one?]] or [[g/zero?]]
+;;   respectively
+;; - [[eq]] and [[compare-full]] similarly looks at [[primal]] and [[tangent]]
+;;   in the [[Dual]] supplied to both sides
 ;;
 ;; while:
 ;;
-;; - [[equiv]] and [[compare]] only examine the [[finite-part]] of either side.
+;; - [[equiv]] and [[compare]] only examine the [[primal]] of either side.
 
 (defn ^:no-doc one?
-  "Returns true if the supplied instance has a [[finite-part]] that responds true
-  to [[emmy.value/one?]], and zero coefficients on any of its tangent
-  components; false otherwise.
+  "Returns true if the supplied instance has a [[primal]] part that responds true
+  to [[emmy.value/one?]], and zero coefficients on its tangent component; false
+  otherwise.
 
   NOTE: This means that [[one?]] will not do what you expect as a conditional
   inside some function. If you want to branch inside some function you're taking
   the derivative of, prefer `(= 1 dx)`. This will only look at
-  the [[finite-part]] and ignore the values of the tangent parts."
+  the [[primal]] and ignore the value of the [[tangent]]."
   [dx]
   (let [[p t] (primal-tangent-pair dx)]
     (and (g/one? p)
          (g/zero? t))))
 
 (defn ^:no-doc identity?
-  "Returns true if the supplied instance has a [[finite-part]] that responds true
-  to [[emmy.value/identity?]], and zero coefficients on any of its tangent
-  components; false otherwise.
+  "Returns true if the supplied instance has a [[primal]] that responds true
+  to [[emmy.value/identity?]], and a zero [[tangent]], false otherwise.
 
   NOTE: This means that [[identity?]] will not do what you expect as a
   conditional inside some function. If you want to branch inside some function
   you're taking the derivative of, prefer `(= <identity element> dx)`. This will
-  only look at the [[finite-part]] and ignore the values of the tangent parts."
+  only look at the [[primal]] and ignore the value of the [[tangent]]."
   [dx]
   (let [[p t] (primal-tangent-pair dx)]
     (and (g/identity? p)
@@ -1017,13 +643,13 @@
 
 (defn eq
   "For non-differentials, this is identical to [[emmy.value/=]].
-  For [[Differential]] instances, equality acts on tangent components too.
+  For [[Dual]] instances, equality acts on tangent components too.
 
   If you want to ignore the tangent components, use [[equiv]]."
   ([_] true)
   ([a b]
-   (v/= (->terms a)
-        (->terms b)))
+   (v/= (primal-tangent-pair a)
+        (primal-tangent-pair b)))
   ([a b & more]
    (if (eq a b)
      (if (next more)
@@ -1032,27 +658,27 @@
      false)))
 
 (defn compare-full
-  "Comparator that compares [[Differential]] instances with each other or
+  "Comparator that compares [[Dual]] instances with each other or
   non-differentials using all tangent terms each instance. Matches the response
   of [[eq]].
 
   Acts as [[emmy.value/compare]] for non-differentials."
   [a b]
   (v/compare
-   (->terms a)
-   (->terms b)))
+   (primal-tangent-pair a)
+   (primal-tangent-pair b)))
 
 (defn equiv
-  "Returns true if all of the supplied objects have equal [[finite-part]]s, false
+  "Returns true if all of the supplied objects have equal [[primal]]s, false
   otherwise.
 
-  Use [[equiv]] if you want to compare non-differentials with
-  [[Differential]]s and ignore all tangent components. If you _do_ want to take
-  the tangent components into account, prefer [[eq]]."
+  Use [[equiv]] if you want to compare scalars with
+  [[Dual]]s and ignore the tangent. If you _do_ want to take the tangent into
+  account, prefer [[eq]]."
   ([_] true)
   ([a b]
-   (v/= (finite-term a)
-        (finite-term b)))
+   (v/= (primal a)
+        (primal b)))
   ([a b & more]
    (if (equiv a b)
      (if (next more)
@@ -1061,21 +687,21 @@
      false)))
 
 (defn compare
-  "Comparator that compares [[Differential]] instances with each other or
-  non-differentials using only the [[finite-part]] of each instance. Matches the
+  "Comparator that compares [[Dual]] instances with each other or
+  non-differentials using only the [[primal]] of each instance. Matches the
   response of [[equiv]].
 
   Acts as [[emmy.value/compare]] for non-differentials."
   [a b]
   (v/compare
-   (finite-term a)
-   (finite-term b)))
+   (primal a)
+   (primal b)))
 
 ;; ## Chain Rule and Lifted Functions
 ;;
 ;; Finally, we come to the heart of it! [[lift-1]] and [[lift-2]] "lift", or
 ;; augment, unary or binary functions with the ability to
-;; handle [[Differential]] instances in addition to whatever other types they
+;; handle [[Dual]] instances in addition to whatever other types they
 ;; previously supported.
 ;;
 ;; These functions are implementations of the single and multivariable Taylor
@@ -1083,12 +709,12 @@
 ;;
 ;; There is yet another subtlety here, noted in the docstrings below. [[lift-1]]
 ;; and [[lift-2]] really are able to lift functions like [[clojure.core/+]] that
-;; can't accept [[Differential]]s. But the first-order derivatives that you have
-;; to supply _do_ have to be able to take [[Differential]] instances.
+;; can't accept [[Dual]]s. But the first-order derivatives that you have
+;; to supply _do_ have to be able to take [[Dual]] instances.
 ;;
-;; This is because the [[tangent-part]] of [[Differential]] might still be
-;; a [[Differential]], and for `Df` to handle this we need to be able to take
-;; the second-order derivative.
+;; This is because the [[tangent]] of [[Dual]] might still be a [[Dual]], and
+;; for `Df` to handle this we need to be able to take the second-order
+;; derivative.
 ;;
 ;; Magically this will all Just Work if you pass an already-lifted function, or
 ;; a function built out of already-lifted components, as `df:dx` or `df:dy`.
@@ -1101,28 +727,27 @@
     single argument
 
   Returns a new unary function that operates on both the original type of `f`
-  and [[Differential]] instances.
+  and [[Dual]] instances.
 
   If called without `df:dx`, `df:dx` defaults to `(f :dfdx)`; this will return
   the derivative registered to a generic function defined
   with [[emmy.util.def/defgeneric]].
 
-  NOTE: `df:dx` has to ALREADY be able to handle [[Differential]] instances. The
-  best way to accomplish this is by building `df:dx` out of already-lifted
-  functions, and declaring them by forward reference if you need to."
+  NOTE: `df:dx` has to ALREADY be able to handle [[Dual]] instances. The best
+  way to accomplish this is by building `df:dx` out of already-lifted functions,
+  and declaring them by forward reference if you need to."
   ([f]
    (if-let [df:dx (f :dfdx)]
      (lift-1 f df:dx)
      (u/illegal "No df:dx supplied for `f` or registered generically.")))
   ([f df:dx]
    (fn call [x]
-     (if-not (differential? x)
+     (if-not (dual? x)
        (f x)
        (let [[px tx] (primal-tangent-pair x)
-             fx      (call px)]
-         (if (g/numeric-zero? tx)
-           fx
-           (d:+* fx (df:dx px) tx)))))))
+             primal  (call px)
+             tangent (g/* (df:dx px) tx)]
+         (bundle-element primal tangent (tag x)))))))
 
 (defn lift-2
   "Given:
@@ -1133,9 +758,9 @@
   - a function `df:dy`, similar to `df:dx` for the second arg
 
   Returns a new binary function that operates on both the original type of `f`
-  and [[Differential]] instances.
+  and [[Dual]] instances.
 
-  NOTE: `df:dx` and `df:dy` have to ALREADY be able to handle [[Differential]]
+  NOTE: `df:dx` and `df:dy` have to ALREADY be able to handle [[Dual]]
   instances. The best way to accomplish this is by building `df:dx` and `df:dy`
   out of already-lifted functions, and declaring them by forward reference if
   you need to."
@@ -1147,19 +772,18 @@
        (u/illegal "No df:dx, df:dy supplied for `f` or registered generically."))))
   ([f df:dx df:dy]
    (fn call [x y]
-     (if-not (or (differential? x)
-                 (differential? y))
-       (f x y)
-       (let [tag     (max-order-tag x y)
-             [xe dx] (primal-tangent-pair x tag)
+     (if-let [[tag _] (tag+perturbation x y)]
+       (let [[xe dx] (primal-tangent-pair x tag)
              [ye dy] (primal-tangent-pair y tag)
-             a (call xe ye)
-             b (if (g/numeric-zero? dx)
-                 a
-                 (d:+* a (df:dx xe ye) dx))]
-         (if (g/numeric-zero? dy)
-           b
-           (d:+* b (df:dy xe ye) dy)))))))
+             primal  (call xe ye)
+             tangent (g/+ (if (g/numeric-zero? dx)
+                            dx
+                            (g/* (df:dx xe ye) dx))
+                          (if (g/numeric-zero? dy)
+                            dy
+                            (g/* (df:dy xe ye) dy)))]
+         (bundle-element primal tangent tag))
+       (f x y)))))
 
 (defn lift-n
   "Given:
@@ -1170,7 +794,7 @@
     first and second args in the binary case
 
   Returns a new any-arity function that operates on both the original type of
-  `f` and [[Differential]] instances.
+  `f` and [[Dual]] instances.
 
   NOTE: The n-ary case of `f` is populated by nested calls to the binary case.
   That means that this is NOT an appropriate lifting method for an n-ary
@@ -1189,7 +813,7 @@
 
 ;; ## Generic Method Installation
 ;;
-;; Armed with [[lift-1]] and [[lift-2]], we can install [[Differential]] into
+;; Armed with [[lift-1]] and [[lift-2]], we can install [[Dual]] into
 ;; the Emmy generic arithmetic system.
 ;;
 ;; Any function built out of these components will work with
@@ -1202,12 +826,12 @@
   - optionally, a corresponding single-arity lifted function
     `differential-op` (defaults to `(lift-1 generic-op)`)
 
-  installs an appropriate unary implementation of `generic-op` for
-  `::differential` instances."
+  installs an appropriate unary implementation of `generic-op` for `::dual`
+  instances."
   ([generic-op]
    (defunary generic-op (lift-1 generic-op)))
   ([generic-op differential-op]
-   (defmethod generic-op [::differential] [a] (differential-op a))))
+   (defmethod generic-op [::dual] [a] (differential-op a))))
 
 (defn- defbinary
   "Given:
@@ -1216,27 +840,37 @@
   - optionally, a corresponding 2-arity lifted function
     `differential-op` (defaults to `(lift-2 generic-op)`)
 
-  installs an appropriate binary implementation of `generic-op` between
-  `:differential` and `::v/scalar` instances."
+  installs an appropriate binary implementation of `generic-op` between `::dual`
+  and `::v/scalar` instances."
   ([generic-op]
    (defbinary generic-op (lift-2 generic-op)))
   ([generic-op differential-op]
-   (doseq [signature [[::differential ::differential]
-                      [::v/scalar ::differential]
-                      [::differential ::v/scalar]]]
+   (doseq [signature [[::dual ::dual]
+                      [::v/scalar ::dual]
+                      [::dual ::v/scalar]]]
      (defmethod generic-op signature [a b] (differential-op a b)))))
+
+(defn ^:no-doc by-primal
+  "Given some unary or binary function `f`, returns an augmented `f` that acts on
+  the primal entries of any [[Dual]] arguments encountered, irrespective of tag.
+
+  Given a [[Dual]] with a [[Dual]] in its [[primal]] part, the returned `f` will
+  recursively descend until it hits a non-[[Dual]]."
+  [f]
+  (fn
+    ([x] (f (deep-primal x)))
+    ([x y] (f (deep-primal x)
+              (deep-primal y)))))
 
 ;; And now we're off to the races. The rest of the namespace
 ;; provides [[defunary]] and [[defbinary]] calls for all of the generic
 ;; operations for which we know how to declare partial derivatives.
 
-;; First, install `equiv` as to perform proper equality between `Differential`
+;; First, install `equiv` as to perform proper equality between `Dual`
 ;; instances and scalars. `equiv` compares on only the finite part, not the
 ;; differential parts.
 
-(defbinary v/= equiv)
-
-(defbinary g/add d:+)
+(defbinary g/add)
 (defunary g/negate)
 (defbinary g/sub)
 
@@ -1251,28 +885,23 @@
 (defunary g/invert)
 (defbinary g/div)
 
-(defunary g/negative?
-  (comp g/negative? finite-term))
-
-(defunary g/infinite?
-  (comp g/infinite? finite-term))
-
 (defunary g/abs
   (fn [x]
-    (let [f (finite-term x)
-          func (cond (< f 0) (lift-1 g/negate)
+    (let [f (deep-primal x)
+          func (cond (< f 0) (lift-1 g/negate (fn [_] -1))
                      (> f 0) (lift-1 identity (fn [_] 1))
                      (= f 0) (u/illegal "Derivative of g/abs undefined at zero")
                      :else (u/illegal (str "error! derivative of g/abs at" x)))]
       (func x))))
 
 (defn- discont-at-integers [f dfdx]
-  (let [name (g/freeze f)
-        f (lift-1 f (fn [_] dfdx))]
+  (let [f (lift-1 f (fn [_] dfdx))
+        f-name (g/freeze f)]
     (fn [x]
-      (if (v/integral? (finite-term x))
+      (if (v/integral? (deep-primal x))
         (u/illegal
-         (str "Derivative of emmy.generic/" name " undefined at integral points."))
+         (str "Derivative of emmy.generic/"
+              f-name " undefined at integral points."))
         (f x)))))
 
 (defunary g/floor
@@ -1331,20 +960,30 @@
 
 ;; Non-differentiable generic operations
 
-(defmethod g/simplify [::differential] [d]
-  (map-coefficients g/simplify d))
+(defbinary v/= (by-primal v/=))
+(defunary g/negative? (by-primal g/negative?))
+(defunary g/infinite? (by-primal g/infinite?))
 
-(defmethod g/zero? [::differential] [d]
-  (every? (comp g/zero? coefficient) (bare-terms d)))
 
-(defmethod g/one? [::differential] [d] (one? d))
-(defmethod g/identity? [::differential] [d] (identity? d))
-(defmethod g/zero-like [::differential] [_] 0)
-(defmethod g/one-like [::differential] [_] 1)
-(defmethod g/identity-like [::differential] [_] 1)
-(defmethod g/freeze [::differential] [d]
-  (letfn [(freeze-term [term]
-            (make-term (tags term)
-                       (g/freeze (coefficient term))))]
-    `[~'Differential
-      ~@(mapv freeze-term (bare-terms d))]))
+(defunary g/zero?
+  (fn [dx]
+    (let [[p t] (primal-tangent-pair dx)]
+      (and (g/zero? p)
+           (g/zero? t)))))
+
+(defunary g/one? one?)
+(defunary g/identity? identity?)
+
+(defmethod g/zero-like [::dual] [_] 0)
+(defmethod g/one-like [::dual] [_] 1)
+(defmethod g/identity-like [::dual] [_] 1)
+(defmethod g/freeze [::dual] [d]
+  `[~'Dual
+    ~(tag d)
+    ~(g/freeze (primal d))
+    ~(g/freeze (tangent d))])
+
+(defmethod g/simplify [::dual] [^Dual d]
+  (Dual. (.-tag d)
+         (g/simplify (.-primal d))
+         (g/simplify (.-tangent d))))

@@ -755,7 +755,7 @@
 
 (defn ^:no-doc by-primal
   "Given some unary or binary function `f`, returns an augmented `f` that acts on
-  the primal entries of any [[TapeCell]] arguments encounted, irrespective of
+  the primal entries of any [[TapeCell]] arguments encountered, irrespective of
   tag.
 
   Given a [[TapeCell]] with a [[TapeCell]] in its [[primal-part]], the returned
