@@ -565,15 +565,12 @@
 (declare compare equiv finite-term from-terms)
 
 (deftype Differential [terms]
-  ;; A [[Differential]] as implemented can act as a chain-rule accounting device
-  ;; for all sorts of types, not just numbers. A [[Differential]] is
-  ;; only [[v/numerical?]] if its coefficients are numerical (or if `terms` is
-  ;; empty, interpreted as a [[Differential]] equal to `0`.)
+  ;; A [[Differential]] has to respond `false` to all [[emmy.value/numerical?]]
+  ;; inquiries; if we didn't do this, then [[emmy.generic/*]] and friends would
+  ;; attempt to apply shortcuts like `(* x <dx-with-1>) => x`, stripping off
+  ;; the [[Differential]] identity of the result and ruining the derivative.
   v/Numerical
-  (numerical? [_]
-    (or (empty? terms)
-        (v/numerical?
-         (coefficient (nth terms 0)))))
+  (numerical? [_] false)
 
   IPerturbed
   (perturbed? [_] true)
@@ -835,10 +832,10 @@
   `tag` defaults to a side-effecting call to [[fresh-tag]]; you can retrieve
   this unknown tag by calling [[max-order-tag]]."
   ([primal]
-   {:pre [(v/numerical? primal)]}
+   {:pre [(v/scalar? primal)]}
    (bundle-element primal 1 (fresh-tag)))
   ([primal tag]
-   {:pre [(v/numerical? primal)]}
+   {:pre [(v/scalar? primal)]}
    (bundle-element primal 1 tag))
   ([primal tangent tag]
    (let [term (make-term (uv/make [tag]) 1)]

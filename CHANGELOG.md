@@ -2,6 +2,28 @@
 
 ## [unreleased]
 
+- #159:
+
+  - Fixes `Differential`'s implementation of `emmy.value/numerical?` to always
+    return `false`. The reason is that `numerical?` is used by `g/*` and friends
+    to decide on simplifications like `(* <dx-with-1> x) => x`, which would lose
+    the structure of `dx-with-1`. By returning false we avoid these
+    simplifications.
+
+  - Converts a number of `emmy.value/numerical?` calls to `emmy.value/scalar?`.
+    The `numerical?` protocol method is used only in generic functions like
+    `g/*` for deciding whether or not to apply numerical simplifications, like
+    `(* x 1) => x`.
+
+    Guarding on `v/scalar?` instead allows us to let in numbers, tapes and
+    differentials, since these latter two are meant to WRAP numbers, but should
+    not be subject to numerical simplifications.
+
+
+  - Adds `emmy.structure/fold-chain` for performing a tree-like fold on
+    structures, saving us work over the alternate pattern of `s/mapr`, `flatten`
+    and `reduce`.
+
 - #155
 
   - Replace the implementation of arbitrary-precision rational arithmetic

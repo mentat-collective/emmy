@@ -82,7 +82,7 @@
   (defmethod g/zero? [#?(:clj String :cljs js/String)] [_] false)
   (testing "v/numerical? special cases"
     (is (not (v/numerical? (d/from-terms {[] "face"}))))
-    (is (v/numerical? (d/->Differential []))
+    (is (v/scalar? (d/->Differential []))
         "An empty term list is interpreted as a 0-valued [[Differential]]."))
 
   (checking "native comparison operators work with differential" 100
@@ -112,9 +112,13 @@
                            (zero? compare-bit) (is (and (<= l r) (= l r) (>= l r)))
                            :else (is (> l r))))))))
 
-  (checking "v/numerical?" 100 [diff (sg/differential sg/real)]
-            (is (v/numerical? diff)
-                "True for all differentials populated by v/numerical? things"))
+  (checking "v/numerical?, v/scalar?" 100 [diff (sg/differential sg/real)]
+            (is (v/scalar? diff)
+                "True for all differentials")
+
+            (is (not (v/numerical? diff))
+                "False for all differentials, even wrapping numerical things...
+                we don't want g/* and friends to simplify us away."))
 
   (testing "value protocol implementation"
     (let [zero (d/->Differential [])
