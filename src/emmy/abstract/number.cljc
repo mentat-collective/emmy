@@ -16,9 +16,6 @@
      (:import (clojure.lang Symbol))))
 
 (extend-type Symbol
-  v/Numerical
-  (numerical? [_] true)
-
   v/IKind
   (kind [_] Symbol))
 

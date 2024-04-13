@@ -13,7 +13,6 @@
             [emmy.matrix :as m]
             [emmy.quaternion :as q]
             [emmy.simplify]
-            [emmy.structure :as s]
             [emmy.util.logic :as ul]
             [emmy.value :as v]
             [same.core :refer [ish? with-comparator]]))
@@ -181,10 +180,6 @@
       (is (not (g/exact? (q/make 1.2 3 4 5))))
       (is (g/exact? (q/make 1 2 3 #emmy/ratio 3/2)))
       (is (not (g/exact? (q/make 0 0 0 0.00001)))))
-
-    (testing "numerical?"
-      (is (not (v/numerical? (s/up 1 2 3 4)))
-          "no structure is numerical."))
 
     (testing "freeze"
       (is (= '(quaternion (/ 1 2) 2 3 x)

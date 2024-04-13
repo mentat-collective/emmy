@@ -138,13 +138,6 @@
   v/IKind
   (kind [_] ::tape)
 
-  ;; A [[TapeCell]] has to respond `false` to all [[emmy.value/numerical?]]
-  ;; inquiries; if we didn't do this, then [[emmy.generic/*]] and friends would
-  ;; attempt to apply shortcuts like `(* x <tape-with-1>) => x`, stripping off
-  ;; the [[TapeCell]] identity of the result and ruining the derivative.
-  v/Numerical
-  (numerical? [_] false)
-
   Object
   ;; Comparing [[TapeCell]] objects using `equals` defaults to [[equiv]], which
   ;; compares instances only using their non-tagged ('finite') components. If

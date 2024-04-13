@@ -89,11 +89,6 @@
         (is (g/exact? (constructor 0 1 #emmy/ratio 3/2)))
         (is (not (g/exact? (constructor 0 0 0.00001))))))
 
-    (testing "numerical?"
-      (checking "no structure is numerical." 100
-                [s (sg/structure sg/real)]
-                (is (not (v/numerical? s)))))
-
     (testing "freeze"
       (is (= '(up 1 2 3) (g/freeze (s/up 1 2 3))))
       (is (= '(down 1 2 3) (g/freeze (s/down 1 2 3)))))
@@ -713,16 +708,9 @@
 
   (checking "typical-object vs compatible-shape" 100
             [s (sg/structure sg/real 3)]
-            (is (v/numerical?
-                 (g/* s (s/compatible-shape s)))
-                "structures collapse to numerical expressions when multiplied by
-                a compatible shape.")
-
             (is (= (s/structure->prototype 'x (s/typical-object s))
                    (s/structure->prototype 'x (s/transpose
-                                               (s/compatible-shape s))))
-                "structures collapse to numerical expressions when multiplied by
-                a compatible shape."))
+                                               (s/compatible-shape s))))))
 
   (checking "s/compatible-zero works" 100
             [s (sg/structure sg/real)]

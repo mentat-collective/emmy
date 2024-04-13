@@ -67,7 +67,7 @@
                            (zero? compare-bit) (is (and (<= l r) (= l r) (>= l r)))
                            :else (is (> l r))))))))
 
-  (checking "v/numerical?, v/scalar?" 100 [diff (sg/dual sg/real)]
+  (checking " v/scalar?" 100 [diff (sg/dual sg/real)]
             (is (v/scalar? diff)
                 "True for all duals"))
 

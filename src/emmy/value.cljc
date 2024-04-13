@@ -20,22 +20,7 @@
      (:import
       (clojure.lang BigInt Sequential))))
 
-(defprotocol Numerical
-  (^boolean numerical? [x]
-   "Returns true if `x` is a purely numerical value and should be considered for
-   numerical simplifications, such as $x * 1 == x$ or $x * 0 ==
-   0$.
-
-  [[numerical?]] should return `false` if `x` has additional, non-numerical
-   structure that should be preserved."))
-
 (defprotocol INumericTower)
-
-(defprotocol IReal)
-
-(extend-protocol Numerical
-  #?(:clj Object :cljs default)
-  (numerical? [_] false))
 
 (defprotocol IKind
   (kind [this]))
@@ -140,17 +125,6 @@
        (derive goog.math.Integer ::integral)
        (derive goog.math.Long ::integral)))
 
-(extend-protocol Numerical
-  #?(:clj Number :cljs number)
-  (numerical? [_] true)
-
-  #?@(:clj
-      [java.lang.Double
-       (numerical? [_] true)
-
-       java.lang.Float
-       (numerical? [_] true)]))
-
 (extend-protocol IKind
   #?(:clj Number :cljs number)
   (kind [x] #?(:clj (type x)
@@ -172,8 +146,8 @@
   nil
   (kind [_] nil)
 
-;;  Var
-;;  (kind [v] (type v))
+  ;;  Var
+  ;;  (kind [v] (type v))
 
   #?(:clj Object :cljs default)
   (kind [o] (:type o (type o))))
@@ -311,26 +285,15 @@
 
 #?(:cljs
    ;; ClojureScript-specific implementations of Value.
-   (do
-     (extend-protocol Numerical
-       js/BigInt
-       (numerical? [_] true)
+   (extend-protocol IKind
+     js/BigInt
+     (kind [_] js/BigInt)
 
-       goog.math.Integer
-       (numerical? [_] true)
+     goog.math.Integer
+     (kind [_] goog.math.Integer)
 
-       goog.math.Long
-       (numerical? [_] true))
-
-     (extend-protocol IKind
-       js/BigInt
-       (kind [_] js/BigInt)
-
-       goog.math.Integer
-       (kind [_] goog.math.Integer)
-
-       goog.math.Long
-       (kind [_] goog.math.Long))))
+     goog.math.Long
+     (kind [_] goog.math.Long)))
 
 #?(:cljs
   ;; We find it convenient to be able to decorate "vanilla" JavaScript

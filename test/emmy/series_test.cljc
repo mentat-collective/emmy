@@ -22,9 +22,6 @@
       (= ::s/power-series (v/kind series))
       (= ::s/series (v/kind series))))
 
-  (testing "v/numerical?"
-    (is (not (v/numerical? series))))
-
   (testing "g/exact?"
     (is (not (g/exact? series))))
 

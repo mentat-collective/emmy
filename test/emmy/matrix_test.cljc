@@ -62,12 +62,6 @@
                  (g/identity-like (m/by-rows [1 2 3 4])))
         "identity-like is only supported on square matrices."))
 
-  (testing "numerical? returns false, always"
-    (is (not (v/numerical? (m/by-rows [1] [2]))))
-    (is (not (v/numerical? (m/by-rows [1.2] [3] [4]))))
-    (is (not (v/numerical? (m/by-rows [0] [0] [0.00001]))))
-    (is (not (v/numerical? (m/by-rows [0 1 (g// 3 2)])))))
-
   (testing "exact?"
     (is (g/exact? (m/by-rows [1] [2])))
     (is (not (g/exact? (m/by-rows [1.2] [3] [4]))))

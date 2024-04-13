@@ -87,9 +87,6 @@
 
 #?(:clj
    (extend-type Ratio
-     v/Numerical
-     (numerical? [_] true)
-
      v/IKind
      (kind [_] Ratio)))
 
@@ -126,11 +123,6 @@
 
      (extend-type bf/Fraction
        v/INumericTower
-
-       v/IReal
-
-       v/Numerical
-       (numerical? [_] true)
 
        #?@(:cljs [IEquiv
                   (-equiv [x other]
@@ -192,7 +184,7 @@
         (bf/remainder (bf/add (bf/remainder a b) b) b)))
      (defmethod g/gcd [bf/Fraction bf/Fraction] [a b] (bf/promote (bf/gcd a b)))
 
-;; Cross-compatibility with numbers in CLJS.
+     ;; Cross-compatibility with numbers in CLJS.
      (defn- downcast-fraction
        "Anything that `upcast-number` doesn't catch will hit this and pull a floating
         point value out of the ratio."

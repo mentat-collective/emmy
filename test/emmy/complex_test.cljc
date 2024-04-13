@@ -102,7 +102,6 @@
 
     (is (= 10 (g/freeze (c/complex 10)))
         "If the imaginary piece is 0, freeze will return only the real part.")
-    (is (v/numerical? (c/complex 10)))
 
     (testing "exact?"
       (is (not (g/exact? (c/complex 0 10.1))))
@@ -267,9 +266,9 @@
     (checking "floor pushes through to complex components" 100
               [x sg/complex]
               (is (v/= (g/floor x)
-                     (g/make-rectangular
-                      (g/floor (g/real-part x))
-                      (g/floor (g/imag-part x))))))
+                       (g/make-rectangular
+                        (g/floor (g/real-part x))
+                        (g/floor (g/imag-part x))))))
 
     (testing "ceiling"
       (is (= (c/complex 1 2) (g/ceiling (c/complex 1 2))))
@@ -328,10 +327,7 @@
                 (is (near z (g/square (g/sqrt z))))))
 
     (testing "sqrt"
-      (is (near (c/complex 10 10) (g/sqrt (g/mul c/I 200)))))
-
-    (testing "arithmetic"
-      (is (v/numerical? c/I)))))
+      (is (near (c/complex 10 10) (g/sqrt (g/mul c/I 200)))))))
 
 (defn fourth-power-is-one?
   "Checks if x^4 is 1+0i. This is needed because the gcd-complex function returns
