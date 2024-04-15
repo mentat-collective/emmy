@@ -2,6 +2,21 @@
 
 ## [unreleased]
 
+- #163:
+
+  - replaces the `emmy.differential.Differential` generalized dual and its term
+    list algebra with a simplified `emmy.differential.Dual` number type
+
+    This new approach works because the `emmy.differential/*active-tags*` stack
+    allows us to make sure that lifted binary operations always wrap their
+    output in a new `Dual` with the tag assigned by the inner-most derivative
+    call.
+
+  - deletes `emmy.util.vector-set` and tests, as these are no longer used
+
+  - adds a `nil` implementation for `extract-tangent`, meaning that `nil`-valued
+    functions now work with `D`
+
 - #159:
 
   - Fixes `Differential`'s implementation of `emmy.value/numerical?` to always
