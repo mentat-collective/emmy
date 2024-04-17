@@ -2,6 +2,28 @@
 
 ## [unreleased]
 
+- #165:
+
+  - Fixes Alexey's Amazing Bug for our tape implementation
+
+  - Adds the `id` field back into `TapeCell`, required for the tag replacement
+    machinery for fixing Alexey's Bug
+
+  - Adds an `emmy.differential/IPerturbed` implementation to TapeCell
+
+  - Fixes some old documentation referencing `:in->partials`, plural
+
+  - Updates `emmy.tape/tag-of` to return nil in case of a non-tape argument vs
+    `##-Inf`, again preparation for forward/reverse interactions
+
+  - Adds support for partial derivatives via a `selectors` argument to
+    `gradient`
+
+  - Fixes a bug in the `g/abs` implementation for `TapeCell`, where `(g/abs
+    <tape>)` would return a positive primal
+
+  - Adds a `simplify` implementation for `TapeCell`
+
 - #163:
 
   - replaces the `emmy.differential.Differential` generalized dual and its term

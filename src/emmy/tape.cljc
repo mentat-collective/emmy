@@ -125,6 +125,7 @@
 
 (declare compare)
 
+
 (deftype TapeCell [tag id primal in->partial]
   v/IKind
   (kind [_] ::tape)
@@ -254,16 +255,15 @@
   (.-tag tape))
 
 (defn tag-of
-  "More permissive version of [[tape-tag]] that returns ##-Inf, the 'least
-  possible tag', when passed a non-[[TapeCell]] instance.
+  "More permissive version of [[tape-tag]] that returns `nil` when passed a
+  non-[[TapeCell]] instance.
 
   TODO this will need to be extended to
   handle [[emmy.differential/Differential]] instances when these namespaces
   merge."
   [x]
-  (if (tape? x)
-    (tape-tag x)
-    ##-Inf))
+  (cond (tape? x) (tape-tag x)
+        :else nil))
 
 (defn tape-id
   "Returns the `-id` field of the supplied [[TapeCell]] object. Errors if any
@@ -720,6 +720,20 @@
                [[x (df:dx primal)]]))
        (f x)))))
 
+(defn- tag+perturbation
+  "A COPY of the same function in `differential`. I'm adding this here to avoid
+  import nonsense, and I'll delete one of the copies on the next PR, when I add
+  support for mixing forward and reverse modes together."
+  ([& dxs]
+   (let [m (into {} (mapcat
+                     (fn [dx]
+                       (when-let [t (tag-of dx)]
+                         {t dx})))
+                 dxs)]
+     (when (seq m)
+       (let [tag (apply d/inner-tag (keys m))]
+         [tag (m tag)])))))
+
 (defn lift-2
   "Given:
 
@@ -756,15 +770,11 @@
                  (make tag
                        (call primal-x primal-y)
                        (into partial-x partial-y))))]
-       (let [tag-x (tag-of x)
-             tag-y (tag-of y)]
-         (cond (and (tape? x) (>= tag-x tag-y))
-               (operate tag-x)
-
-               (and (tape? y) (< tag-x tag-y))
-               (operate tag-y)
-
-               :else (f x y)))))))
+       (if-let [[tag dx] (tag+perturbation x y)]
+         (cond (tape? dx) (operate tag)
+               :else
+               (u/illegal "Non-tape perturbation@"))
+         (f x y))))))
 
 (defn lift-n
   "Given:

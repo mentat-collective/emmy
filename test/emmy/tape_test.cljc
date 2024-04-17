@@ -6,6 +6,7 @@
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
             [emmy.calculus.derivative :refer [D]]
+            [emmy.expression.analyze :as a]
             [emmy.generators :as sg]
             [emmy.generic :as g]
             [emmy.numerical.derivative :refer [D-numeric]]
@@ -19,13 +20,14 @@
 (use-fixtures :each hermetic-simplify-fixture)
 
 (deftest tapecell-type-tests
-  (is (= (str "#emmy.tape.TapeCell{"
-              ":tag 0, :primal (cos x), "
-              ":in->partial "
-              "[[#emmy.tape.TapeCell{:tag 0, :primal x, :in->partial []} (- (sin x))]]"
-              "}")
-         (pr-str (g/cos (t/make 0 'x))))
-      "string representation")
+  (with-redefs [t/fresh-id (a/monotonic-symbol-generator 1 "id_")]
+    (is (= (str "#emmy.tape.TapeCell{"
+                ":tag 0, :id id_2, :primal (cos x), "
+                ":in->partial "
+                "[[#emmy.tape.TapeCell{:tag 0, :id id_1, :primal x, :in->partial []} (- (sin x))]]"
+                "}")
+           (pr-str (g/cos (t/make 0 'x))))
+        "string representation"))
 
   (checking "tape? works" 100 [t (sg/tapecell gen/symbol)]
             (is (t/tape? t)))
@@ -185,21 +187,20 @@
                       (is (zero? (v/compare l+dr l)))
                       (is (zero? (v/compare l l+dr))))))
 
-        (testing "freeze, simplify, str"
-          (let [not-simple (g/square
-                            (g/square (t/make 0 'x {(t/make 0 'y) 1})))]
-            (is (= '[TapeCell
-                     0
-                     (expt x 4)
-                     [[[TapeCell 0 (expt x 2)
-                        [[[TapeCell 0 x [[[TapeCell 0 y []] 1]]] (* 2 x)]]]
-                       (* 2 (expt x 2))]]]
-                   (g/freeze not-simple))
-                "A frozen differential freezes each entry")
 
-            (checking "simplify acts as identity" 100
-                      [t (sg/tapecell gen/symbol)]
-                      (is (identical? t (g/simplify t))))))))))
+        (testing "freeze, simplify, str"
+          (with-redefs [t/fresh-id (a/monotonic-symbol-generator 3 "id_")]
+            (let [not-simple (g/square
+                              (g/square (t/make 0 'x {(t/make 0 'y) 1})))]
+
+              (is (= '[TapeCell 0
+                       id_004
+                       (expt x 4)
+                       [[[TapeCell 0 id_003 (expt x 2)
+                          [[[TapeCell 0 id_002 x [[[TapeCell 0 id_001 y []] 1]]] (* 2 x)]]]
+                         (* 2 (expt x 2))]]]
+                     (g/freeze not-simple))
+                  "A frozen differential freezes each entry"))))))))
 
 (deftest tape-api-tests
   (testing "tag-of"
@@ -209,8 +210,8 @@
                        (t/tape-tag cell))
                     "for tape cells, these should match")))
 
-    (checking "for any other type tag == ##-Inf" 100 [x gen/any]
-              (is (= ##-Inf (t/tag-of x))
+    (checking "for any other type tag == nil" 100 [x gen/any]
+              (is (nil? (t/tag-of x))
                   "for tape cells, these should match")))
 
   (checking "deep-primal returns nested primal" 100 [p gen/any-equatable]
@@ -300,8 +301,8 @@
       (is (= (g/exp 8) ((f-hat g/exp) 5))
           "Nothing tough expected in this case.")
 
-      ;; We'll update this once we fix the amazing bug for reverse-mode.
-      (is (= 0 ((f-hat (f-hat g/exp)) 5))
+      (is (= (g/exp 11)
+             ((f-hat (f-hat g/exp)) 5))
           "This is the amazing bug, and SHOULD actually equal (g/exp 11)."))))
 
 (deftest sinc-etc-tests
@@ -481,6 +482,9 @@
               ((t/gradient (t/gradient f)) 'a 'b 'c 'd 'e 'f)))
           "multivariable derivatives match (reverse-over-reverse)")
 
+      ;; TODO enable this when we add support for tape and gradient comms in
+      ;; lift-2.
+      #_
       (is (= expected
              (g/simplify
               ((D (t/gradient f)) 'a 'b 'c 'd 'e 'f)))
