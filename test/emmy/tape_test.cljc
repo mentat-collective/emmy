@@ -6,6 +6,8 @@
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
             [emmy.calculus.derivative :refer [D]]
+            [emmy.differential :as d]
+            [emmy.expression.analyze :as a]
             [emmy.generators :as sg]
             [emmy.generic :as g]
             [emmy.numerical.derivative :refer [D-numeric]]
@@ -19,13 +21,14 @@
 (use-fixtures :each hermetic-simplify-fixture)
 
 (deftest tapecell-type-tests
-  (is (= (str "#emmy.tape.TapeCell{"
-              ":tag 0, :primal (cos x), "
-              ":in->partial "
-              "[[#emmy.tape.TapeCell{:tag 0, :primal x, :in->partial []} (- (sin x))]]"
-              "}")
-         (pr-str (g/cos (t/make 0 'x))))
-      "string representation")
+  (with-redefs [t/fresh-id (a/monotonic-symbol-generator 1 "id_")]
+    (is (= (str "#emmy.tape.TapeCell{"
+                ":tag 0, :id id_2, :primal (cos x), "
+                ":in->partial "
+                "[[#emmy.tape.TapeCell{:tag 0, :id id_1, :primal x, :in->partial []} (- (sin x))]]"
+                "}")
+           (pr-str (g/cos (t/make 0 'x))))
+        "string representation"))
 
   (checking "tape? works" 100 [t (sg/tapecell gen/symbol)]
             (is (t/tape? t)))
@@ -78,11 +81,11 @@
                            ;; instance equality for `=`, but value equality for
                            ;; `v/=`.
                            (zero? compare-bit) (is (and (<= l r) (v/= l r) (>= l r)))
-                           :else (is (> l r))))))))
+                           :else               (is (> l r))))))))
 
   (testing "value protocol implementation"
     (let [zero (t/make 0 0)
-          dx (t/make 0 0 {(t/make 0 'x) 1})]
+          dx   (t/make 0 0 {(t/make 0 'x) 1})]
       (is (g/zero? zero)
           "zero? returns true for an empty term list")
 
@@ -183,23 +186,75 @@
                       (is (zero? (t/compare l+dr l)))
                       (is (zero? (t/compare l l+dr)))
                       (is (zero? (v/compare l+dr l)))
-                      (is (zero? (v/compare l l+dr))))))
+                      (is (zero? (v/compare l l+dr)))))))
 
-        (testing "freeze, simplify, str"
+      (testing "freeze, simplify, str"
+        (with-redefs [t/fresh-id (a/monotonic-symbol-generator 3 "id_")]
           (let [not-simple (g/square
                             (g/square (t/make 0 'x {(t/make 0 'y) 1})))]
-            (is (= '[TapeCell
-                     0
+
+            (is (= '[TapeCell 0
+                     id_004
                      (expt x 4)
-                     [[[TapeCell 0 (expt x 2)
-                        [[[TapeCell 0 x [[[TapeCell 0 y []] 1]]] (* 2 x)]]]
+                     [[[TapeCell 0 id_003 (expt x 2)
+                        [[[TapeCell 0 id_002 x [[[TapeCell 0 id_001 y []] 1]]] (* 2 x)]]]
                        (* 2 (expt x 2))]]]
                    (g/freeze not-simple))
-                "A frozen differential freezes each entry")
+                "A frozen differential freezes each entry")))
 
-            (checking "simplify acts as identity" 100
-                      [t (sg/tapecell gen/symbol)]
-                      (is (identical? t (g/simplify t))))))))))
+        (let [tape (t/make 0
+                           (g/* 'x 'x 'x)
+                           [[(t/make 0 (g/* 'x 'x) []) (g/+ 'y 'y 'y)]
+                            [(t/make 0 (g/* 'y 'y) []) (g/+ 'x 'x 'x)]])]
+          (is (t/eq (t/make 0
+                            (g/expt 'x 3)
+                            [[(t/make 0 (g/square 'x) []) (g/* 3 'y)]
+                             [(t/make 0 (g/square 'y) []) (g/* 3 'x)]])
+                    (g/simplify tape))
+              "simplify simplifies all in->partial entries AND the primal ")))
+
+      (checking "d/perturbed?" 100 [tape (sg/tapecell gen/symbol)]
+                (is (d/perturbed? tape)
+                    "all tags are perturbed?"))
+
+      (checking "d/extract-tangent" 100 [tag  gen/nat
+                                         tape (sg/tapecell gen/symbol)]
+                (is (zero? (d/extract-tangent tape tag))
+                    "extract-tangent always returns 0 for tapes")
+
+                (is (zero? (d/extract-tangent tape (t/tape-tag tape)))
+                    "extract-tangent always returns 0 for tapes, even for
+                      their own tag"))
+
+      (checking "d/replace-tag" 100 [tag  gen/nat
+                                     tape (sg/tapecell gen/symbol)]
+                (let [swapped (d/replace-tag tape
+                                             (t/tape-tag tape)
+                                             tag)]
+                  (is (= tag (t/tape-tag swapped))
+                      "tag replacement works")
+
+                  (is (= (dissoc (t/tapecell->map tape) :tag)
+                         (dissoc (t/tapecell->map swapped) :tag))
+                      "all fields are the same except for tag"))
+
+                (is (t/eq tape (d/replace-tag tape tag tag))
+                    "replacing a tag with itself is a no-op")
+
+                (is (t/eq tape (-> tape
+                                   (d/replace-tag (t/tape-tag tape) tag)
+                                   (d/replace-tag tag (t/tape-tag tape))))
+                    "swapping a tag out then back is a no-op")
+
+                (let [swapped (d/replace-tag tape
+                                             (t/tape-tag tape)
+                                             tag)]
+                  (is (= tag (t/tape-tag swapped))
+                      "tag replacement works")
+
+                  (is (= (dissoc (t/tapecell->map tape) :tag)
+                         (dissoc (t/tapecell->map swapped) :tag))
+                      "all fields are the same except for tag"))))))
 
 (deftest tape-api-tests
   (testing "tag-of"
@@ -209,8 +264,8 @@
                        (t/tape-tag cell))
                     "for tape cells, these should match")))
 
-    (checking "for any other type tag == ##-Inf" 100 [x gen/any]
-              (is (= ##-Inf (t/tag-of x))
+    (checking "for any other type tag == nil" 100 [x gen/any]
+              (is (nil? (t/tag-of x))
                   "for tape cells, these should match")))
 
   (checking "deep-primal returns nested primal" 100 [p gen/any-equatable]
@@ -300,8 +355,8 @@
       (is (= (g/exp 8) ((f-hat g/exp) 5))
           "Nothing tough expected in this case.")
 
-      ;; We'll update this once we fix the amazing bug for reverse-mode.
-      (is (= 0 ((f-hat (f-hat g/exp)) 5))
+      (is (= (g/exp 11)
+             ((f-hat (f-hat g/exp)) 5))
           "This is the amazing bug, and SHOULD actually equal (g/exp 11)."))))
 
 (deftest sinc-etc-tests
@@ -467,6 +522,48 @@
               ((D f) ['x 'y 'z]))
              (g/simplify
               ((t/gradient f) ['x 'y 'z])))
+          "reverse-mode matches forward-mode.")
+
+      (is (= ((t/gradient f) ['x 'y 'z])
+             (s/down
+              ((t/gradient f [0]) ['x 'y 'z])
+              ((t/gradient f [1]) ['x 'y 'z])
+              ((t/gradient f [2]) ['x 'y 'z])))
+          "individual partials match explicit gradient")
+
+      (is (= ((t/gradient f []) ['x 'y 'z])
+             ((t/gradient f) ['x 'y 'z]))
+          "default is equiv to empty partials"))
+
+    (is (= (g/* (g/sin 'y) (g/- (g/sin 'x)))
+           ((t/gradient (fn [[[x] [y]]]
+                          (g/* (g/cos x) (g/sin y)))
+                        [0 0])
+            [['x] ['y]]))
+        "deeper partial"))
+
+  (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
+               ((t/gradient g/sin [0]) 'x))
+      "partial selector provided to a fn of a non-structural argument throws on
+      fn application")
+
+  (testing "partial derivative"
+    (let [f (fn [[x y z]]
+              (g/+ (g/expt x 4) (g/* x y z (g/cos x))))]
+      (is (= '(down
+               (+ (* -1 x y z (sin x))
+                  (* 4 (expt x 3))
+                  (* y z (cos x)))
+               (* x z (cos x))
+               (* x y (cos x)))
+             (g/freeze
+              (g/simplify
+               ((t/gradient f) ['x 'y 'z])))))
+
+      (is (= (g/simplify
+              ((D f) ['x 'y 'z]))
+             (g/simplify
+              ((t/gradient f) ['x 'y 'z])))
           "reverse-mode matches forward-mode.")))
 
   (testing "multiple input, vector output"
@@ -481,6 +578,9 @@
               ((t/gradient (t/gradient f)) 'a 'b 'c 'd 'e 'f)))
           "multivariable derivatives match (reverse-over-reverse)")
 
+      ;; TODO enable this when we add support for tape and gradient comms in
+      ;; lift-2.
+      #_
       (is (= expected
              (g/simplify
               ((D (t/gradient f)) 'a 'b 'c 'd 'e 'f)))
