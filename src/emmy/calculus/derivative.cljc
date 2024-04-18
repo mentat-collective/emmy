@@ -15,6 +15,7 @@
             [emmy.operator :as o]
             [emmy.series :as series]
             [emmy.structure :as s]
+            [emmy.tape :as tape]
             [emmy.util :as u]
             [emmy.value :as v])
   #?(:clj
@@ -457,6 +458,17 @@
   automatic differentiation."
   (o/make-operator #(g/partial-derivative % [])
                    g/derivative-symbol))
+
+(def D-rev
+  "Reverse-mode derivative operator..."
+  (o/make-operator #(tape/gradient % [])
+                   g/derivative-symbol))
+
+(defn partial-rev
+  "Reverse-mode partial derivative."
+  [& selectors]
+  (o/make-operator #(tape/gradient % selectors)
+                   `(~'partial ~@selectors)))
 
 (defn D-as-matrix [F]
   (fn [s]

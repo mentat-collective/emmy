@@ -19,6 +19,7 @@
             [emmy.numsymb :as sym]
             [emmy.polynomial]
             [emmy.structure :as s]
+            [emmy.tape :as tape]
             [emmy.util :as u]
             [emmy.value :as v])
   #?(:clj
@@ -262,14 +263,25 @@
            (g/+ tangent (g/* (literal-apply partial primal-s)
                              dx))))))))
 
+(defn- reverse-mode-fold [f primal-s tag]
+  (fn
+    ([] [])
+    ([partials]
+     (tape/make tag (apply f primal-s) partials))
+    ([partials [entry path _]]
+     (if (and (tape/tape? entry) (= tag (tape/tape-tag entry)))
+       (let [partial (literal-partial f path)]
+         (conj partials [entry (literal-apply partial primal-s)]))
+       partials))))
+
 (defn- literal-derivative
-  "Takes a literal function `f` and a sequence of arguments `xs`, and generates
-  an expanded `((D f) xs)` by applying the chain rule and summing the partial
-  derivatives for each [[emmy.differential/Dual]] argument in the input
-  structure."
+  "Takes a literal function `f` and a sequence of arguments `xs`, and generates an
+  expanded `((D f) xs)` by applying the chain rule and summing the partial
+  derivatives for each perturbed argument in the input structure."
   [f s tag dx]
-  (let [fold-fn  (cond (d/dual? dx) forward-mode-fold
-                       :else         (u/illegal "No tape or differential inputs."))
+  (let [fold-fn  (cond (tape/tape? dx) reverse-mode-fold
+                       (d/dual? dx)    forward-mode-fold
+                       :else           (u/illegal "No tape or differential inputs."))
         primal-s (s/mapr (fn [x] (d/primal x tag)) s)]
     (s/fold-chain (fold-fn f primal-s tag) s)))
 
@@ -305,7 +317,7 @@
     (if-let [[tag dx] (s/fold-chain
                        (fn
                          ([] [])
-                         ([acc]     (apply d/tag+perturbation acc))
+                         ([acc]     (apply tape/tag+perturbation acc))
                          ([acc [d]] (conj acc d)))
                        s)]
       (literal-derivative f s tag dx)
