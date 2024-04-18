@@ -200,7 +200,18 @@
                         [[[TapeCell 0 id_002 x [[[TapeCell 0 id_001 y []] 1]]] (* 2 x)]]]
                        (* 2 (expt x 2))]]]
                    (g/freeze not-simple))
-                "A frozen differential freezes each entry"))))
+                "A frozen differential freezes each entry")))
+
+        (let [tape (t/make 0
+                           (g/* 'x 'x 'x)
+                           [[(t/make 0 (g/* 'x 'x) []) (g/+ 'y 'y 'y)]
+                            [(t/make 0 (g/* 'y 'y) []) (g/+ 'x 'x 'x)]])]
+          (is (t/eq (t/make 0
+                            (g/expt 'x 3)
+                            [[(t/make 0 (g/square 'x) []) (g/* 3 'y)]
+                             [(t/make 0 (g/square 'y) []) (g/* 3 'x)]])
+                    (g/simplify tape))
+              "simplify simplifies all in->partial entries AND the primal ")))
 
       (checking "d/perturbed?" 100 [tape (sg/tapecell gen/symbol)]
                 (is (d/perturbed? tape)
