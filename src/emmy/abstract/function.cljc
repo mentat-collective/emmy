@@ -282,7 +282,7 @@
   (let [fold-fn  (cond (tape/tape? dx) reverse-mode-fold
                        (d/dual? dx)    forward-mode-fold
                        :else           (u/illegal "No tape or differential inputs."))
-        primal-s (s/mapr (fn [x] (d/primal x tag)) s)]
+        primal-s (s/mapr (fn [x] (tape/primal-of x tag)) s)]
     (s/fold-chain (fold-fn f primal-s tag) s)))
 
 (defn- check-argument-type

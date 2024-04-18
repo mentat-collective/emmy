@@ -543,12 +543,16 @@
      (letfn [(process-term [term]
                (g/simplify
                 (s/mapr (fn rec [x]
-                          (if (d/dual? x)
-                            (d/bundle-element
-                             (rec (d/primal x))
-                             (rec (d/tangent x))
-                             (d/tag x))
-                            (-> (g/simplify x)
-                                (x/substitute replace-m))))
+                          (cond (d/dual? x)
+                                (d/bundle-element
+                                 (rec (d/primal x))
+                                 (rec (d/tangent x))
+                                 (d/tag x))
+
+                                (tape/tape? x)
+                                (u/illegal "TODO implement this using fmap style.")
+
+                                :else (-> (g/simplify x)
+                                          (x/substitute replace-m))))
                         term)))]
        (series/fmap process-term series)))))
