@@ -6,6 +6,7 @@
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
             [emmy.calculus.derivative :refer [D]]
+            [emmy.differential :as d]
             [emmy.expression.analyze :as a]
             [emmy.generators :as sg]
             [emmy.generic :as g]
@@ -80,11 +81,11 @@
                            ;; instance equality for `=`, but value equality for
                            ;; `v/=`.
                            (zero? compare-bit) (is (and (<= l r) (v/= l r) (>= l r)))
-                           :else (is (> l r))))))))
+                           :else               (is (> l r))))))))
 
   (testing "value protocol implementation"
     (let [zero (t/make 0 0)
-          dx (t/make 0 0 {(t/make 0 'x) 1})]
+          dx   (t/make 0 0 {(t/make 0 'x) 1})]
       (is (g/zero? zero)
           "zero? returns true for an empty term list")
 
@@ -185,22 +186,64 @@
                       (is (zero? (t/compare l+dr l)))
                       (is (zero? (t/compare l l+dr)))
                       (is (zero? (v/compare l+dr l)))
-                      (is (zero? (v/compare l l+dr))))))
+                      (is (zero? (v/compare l l+dr)))))))
 
+      (testing "freeze, simplify, str"
+        (with-redefs [t/fresh-id (a/monotonic-symbol-generator 3 "id_")]
+          (let [not-simple (g/square
+                            (g/square (t/make 0 'x {(t/make 0 'y) 1})))]
 
-        (testing "freeze, simplify, str"
-          (with-redefs [t/fresh-id (a/monotonic-symbol-generator 3 "id_")]
-            (let [not-simple (g/square
-                              (g/square (t/make 0 'x {(t/make 0 'y) 1})))]
+            (is (= '[TapeCell 0
+                     id_004
+                     (expt x 4)
+                     [[[TapeCell 0 id_003 (expt x 2)
+                        [[[TapeCell 0 id_002 x [[[TapeCell 0 id_001 y []] 1]]] (* 2 x)]]]
+                       (* 2 (expt x 2))]]]
+                   (g/freeze not-simple))
+                "A frozen differential freezes each entry"))))
 
-              (is (= '[TapeCell 0
-                       id_004
-                       (expt x 4)
-                       [[[TapeCell 0 id_003 (expt x 2)
-                          [[[TapeCell 0 id_002 x [[[TapeCell 0 id_001 y []] 1]]] (* 2 x)]]]
-                         (* 2 (expt x 2))]]]
-                     (g/freeze not-simple))
-                  "A frozen differential freezes each entry"))))))))
+      (checking "d/perturbed?" 100 [tape (sg/tapecell gen/symbol)]
+                (is (d/perturbed? tape)
+                    "all tags are perturbed?"))
+
+      (checking "d/extract-tangent" 100 [tag  gen/nat
+                                         tape (sg/tapecell gen/symbol)]
+                (is (zero? (d/extract-tangent tape tag))
+                    "extract-tangent always returns 0 for tapes")
+
+                (is (zero? (d/extract-tangent tape (t/tape-tag tape)))
+                    "extract-tangent always returns 0 for tapes, even for
+                      their own tag"))
+
+      (checking "d/replace-tag" 100 [tag  gen/nat
+                                     tape (sg/tapecell gen/symbol)]
+                (let [swapped (d/replace-tag tape
+                                             (t/tape-tag tape)
+                                             tag)]
+                  (is (= tag (t/tape-tag swapped))
+                      "tag replacement works")
+
+                  (is (= (dissoc (t/tapecell->map tape) :tag)
+                         (dissoc (t/tapecell->map swapped) :tag))
+                      "all fields are the same except for tag"))
+
+                (is (t/eq tape (d/replace-tag tape tag tag))
+                    "replacing a tag with itself is a no-op")
+
+                (is (t/eq tape (-> tape
+                                   (d/replace-tag (t/tape-tag tape) tag)
+                                   (d/replace-tag tag (t/tape-tag tape))))
+                    "swapping a tag out then back is a no-op")
+
+                (let [swapped (d/replace-tag tape
+                                             (t/tape-tag tape)
+                                             tag)]
+                  (is (= tag (t/tape-tag swapped))
+                      "tag replacement works")
+
+                  (is (= (dissoc (t/tapecell->map tape) :tag)
+                         (dissoc (t/tapecell->map swapped) :tag))
+                      "all fields are the same except for tag"))))))
 
 (deftest tape-api-tests
   (testing "tag-of"
@@ -452,6 +495,48 @@
 
 (deftest gradient-tests
   (testing "vector input, scalar output"
+    (let [f (fn [[x y z]]
+              (g/+ (g/expt x 4) (g/* x y z (g/cos x))))]
+      (is (= '(down
+               (+ (* -1 x y z (sin x))
+                  (* 4 (expt x 3))
+                  (* y z (cos x)))
+               (* x z (cos x))
+               (* x y (cos x)))
+             (g/freeze
+              (g/simplify
+               ((t/gradient f) ['x 'y 'z])))))
+
+      (is (= (g/simplify
+              ((D f) ['x 'y 'z]))
+             (g/simplify
+              ((t/gradient f) ['x 'y 'z])))
+          "reverse-mode matches forward-mode.")
+
+      (is (= ((t/gradient f) ['x 'y 'z])
+             (s/down
+              ((t/gradient f [0]) ['x 'y 'z])
+              ((t/gradient f [1]) ['x 'y 'z])
+              ((t/gradient f [2]) ['x 'y 'z])))
+          "individual partials match explicit gradient")
+
+      (is (= ((t/gradient f []) ['x 'y 'z])
+             ((t/gradient f) ['x 'y 'z]))
+          "default is equiv to empty partials"))
+
+    (is (= (g/* (g/sin 'y) (g/- (g/sin 'x)))
+           ((t/gradient (fn [[[x] [y]]]
+                          (g/* (g/cos x) (g/sin y)))
+                        [0 0])
+            [['x] ['y]]))
+        "deeper partial"))
+
+  (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
+               ((t/gradient g/sin [0]) 'x))
+      "partial selector provided to a fn of a non-structural argument throws on
+      fn application")
+
+  (testing "partial derivative"
     (let [f (fn [[x y z]]
               (g/+ (g/expt x 4) (g/* x y z (g/cos x))))]
       (is (= '(down

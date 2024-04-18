@@ -439,8 +439,6 @@
 ;;
 (defrecord Completed [v->partial]
   d/IPerturbed
-  (perturbed? [_] (boolean (some d/perturbed? (vals v->partial))))
-
   ;; NOTE that it's a problem that `replace-tag` is called on [[Completed]]
   ;; instances now. In a future refactor I want `get` calls out of
   ;; a [[Completed]] map to occur before tag replacement needs to happen.
@@ -448,10 +446,15 @@
     (Completed.
      (u/map-vals #(d/replace-tag % old new) v->partial)))
 
-  ;; This should never happen; it would be that a [[Completed]] instance has
+  ;; These should be called; it would be that a [[Completed]] instance has
   ;; escaped from a derivative call. These are meant to be an internal
   ;; implementation detail only.
   (extract-tangent [_ _]
+    (assert "Impossible!"))
+
+  ;; This is called on arguments to literal functions to check if a derivative
+  ;; needs to be taken. This should never happen with a [[Completed]] instance!
+  (perturbed? [_]
     (assert "Impossible!")))
 
 (defn process [sensitivities tape]
@@ -773,7 +776,7 @@
        (if-let [[tag dx] (tag+perturbation x y)]
          (cond (tape? dx) (operate tag)
                :else
-               (u/illegal "Non-tape perturbation@"))
+               (u/illegal "Non-tape perturbation!"))
          (f x y))))))
 
 (defn lift-n
