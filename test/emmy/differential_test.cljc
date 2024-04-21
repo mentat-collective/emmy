@@ -10,6 +10,7 @@
             [emmy.generic :as g]
             [emmy.numerical.derivative :refer [D-numeric]]
             [emmy.simplify :refer [hermetic-simplify-fixture]]
+            [emmy.tape :as tape]
             [emmy.value :as v]
             [same.core :refer [ish? with-comparator]]))
 
@@ -357,7 +358,7 @@
                     (is (g/one? ((derivative g/fractional-part) x)))))))
 
   (testing "lift-n"
-    (let [*   (d/lift-n g/* (fn [_] 1) (fn [_ y] y) (fn [x _] x))
+    (let [*   (tape/lift-n g/* (fn [_] 1) (fn [_ y] y) (fn [x _] x))
           Df7 (derivative
                (fn x**7 [x] (* x x x x x x x)))
           Df1 (derivative *)

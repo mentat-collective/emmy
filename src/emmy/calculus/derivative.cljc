@@ -15,6 +15,7 @@
             [emmy.operator :as o]
             [emmy.series :as series]
             [emmy.structure :as s]
+            [emmy.tape :as tape]
             [emmy.util :as u]
             [emmy.value :as v])
   #?(:clj
@@ -413,9 +414,8 @@
 (defn jvp [f v]
   (multi #(simple-jvp % v) f))
 
-#_
-(defn hvp [f v x]
-  (jvm (gradient f) v x))
+(defn hvp [f v]
+  (jvp (tape/gradient f) v))
 
 #_
 (let [f (emmy.env/literal-function 'f (-> (UP Real Real) (UP Real Real)))
@@ -524,6 +524,17 @@
   (o/make-operator #(g/partial-derivative % [])
                    g/derivative-symbol))
 
+(def D-rev
+  "Reverse-mode derivative operator..."
+  (o/make-operator #(tape/gradient % [])
+                   g/derivative-symbol))
+
+(defn partial-rev
+  "Reverse-mode partial derivative."
+  [& selectors]
+  (o/make-operator #(tape/gradient % selectors)
+                   `(~'partial ~@selectors)))
+
 (defn D-as-matrix [F]
   (fn [s]
     (matrix/s->m
@@ -597,12 +608,16 @@
      (letfn [(process-term [term]
                (g/simplify
                 (s/mapr (fn rec [x]
-                          (if (d/dual? x)
-                            (d/bundle-element
-                             (rec (d/primal x))
-                             (rec (d/tangent x))
-                             (d/tag x))
-                            (-> (g/simplify x)
-                                (x/substitute replace-m))))
+                          (cond (d/dual? x)
+                                (d/bundle-element
+                                 (rec (d/primal x))
+                                 (rec (d/tangent x))
+                                 (d/tag x))
+
+                                (tape/tape? x)
+                                (u/illegal "TODO implement this using fmap style.")
+
+                                :else (-> (g/simplify x)
+                                          (x/substitute replace-m))))
                         term)))]
        (series/fmap process-term series)))))

@@ -13,6 +13,7 @@
             [emmy.function :as f]
             [emmy.generic :as g]
             [emmy.matrix :as matrix]
+            [emmy.operator :as o]
             [emmy.structure :as s]
             [emmy.util :as u]
             [emmy.value :as v]))
@@ -254,17 +255,6 @@
   [^TapeCell tape]
   (.-tag tape))
 
-(defn tag-of
-  "More permissive version of [[tape-tag]] that returns `nil` when passed a
-  non-[[TapeCell]] instance.
-
-  TODO this will need to be extended to
-  handle [[emmy.differential/Differential]] instances when these namespaces
-  merge."
-  [x]
-  (cond (tape? x) (tape-tag x)
-        :else nil))
-
 (defn tape-id
   "Returns the `-id` field of the supplied [[TapeCell]] object. Errors if any
   other type is supplied.
@@ -317,15 +307,77 @@
    :primal      (.-primal t)
    :in->partial (.-in->partial t)})
 
+(defn tag-of
+  "More permissive version of [[tape-tag]] that returns `nil` when passed a
+  non-[[TapeCell]] instance.
+
+  TODO note what we handle now."
+  [x]
+  (cond (tape? x)   (tape-tag x)
+        (d/dual? x) (d/tag x)
+        :else       nil))
+
+;; TODO move tag stuff here?
+
+(defn inner-tag
+  "Given any number of `tags`, returns the tag most recently bound
+  via [[with-active-tag]] (i.e., the tag connected with the _innermost_ call
+  to [[with-active-tag]]).
+
+  If none of the tags are bound, returns `(apply max tags)`."
+  [& tags]
+  (or (some (apply hash-set tags)
+            d/*active-tags*)
+      (apply max tags)))
+
+;; TODO we could change `perturbed?` into something like
+;; `possible-perturbations`, to get collection types to return sequence of
+;; inputs for this. Then we could handle map-shaped inputs etc into literal
+;; functions, if we had the proper descriptor language for it.
+
+(defn tag+perturbation
+  "Given any number of `dxs`, returns a pair of the form
+
+  [<tag> <tape-or-dual-number>]
+
+  containing the tag and instance of [[emmy.differential/Dual]] or [[TapeCell]]
+  associated with the inner-most call to [[with-active-tag]] in the current call
+  stack.
+
+  If none of `dxs` has an active tag, returns `nil`."
+  ([& dxs]
+   (let [m (into {} (mapcat
+                     (fn [dx]
+                       (when-let [t (tag-of dx)]
+                         {t dx})))
+                 dxs)]
+     (when (seq m)
+       (let [tag (apply inner-tag (keys m))]
+         [tag (m tag)])))))
+
+(defn primal-of
+  "More permissive version of [[tape-primal]] that returns `v` when passed a
+  non-[[TapeCell]]-or-[[emmy.differential/Dual]] instance.
+
+  TODO fix docstring"
+  ([v]
+   (primal-of v (tag-of v)))
+  ([v tag]
+   (cond (tape? v)   (tape-primal v tag)
+         (d/dual? v) (d/primal v tag)
+         :else       v)))
+
 (defn deep-primal
   "Version of [[tape-primal]] that will descend recursively into any [[TapeCell]]
   instance returned by [[tape-primal]] until encountering a non-[[TapeCell]].
 
-  Given a non-[[TapeCell]], acts as identity."
-  [v]
-  (if (tape? v)
-    (recur (tape-primal v))
-    v))
+  Given a non-[[TapeCell]], acts as identity.
+
+  TODO say what we really do now"
+  ([v]
+   (cond (tape? v)   (recur (tape-primal v))
+         (d/dual? v) (recur (d/primal v))
+         :else       v)))
 
 ;; ### Comparison, Control Flow
 ;;
@@ -439,6 +491,20 @@
 ;;
 (defrecord Completed [v->partial]
   d/IPerturbed
+  ;; TODO note that this can happen because these can pop out from inside of
+  ;; ->partial-fn. And that is currently where the tag-rewriting has to occur.
+  ;;
+  ;; But that is going to be inefficient for lots of intermediate values...
+  ;; ideally we could call this AFTER we select out the IDs. That implies that
+  ;; we want to shove that inside of extract.
+  ;;
+  ;; TODO TODO TODO definitely do this, we definitely want that to happen, don't
+  ;; have those stacked levels, otherwise super inefficient to walk multiple
+  ;; times.
+  ;;
+  ;; TODO AND THEN if that's true then we can delete this implementation, since
+  ;; we'll already be pulled OUT of the completed map.
+
   ;; NOTE that it's a problem that `replace-tag` is called on [[Completed]]
   ;; instances now. In a future refactor I want `get` calls out of
   ;; a [[Completed]] map to occur before tag replacement needs to happen.
@@ -484,6 +550,10 @@
   - the partial derivative of the output with respect to that value."
   [root]
   (let [nodes         (topological-sort root)
+
+        ;; TODO this is the spot where we want to wire in many sensitivities. So
+        ;; how would it work, if we set all of the sensitivities for the outputs
+        ;; at once? What would the ordering be as we walked backwards?
         sensitivities {(tape-id root) 1}]
     (->Completed
      (reduce process sensitivities nodes))))
@@ -499,6 +569,10 @@
 ;; this for forward-mode, I believe.
 
 (declare ->partials)
+
+;; TODO fix the docstring, and think of how we can combine this into the
+;; narrative of what we find in derivative. Maybe this should be the main
+;; version?
 
 (defn- ->partials-fn
   "Returns a new function that composes a 'tag extraction' step with `f`. The
@@ -542,11 +616,23 @@
         (vector? output)
         (mapv #(->partials % tag) output)
 
+        ;; Here is an example of the subtlety. We MAY want to go one at a
+        ;; time... or we may want to insert some sensitivity entry into the
+        ;; entire structure and roll the entire structure back. We don't do that
+        ;; YET so I bet we can get away with ignoring it for this first PR. But
+        ;; we are close to needing that.
         (s/structure? output)
         (s/mapr #(->partials % tag) output)
 
         (f/function? output)
         (->partials-fn output tag)
+
+        (o/operator? output)
+        (o/->Operator (->partials-fn (o/procedure output) tag)
+                      (o/arity output)
+                      (o/name output)
+                      (o/context output)
+                      (meta output))
 
         (v/scalar? output)
         (->Completed {})
@@ -580,9 +666,14 @@
         (s/mapr #(extract % id) output)
 
         (f/function? output)
-        ;; TODO this needs to handle perturbation confusion with tag
-        ;; replacement. Make something similar to extract-tangent-fn.
         (comp #(extract % id) output)
+
+        (o/operator? output)
+        (o/->Operator (extract (o/procedure output) id)
+                      (o/arity output)
+                      (o/name output)
+                      (o/context output)
+                      (meta output))
 
         :else 0))
 
@@ -699,16 +790,17 @@
   - a function `df:dx` that computes the derivative of `f` with respect to its
     single argument
 
-  Returns a new unary function that operates on both the original type of `f`
-  and [[TapeCell]] instances.
+  Returns a new unary function that operates on both the original type of
+  `f`, [[TapeCell]] and [[emmy.differential/Dual]] instances.
 
   If called without `df:dx`, `df:dx` defaults to `(f :dfdx)`; this will return
   the derivative registered to a generic function defined
   with [[emmy.util.def/defgeneric]].
 
-  NOTE: `df:dx` has to ALREADY be able to handle [[TapeCell]] instances. The
-  best way to accomplish this is by building `df:dx` out of already-lifted
-  functions, and declaring them by forward reference if you need to."
+  NOTE: `df:dx` has to ALREADY be able to handle [[TapeCell]]
+  and [[emmy.differential/Dual]] instances. The best way to accomplish this is
+  by building `df:dx` out of already-lifted functions, and declaring them by
+  forward reference if you need to."
   ([f]
    (if-let [df:dx (f :dfdx)]
      (lift-1 f df:dx)
@@ -716,26 +808,19 @@
       "No df:dx supplied for `f` or registered generically.")))
   ([f df:dx]
    (fn call [x]
-     (if (tape? x)
-       (let [primal (tape-primal x)]
-         (make (tape-tag x)
-               (call primal)
-               [[x (df:dx primal)]]))
-       (f x)))))
+     (cond (tape? x)
+           (let [primal (tape-primal x)]
+             (make (tape-tag x)
+                   (call primal)
+                   [[x (df:dx primal)]]))
 
-(defn- tag+perturbation
-  "A COPY of the same function in `differential`. I'm adding this here to avoid
-  import nonsense, and I'll delete one of the copies on the next PR, when I add
-  support for mixing forward and reverse modes together."
-  ([& dxs]
-   (let [m (into {} (mapcat
-                     (fn [dx]
-                       (when-let [t (tag-of dx)]
-                         {t dx})))
-                 dxs)]
-     (when (seq m)
-       (let [tag (apply d/inner-tag (keys m))]
-         [tag (m tag)])))))
+           (d/dual? x)
+           (let [[px tx] (d/primal-tangent-pair x)
+                 primal  (call px)
+                 tangent (g/* (df:dx px) tx)]
+             (d/bundle-element primal tangent (d/tag x)))
+
+           :else (f x)))))
 
 (defn lift-2
   "Given:
@@ -745,13 +830,13 @@
     single argument
   - a function `df:dy`, similar to `df:dx` for the second arg
 
-  Returns a new binary function that operates on both the original type of `f`
-  and [[TapeCell]] instances.
+  Returns a new binary function that operates on both the original type of
+  `f`, [[TapeCell]] and [[emmy.differential/Differential]] instances.
 
   NOTE: `df:dx` and `df:dy` have to ALREADY be able to handle [[TapeCell]]
-  instances. The best way to accomplish this is by building `df:dx` and `df:dy`
-  out of already-lifted functions, and declaring them by forward reference if
-  you need to."
+  and [[emmy.differential/Dual]] instances. The best way to accomplish this is
+  by building `df:dx` and `df:dy` out of already-lifted functions, and declaring
+  them by forward reference if you need to."
   ([f]
    (let [df:dx (f :dfdx)
          df:dy (f :dfdy)]
@@ -761,7 +846,19 @@
         "No df:dx, df:dy supplied for `f` or registered generically."))))
   ([f df:dx df:dy]
    (fn call [x y]
-     (letfn [(operate [tag]
+     (letfn [(operate-forward [tag]
+               (let [[xe dx] (d/primal-tangent-pair x tag)
+                     [ye dy] (d/primal-tangent-pair y tag)
+                     primal  (call xe ye)
+                     tangent (g/+ (if (g/numeric-zero? dx)
+                                    dx
+                                    (g/* (df:dx xe ye) dx))
+                                  (if (g/numeric-zero? dy)
+                                    dy
+                                    (g/* (df:dy xe ye) dy)))]
+                 (d/bundle-element primal tangent tag)))
+
+             (operate-reverse [tag]
                (let [primal-x  (tape-primal x tag)
                      primal-y  (tape-primal y tag)
                      partial-x (if (and (tape? x) (= tag (tape-tag x)))
@@ -770,13 +867,15 @@
                      partial-y (if (and (tape? y) (= tag (tape-tag y)))
                                  [[y (df:dy primal-x primal-y)]]
                                  [])]
+
                  (make tag
                        (call primal-x primal-y)
                        (into partial-x partial-y))))]
        (if-let [[tag dx] (tag+perturbation x y)]
-         (cond (tape? dx) (operate tag)
+         (cond (tape? dx)   (operate-reverse tag)
+               (d/dual? dx) (operate-forward tag)
                :else
-               (u/illegal "Non-tape perturbation!"))
+               (u/illegal "Non-tape or differential perturbation!"))
          (f x y))))))
 
 (defn lift-n
@@ -788,7 +887,7 @@
     first and second args in the binary case
 
   Returns a new any-arity function that operates on both the original type of
-  `f` and [[TapeCell]] instances.
+  `f`, [[TapeCell]] and [[emmy.differential/Dual]] instances.
 
   NOTE: The n-ary case of `f` is populated by nested calls to the binary case.
   That means that this is NOT an appropriate lifting method for an n-ary
@@ -817,11 +916,12 @@
   - optionally, a corresponding single-arity lifted function
     `differential-op` (defaults to `(lift-1 generic-op)`)
 
-  installs an appropriate unary implementation of `generic-op` for `::tape`
-  instances."
+  installs an appropriate unary implementation of `generic-op` for `::tape` and
+  `:emmy.differential/dual` instances."
   ([generic-op]
    (defunary generic-op (lift-1 generic-op)))
   ([generic-op differential-op]
+   (defmethod generic-op [::d/dual] [a] (differential-op a))
    (defmethod generic-op [::tape] [a] (differential-op a))))
 
 (defn- defbinary
@@ -831,14 +931,19 @@
   - optionally, a corresponding 2-arity lifted function
     `differential-op` (defaults to `(lift-2 generic-op)`)
 
-  installs an appropriate binary implementation of `generic-op` between `:tape`
-  and `::v/scalar` instances."
+  installs an appropriate binary implementation of `generic-op` between
+  `::tape`, `::emmy.differential/dual` and `::v/scalar` instances."
   ([generic-op]
    (defbinary generic-op (lift-2 generic-op)))
   ([generic-op differential-op]
    (doseq [signature [[::tape ::tape]
+                      [::d/dual ::d/dual]
+                      [::tape ::d/dual]
+                      [::d/dual ::tape]
                       [::v/scalar ::tape]
-                      [::tape ::v/scalar]]]
+                      [::v/scalar ::d/dual]
+                      [::tape ::v/scalar]
+                      [::d/dual ::v/scalar]]]
      (defmethod generic-op signature [a b] (differential-op a b)))))
 
 (defn ^:no-doc by-primal
@@ -847,7 +952,9 @@
   tag.
 
   Given a [[TapeCell]] with a [[TapeCell]] in its [[primal-part]], the returned
-  `f` will recursively descend until it hits a non-[[TapeCell]]."
+  `f` will recursively descend until it hits a non-[[TapeCell]].
+
+  TODO fix docs"
   [f]
   (fn
     ([x] (f (deep-primal x)))
@@ -944,9 +1051,29 @@
 ;; Non-differentiable generic operations
 
 (defbinary v/= (by-primal v/=))
-(defunary g/zero? (by-primal g/zero?))
-(defunary g/one? (by-primal g/one?))
-(defunary g/identity? (by-primal g/identity?))
+(defunary g/zero?
+  (let [zero-p? (by-primal g/zero?)]
+    (fn [dx]
+      (if (tape? dx)
+        (zero-p? dx)
+        (let [[p t] (d/primal-tangent-pair dx)]
+          (and (g/zero? p)
+               (g/zero? t)))))))
+
+(defunary g/one?
+  (let [one-p? (by-primal g/one?)]
+    (fn [dx]
+      (if (tape? dx)
+        (one-p? dx)
+        (d/one? dx)))))
+
+(defunary g/identity?
+  (let [identity-p? (by-primal g/identity?)]
+    (fn [dx]
+      (if (tape? dx)
+        (identity-p? dx)
+        (d/identity? dx)))))
+
 (defunary g/negative? (by-primal g/negative?))
 (defunary g/infinite? (by-primal g/infinite?))
 

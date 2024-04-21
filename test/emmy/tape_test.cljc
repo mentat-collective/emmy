@@ -576,20 +576,30 @@
       (is (= expected
              (g/simplify
               ((t/gradient (t/gradient f)) 'a 'b 'c 'd 'e 'f)))
-          "multivariable derivatives match (reverse-over-reverse)")
+          "multivariable derivatives match (reverse-over-reverse)"))))
 
-      ;; TODO enable this when we add support for tape and gradient comms in
-      ;; lift-2.
-      #_
-      (is (= expected
-             (g/simplify
-              ((D (t/gradient f)) 'a 'b 'c 'd 'e 'f)))
-          "forward-over-reverse")
+(deftest mixed-mode-tests
+  (testing "nested reverse mode"
+    (let [f (fn [x]
+              (fn [y]
+                (g/* (g/square x) (g/square y))))]
+      (is (= ((D ((t/gradient f) 'x)) 'y)
+             ((t/gradient ((D f) 'x)) 'y)
+             ((t/gradient ((t/gradient f) 'x)) 'y))
+          "reverse-mode nests with forward-mode")))
 
-      ;; TODO enable this when we add support for tape and gradient comms in
-      ;; lift-2.
-      #_
-      (is (= expected
-             (g/simplify
-              ((t/gradient (D f)) 'a 'b 'c 'd 'e 'f)))
-          "reverse-over-forward"))))
+  (let [f (fn [a b c d e f]
+            [(g/* (g/cos a) (g/cos b))
+             (g/* (g/cos c) (g/cos d))
+             (g/* (g/cos e) (g/cos f))])
+        expected (g/simplify
+                  ((D (D f)) 'a 'b 'c 'd 'e 'f))]
+    (is (= expected
+           (g/simplify
+            ((D (t/gradient f)) 'a 'b 'c 'd 'e 'f)))
+        "forward-over-reverse")
+
+    (is (= expected
+           (g/simplify
+            ((t/gradient (D f)) 'a 'b 'c 'd 'e 'f)))
+        "reverse-over-forward")))
