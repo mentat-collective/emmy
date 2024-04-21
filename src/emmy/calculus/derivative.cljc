@@ -411,23 +411,48 @@
               (f (g/+ x (g/* r v))))]
       ((derivative g) 0))))
 
+;; TODO do we like this, with the multi combinator?
+(defn grad [f selectors]
+  (fn [x]
+    (when (and (seq selectors) (not (s/structure? x)))
+      (u/illegal
+       (str "Selectors " selectors
+            " not allowed for non-structural input " x)))
+
+    (let [tag       (d/fresh-tag)
+          inputs    (if (empty? selectors)
+                      (tape/tapify x tag)
+                      (update-in x selectors tape/tapify tag))
+          output    (d/with-active-tag tag f [inputs])
+          completed (tape/->partials output tag)]
+      (if (empty? selectors)
+        (tape/interpret inputs completed tag)
+        (tape/interpret (get-in inputs selectors) completed tag)))))
+
+(defn gradient
+  ([f] (gradient f []))
+  ([f selectors]
+   (multi #(grad % selectors) f)))
+
 (defn jvp [f v]
   (multi #(simple-jvp % v) f))
 
 (defn hvp [f v]
   (jvp (tape/gradient f) v))
 
-#_
-(let [f (emmy.env/literal-function 'f (-> (UP Real Real) (UP Real Real)))
-      x (s/up 'x 'y)
-      v (s/up 'dx 'dy)]
+(comment
+  (let [f (emmy.env/literal-function 'f (-> (UP* Real 10) Real))
+        x (s/literal-up 'x 10)
+        v (s/literal-up 'dx 10)]
+    (g/- ((hvp f v) x)
+         (g/* (((g/square D) f) x) v)))
 
-  (g/- ((jvp f v) x)
-       (g/* ((D f) x) v)))
+  (let [f (emmy.env/literal-function 'f (-> (UP Real Real) (UP Real Real)))
+        x (s/up 'x 'y)
+        v (s/up 'dx 'dy)]
 
-;; TODO combine with multivariate, then do hvp with gradient
-
-
+    (g/- ((jvp f v) x)
+         (g/* ((D f) x) v))))
 
 #_
 (comment
