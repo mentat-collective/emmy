@@ -259,7 +259,6 @@
       (-> (d/with-active-tag tag f [lifted])
           (d/extract-tangent tag)))))
 
-;; The result of applying the derivative `(D f)` of a multivariable function `f`
 ;; to a sequence of `args` is a structure of the same shape as `args` with all
 ;; orientations flipped. (For a partial derivative like `((partial 0 1) f)` the
 ;; result has the same-but-flipped shape as `(get-in args [0 1])`.)
@@ -376,6 +375,14 @@
               (str "Selectors " selectors
                    " not allowed for non-structural input " input)))))))
 
+(defn multi [op f]
+  (fn
+    ([] 0)
+    ([x] ((op f) x))
+    ([x & more]
+     ((multi op (fn [xs] (apply f xs)))
+      (matrix/seq-> (cons x more))))))
+
 (defn- multivariate
   "Slightly wider version of [[euclidean]]. Accepts:
 
@@ -394,15 +401,74 @@
   Single-argument functions don't transform their arguments."
   ([f] (multivariate f []))
   ([f selectors]
-   (let [d #(euclidean % selectors)
-         df (d f)
-         df* (d (fn [args] (apply f args)))]
-     (-> (fn
-           ([] 0)
-           ([x] (df x))
-           ([x & more]
-            (df* (matrix/seq-> (cons x more)))))
-         (f/with-arity (f/arity f) {:from ::multivariate})))))
+   (let [d #(euclidean % selectors)]
+     (multi d f))))
+
+(defn simple-jvp [f v]
+  (fn [x]
+    (let [g (fn [r]
+              (f (g/+ x (g/* r v))))]
+      ((derivative g) 0))))
+
+(defn jvp [f v]
+  (multi #(simple-jvp % v) f))
+
+#_
+(defn hvp [f v x]
+  (jvm (gradient f) v x))
+
+#_
+(let [f (emmy.env/literal-function 'f (-> (UP Real Real) (UP Real Real)))
+      x (s/up 'x 'y)
+      v (s/up 'dx 'dy)]
+
+  (g/- ((jvp f v) x)
+       (g/* ((D f) x) v)))
+
+;; TODO combine with multivariate, then do hvp with gradient
+
+
+
+#_
+(comment
+  (let [f (fn [[a b c d e f g h i :as x]]
+            (into []
+                  (take 1000
+                        (cycle [(g/expt (g/cos a) (g/atan c))
+                                (g/expt (g/sin a) (g/atan b))
+                                (g/expt (g/sin b) (g/atan c))
+                                (g/exp (g/square c))
+                                (g/expt (g/cos d) (g/atan f))
+                                (g/expt (g/sin d) (g/atan e))
+                                (g/expt (g/sin e) (g/atan f))
+                                (g/exp (g/square f))
+                                (g/expt (g/cos g) (g/atan i))
+                                (g/expt (g/sin g) (g/atan h))
+                                (g/expt (g/sin h) (g/atan i))
+                                (g/exp (g/square i))]))))
+        v (s/up 'da 'db 'dc 'de 'de 'df 'dg 'dh 'di)
+        x (s/up 'a 'b 'c 'd 'e 'f 'g 'h 'i)
+        n 1]
+    (time (dotimes [_ n] ((jvp f v) x)))
+    (time (dotimes [_ n] (g/* ((D f) x) v))))
+
+  (let [f (fn [[x y z]]
+            [(g/expt (g/cos x) (g/atan z))
+             (g/expt (g/sin x) (g/atan y))
+             (g/expt (g/sin y) (g/atan z))
+             (g/exp (g/square z))])
+        v (s/up 'dx 'dx 'dz)
+        x (s/up 'x 'y 'z)]
+    (g/- ((jvp f v) x)
+         (g/* ((D f) x) v))))
+
+#_
+(extend-protocol v/Numerical
+  nil
+  (numerical? [_] false))
+
+;; The result of applying the derivative `(D f)` of a multivariable function `f`
+
 
 ;; ## Generic [[g/partial-derivative]] Installation
 ;;
