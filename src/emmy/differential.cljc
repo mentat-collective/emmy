@@ -102,7 +102,7 @@
 ;;
 ;; $$f(a+b\varepsilon) = f(a)+ (Df(a)b)\varepsilon$$
 ;;
-;; > NOTE: See [[lift-1]] for an implementation of this idea.
+;; > NOTE: See [[emmy.tape/lift-1]] for an implementation of this idea.
 ;;
 ;; This justifies our claim above: applying a function to some dual number
 ;; $a+\varepsilon$ returns a new dual number, where
@@ -257,9 +257,9 @@
 ;; ### What Return Values are Allowed?
 ;;
 ;; Before we discuss the implementation of dual
-;; numbers (called [[Differential]]), [[lift-1]], [[lift-2]] and the rest of the
-;; machinery that makes this all possible; what sorts of objects is `f` allowed
-;; to return?
+;; numbers (called [[Differential]]), [[emmy.tape/lift-1]], [[emmy.tape/lift-2]]
+;; and the rest of the machinery that makes this all possible; what sorts of
+;; objects is `f` allowed to return?
 ;;
 ;; The dual number approach is beautiful because we can bring to bear all sorts
 ;; of operations in Clojure that never even _see_ dual numbers. For example,
@@ -668,29 +668,19 @@
 
 ;; ## Chain Rule and Lifted Functions
 ;;
-;; Finally, we come to the heart of it! [[lift-1]] and [[lift-2]] "lift", or
-;; augment, unary or binary functions with the ability to
-;; handle [[Dual]] instances in addition to whatever other types they
-;; previously supported.
+;; For the rest of the story, please see the implementations
+;; of [[emmy.tape/lift-1]] and [[emmy.tape/lift-2]]. These functions "lift", or
+;; augment, unary or binary functions with the ability to handle [[Dual]]
+;; instances in addition to whatever other types they previously supported.
 ;;
-;; These functions are implementations of the single and multivariable Taylor
-;; series expansion methods discussed at the beginning of the namespace.
-;;
-;; There is yet another subtlety here, noted in the docstrings below. [[lift-1]]
-;; and [[lift-2]] really are able to lift functions like [[clojure.core/+]] that
-;; can't accept [[Dual]]s. But the first-order derivatives that you have
-;; to supply _do_ have to be able to take [[Dual]] instances.
-;;
-;; This is because the [[tangent]] of [[Dual]] might still be a [[Dual]], and
-;; for `Df` to handle this we need to be able to take the second-order
-;; derivative.
-;;
-;; Magically this will all Just Work if you pass an already-lifted function, or
-;; a function built out of already-lifted components, as `df:dx` or `df:dy`.
-
-;; TODO port docs above...
+;; The [[dual?]] branches inside these functions are implementations of the
+;; single and multivariable Taylor series expansion methods discussed at the
+;; beginning of the namespace.
 
 ;; ## Generic Method Installation
+;;
+;; These generic methods don't need to be lifted, so live here alongside
+;; the [[Dual]] type definition.
 
 (defmethod g/zero-like [::dual] [_] 0)
 (defmethod g/one-like [::dual] [_] 1)

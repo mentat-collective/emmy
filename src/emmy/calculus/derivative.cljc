@@ -459,17 +459,6 @@
   (o/make-operator #(g/partial-derivative % [])
                    g/derivative-symbol))
 
-(def D-rev
-  "Reverse-mode derivative operator..."
-  (o/make-operator #(tape/gradient % [])
-                   g/derivative-symbol))
-
-(defn partial-rev
-  "Reverse-mode partial derivative."
-  [& selectors]
-  (o/make-operator #(tape/gradient % selectors)
-                   `(~'partial ~@selectors)))
-
 (defn D-as-matrix [F]
   (fn [s]
     (matrix/s->m
@@ -550,7 +539,14 @@
                                  (d/tag x))
 
                                 (tape/tape? x)
-                                (u/illegal "TODO implement this using fmap style.")
+                                (tape/->TapeCell
+                                 (tape/tape-tag x)
+                                 (tape/tape-id x)
+                                 (rec (tape/tape-primal x))
+                                 (mapv (fn [[node partial]]
+                                         [(rec node)
+                                          (rec partial)])
+                                       (tape/tape-partials x)))
 
                                 :else (-> (g/simplify x)
                                           (x/substitute replace-m))))

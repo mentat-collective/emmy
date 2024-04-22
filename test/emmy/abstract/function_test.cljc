@@ -17,6 +17,7 @@
             [emmy.structure :as s :refer [literal-up
                                           literal-down
                                           up down]]
+            [emmy.tape :as t]
             [emmy.value :as v :refer [=]]))
 
 (use-fixtures :each hermetic-simplify-fixture)
@@ -331,3 +332,20 @@
       (is (= '((((partial 1) F) x y) (((partial 1) G) x y) 0 0) (simp4 (((partial 1) T) 'x 'y))))
       (is (= '((((partial 0) W) (up r θ)) (((partial 0) Z) (up r θ)) 0 0) (simp4 (((partial 0) U) (up 'r 'θ)))))
       (is (= '((((partial 1) W) (up r θ)) (((partial 1) Z) (up r θ)) 0 0) (simp4 (((partial 1) U) (up 'r 'θ))))))))
+
+(deftest literal-derivative-tests
+  (testing "reverse-mode matches forward-mode"
+    (let [f (af/literal-function 'f)]
+      (is (= ((emmy.tape/gradient f) 'x)
+             ((D f) 'x))
+          "gradient matches D with internal partials"))
+
+    (let [f (af/literal-function 'f '(-> (UP Real (UP Real Real) (UP Real Real)) Real))
+          s (up 't (up 'x 'y) (up 'px 'py))]
+      (is (= ((t/gradient (t/gradient f)) s)
+             ((D (D f)) s))
+          "gradient matches D with internal partials")
+
+      (is (= ((D (t/gradient f)) s)
+             ((t/gradient (D f)) s))
+          "mixed-mode"))))
