@@ -482,16 +482,6 @@
    (-> (primal-tangent-pair dx tag)
        (nth 0))))
 
-(defn deep-primal
-  "Version of [[primal]] that will descend recursively into any [[Dual]] instance
-  returned by [[primal]] until encountering a non-[[Dual]].
-
-  Given a non-[[Dual]], acts as identity."
-  [dx]
-  (if (dual? dx)
-    (recur (.-primal ^Dual dx))
-    dx))
-
 (defn tangent
   "If `dx` is an instance of [[Dual]] returns the `tangent` component. Else, returns 0.
 

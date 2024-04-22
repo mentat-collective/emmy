@@ -329,17 +329,7 @@
             (let [tag (d/tag diff)
                   [primal tangent] (d/primal-tangent-pair diff tag)]
               (is (d/eq primal (d/primal diff tag)))
-              (is (d/eq tangent (d/tangent diff tag)))))
-
-  (checking "deep-primal fetches bottom primal" 100
-            [diff real-dual-gen]
-            (loop [diff diff]
-              (let [primal (d/primal diff)]
-                (if (d/dual? primal)
-                  (recur primal)
-                  (is (= primal (d/primal diff))
-                      "recursing to the bottom with primal gives the same result
-                         as jumping straight there with deep-primal"))))))
+              (is (d/eq tangent (d/tangent diff tag))))))
 
 (deftest lifted-fn-tests
   (letfn [(breaks? [f x]
