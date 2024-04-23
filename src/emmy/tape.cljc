@@ -124,7 +124,8 @@
 
 ;; Here's the [[TapeCell]] type with the fields described above.
 
-(declare compare reverse-phase ->Completed)
+(declare compare)
+
 
 (deftype TapeCell [tag id primal in->partial]
   v/IKind
@@ -141,10 +142,7 @@
   ;; This implementation is called if a tape ever makes it out of
   ;; forward-mode-differentiated function. If this happens, a [[TapeCell]]
   ;; should be treated like a scalar, with a 0-valued tangent component.
-  (extract-tangent [this t mode]
-    (cond (= t tag)         (reverse-phase this)
-          (= mode :reverse) (->Completed {})
-          :else             0))
+  (extract-tangent [_ _ _] 0)
 
   ;; A [[TapeCell]] has to respond `false` to all [[emmy.value/numerical?]]
   ;; inquiries; if we didn't do this, then [[emmy.generic/*]] and friends would
@@ -161,9 +159,9 @@
   #?(:cljs (valueOf [_] (.valueOf primal)))
   (toString [_]
     (str "#emmy.tape.TapeCell"
-         {:tag         tag
-          :id          id
-          :primal      primal
+         {:tag tag
+          :id id
+          :primal primal
           :in->partial in->partial}))
 
   #?@(:clj
@@ -339,11 +337,11 @@
 
   If none of `dxs` has an active tag, returns `nil`."
   ([& dxs]
-   (let [m (into {} (mapcat
-                     (fn [dx]
-                       (when-let [t (tag-of dx)]
-                         {t dx})))
-                 dxs)]
+   (let [xform (map
+                (fn [dx]
+                  (when-let [t (tag-of dx)]
+                    [t dx])))
+         m     (into {} xform dxs)]
      (when (seq m)
        (let [tag (apply inner-tag (keys m))]
          [tag (m tag)])))))
