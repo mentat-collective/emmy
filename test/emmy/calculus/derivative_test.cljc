@@ -19,6 +19,7 @@
             [emmy.series :as series]
             [emmy.simplify :refer [hermetic-simplify-fixture]]
             [emmy.structure :as s]
+            [emmy.tape :as tape]
             [emmy.util :as u]
             [emmy.value :as v]
             [same.core :refer [ish? with-comparator]]))
@@ -103,7 +104,14 @@
                   (/ -2 (expt x 2))
                   (/ -3 (expt x 2)))
              (simplify
-              ((D f) 'x)))))))
+              ((D f) 'x))))))
+
+  (let [f (fn [a b c d e] [d e c b a])
+        M ((D f) 'a 'b 'c 'd 'e)]
+    (is (= (s/up 4 5 3 2 1)
+           (g/* M [1 2 3 4 5]))
+        "the Jacobian of a permutation is the permutation matrix of that
+        permutation")))
 
 (deftest derivative-return-tests
   (testing "Series, PowerSeries"
@@ -243,10 +251,10 @@
                    (* (η t) ((D g) (q t))))
                (simplify (((δη (+ F G)) q) 't)))))
 
-(testing "scalar product rule for variation: δ(cF) = cδF"
+      (testing "scalar product rule for variation: δ(cF) = cδF"
         (is (= '(* c (η t) ((D f) (q t))) (simplify (((δη (* 'c F)) q) 't)))))
 
-(testing "product rule for variation: δ(FG) = δF G + F δG"
+      (testing "product rule for variation: δ(FG) = δF G + F δG"
         (is (= (simplify (+ (* (((δη F) q) 't) ((G q) 't))
                             (* ((F q) 't) (((δη G) q) 't))))
                (simplify (((δη (* F G)) q) 't)))))
@@ -695,8 +703,8 @@
 
     (testing "f -> Series"
       (let [F (fn [k] (series/series
-                      (fn [t] (g/* k t))
-                      (fn [t] (g/* k k t))))]
+                       (fn [t] (g/* k t))
+                       (fn [t] (g/* k k t))))]
         (is (= '((* q z) (* (expt q 2) z) 0 0) (simp4 ((F 'q) 'z))))
         (is (= '(z (* 2 q z) 0 0) (simp4 (((D F) 'q) 'z)))))))
 
@@ -1272,7 +1280,7 @@
       ;; This means that the tangents of the `x` instances captured by `f1` and
       ;; `f2` can no longer interact. There is no context waiting to bind them
       ;; together!
-)))
+      )))
 
 (deftest dvl-bug-examples
   ;; These tests and comments all come from Alexey Radul's
@@ -1312,7 +1320,7 @@
                  (fn [g]
                    (fn [z] (g (+ x z)))))))]
       (is (ish? ((fn [y] (+ (* 3 (cos (* 3 y)))
-                           (* y (cos (* 3 y)))))
+                            (* y (cos (* 3 y)))))
                  (+ 3 Math/PI))
                 (((D f) 3)
                  (fn [g-hat f-hat]
@@ -1342,7 +1350,7 @@
     ;; The "linear" comment matters because if you only combine the dropped-down
     ;; pieces linearly, then their tangents wouldn't have interacted anyway, so
     ;; you can't tell that there are different cases here.
-)
+    )
 
   (testing "amazing bug 4"
     ;; The same as amazing-bug-3.dvl, but supplies the arguments to f in the
@@ -1575,6 +1583,16 @@
       "proper function when symbolic-taylor-series is used INSIDE of a call to
       `D`; this shows that it can do proper symbolic replacement inside of
       differential instances.")
+
+  (is (v/= [0 1 0 0]
+           ((tape/gradient
+             (fn [y]
+               (into [] (take 4 (d/symbolic-taylor-series
+                                 (fn [x] (g/* x y))
+                                 0)))))
+            'a))
+      "works with gradient too! TODO once gradients support series outputs,
+      massage this into better shape...")
 
   (testing "compare, one stays symbolic:"
     (letfn [(f [[a b]]

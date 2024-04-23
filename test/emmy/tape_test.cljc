@@ -11,6 +11,7 @@
             [emmy.generators :as sg]
             [emmy.generic :as g]
             [emmy.numerical.derivative :refer [D-numeric]]
+            [emmy.operator :as o]
             [emmy.simplify :refer [hermetic-simplify-fixture]]
             [emmy.structure :as s]
             [emmy.tape :as t]
@@ -262,11 +263,24 @@
               (let [cell (t/make tag 1)]
                 (is (= (t/tag-of cell)
                        (t/tape-tag cell))
-                    "for tape cells, these should match")))
+                    "for tape cells, these should match"))))
 
-    (checking "for any other type tag == nil" 100 [x gen/any]
-              (is (nil? (t/tag-of x))
-                  "for tape cells, these should match")))
+  (testing "primal-of"
+    (checking "for any other type primal-of == identity" 100 [x gen/any-equatable]
+              (is (= x (t/primal-of x))))
+
+    (checking "vs tape-primal" 100 [tape (sg/tapecell gen/symbol)]
+              (is (= (t/primal-of tape)
+                     (t/tape-primal tape))
+                  "primal-of eq with and without tag")
+
+              (is (= (t/primal-of tape)
+                     (t/primal-of tape (t/tape-tag tape)))
+                  "primal-of eq with and without tag")
+
+              (is (= (t/tape-primal tape)
+                     (t/tape-primal tape (t/tape-tag tape)))
+                  "tape-primal eq with and without tag")))
 
   (checking "deep-primal returns nested primal" 100 [p gen/any-equatable]
             (let [cell (t/make 0 (t/make 1 p))]
@@ -546,6 +560,16 @@
                ((t/gradient g/sin [0]) 'x))
       "partial selector provided to a fn of a non-structural argument throws on
       fn application")
+
+  (testing "Operator"
+    (letfn [(f [x]
+              (o/make-operator (g/* x g/sin) 'D-op))]
+      (is (o/operator? ((t/gradient f) 'x))
+          "if f returns an operator, (gradient f) does too.")
+      (is (= '(sin y)
+             (g/freeze
+              (((t/gradient f) 'x) 'y)))
+          "gradient pushes into the operator's fn.")))
 
   (testing "partial derivative"
     (let [f (fn [[x y z]]

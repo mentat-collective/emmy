@@ -2,6 +2,13 @@
 
 ## [unreleased]
 
+- #156:
+
+  - Makes forward- and reverse-mode automatic differentiation compatible with
+    each other, allowing for proper mixed-mode AD
+
+  - Adds support for derivatives of literal functions in reverse-mode
+
 - #165:
 
   - Fixes Alexey's Amazing Bug for our tape implementation

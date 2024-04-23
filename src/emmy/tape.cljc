@@ -309,15 +309,11 @@
 
 (defn tag-of
   "More permissive version of [[tape-tag]] that returns `nil` when passed a
-  non-[[TapeCell]] instance.
-
-  TODO note what we handle now."
+  non-perturbation."
   [x]
   (cond (tape? x)   (tape-tag x)
         (d/dual? x) (d/tag x)
         :else       nil))
-
-;; TODO move tag stuff here?
 
 (defn inner-tag
   "Given any number of `tags`, returns the tag most recently bound
@@ -330,11 +326,6 @@
             d/*active-tags*)
       (apply max tags)))
 
-;; TODO we could change `perturbed?` into something like
-;; `possible-perturbations`, to get collection types to return sequence of
-;; inputs for this. Then we could handle map-shaped inputs etc into literal
-;; functions, if we had the proper descriptor language for it.
-
 (defn tag+perturbation
   "Given any number of `dxs`, returns a pair of the form
 
@@ -346,20 +337,18 @@
 
   If none of `dxs` has an active tag, returns `nil`."
   ([& dxs]
-   (let [m (into {} (mapcat
-                     (fn [dx]
-                       (when-let [t (tag-of dx)]
-                         {t dx})))
-                 dxs)]
+   (let [xform (map
+                (fn [dx]
+                  (when-let [t (tag-of dx)]
+                    [t dx])))
+         m     (into {} xform dxs)]
      (when (seq m)
        (let [tag (apply inner-tag (keys m))]
          [tag (m tag)])))))
 
 (defn primal-of
   "More permissive version of [[tape-primal]] that returns `v` when passed a
-  non-[[TapeCell]]-or-[[emmy.differential/Dual]] instance.
-
-  TODO fix docstring"
+  non-perturbation."
   ([v]
    (primal-of v (tag-of v)))
   ([v tag]
@@ -368,12 +357,11 @@
          :else       v)))
 
 (defn deep-primal
-  "Version of [[tape-primal]] that will descend recursively into any [[TapeCell]]
-  instance returned by [[tape-primal]] until encountering a non-[[TapeCell]].
+  "Version of [[tape-primal]] that will descend recursively into any perturbation
+  instance returned by [[tape-primal]] or [[emmy.differential/primal]] until
+  encountering a non-perturbation.
 
-  Given a non-[[TapeCell]], acts as identity.
-
-  TODO say what we really do now"
+  Given a non-perturbation, acts as identity."
   ([v]
    (cond (tape? v)   (recur (tape-primal v))
          (d/dual? v) (recur (d/primal v))
@@ -491,20 +479,6 @@
 ;;
 (defrecord Completed [v->partial]
   d/IPerturbed
-  ;; TODO note that this can happen because these can pop out from inside of
-  ;; ->partial-fn. And that is currently where the tag-rewriting has to occur.
-  ;;
-  ;; But that is going to be inefficient for lots of intermediate values...
-  ;; ideally we could call this AFTER we select out the IDs. That implies that
-  ;; we want to shove that inside of extract.
-  ;;
-  ;; TODO TODO TODO definitely do this, we definitely want that to happen, don't
-  ;; have those stacked levels, otherwise super inefficient to walk multiple
-  ;; times.
-  ;;
-  ;; TODO AND THEN if that's true then we can delete this implementation, since
-  ;; we'll already be pulled OUT of the completed map.
-
   ;; NOTE that it's a problem that `replace-tag` is called on [[Completed]]
   ;; instances now. In a future refactor I want `get` calls out of
   ;; a [[Completed]] map to occur before tag replacement needs to happen.
@@ -550,10 +524,6 @@
   - the partial derivative of the output with respect to that value."
   [root]
   (let [nodes         (topological-sort root)
-
-        ;; TODO this is the spot where we want to wire in many sensitivities. So
-        ;; how would it work, if we set all of the sensitivities for the outputs
-        ;; at once? What would the ordering be as we walked backwards?
         sensitivities {(tape-id root) 1}]
     (->Completed
      (reduce process sensitivities nodes))))
@@ -569,10 +539,6 @@
 ;; this for forward-mode, I believe.
 
 (declare ->partials)
-
-;; TODO fix the docstring, and think of how we can combine this into the
-;; narrative of what we find in derivative. Maybe this should be the main
-;; version?
 
 (defn- ->partials-fn
   "Returns a new function that composes a 'tag extraction' step with `f`. The
@@ -616,11 +582,6 @@
         (vector? output)
         (mapv #(->partials % tag) output)
 
-        ;; Here is an example of the subtlety. We MAY want to go one at a
-        ;; time... or we may want to insert some sensitivity entry into the
-        ;; entire structure and roll the entire structure back. We don't do that
-        ;; YET so I bet we can get away with ignoring it for this first PR. But
-        ;; we are close to needing that.
         (s/structure? output)
         (s/mapr #(->partials % tag) output)
 
@@ -755,11 +716,14 @@
        (matrix/seq-> (cons x more)))))))
 
 ;; ## Lifted Functions
+
+;; [[lift-1]] and [[lift-2]] "lift", or augment, unary or binary functions with
+;; the ability to handle [[emmy.differential/Dual]] and [[TapeCell]] instances
+;; in addition to whatever other types they previously supported.
 ;;
-;; NOTE these next two functions are similar to the functions
-;; in [[emmy.differential]]; both of these should be merged and install methods
-;; that can handle the interaction between [[TapeCell]]
-;; and [[emmy.differential/Differential]] instances.
+;; Forward-mode support for [[emmy.differential/Dual]] is an implementation of
+;; the single and multivariable Taylor series expansion methods discussed at the
+;; beginning of [[emmy.differential]].
 ;;
 ;; To support reverse-mode automatic differentiation, When a unary or binary
 ;; function `f` encounters a [[TapeCell]] `x` (and `y` in the binary case) it
@@ -778,10 +742,19 @@
 ;; ````
 ;;
 ;;  in the binary case.
+
+;; There is a subtlety here, noted in the docstrings below. [[lift-1]]
+;; and [[lift-2]] really are able to lift functions like [[clojure.core/+]] that
+;; can't accept [[emmy.differential/Dual]] and [[TapeCell]]s. But the
+;; first-order derivatives that you have to supply _do_ have to be able to take
+;; instances of these types.
 ;;
-;; The partial derivative implementations are passed in directly or retrieved
-;; from the generic implementation using the same method as in
-;; the [[emmy.differential]] versions, hinting again that we should unify these.
+;; This is because, for example, the [[emmy.differential/tangent]] of [[Dual]]
+;; might still be a [[Dual]], and will hit the first-order derivative via the
+;; chain rule.
+;;
+;; Magically this will all Just Work if you pass an already-lifted function, or
+;; a function built out of already-lifted components, as `df:dx` or `df:dy`.
 
 (defn lift-1
   "Given:
@@ -875,7 +848,7 @@
          (cond (tape? dx)   (operate-reverse tag)
                (d/dual? dx) (operate-forward tag)
                :else
-               (u/illegal "Non-tape or differential perturbation!"))
+               (u/illegal "Non-tape or dual perturbation!"))
          (f x y))))))
 
 (defn lift-n
@@ -948,13 +921,8 @@
 
 (defn ^:no-doc by-primal
   "Given some unary or binary function `f`, returns an augmented `f` that acts on
-  the primal entries of any [[TapeCell]] arguments encountered, irrespective of
-  tag.
-
-  Given a [[TapeCell]] with a [[TapeCell]] in its [[primal-part]], the returned
-  `f` will recursively descend until it hits a non-[[TapeCell]].
-
-  TODO fix docs"
+  the primal entries of any perturbed arguments encountered, irrespective of
+  tag."
   [f]
   (fn
     ([x] (f (deep-primal x)))

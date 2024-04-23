@@ -260,6 +260,7 @@
       (-> (d/with-active-tag tag f [lifted])
           (d/extract-tangent tag)))))
 
+;; The result of applying the derivative `(D f)` of a multivariable function `f`
 ;; to a sequence of `args` is a structure of the same shape as `args` with all
 ;; orientations flipped. (For a partial derivative like `((partial 0 1) f)` the
 ;; result has the same-but-flipped shape as `(get-in args [0 1])`.)
@@ -596,17 +597,6 @@
   (o/make-operator #(g/partial-derivative % [])
                    g/derivative-symbol))
 
-(def D-rev
-  "Reverse-mode derivative operator..."
-  (o/make-operator #(tape/gradient % [])
-                   g/derivative-symbol))
-
-(defn partial-rev
-  "Reverse-mode partial derivative."
-  [& selectors]
-  (o/make-operator #(tape/gradient % selectors)
-                   `(~'partial ~@selectors)))
-
 (defn D-as-matrix [F]
   (fn [s]
     (matrix/s->m
@@ -687,7 +677,14 @@
                                  (d/tag x))
 
                                 (tape/tape? x)
-                                (u/illegal "TODO implement this using fmap style.")
+                                (tape/->TapeCell
+                                 (tape/tape-tag x)
+                                 (tape/tape-id x)
+                                 (rec (tape/tape-primal x))
+                                 (mapv (fn [[node partial]]
+                                         [(rec node)
+                                          (rec partial)])
+                                       (tape/tape-partials x)))
 
                                 :else (-> (g/simplify x)
                                           (x/substitute replace-m))))
