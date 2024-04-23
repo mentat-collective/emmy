@@ -439,11 +439,49 @@
 
 (defn vjp [f v]
   (let [g (fn [x]
-            (if (or (and (v/scalar? x) (v/scalar? v))
+            (if (or (v/scalar? x)
+                    (v/scalar? v)
                     (s/compatible-for-contraction? x v))
               (g/* x v)
               (u/illegal "Incompatible structures!")))]
     (gradient (comp g f))))
+
+;; TODO this would be better, if we had a clear way of pulling the primals out
+;; from the IPerturbed protocol... that would let `jvp` do its thing as well.
+
+(defn primal-and-derivative [f]
+  (fn [x]
+    (let [tag    (d/fresh-tag)
+          lifted (d/bundle-element x 1 tag)
+          output (d/with-active-tag tag f [lifted])]
+      [(d/primal output)
+       (d/extract-tangent output tag)])))
+
+(defn primal-and-jvp [f v]
+  (fn [x]
+    (let [g (fn [r]
+              (f (g/+ x (g/* r v))))]
+      ((primal-and-derivative g) 0))))
+
+(defn vjp* [f]
+  (fn [x]
+    (let [tag    (d/fresh-tag)
+          inputs (tape/tapify x tag)
+          output (d/with-active-tag tag f [inputs])]
+      [(tape/tape-primal output)
+       (fn [v]
+         (let [output    (if (or (v/scalar? x)
+                                 (v/scalar? v)
+                                 (s/compatible-for-contraction? x v))
+                           (g/* output v)
+                           (u/illegal "Incompatible structures!"))
+               completed (tape/->partials output tag)]
+           (tape/interpret inputs completed tag)))])))
+
+;; attempting to return the primal too
+
+(defn primal-and-vjp [f]
+  (multi vjp* f))
 
 (defn hvp [f v]
   (jvp (gradient f) v))
