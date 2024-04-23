@@ -337,11 +337,11 @@
 
   If none of `dxs` has an active tag, returns `nil`."
   ([& dxs]
-   (let [m (into {} (mapcat
-                     (fn [dx]
-                       (when-let [t (tag-of dx)]
-                         {t dx})))
-                 dxs)]
+   (let [xform (map
+                (fn [dx]
+                  (when-let [t (tag-of dx)]
+                    [t dx])))
+         m     (into {} xform dxs)]
      (when (seq m)
        (let [tag (apply inner-tag (keys m))]
          [tag (m tag)])))))

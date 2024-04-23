@@ -104,7 +104,14 @@
                   (/ -2 (expt x 2))
                   (/ -3 (expt x 2)))
              (simplify
-              ((D f) 'x)))))))
+              ((D f) 'x))))))
+
+  (let [f (fn [a b c d e] [d e c b a])
+        M ((D f) 'a 'b 'c 'd 'e)]
+    (is (= (s/up 4 5 3 2 1)
+           (g/* M [1 2 3 4 5]))
+        "the Jacobian of a permutation is the permutation matrix of that
+        permutation")))
 
 (deftest derivative-return-tests
   (testing "Series, PowerSeries"
@@ -1313,7 +1320,7 @@
                  (fn [g]
                    (fn [z] (g (+ x z)))))))]
       (is (ish? ((fn [y] (+ (* 3 (cos (* 3 y)))
-                           (* y (cos (* 3 y)))))
+                            (* y (cos (* 3 y)))))
                  (+ 3 Math/PI))
                 (((D f) 3)
                  (fn [g-hat f-hat]
