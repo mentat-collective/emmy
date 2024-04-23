@@ -15,6 +15,7 @@
             [emmy.operator :as o]
             [emmy.series :as series]
             [emmy.structure :as s]
+            [emmy.tape :as tape]
             [emmy.util :as u]
             [emmy.value :as v])
   #?(:clj
@@ -531,12 +532,23 @@
      (letfn [(process-term [term]
                (g/simplify
                 (s/mapr (fn rec [x]
-                          (if (d/dual? x)
-                            (d/bundle-element
-                             (rec (d/primal x))
-                             (rec (d/tangent x))
-                             (d/tag x))
-                            (-> (g/simplify x)
-                                (x/substitute replace-m))))
+                          (cond (d/dual? x)
+                                (d/bundle-element
+                                 (rec (d/primal x))
+                                 (rec (d/tangent x))
+                                 (d/tag x))
+
+                                (tape/tape? x)
+                                (tape/->TapeCell
+                                 (tape/tape-tag x)
+                                 (tape/tape-id x)
+                                 (rec (tape/tape-primal x))
+                                 (mapv (fn [[node partial]]
+                                         [(rec node)
+                                          (rec partial)])
+                                       (tape/tape-partials x)))
+
+                                :else (-> (g/simplify x)
+                                          (x/substitute replace-m))))
                         term)))]
        (series/fmap process-term series)))))

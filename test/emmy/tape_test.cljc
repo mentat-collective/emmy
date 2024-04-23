@@ -11,6 +11,7 @@
             [emmy.generators :as sg]
             [emmy.generic :as g]
             [emmy.numerical.derivative :refer [D-numeric]]
+            [emmy.operator :as o]
             [emmy.simplify :refer [hermetic-simplify-fixture]]
             [emmy.structure :as s]
             [emmy.tape :as t]
@@ -262,11 +263,24 @@
               (let [cell (t/make tag 1)]
                 (is (= (t/tag-of cell)
                        (t/tape-tag cell))
-                    "for tape cells, these should match")))
+                    "for tape cells, these should match"))))
 
-    (checking "for any other type tag == nil" 100 [x gen/any]
-              (is (nil? (t/tag-of x))
-                  "for tape cells, these should match")))
+  (testing "primal-of"
+    (checking "for any other type primal-of == identity" 100 [x gen/any-equatable]
+              (is (= x (t/primal-of x))))
+
+    (checking "vs tape-primal" 100 [tape (sg/tapecell gen/symbol)]
+              (is (= (t/primal-of tape)
+                     (t/tape-primal tape))
+                  "primal-of eq with and without tag")
+
+              (is (= (t/primal-of tape)
+                     (t/primal-of tape (t/tape-tag tape)))
+                  "primal-of eq with and without tag")
+
+              (is (= (t/tape-primal tape)
+                     (t/tape-primal tape (t/tape-tag tape)))
+                  "tape-primal eq with and without tag")))
 
   (checking "deep-primal returns nested primal" 100 [p gen/any-equatable]
             (let [cell (t/make 0 (t/make 1 p))]
@@ -547,6 +561,16 @@
       "partial selector provided to a fn of a non-structural argument throws on
       fn application")
 
+  (testing "Operator"
+    (letfn [(f [x]
+              (o/make-operator (g/* x g/sin) 'D-op))]
+      (is (o/operator? ((t/gradient f) 'x))
+          "if f returns an operator, (gradient f) does too.")
+      (is (= '(sin y)
+             (g/freeze
+              (((t/gradient f) 'x) 'y)))
+          "gradient pushes into the operator's fn.")))
+
   (testing "partial derivative"
     (let [f (fn [[x y z]]
               (g/+ (g/expt x 4) (g/* x y z (g/cos x))))]
@@ -576,20 +600,30 @@
       (is (= expected
              (g/simplify
               ((t/gradient (t/gradient f)) 'a 'b 'c 'd 'e 'f)))
-          "multivariable derivatives match (reverse-over-reverse)")
+          "multivariable derivatives match (reverse-over-reverse)"))))
 
-      ;; TODO enable this when we add support for tape and gradient comms in
-      ;; lift-2.
-      #_
-      (is (= expected
-             (g/simplify
-              ((D (t/gradient f)) 'a 'b 'c 'd 'e 'f)))
-          "forward-over-reverse")
+(deftest mixed-mode-tests
+  (testing "nested reverse mode"
+    (let [f (fn [x]
+              (fn [y]
+                (g/* (g/square x) (g/square y))))]
+      (is (= ((D ((t/gradient f) 'x)) 'y)
+             ((t/gradient ((D f) 'x)) 'y)
+             ((t/gradient ((t/gradient f) 'x)) 'y))
+          "reverse-mode nests with forward-mode")))
 
-      ;; TODO enable this when we add support for tape and gradient comms in
-      ;; lift-2.
-      #_
-      (is (= expected
-             (g/simplify
-              ((t/gradient (D f)) 'a 'b 'c 'd 'e 'f)))
-          "reverse-over-forward"))))
+  (let [f (fn [a b c d e f]
+            [(g/* (g/cos a) (g/cos b))
+             (g/* (g/cos c) (g/cos d))
+             (g/* (g/cos e) (g/cos f))])
+        expected (g/simplify
+                  ((D (D f)) 'a 'b 'c 'd 'e 'f))]
+    (is (= expected
+           (g/simplify
+            ((D (t/gradient f)) 'a 'b 'c 'd 'e 'f)))
+        "forward-over-reverse")
+
+    (is (= expected
+           (g/simplify
+            ((t/gradient (D f)) 'a 'b 'c 'd 'e 'f)))
+        "reverse-over-forward")))

@@ -12,7 +12,6 @@
   (:refer-clojure :exclude [compare])
   (:require [emmy.function]  ;; for the side effect of making kind: MultiFn -> ::v/function
             [emmy.generic :as g]
-            [emmy.util :as u]
             [emmy.value :as v]))
 
 ;; ## Differentials, Dual Numbers and Automatic Differentiation
@@ -103,7 +102,7 @@
 ;;
 ;; $$f(a+b\varepsilon) = f(a)+ (Df(a)b)\varepsilon$$
 ;;
-;; > NOTE: See [[lift-1]] for an implementation of this idea.
+;; > NOTE: See [[emmy.tape/lift-1]] for an implementation of this idea.
 ;;
 ;; This justifies our claim above: applying a function to some dual number
 ;; $a+\varepsilon$ returns a new dual number, where
@@ -258,9 +257,9 @@
 ;; ### What Return Values are Allowed?
 ;;
 ;; Before we discuss the implementation of dual
-;; numbers (called [[Differential]]), [[lift-1]], [[lift-2]] and the rest of the
-;; machinery that makes this all possible; what sorts of objects is `f` allowed
-;; to return?
+;; numbers (called [[Differential]]), [[emmy.tape/lift-1]], [[emmy.tape/lift-2]]
+;; and the rest of the machinery that makes this all possible; what sorts of
+;; objects is `f` allowed to return?
 ;;
 ;; The dual number approach is beautiful because we can bring to bear all sorts
 ;; of operations in Clojure that never even _see_ dual numbers. For example,
@@ -483,16 +482,6 @@
    (-> (primal-tangent-pair dx tag)
        (nth 0))))
 
-(defn deep-primal
-  "Version of [[primal]] that will descend recursively into any [[Dual]] instance
-  returned by [[primal]] until encountering a non-[[Dual]].
-
-  Given a non-[[Dual]], acts as identity."
-  [dx]
-  (if (dual? dx)
-    (recur (.-primal ^Dual dx))
-    dx))
-
 (defn tangent
   "If `dx` is an instance of [[Dual]] returns the `tangent` component. Else, returns 0.
 
@@ -556,36 +545,6 @@
   [tag]
   (boolean
    (some #{tag} *active-tags*)))
-
-(defn inner-tag
-  "Given any number of `tags`, returns the tag most recently bound
-  via [[with-active-tag]] (i.e., the tag connected with the _innermost_ call
-  to [[with-active-tag]]).
-
-  If none of the tags are bound, returns `(apply max tags)`."
-  [& tags]
-  (or (some (apply hash-set tags)
-            *active-tags*)
-      (apply max tags)))
-
-(defn tag+perturbation
-  "Given any number of [[Dual]] instances `dxs`, returns a pair of the form
-
-  [<tag> <dual number>]
-
-  containing the tag and instance of [[Dual]] associated with the inner-most
-  call to [[with-active-tag]] in the current call stack.
-
-  If none of `dxs` has an active tag, returns `nil`."
-  ([& dxs]
-   (let [m (into {} (mapcat
-                     (fn [dx]
-                       (when-let [t (tag dx)]
-                         {t dx})))
-                 dxs)]
-     (when (seq m)
-       (let [tag (apply inner-tag (keys m))]
-         [tag (m tag)])))))
 
 ;; ## Comparison, Control Flow
 ;;
@@ -699,280 +658,19 @@
 
 ;; ## Chain Rule and Lifted Functions
 ;;
-;; Finally, we come to the heart of it! [[lift-1]] and [[lift-2]] "lift", or
-;; augment, unary or binary functions with the ability to
-;; handle [[Dual]] instances in addition to whatever other types they
-;; previously supported.
+;; For the rest of the story, please see the implementations
+;; of [[emmy.tape/lift-1]] and [[emmy.tape/lift-2]]. These functions "lift", or
+;; augment, unary or binary functions with the ability to handle [[Dual]]
+;; instances in addition to whatever other types they previously supported.
 ;;
-;; These functions are implementations of the single and multivariable Taylor
-;; series expansion methods discussed at the beginning of the namespace.
-;;
-;; There is yet another subtlety here, noted in the docstrings below. [[lift-1]]
-;; and [[lift-2]] really are able to lift functions like [[clojure.core/+]] that
-;; can't accept [[Dual]]s. But the first-order derivatives that you have
-;; to supply _do_ have to be able to take [[Dual]] instances.
-;;
-;; This is because the [[tangent]] of [[Dual]] might still be a [[Dual]], and
-;; for `Df` to handle this we need to be able to take the second-order
-;; derivative.
-;;
-;; Magically this will all Just Work if you pass an already-lifted function, or
-;; a function built out of already-lifted components, as `df:dx` or `df:dy`.
-
-(defn lift-1
-  "Given:
-
-  - some unary function `f`
-  - a function `df:dx` that computes the derivative of `f` with respect to its
-    single argument
-
-  Returns a new unary function that operates on both the original type of `f`
-  and [[Dual]] instances.
-
-  If called without `df:dx`, `df:dx` defaults to `(f :dfdx)`; this will return
-  the derivative registered to a generic function defined
-  with [[emmy.util.def/defgeneric]].
-
-  NOTE: `df:dx` has to ALREADY be able to handle [[Dual]] instances. The best
-  way to accomplish this is by building `df:dx` out of already-lifted functions,
-  and declaring them by forward reference if you need to."
-  ([f]
-   (if-let [df:dx (f :dfdx)]
-     (lift-1 f df:dx)
-     (u/illegal "No df:dx supplied for `f` or registered generically.")))
-  ([f df:dx]
-   (fn call [x]
-     (if-not (dual? x)
-       (f x)
-       (let [[px tx] (primal-tangent-pair x)
-             primal  (call px)
-             tangent (g/* (df:dx px) tx)]
-         (bundle-element primal tangent (tag x)))))))
-
-(defn lift-2
-  "Given:
-
-  - some binary function `f`
-  - a function `df:dx` that computes the derivative of `f` with respect to its
-    single argument
-  - a function `df:dy`, similar to `df:dx` for the second arg
-
-  Returns a new binary function that operates on both the original type of `f`
-  and [[Dual]] instances.
-
-  NOTE: `df:dx` and `df:dy` have to ALREADY be able to handle [[Dual]]
-  instances. The best way to accomplish this is by building `df:dx` and `df:dy`
-  out of already-lifted functions, and declaring them by forward reference if
-  you need to."
-  ([f]
-   (let [df:dx (f :dfdx)
-         df:dy (f :dfdy)]
-     (if (and df:dx df:dy)
-       (lift-2 f df:dx df:dy)
-       (u/illegal "No df:dx, df:dy supplied for `f` or registered generically."))))
-  ([f df:dx df:dy]
-   (fn call [x y]
-     (if-let [[tag _] (tag+perturbation x y)]
-       (let [[xe dx] (primal-tangent-pair x tag)
-             [ye dy] (primal-tangent-pair y tag)
-             primal  (call xe ye)
-             tangent (g/+ (if (g/numeric-zero? dx)
-                            dx
-                            (g/* (df:dx xe ye) dx))
-                          (if (g/numeric-zero? dy)
-                            dy
-                            (g/* (df:dy xe ye) dy)))]
-         (bundle-element primal tangent tag))
-       (f x y)))))
-
-(defn lift-n
-  "Given:
-
-  - some function `f` that can handle 0, 1 or 2 arguments
-  - `df:dx`, a fn that returns the derivative wrt the single arg in the unary case
-  - `df:dx1` and `df:dx2`, fns that return the derivative with respect to the
-    first and second args in the binary case
-
-  Returns a new any-arity function that operates on both the original type of
-  `f` and [[Dual]] instances.
-
-  NOTE: The n-ary case of `f` is populated by nested calls to the binary case.
-  That means that this is NOT an appropriate lifting method for an n-ary
-  function that isn't built out of associative binary calls. If you need this
-  ability, please file an issue at the [emmy issue
-  tracker](https://github.com/mentat-collective/emmy/issues)."
-  [f df:dx df:dx1 df:dx2]
-  (let [f1 (lift-1 f df:dx)
-        f2 (lift-2 f df:dx1 df:dx2)]
-    (fn call
-      ([] (f))
-      ([x] (f1 x))
-      ([x y] (f2 x y))
-      ([x y & more]
-       (reduce call (call x y) more)))))
+;; The [[dual?]] branches inside these functions are implementations of the
+;; single and multivariable Taylor series expansion methods discussed at the
+;; beginning of the namespace.
 
 ;; ## Generic Method Installation
 ;;
-;; Armed with [[lift-1]] and [[lift-2]], we can install [[Dual]] into
-;; the Emmy generic arithmetic system.
-;;
-;; Any function built out of these components will work with
-;; the [[emmy.calculus.derivative/D]] operator.
-
-(defn- defunary
-  "Given:
-
-  - a generic unary multimethod `generic-op`
-  - optionally, a corresponding single-arity lifted function
-    `differential-op` (defaults to `(lift-1 generic-op)`)
-
-  installs an appropriate unary implementation of `generic-op` for `::dual`
-  instances."
-  ([generic-op]
-   (defunary generic-op (lift-1 generic-op)))
-  ([generic-op differential-op]
-   (defmethod generic-op [::dual] [a] (differential-op a))))
-
-(defn- defbinary
-  "Given:
-
-  - a generic binary multimethod `generic-op`
-  - optionally, a corresponding 2-arity lifted function
-    `differential-op` (defaults to `(lift-2 generic-op)`)
-
-  installs an appropriate binary implementation of `generic-op` between `::dual`
-  and `::v/scalar` instances."
-  ([generic-op]
-   (defbinary generic-op (lift-2 generic-op)))
-  ([generic-op differential-op]
-   (doseq [signature [[::dual ::dual]
-                      [::v/scalar ::dual]
-                      [::dual ::v/scalar]]]
-     (defmethod generic-op signature [a b] (differential-op a b)))))
-
-(defn ^:no-doc by-primal
-  "Given some unary or binary function `f`, returns an augmented `f` that acts on
-  the primal entries of any [[Dual]] arguments encountered, irrespective of tag.
-
-  Given a [[Dual]] with a [[Dual]] in its [[primal]] part, the returned `f` will
-  recursively descend until it hits a non-[[Dual]]."
-  [f]
-  (fn
-    ([x] (f (deep-primal x)))
-    ([x y] (f (deep-primal x)
-              (deep-primal y)))))
-
-;; And now we're off to the races. The rest of the namespace
-;; provides [[defunary]] and [[defbinary]] calls for all of the generic
-;; operations for which we know how to declare partial derivatives.
-
-;; First, install `equiv` as to perform proper equality between `Dual`
-;; instances and scalars. `equiv` compares on only the finite part, not the
-;; differential parts.
-
-(defbinary g/add)
-(defunary g/negate)
-(defbinary g/sub)
-
-(let [mul  (lift-2 g/mul)]
-  (defbinary g/mul mul)
-  (defbinary g/dot-product mul))
-(defbinary g/expt)
-
-(defunary g/square)
-(defunary g/cube)
-
-(defunary g/invert)
-(defbinary g/div)
-
-(defunary g/abs
-  (fn [x]
-    (let [f (deep-primal x)
-          func (cond (< f 0) (lift-1 g/negate (fn [_] -1))
-                     (> f 0) (lift-1 identity (fn [_] 1))
-                     (= f 0) (u/illegal "Derivative of g/abs undefined at zero")
-                     :else (u/illegal (str "error! derivative of g/abs at" x)))]
-      (func x))))
-
-(defn- discont-at-integers [f dfdx]
-  (let [f (lift-1 f (fn [_] dfdx))
-        f-name (g/freeze f)]
-    (fn [x]
-      (if (v/integral? (deep-primal x))
-        (u/illegal
-         (str "Derivative of emmy.generic/"
-              f-name " undefined at integral points."))
-        (f x)))))
-
-(defunary g/floor
-  (discont-at-integers g/floor 0))
-
-(defunary g/ceiling
-  (discont-at-integers g/ceiling 0))
-
-(defunary g/integer-part
-  (discont-at-integers g/integer-part 0))
-
-(defunary g/fractional-part
-  (discont-at-integers g/fractional-part 1))
-
-(let [div (lift-2 g/div)]
-  (defbinary g/solve-linear (fn [l r] (div r l)))
-  (defbinary g/solve-linear-right div))
-
-(defunary g/sqrt)
-(defunary g/log)
-(defunary g/exp)
-
-(defunary g/cos)
-(defunary g/sin)
-(defunary g/tan)
-(defunary g/cot)
-(defunary g/sec)
-(defunary g/csc)
-
-(defunary g/atan)
-(defbinary g/atan)
-(defunary g/asin)
-(defunary g/acos)
-(defunary g/acot)
-(defunary g/asec)
-(defunary g/acsc)
-
-(defunary g/cosh)
-(defunary g/sinh)
-(defunary g/tanh)
-(defunary g/sech)
-(defunary g/coth)
-(defunary g/csch)
-
-(defunary g/acosh)
-(defunary g/asinh)
-(defunary g/atanh)
-(defunary g/acoth)
-(defunary g/asech)
-(defunary g/acsch)
-
-(defunary g/sinc)
-(defunary g/sinhc)
-(defunary g/tanc)
-(defunary g/tanhc)
-
-;; Non-differentiable generic operations
-
-(defbinary v/= (by-primal v/=))
-(defunary g/negative? (by-primal g/negative?))
-(defunary g/infinite? (by-primal g/infinite?))
-
-
-(defunary g/zero?
-  (fn [dx]
-    (let [[p t] (primal-tangent-pair dx)]
-      (and (g/zero? p)
-           (g/zero? t)))))
-
-(defunary g/one? one?)
-(defunary g/identity? identity?)
+;; These generic methods don't need to be lifted, so live here alongside
+;; the [[Dual]] type definition.
 
 (defmethod g/zero-like [::dual] [_] 0)
 (defmethod g/one-like [::dual] [_] 1)

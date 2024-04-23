@@ -10,6 +10,7 @@
             [emmy.generic :as g]
             [emmy.numerical.derivative :refer [D-numeric]]
             [emmy.simplify :refer [hermetic-simplify-fixture]]
+            [emmy.tape :as tape]
             [emmy.value :as v]
             [same.core :refer [ish? with-comparator]]))
 
@@ -328,17 +329,7 @@
             (let [tag (d/tag diff)
                   [primal tangent] (d/primal-tangent-pair diff tag)]
               (is (d/eq primal (d/primal diff tag)))
-              (is (d/eq tangent (d/tangent diff tag)))))
-
-  (checking "deep-primal fetches bottom primal" 100
-            [diff real-dual-gen]
-            (loop [diff diff]
-              (let [primal (d/primal diff)]
-                (if (d/dual? primal)
-                  (recur primal)
-                  (is (= primal (d/primal diff))
-                      "recursing to the bottom with primal gives the same result
-                         as jumping straight there with deep-primal"))))))
+              (is (d/eq tangent (d/tangent diff tag))))))
 
 (deftest lifted-fn-tests
   (letfn [(breaks? [f x]
@@ -357,7 +348,7 @@
                     (is (g/one? ((derivative g/fractional-part) x)))))))
 
   (testing "lift-n"
-    (let [*   (d/lift-n g/* (fn [_] 1) (fn [_ y] y) (fn [x _] x))
+    (let [*   (tape/lift-n g/* (fn [_] 1) (fn [_ y] y) (fn [x _] x))
           Df7 (derivative
                (fn x**7 [x] (* x x x x x x x)))
           Df1 (derivative *)
