@@ -1578,8 +1578,8 @@
 
   (testing "compare, one stays symbolic:"
     (letfn [(f [[a b]]
-             (* (sin (* 3 a))
-                (cos (* 4 b))))]
+              (* (sin (* 3 a))
+                 (cos (* 4 b))))]
 
       (is (ish? [-0.020532965943782493
                  (s/down 0.4321318251769156 -0.558472974950351)]
@@ -1599,3 +1599,11 @@
                   (take 2)))
           "symbolic-taylor-series keeps the arguments symbolic, even when they
           are numbers."))))
+
+(deftest vjp-test
+  (let [f (fn [[x y]] [(g/* x y) (g/sin x) (g/cos y)])
+        v (s/down 'dx 'dy 'dz)]
+    (is (g/zero?
+         (g/simplify
+          (g/- ((d/vjp f v) (s/up 'x 'y))
+               (g/* v ((D f) (s/up 'x 'y)))))))))

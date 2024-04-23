@@ -437,10 +437,19 @@
 (defn jvp [f v]
   (multi #(simple-jvp % v) f))
 
+(defn vjp [f v]
+  (let [g (fn [x]
+            (if (or (and (v/scalar? x) (v/scalar? v))
+                    (s/compatible-for-contraction? x v))
+              (g/* x v)
+              (u/illegal "Incompatible structures!")))]
+    (gradient (comp g f))))
+
 (defn hvp [f v]
-  (jvp (tape/gradient f) v))
+  (jvp (gradient f) v))
 
 (comment
+  (require 'emmy.env)
   (let [f (emmy.env/literal-function 'f (-> (UP* Real 10) Real))
         x (s/literal-up 'x 10)
         v (s/literal-up 'dx 10)]
