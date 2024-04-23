@@ -124,12 +124,20 @@
      (d/replace-tag k old new)
      m))
 
-  (extract-tangent [_ tag]
+  (extract-tangent [_ tag mode]
     (Quaternion.
-     (d/extract-tangent r tag)
-     (d/extract-tangent i tag)
-     (d/extract-tangent j tag)
-     (d/extract-tangent k tag)
+     (d/extract-tangent r tag mode)
+     (d/extract-tangent i tag mode)
+     (d/extract-tangent j tag mode)
+     (d/extract-tangent k tag mode)
+     m))
+
+  (extract-id [_ id]
+    (Quaternion.
+     (d/extract-id r id)
+     (d/extract-id i id)
+     (d/extract-id j id)
+     (d/extract-id k id)
      m))
 
   v/IKind

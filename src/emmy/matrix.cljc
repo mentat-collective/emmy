@@ -37,7 +37,8 @@
   d/IPerturbed
   (perturbed? [_] (boolean (core/some d/perturbed? v)))
   (replace-tag [M old new] (fmap #(d/replace-tag % old new) M))
-  (extract-tangent [M tag] (fmap #(d/extract-tangent % tag) M))
+  (extract-tangent [M tag mode] (fmap #(d/extract-tangent % tag mode) M))
+  (extract-id [M id] (fmap #(d/extract-id % id) M))
 
   f/IArity
   (arity [_] (transduce (map f/seq-arity) f/combine-arities v))

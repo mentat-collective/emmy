@@ -59,7 +59,8 @@
   d/IPerturbed
   (perturbed? [v] (boolean (some d/perturbed? v)))
   (replace-tag [v old new] (mapv #(d/replace-tag % old new) v))
-  (extract-tangent [v tag] (mapv #(d/extract-tangent % tag) v)))
+  (extract-tangent [v tag mode] (mapv #(d/extract-tangent % tag mode) v))
+  (extract-id [v id] (mapv #(d/extract-id % id) v)))
 
 ;; ## Sequences
 ;;
@@ -86,7 +87,10 @@
     d/IPerturbed
     (perturbed? [_] false)
     (replace-tag [xs old new] (map #(d/replace-tag % old new) xs))
-    (extract-tangent [xs tag] (map #(d/extract-tangent % tag) xs))))
+    (extract-tangent [xs tag mode]
+      (map #(d/extract-tangent % tag mode) xs))
+    (extract-id [xs id]
+      (map #(d/extract-id % id) xs))))
 
 ;; ## Maps
 ;;
@@ -171,8 +175,8 @@
      (extend klass
        v/IKind
        {:kind (fn [m] (if (sorted? m)
-                        (type m)
-                        (:type m (type m))))}
+                       (type m)
+                       (:type m (type m))))}
 
        f/IArity
        {:arity (fn [_] [:between 1 2])}
@@ -181,12 +185,20 @@
        {:perturbed? (fn [m] (boolean (some d/perturbed? (vals m))))
         :replace-tag (fn [m old new] (u/map-vals #(d/replace-tag % old new) m))
         :extract-tangent
-        (fn [m tag]
+        (fn [m tag mode]
           (if-let [t (:type m)]
             ;; Do NOT attempt to recurse into the values if this map is being used as a
             ;; simple representation for some other type, like a manifold point.
             (u/unsupported (str "`extract-tangent` not supported for type " t "."))
-            (u/map-vals #(d/extract-tangent % tag) m)))})
+            (u/map-vals #(d/extract-tangent % tag mode) m)))
+
+        :extract-id
+        (fn [m id]
+          (if-let [t (:type m)]
+            ;; Do NOT attempt to recurse into the values if this map is being used as a
+            ;; simple representation for some other type, like a manifold point.
+            (u/unsupported (str "`extract-id` not supported for type " t "."))
+            (u/map-vals #(d/extract-id % id) m)))})
 
      :cljs
      (extend-type klass
@@ -201,12 +213,18 @@
        d/IPerturbed
        (perturbed? [m] (boolean (some d/perturbed? (vals m))))
        (replace-tag [m old new] (u/map-vals #(d/replace-tag % old new) m))
-       (extract-tangent [m tag]
+       (extract-tangent [m tag mode]
          (if-let [t (:type m)]
            ;; Do NOT attempt to recurse into the values if this map is being used as a
            ;; simple representation for some other type, like a manifold point.
            (u/unsupported (str "`extract-tangent` not supported for type " t "."))
-           (u/map-vals #(d/extract-tangent % tag) m))))))
+           (u/map-vals #(d/extract-tangent % tag mode) m)))
+       (extract-id [m id]
+         (if-let [t (:type m)]
+           ;; Do NOT attempt to recurse into the values if this map is being used as a
+           ;; simple representation for some other type, like a manifold point.
+           (u/unsupported (str "`extract-id` not supported for type " t "."))
+           (u/map-vals #(d/extract-id % id) m))))))
 
 ;; ## Sets
 ;;

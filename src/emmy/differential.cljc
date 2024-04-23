@@ -12,6 +12,7 @@
   (:refer-clojure :exclude [compare])
   (:require [emmy.function]  ;; for the side effect of making kind: MultiFn -> ::v/function
             [emmy.generic :as g]
+            [emmy.util :as u]
             [emmy.value :as v]))
 
 ;; ## Differentials, Dual Numbers and Automatic Differentiation
@@ -337,9 +338,35 @@
     modified by replacing any appearance of `old-tag` with `new-tag`. Else,
     return `this`.")
 
-  (extract-tangent [this tag]
+  (extract-tangent [this tag mode]
     "If `this` is perturbed, return the tangent component paired with the
-    supplied tag. Else, returns `([[emmy.value/zero-like]] this)`."))
+    supplied tag. Else, returns `([[emmy.value/zero-like]] this)`.")
+
+  (extract-id [this id]))
+
+(defrecord Completed [v->partial]
+  IPerturbed
+  ;; NOTE that it's a problem that `replace-tag` is called on [[Completed]]
+  ;; instances now. In a future refactor I want `get` calls out of
+  ;; a [[Completed]] map to occur before tag replacement needs to happen.
+  (replace-tag [_ old new]
+    (Completed.
+     (u/map-vals #(replace-tag % old new) v->partial)))
+
+  ;; These should be called; it would be that a [[Completed]] instance has
+  ;; escaped from a derivative call. These are meant to be an internal
+  ;; implementation detail only.
+  (extract-tangent [_ _ _] (assert "Impossible!"))
+
+  (extract-id [_ id]
+    (get v->partial id 0))
+
+  ;; This is called on arguments to literal functions to check if a derivative
+  ;; needs to be taken. This should never happen with a [[Completed]] instance!
+  (perturbed? [_] (assert "Impossible!")))
+
+(defn completed? [x]
+  (instance? Completed x))
 
 ;; `replace-tag` exists to handle subtle bugs that can arise in the case of
 ;; functional return values. See the "Amazing Bug" sections
@@ -352,12 +379,18 @@
   nil
   (perturbed? [_] false)
   (replace-tag [_ _ _] nil)
-  (extract-tangent [_ _] 0)
+  (extract-tangent [_ _ mode]
+    (if (= mode ::dual)
+      0
+      (->Completed {})))
 
   #?(:clj Object :cljs default)
   (perturbed? [_] false)
   (replace-tag [this _ _] this)
-  (extract-tangent [this _] (g/zero-like this)))
+  (extract-tangent [this _ mode]
+    (if (= mode ::dual)
+      (g/zero-like this)
+      (->Completed {}))))
 
 ;; ## Dual Implementation
 ;;
@@ -395,8 +428,10 @@
       (Dual. new primal tangent)
       this))
 
-  (extract-tangent [_ t]
-    (if (= t tag) tangent 0))
+  (extract-tangent [_ t mode]
+    (cond (not= mode ::dual) (->Completed {})
+          (= t tag)          tangent
+          :else              0))
 
   v/IKind
   (kind [_] ::dual)
@@ -409,8 +444,8 @@
   #?(:cljs (valueOf [_] (.valueOf primal)))
   (toString [_]
     (str "#emmy.tape.Dual"
-         {:tag tag
-          :primal primal
+         {:tag     tag
+          :primal  primal
           :tangent tangent}))
 
   #?@(:clj

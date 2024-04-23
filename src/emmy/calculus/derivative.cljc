@@ -25,8 +25,8 @@
 ;;
 ;; The following section, along with [[emmy.collection]]
 ;; and [[emmy.differential]], rounds out the implementations
-;; of [[d/IPerturbed]] for native Clojure(script) data types. The function
-;; implementation is subtle, as described by [Manzyuk et al.
+;; of [[emmy.differential/IPerturbed]] for native Clojure(script) data types.
+;; The function implementation is subtle, as described by [Manzyuk et al.
 ;; 2019](https://arxiv.org/pdf/1211.4892.pdf).
 ;; ([[emmy.derivative.calculus-test]], in the "Amazing Bug" sections,
 ;; describes the pitfalls at length.)
@@ -150,15 +150,15 @@
 
   If called _outside_ of a function waiting for `tag` no tag remapping will
   occur."
-  [f tag]
+  [f tag mode]
   (-> (fn [& args]
         (if (d/tag-active? tag)
           (let [fresh (d/fresh-tag)]
             (-> (d/with-active-tag tag f (map #(d/replace-tag % tag fresh) args))
-                (d/extract-tangent tag)
+                (d/extract-tangent tag mode)
                 (d/replace-tag fresh tag)))
           (-> (d/with-active-tag tag f args)
-              (d/extract-tangent tag))))
+              (d/extract-tangent tag mode))))
       (f/with-arity (f/arity f))))
 
 ;; NOTE: that the tag-remapping that the docstring for `extract-tag-fn`
@@ -202,18 +202,19 @@
 ;; preserved through tag replacement and extraction.
 
 (extend-protocol d/IPerturbed
-
   MultiFn
   (perturbed? [_] false)
   (replace-tag [f old new] (replace-tag-fn f old new))
-  (extract-tangent [f tag] (extract-tangent-fn f tag))
+  (extract-tangent [f tag mode] (extract-tangent-fn f tag mode))
+  (extract-id [f id] (comp #(d/extract-id % id) f))
 
   #?@(:clj
       [;; In Clojure, metadata can live directly on function objects.
        Fn
        (perturbed? [f] (:perturbed? (meta f) false))
        (replace-tag [f old new] (replace-tag-fn f old new))
-       (extract-tangent [f tag] (extract-tangent-fn f tag))]
+       (extract-tangent [f tag mode] (extract-tangent-fn f tag mode))
+       (extract-id [f id] (comp #(d/extract-id % id) f))]
 
       :cljs
       [;; In Clojurescript, we arrange for metadata to live directly on
@@ -222,7 +223,7 @@
        function
        (perturbed? [f] (:perturbed? (meta f) false))
        (replace-tag [f old new] (replace-tag-fn f old new))
-       (extract-tangent [f tag] (extract-tangent-fn f tag))
+       (extract-tangent [f tag mode] (extract-tangent-fn f tag mode))
        ;; The official way to get metadata onto a function in Clojurescript
        ;; is to promote the fn to an AFn-implementing object and store the
        ;; metadata on a directly-visible object property, which we also
@@ -231,8 +232,9 @@
        (perturbed? [f] (:perturbed? (.-meta f) false))
        (replace-tag [f old new]
                     (replace-tag-fn (.-afn f) old new))
-       (extract-tangent [f tag]
-                        (extract-tangent-fn (.-afn f) tag))]))
+       (extract-tangent [f tag mode]
+                        (extract-tangent-fn (.-afn f) tag mode))
+       (extract-id [f id] (comp #(d/extract-id % id) (.-afn f)))]))
 
 ;; ## Single and Multivariable Calculus
 ;;
@@ -258,7 +260,7 @@
     (let [tag    (d/fresh-tag)
           lifted (d/bundle-element x 1 tag)]
       (-> (d/with-active-tag tag f [lifted])
-          (d/extract-tangent tag)))))
+          (d/extract-tangent tag ::d/dual)))))
 
 ;; The result of applying the derivative `(D f)` of a multivariable function `f`
 ;; to a sequence of `args` is a structure of the same shape as `args` with all

@@ -34,7 +34,7 @@
     (let [tag 0
           f   (fn [x] (fn [g] (g x)))
           Df  (-> (f (sd/bundle-element 'x 1 tag))
-                  (sd/extract-tangent tag))]
+                  (sd/extract-tangent tag ::sd/dual))]
       (is (not (sd/tag-active? tag))
           "Outside the context of a derivative, the tag is not marked as
           active.")
@@ -1094,7 +1094,7 @@
 
                   ;; go extract the original tag that we were looking for in the
                   ;; first place.
-                  (d/extract-tangent tag)
+                  (d/extract-tangent tag ::sd/dual)
 
                   ;; Sub `tag` back in so that any wrapping fn can extract it.
                   ;;
@@ -1272,8 +1272,8 @@
             mixed partial instead."))
 
       ;; You see this because the `list` continuation triggers
-      ;; an `(extract-tangent ,,, tag)` call on each component of the `list`
-      ;; separately, so the returned `f1`and `f2` are both composed with
+      ;; an `(extract-tangent ,,, tag mode)` call on each component of the
+      ;; `list` separately, so the returned `f1`and `f2` are both composed with
       ;; `extract-tangent` calls for the tangent associated with the scope
       ;; introduced by `(D f)`.
       ;;
@@ -1585,14 +1585,13 @@
       differential instances.")
 
   (is (v/= [0 1 0 0]
-           ((tape/gradient
-             (fn [y]
-               (into [] (take 4 (d/symbolic-taylor-series
-                                 (fn [x] (g/* x y))
-                                 0)))))
-            'a))
-      "works with gradient too! TODO once gradients support series outputs,
-      massage this into better shape...")
+           (take 4 ((tape/gradient
+                     (fn [y]
+                       (d/symbolic-taylor-series
+                        (fn [x] (g/* x y))
+                        0)))
+                    'a)))
+      "works with gradient too!")
 
   (testing "compare, one stays symbolic:"
     (letfn [(f [[a b]]
