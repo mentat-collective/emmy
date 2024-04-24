@@ -365,9 +365,6 @@
   ;; needs to be taken. This should never happen with a [[Completed]] instance!
   (perturbed? [_] (assert "Impossible!")))
 
-(defn completed? [x]
-  (instance? Completed x))
-
 ;; `replace-tag` exists to handle subtle bugs that can arise in the case of
 ;; functional return values. See the "Amazing Bug" sections
 ;; in [[emmy.calculus.derivative-test]] for detailed examples on how this
