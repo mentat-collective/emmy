@@ -528,7 +528,7 @@
                 (for [i (range 2)
                       j (range 2)]
                   (((partial i j) f) (s/up 'x 'y) (s/up 'w 'z))))))
-    (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
+    (is (thrown? #?(:clj ClassCastException :cljs js/Error)
                  (((partial 0 1) f) 'x 'y)))))
 
 (deftest derivative-as-operator

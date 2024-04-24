@@ -435,10 +435,12 @@
 
 (doseq [t [::v/function ::s/structure]]
   (defmethod g/partial-derivative [t v/seqtype] [f selectors]
-    (multivariate f selectors))
+    (tape/gradient f selectors)
+    #_(multivariate f selectors))
 
   (defmethod g/partial-derivative [t nil] [f _]
-    (multivariate f [])))
+    (tape/gradient f [])
+    #_(multivariate f [])))
 
 ;; ## Operators
 ;;

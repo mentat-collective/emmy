@@ -365,6 +365,10 @@
   ;; needs to be taken. This should never happen with a [[Completed]] instance!
   (perturbed? [_] (assert "Impossible!")))
 
+(defmethod g/zero? [Completed] [_] false)
+(defmethod g/one? [Completed] [_] false)
+(defmethod g/identity? [Completed] [_] false)
+
 (defn completed? [x]
   (instance? Completed x))
 

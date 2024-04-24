@@ -701,7 +701,7 @@
 
     ;; but not all transforms are canonical:
     (testing "non-canonical-transform"
-      (with-redefs [gensym (a/monotonic-symbol-generator 1 "x")]
+      (with-redefs [gensym (a/monotonic-symbol-generator 2 "x")]
         (letfn [(a-non-canonical-transform [[t theta p]]
                   (let [x (* p (g/sin theta))
                         p_x (* p (g/cos theta))]
