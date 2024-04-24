@@ -872,16 +872,18 @@
 (defmethod g/exact? [::series] [_] false)
 (defmethod g/exact? [::power-series] [_] false)
 (defmethod g/freeze [::power-series] [^PowerSeries s]
-        (let [prefix (->> (g/simplify (take 4 (.-xs s)))
-                          (g/freeze)
-                          (filter (complement g/zero?))
-                          (map-indexed
-                           (fn [n a]
-                             (if (g/one? a)
-                               `(~'expt ~'_ ~n)
-                               `(~'* ~a (~'expt ~'_ ~n))))))]
-          `(~'+ ~@prefix ~'...)))
+  (let [prefix (->> (g/simplify (take 4 (.-xs s)))
+                    (g/freeze)
+                    (into [] (comp
+                              (map-indexed
+                               (fn [n a]
+                                 (cond (g/zero? a) []
+                                       (g/one? a)  [(list 'expt '_ n)]
+                                       :else       [(list '* a (list 'expt '_ n))])))
+                              cat)))]
+    `(~'+ ~@prefix ~'...)))
+
 (defmethod g/freeze [::series] [^Series s]
-        (let [prefix (g/freeze
-                      (g/simplify (take 4 (.-xs s))))]
-          `(~'+ ~@prefix ~'...)))
+  (let [prefix (g/freeze
+                (g/simplify (take 4 (.-xs s))))]
+    `(~'+ ~@prefix ~'...)))

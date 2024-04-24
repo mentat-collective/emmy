@@ -286,7 +286,17 @@
         (is (= "(+ (* 4 (expt _ 0)) (* 5 (expt _ 1)) (* 6 (expt _ 2)) (* 7 (expt _ 3)) ...)"
                (str p)))
         (is (= (str s) (str (g/freeze s))))
-        (is (= (str p) (str (g/freeze p))))))))
+        (is (= (str p) (str (g/freeze p))))
+
+        (is (= "(+ (expt _ 0) (* (/ -1 2) (expt _ 2)) ...)"
+               (str
+                (g/freeze s/cos-series)))
+            "cosine representation has the initial 1, drops correct zeros")
+
+        (is (= "(+ (expt _ 1) (* (/ -1 6) (expt _ 3)) ...)"
+               (str
+                (g/freeze s/sin-series)))
+            "sine representation drops correct zeros")))))
 
 (deftest series-as-fn-tests
   (let [f (fn [i] #(g/* %1 %2 i))
