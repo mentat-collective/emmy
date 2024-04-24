@@ -224,6 +224,8 @@
        (perturbed? [f] (:perturbed? (meta f) false))
        (replace-tag [f old new] (replace-tag-fn f old new))
        (extract-tangent [f tag mode] (extract-tangent-fn f tag mode))
+       (extract-id [f id] (comp #(d/extract-id % id) f))
+
        ;; The official way to get metadata onto a function in Clojurescript
        ;; is to promote the fn to an AFn-implementing object and store the
        ;; metadata on a directly-visible object property, which we also
