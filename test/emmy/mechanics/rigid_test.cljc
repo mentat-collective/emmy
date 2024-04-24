@@ -24,10 +24,10 @@
 (deftest rigid-tests
   (f/with-literal-functions [theta phi psi]
     (is (= '(column-matrix
-             (+ (* (sin (theta t)) ((D phi) t) (sin (psi t)))
-                (* (cos (psi t)) ((D theta) t)))
-             (+ (* (cos (psi t)) (sin (theta t)) ((D phi) t))
-                (* -1 ((D theta) t) (sin (psi t))))
+             (+ (* (sin (psi t)) (sin (theta t)) ((D phi) t))
+                (* ((D theta) t) (cos (psi t))))
+             (+ (* (sin (theta t)) ((D phi) t) (cos (psi t)))
+                (* -1 (sin (psi t)) ((D theta) t)))
              (+ (* (cos (theta t)) ((D phi) t)) ((D psi) t)))
            (simplify
             ((rig/Euler->omega-body
@@ -35,12 +35,11 @@
              't))))
 
     (is (= '(column-matrix
-             (+ (* (sin (theta t)) ((D phi) t) (sin (psi t)))
-                (* (cos (psi t)) ((D theta) t)))
-             (+ (* (cos (psi t)) (sin (theta t)) ((D phi) t))
-                (* -1 ((D theta) t) (sin (psi t))))
-             (+ (* (cos (theta t)) ((D phi) t))
-                ((D psi) t)))
+             (+ (* (sin (psi t)) (sin (theta t)) ((D phi) t))
+                (* ((D theta) t) (cos (psi t))))
+             (+ (* (sin (theta t)) ((D phi) t) (cos (psi t)))
+                (* -1 (sin (psi t)) ((D theta) t)))
+             (+ (* (cos (theta t)) ((D phi) t)) ((D psi) t)))
            (simplify
             (((rig/M-of-q->omega-body-of-t rotation/Euler->M)
               (up theta phi psi))
@@ -60,10 +59,10 @@
   (let [an-Euler-state (up 't
                            (up 'theta 'phi 'psi)
                            (up 'thetadot 'phidot 'psidot))]
-    (is (= '(+ (* A phidot (expt (sin psi) 2) (expt (sin theta) 2))
+    (is (= '(+ (* A phidot (expt (sin theta) 2) (expt (sin psi) 2))
                (* B phidot (expt (sin theta) 2) (expt (cos psi) 2))
-               (* A thetadot (sin psi) (sin theta) (cos psi))
-               (* -1 B thetadot (sin psi) (sin theta) (cos psi))
+               (* A thetadot (sin theta) (sin psi) (cos psi))
+               (* -1N B thetadot (sin theta) (sin psi) (cos psi))
                (* C phidot (expt (cos theta) 2))
                (* C psidot (cos theta)))
            (simplify

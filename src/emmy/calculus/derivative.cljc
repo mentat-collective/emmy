@@ -224,6 +224,8 @@
        (perturbed? [f] (:perturbed? (meta f) false))
        (replace-tag [f old new] (replace-tag-fn f old new))
        (extract-tangent [f tag mode] (extract-tangent-fn f tag mode))
+       (extract-id [f id] (comp #(d/extract-id % id) f))
+
        ;; The official way to get metadata onto a function in Clojurescript
        ;; is to promote the fn to an AFn-implementing object and store the
        ;; metadata on a directly-visible object property, which we also
@@ -435,12 +437,10 @@
 
 (doseq [t [::v/function ::s/structure]]
   (defmethod g/partial-derivative [t v/seqtype] [f selectors]
-    (tape/gradient f selectors)
-    #_(multivariate f selectors))
+    (tape/gradient f selectors))
 
   (defmethod g/partial-derivative [t nil] [f _]
-    (tape/gradient f [])
-    #_(multivariate f [])))
+    (tape/gradient f [])))
 
 ;; ## Operators
 ;;
@@ -477,6 +477,16 @@
   [& selectors]
   (o/make-operator #(g/partial-derivative % selectors)
                    `(~'partial ~@selectors)))
+
+(def D-fwd
+  (o/make-operator #(multivariate % [])
+                   g/derivative-symbol))
+
+(defn partial-fwd [& selectors]
+  (o/make-operator #(multivariate % selectors)
+                   `(~'partial ~@selectors)))
+
+
 
 ;; ## Derivative Utilities
 ;;

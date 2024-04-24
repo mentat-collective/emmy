@@ -90,10 +90,10 @@ and the differentials of coordinate functions."
             μ (m/literal-manifold-map 'μ R1-rect R2-rect)
             f (man/literal-manifold-function 'f R2-rect)]
 
-        (is (= '(+ (* (((partial 0) f) (up (μ↑0 τ) (μ↑1 τ)))
-                      ((D μ↑0) τ))
-                   (* (((partial 1) f) (up (μ↑0 τ) (μ↑1 τ)))
-                      ((D μ↑1) τ)))
+        (is (= '(+ (* (((partial 1) f) (up (μ↑0 τ) (μ↑1 τ)))
+                      ((D μ↑1) τ))
+                   (* (((partial 0) f) (up (μ↑0 τ) (μ↑1 τ)))
+                      ((D μ↑0) τ)))
                (simplify
                 ((((m/differential μ) d:dt) f)
                  ((man/point R1-rect) 'τ)))))
@@ -120,10 +120,10 @@ and the differentials of coordinate functions."
 
           ;; "However, if we kludge the correct argument it gives the expected
           ;; answer."
-          (is (= '(/ (+ (* ((D μ↑0) τ) (e1↑1 (up x0 y0)))
-                        (* -1 ((D μ↑1) τ) (e1↑0 (up x0 y0))))
-                     (+ (* (e1↑1 (up x0 y0)) (e0↑0 (up x0 y0)))
-                        (* -1 (e1↑0 (up x0 y0)) (e0↑1 (up x0 y0)))))
+          (is (= '(/ (+ (* -1 ((D μ↑1) τ) (e1↑0 (up x0 y0)))
+                        (* ((D μ↑0) τ) (e1↑1 (up x0 y0))))
+                     (+ (* -1 (e1↑0 (up x0 y0)) (e0↑1 (up x0 y0)))
+                        (* (e1↑1 (up x0 y0)) (e0↑0 (up x0 y0)))))
                  (simplify
                   (((nth edual 0)
                     (vf/procedure->vector-field
@@ -142,8 +142,8 @@ and the differentials of coordinate functions."
                          (man/chart R1-rect))
             f (f/compose (af/literal-function 'f '(-> (UP Real Real) Real))
                          (man/chart S2-spherical))]
-        (is (= '(+ (* (((partial 0) f) (up (θ τ) (φ τ))) ((D θ) τ))
-                   (* (((partial 1) f) (up (θ τ) (φ τ))) ((D φ) τ)))
+        (is (= '(+ (* (((partial 1) f) (up (θ τ) (φ τ))) ((D φ) τ))
+                   (* (((partial 0) f) (up (θ τ) (φ τ))) ((D θ) τ)))
                (simplify ((((m/differential μ) d:dt) f)
                           ((man/point R1-rect) 'τ)))))
 
