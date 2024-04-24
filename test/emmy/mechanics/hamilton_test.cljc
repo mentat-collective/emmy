@@ -707,8 +707,8 @@
                         p_x (* p (g/cos theta))]
                     (up t x p_x)))]
           (is (= '(up 0
-                      (+ (* -1 p x3) x3)
-                      (+ (* p x2) (* -1 x2)))
+                      (+ (* -1 p x17) x17)
+                      (+ (* p x16) (* -1 x16)))
                  (simplify
                   ((H/time-independent-canonical? a-non-canonical-transform)
                    (up 't 'theta 'p))))
