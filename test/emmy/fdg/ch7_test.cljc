@@ -350,9 +350,9 @@
                        (((expt D 2) alpha) t))
                     (+ (* 2
                           (cos (alpha t))
-                          ((D alpha) t)
                           (sin (alpha t))
-                          ((D beta) t))
+                          ((D beta) t)
+                          ((D alpha) t))
                        (* (expt (sin (alpha t)) 2)
                           (((expt D 2) beta) t))))
              (simplify

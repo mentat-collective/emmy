@@ -153,10 +153,13 @@
         values like (cos 0) can be exactly evaluated.")))
 
   (checking "inexact numbers" 100 [x sg/native-integral]
-            (is (=  (+ 1 (Math/cos x))
-                    (g/+ 1 (g/cos x)))
-                "You get a floating-point inexact result by calling generic fns
-    on a number directly, by comparison."))
+            (if (g/zero? x)
+              (is (= 2 (g/+ 1 (g/cos x)))
+                  "special-cased exact output at 0")
+              (is (= (+ 1 (Math/cos x))
+                     (g/+ 1 (g/cos x)))
+                  "You get a floating-point inexact result by calling generic fns
+    on a number directly, by comparison.")))
 
   (testing "literal-number properly prints wrapped sequences, even if they're lazy."
     (is (= "(* 2 x)"

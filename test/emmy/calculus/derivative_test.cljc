@@ -446,12 +446,12 @@
   (testing "space"
     (let [g (af/literal-function 'g [0 0] 0)
           h (af/literal-function 'h [0 0] 0)]
-      (is (= '(+ (((partial 0) g) x y) (((partial 0) h) x y))
+      (is (= '(+ (((partial 0) h) x y) (((partial 0) g) x y))
              (simplify (((partial 0) (+ g h)) 'x 'y))))
-      (is (= '(+ (* (((partial 0) g) x y) (h x y)) (* (((partial 0) h) x y) (g x y)))
+      (is (= '(+ (* (((partial 0) h) x y) (g x y)) (* (((partial 0) g) x y) (h x y)))
              (simplify (((partial 0) (* g h)) 'x 'y))))
-      (is (= '(+ (* (((partial 0) g) x y) (h x y) (expt (g x y) (+ (h x y) -1)))
-                 (* (((partial 0) h) x y) (log (g x y)) (expt (g x y) (h x y))))
+      (is (= '(+ (* (((partial 0) h) x y) (log (g x y)) (expt (g x y) (h x y)))
+                 (* (((partial 0) g) x y) (h x y) (expt (g x y) (+ (h x y) -1))))
              (simplify (((partial 0) (g/expt g h)) 'x 'y))))))
 
   (testing "operators"
@@ -528,7 +528,7 @@
                 (for [i (range 2)
                       j (range 2)]
                   (((partial i j) f) (s/up 'x 'y) (s/up 'w 'z))))))
-    (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
+    (is (thrown? #?(:clj ClassCastException :cljs js/Error)
                  (((partial 0 1) f) 'x 'y)))))
 
 (deftest derivative-as-operator

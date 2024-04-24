@@ -147,9 +147,9 @@
 
     (let [q (up x y)]
       (is (= '(down
-               (+ (* ((D x) (f t)) (m_00 (up (x (f t)) (y (f t)))) (((expt D 2) f) t))
-                  (* (m_01 (up (x (f t)) (y (f t)))) ((D y) (f t)) (((expt D 2) f) t)))
-               (+ (* ((D x) (f t)) (m_01 (up (x (f t)) (y (f t)))) (((expt D 2) f) t))
+               (+ (* (m_01 (up (x (f t)) (y (f t)))) ((D y) (f t)) (((expt D 2) f) t))
+                  (* ((D x) (f t)) (m_00 (up (x (f t)) (y (f t)))) (((expt D 2) f) t)))
+               (+ (* (m_01 (up (x (f t)) (y (f t)))) ((D x) (f t)) (((expt D 2) f) t))
                   (* ((D y) (f t)) (m_11 (up (x (f t)) (y (f t)))) (((expt D 2) f) t))))
              (simplify
               ((- (compose (e/Euler-Lagrange-operator L2)
@@ -188,10 +188,10 @@
   (is (= '(/ (+ (* (expt c 2) (((expt (partial 0) 2) V) (up y z t)))
                 (* (expt c 2) (((expt (partial 1) 2) V) (up y z t)))
                 (* (expt c 2) (((expt (partial 2) 2) V) (up y z t)))
-                (* -1 (expt (((partial 0) V) (up y z t)) 2))
                 (* 2 (V (up y z t)) (((expt (partial 0) 2) V) (up y z t)))
                 (* 2 (V (up y z t)) (((expt (partial 1) 2) V) (up y z t)))
                 (* 2 (V (up y z t)) (((expt (partial 2) 2) V) (up y z t)))
+                (* -1 (expt (((partial 0) V) (up y z t)) 2))
                 (* -1 (expt (((partial 1) V) (up y z t)) 2))
                 (* -1 (expt (((partial 2) V) (up y z t)) 2)))
              (+ (expt c 2) (* 2N (V (up y z t)))))

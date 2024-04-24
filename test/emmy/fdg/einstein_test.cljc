@@ -193,7 +193,7 @@
                      (e/Christoffel->Cartan
                       (e/metric->Christoffel-2 metric basis)))
               ws    (e/basis->oneform-basis basis)]
-          (is (= '[(/ (+ (* (expt c 2) ((D rho) t) (R t))
+          (is (= '[(/ (+ (* (expt c 2) (R t) ((D rho) t))
                          (* 3 (expt c 2) ((D R) t) (rho t))
                          (* 3 ((D R) t) (p t)))
                       (* (expt c 2) (R t)))

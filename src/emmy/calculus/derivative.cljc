@@ -437,10 +437,10 @@
 
 (doseq [t [::v/function ::s/structure]]
   (defmethod g/partial-derivative [t v/seqtype] [f selectors]
-    (multivariate f selectors))
+    (tape/gradient f selectors))
 
   (defmethod g/partial-derivative [t nil] [f _]
-    (multivariate f [])))
+    (tape/gradient f [])))
 
 ;; ## Operators
 ;;
@@ -477,6 +477,16 @@
   [& selectors]
   (o/make-operator #(g/partial-derivative % selectors)
                    `(~'partial ~@selectors)))
+
+(def D-fwd
+  (o/make-operator #(multivariate % [])
+                   g/derivative-symbol))
+
+(defn partial-fwd [& selectors]
+  (o/make-operator #(multivariate % selectors)
+                   `(~'partial ~@selectors)))
+
+
 
 ;; ## Derivative Utilities
 ;;

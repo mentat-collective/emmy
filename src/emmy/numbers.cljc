@@ -95,8 +95,8 @@
         (g/infinite? a) 0
         :else (g// (g/sin a) a)))
 
-(defmethod g/sin [::v/real] [a] (Math/sin a))
-(defmethod g/cos [::v/real] [a] (Math/cos a))
+(defmethod g/sin [::v/real] [a] (if (g/zero? a) 0 (Math/sin a)))
+(defmethod g/cos [::v/real] [a] (if (g/zero? a) 1 (Math/cos a)))
 (defmethod g/tan [::v/real] [a] (Math/tan a))
 
 (defmethod g/cosh [::v/real] [a] (Math/cosh a))

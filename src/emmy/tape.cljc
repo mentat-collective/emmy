@@ -719,15 +719,22 @@
                (let [primal-x  (tape-primal x tag)
                      primal-y  (tape-primal y tag)
                      partial-x (if (and (tape? x) (= tag (tape-tag x)))
-                                 [[x (df:dx primal-x primal-y)]]
+                                 (let [px (df:dx primal-x primal-y)]
+                                   (if (g/numeric-zero? px)
+                                     []
+                                     [[x px]]))
                                  [])
                      partial-y (if (and (tape? y) (= tag (tape-tag y)))
-                                 [[y (df:dy primal-x primal-y)]]
-                                 [])]
-
-                 (make tag
-                       (call primal-x primal-y)
-                       (into partial-x partial-y))))]
+                                 (let [py (df:dy primal-x primal-y)]
+                                   (if (g/numeric-zero? py)
+                                     []
+                                     [[y py]]))
+                                 [])
+                     primal    (call primal-x primal-y)
+                     partials  (into partial-x partial-y)]
+                 (if (empty? partials)
+                   primal
+                   (make tag primal partials))))]
        (if-let [[tag dx] (tag+perturbation x y)]
          (cond (tape? dx)   (operate-reverse tag)
                (d/dual? dx) (operate-forward tag)
