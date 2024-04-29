@@ -5,7 +5,7 @@
   (:require [clojure.test :refer [is deftest testing use-fixtures]]
             [emmy.abstract.function :as af]
             [emmy.abstract.number :refer [literal-number]]
-            [emmy.calculus.derivative :as d :refer [D partial]]
+            [emmy.calculus.derivative :as d]
             [emmy.complex :as c]
             [emmy.differential :as sd]
             [emmy.expression :as x]
@@ -34,7 +34,7 @@
     (let [tag 0
           f   (fn [x] (fn [g] (g x)))
           Df  (-> (f (sd/bundle-element 'x 1 tag))
-                  (sd/extract-tangent tag ::sd/dual))]
+                  (sd/extract-tangent tag sd/FORWARD-MODE))]
       (is (not (sd/tag-active? tag))
           "Outside the context of a derivative, the tag is not marked as
           active.")
@@ -47,7 +47,7 @@
                         call to Df the `tag` IS active.")
                     (g/cube x)))))))))
 
-(deftest basic-D-tests
+(defn basic-D-tests [D]
   (is (= 0 ((D (fn [] 100))))
       "D of no-arg returns zero")
 
@@ -113,7 +113,7 @@
         "the Jacobian of a permutation is the permutation matrix of that
         permutation")))
 
-(deftest derivative-return-tests
+(defn derivative-return-tests [D]
   (testing "Series, PowerSeries"
     (let [series-D ((D series/exp-series) 'x)]
       (is (series/series? series-D)
@@ -167,7 +167,7 @@
               (((D f) 'x) 'y)))
           "derivative pushes into the operator's fn.."))))
 
-(deftest partial-diff-test
+(defn partial-diff-test [D partial]
   (testing "partial derivative simplification rules"
     (let [f (af/literal-function 'f '(-> (UP Real Real) Real))]
       (is (= '(((* (expt (partial 0) 2) (partial 1)) f) (up x y))
@@ -218,7 +218,7 @@
       (is (= (s/down (s/up 'x 0) (s/up 0 'y))
              (((D F) 1 1) (s/up 'x 'y)))))))
 
-(defn- δ [η]
+(defn δ [D η]
   (fn [f]
     ;; Define g(ε) as in Eq. 1.22; then δ_η f[q] = Dg(0)
     (fn [q]
@@ -226,14 +226,14 @@
                 (f (+ q (* ε η))))]
         ((D g) 0)))))
 
-(deftest delta-eta-tests
+(defn delta-eta-tests [D]
   (af/with-literal-functions [η q f g]
     (let [I (fn [q] q)
           F (fn [q] (fn [t] (f (q t))))
           G (fn [q] (fn [t] (g (q t))))
           q+εη (+ q (* 'ε η))
           g (fn [ε] (+ q (* ε η)))
-          δη (δ η)
+          δη (δ D η)
           δηI (δη I)
           δηIq (δηI q)
           δηFq ((δη F) q)
@@ -265,7 +265,7 @@
         (is (= '(* (η t) ((D f) (q t)) ((D φ) (f (q t))))
                (simplify (((δη (φ F)) q) 't))))))))
 
-(deftest exponentiation-and-composition
+(defn exponentiation-and-composition [D]
   (let [ff (fn [x y z]
              (+ (* x x y)
                 (* y y z)
@@ -356,7 +356,7 @@
       (is (= 0 ((D (fn [_x] 0)) 'x)))
       (is (= 0 ((D (fn [& _xs] 0)) 'x))))))
 
-(deftest literal-function-tests
+(defn literal-function-tests [D partial]
   (af/with-literal-functions [f [g [0 0] 0]]
     (testing "R -> R"
       (is (= '((D f) x) (simplify ((D f) 'x))))
@@ -377,13 +377,13 @@
       (is (= 0 ((g/zero-like f) 'x)))
       (is (= 0 ((D (g/zero-like f)) 'x))))))
 
-(deftest complex-derivatives
+(defn complex-derivatives [D]
   (let [f (fn [z] (* c/I (sin (* c/I z))))]
     (is (= '(* -1 (cosh z))
            (simplify
             ((D f) 'z))))))
 
-(deftest operator-tests
+(defn operator-tests [D]
   (testing "operator multiplication by fn == "
     (is (= '(+ (* (expt t 3) (cos t))
                (* 3 (expt t 2) (sin t)))
@@ -394,7 +394,7 @@
          (simplify (((* sin D) g/cube) 't)))
       "fn * D == multiplies after D"))
 
-(deftest more-trig-tests
+(defn more-trig-tests [D]
   (testing "cotangent"
     (is (= '(/ (cos x) (sin x))
            (simplify (cot 'x))))
@@ -442,7 +442,7 @@
             "This style uses function arithmetic and applies 'x at the
             end.")))))
 
-(deftest alexgian-examples
+(defn alexgian-examples [D partial]
   (testing "space"
     (let [g (af/literal-function 'g [0 0] 0)
           h (af/literal-function 'h [0 0] 0)]
@@ -518,7 +518,7 @@
       (is (ish? expected ((D f100e) 6)))
       (is (ish? expected ((D f100ea) 6))))))
 
-(deftest deep-partials
+(defn deep-partials [partial]
   (let [f (fn [x y] (+ (g/square x) (g/square (g/square y))))]
     (is (= '((* 2 x)
              (* 2 y)
@@ -531,7 +531,7 @@
     (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
                  (((partial 0 1) f) 'x 'y)))))
 
-(deftest derivative-as-operator
+(defn derivative-as-operator [D]
   (let [f (af/literal-function 'f [0 0] 0)
         g (af/literal-function 'g (s/up 0 0) 0)
         dX (s/up 'dx 'dy)]
@@ -561,7 +561,7 @@
                (* (expt dy 2) (((expt (partial 1) 2) f) x y)))
            (simplify (* dX (((g/expt D 2) f) 'x 'y) dX))))))
 
-(deftest moved-from-structure-and-matrix
+(defn moved-from-structure-and-matrix [D]
   (testing "as-matrix, D-as-matrix"
     (let [S (s/up 't (s/up 'x 'y) (s/down 'p_x 'p_y))
           present (fn [expr]
@@ -648,7 +648,7 @@
              (simplify
               (matrix/s->m vs (((g/expt D 2) L1) vs) vs)))))))
 
-(deftest moved-from-matrix
+(defn moved-from-matrix [D]
   (testing "s->m->s"
     (let [as-matrix (fn [F]
                       (fn [s]
@@ -691,7 +691,7 @@
              (simplify
               ((as-matrix (D C-general)) s)))))))
 
-(deftest taylor-moved-from-series
+(defn taylor-moved-from-series [D]
   (let [simp4 (fn [x] (simplify (take 4 x)))
         V (series/series g/sin g/cos g/tan)]
 
@@ -703,8 +703,8 @@
 
     (testing "f -> Series"
       (let [F (fn [k] (series/series
-                       (fn [t] (g/* k t))
-                       (fn [t] (g/* k k t))))]
+                      (fn [t] (g/* k t))
+                      (fn [t] (g/* k k t))))]
         (is (= '((* q z) (* (expt q 2) z) 0 0) (simp4 ((F 'q) 'z))))
         (is (= '(z (* 2 q z) 0 0) (simp4 (((D F) 'q) 'z)))))))
 
@@ -727,7 +727,7 @@
                     (fn [x] (g/sqrt (+ (g/one-like x) x)))
                     0) 'dx))))))
 
-(deftest derivative-of-matrix
+(defn derivative-of-matrix [D]
   (let [M (matrix/by-rows [(af/literal-function 'f) (af/literal-function 'g)]
                           [(af/literal-function 'h) (af/literal-function 'k)])]
     (is (= '(matrix-by-rows
@@ -764,7 +764,7 @@
            (simplify
             ((D (* (g/transpose M) M)) 't))))))
 
-(deftest derivatives-as-values
+(defn derivatives-as-values [D]
   (let [cs0 (fn [x] (sin (cos x)))
         cs1 (f/compose sin cos)
         cs2 (comp sin cos)
@@ -790,7 +790,7 @@
 ;; Tests from the refman that came about while implementing various derivative
 ;; and operator functions.
 
-(deftest refman-tests
+(defn refman-tests [D]
   (testing "o/expn expansion of `D`"
     (let [f     (af/literal-function 'f)
           ->seq (comp simplify #(take 10 %))]
@@ -851,7 +851,7 @@
             (is (ish? (Math/cos 1) (via-series 1)))
             (is (ish? (Math/cos 0.6) (via-series 0.6)))))))))
 
-(deftest higher-order-fn-tests
+(defn higher-order-fn-tests [D]
   (letfn [(f [x]
             (fn [y z]
               (g/* x y z)))]
@@ -873,7 +873,7 @@
 #?(:clj
    ;; NOTE these are disabled for cljs because they force themselves into ratio
    ;; arithmetic!
-   (deftest newton-raphson-sqrt
+   (defn newton-raphson-sqrt [D]
      (testing "autodiff works through arbitrary optimization loops!"
        (with-comparator (v/within 1e-8)
          (letfn [(nr-sqrt [x]
@@ -898,7 +898,7 @@
              (is (ish? (/ -1 108) (((g/square D) nr-sqrt) 9)))
              (is (ish? (/ -1 256) (((g/square D) nr-sqrt) 16)))))))))
 
-(deftest amazing-bug
+(defn amazing-bug [D]
   (testing "alexey's amazing bug"
     (let [shift (fn [offset]
                   (fn [g]
@@ -1094,7 +1094,7 @@
 
                   ;; go extract the original tag that we were looking for in the
                   ;; first place.
-                  (d/extract-tangent tag ::sd/dual)
+                  (d/extract-tangent tag d/FORWARD-MODE)
 
                   ;; Sub `tag` back in so that any wrapping fn can extract it.
                   ;;
@@ -1210,7 +1210,7 @@
                  (wrapped-d-hat
                   (wrapped-d-hat (wrap exp)))) 1)))))))
 
-(deftest sams-amazing-bug
+(defn sams-amazing-bug [D]
   ;; This test shows a potential pitfall that might bite you if you're not
   ;; careful about tracking the scope introduced by each call to [[d/D]]. This
   ;; gets tricky with derivatives of higher order functions.
@@ -1282,7 +1282,7 @@
       ;; together!
       )))
 
-(deftest dvl-bug-examples
+(defn dvl-bug-examples [D]
   ;; These tests and comments all come from Alexey Radul's
   ;; https://github.com/axch/dysvunctional-language. Thanks, Alexey!
 
@@ -1320,7 +1320,7 @@
                  (fn [g]
                    (fn [z] (g (+ x z)))))))]
       (is (ish? ((fn [y] (+ (* 3 (cos (* 3 y)))
-                            (* y (cos (* 3 y)))))
+                           (* y (cos (* 3 y)))))
                  (+ 3 Math/PI))
                 (((D f) 3)
                  (fn [g-hat f-hat]
@@ -1390,7 +1390,7 @@
       (is (= (* 2 (sin 1) (cos 1))
              ((D (fn [x] (* (sin x) (sin x)))) 1))))))
 
-(deftest confusion-tests
+(defn confusion-tests [D]
   ;; More tests from dvl stressing perturbation confusion.
   (testing "don't confuse perturbations, from dvl"
     (letfn [(one [x]
@@ -1494,7 +1494,7 @@
                   (take 3)
                   (simplify)))))))
 
-(deftest symbolic-taylor-series-tests
+(defn symbolic-taylor-series-tests [D]
   (let [xs (d/symbolic-taylor-series exp 0)]
     (is (series/power-series? xs)
         "we have a proper power series!")
@@ -1616,3 +1616,38 @@
                   (take 2)))
           "symbolic-taylor-series keeps the arguments symbolic, even when they
           are numbers."))))
+
+(defn all-tests [D partial]
+  (basic-D-tests D)
+  (derivative-return-tests D)
+  (partial-diff-test D partial)
+  (delta-eta-tests D)
+  (exponentiation-and-composition D)
+  (literal-function-tests D partial)
+  (complex-derivatives D)
+  (operator-tests D)
+  (more-trig-tests D)
+  (hermetic-simplify-fixture #(alexgian-examples D partial))
+  (deep-partials partial)
+  (derivative-as-operator D)
+  (moved-from-structure-and-matrix D)
+  (moved-from-matrix D)
+  (taylor-moved-from-series D)
+  (hermetic-simplify-fixture #(derivative-of-matrix D))
+  (hermetic-simplify-fixture #(derivatives-as-values D))
+  (refman-tests D)
+  (higher-order-fn-tests D)
+  #?(:clj (newton-raphson-sqrt D))
+  (amazing-bug D)
+  (sams-amazing-bug D)
+  (dvl-bug-examples D)
+  (confusion-tests D)
+  (symbolic-taylor-series-tests D))
+
+(deftest forward-mode-tests
+  (all-tests d/D-forward
+             d/partial-forward))
+
+(deftest reverse-mode-tests
+  (all-tests d/D-forward
+             d/partial-forward))

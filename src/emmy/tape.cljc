@@ -141,9 +141,9 @@
   ;; forward-mode-differentiated function. If this happens, a [[TapeCell]]
   ;; should be treated like a scalar, with a 0-valued tangent component.
   (extract-tangent [this t mode]
-    (cond (= mode ::d/dual) 0
-          (= t tag)         (reverse-phase this)
-          :else             (d/->Completed {})))
+    (cond (= mode d/FORWARD-MODE) 0
+          (= t tag)               (reverse-phase this)
+          :else                   d/REVERSE-EMPTY))
 
   (extract-id [_ _] 0)
 
@@ -589,7 +589,7 @@
                         (tapify x tag)
                         (update-in x selectors tapify tag))
             output    (d/with-active-tag tag f [inputs])
-            completed (d/extract-tangent output tag ::tape)]
+            completed (d/extract-tangent output tag d/REVERSE-MODE)]
         (if (empty? selectors)
           (interpret inputs completed tag)
           (interpret (get-in inputs selectors) completed tag))))

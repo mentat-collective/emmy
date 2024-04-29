@@ -365,6 +365,10 @@
   ;; needs to be taken. This should never happen with a [[Completed]] instance!
   (perturbed? [_] (assert "Impossible!")))
 
+(def FORWARD-MODE ::forward)
+(def REVERSE-MODE ::reverse)
+(def REVERSE-EMPTY (->Completed {}))
+
 ;; `replace-tag` exists to handle subtle bugs that can arise in the case of
 ;; functional return values. See the "Amazing Bug" sections
 ;; in [[emmy.calculus.derivative-test]] for detailed examples on how this
@@ -377,17 +381,17 @@
   (perturbed? [_] false)
   (replace-tag [_ _ _] nil)
   (extract-tangent [_ _ mode]
-    (if (= mode ::dual)
+    (if (= mode FORWARD-MODE)
       0
-      (->Completed {})))
+      REVERSE-EMPTY))
 
   #?(:clj Object :cljs default)
   (perturbed? [_] false)
   (replace-tag [this _ _] this)
   (extract-tangent [this _ mode]
-    (if (= mode ::dual)
+    (if (= mode FORWARD-MODE)
       (g/zero-like this)
-      (->Completed {}))))
+      REVERSE-EMPTY)))
 
 ;; ## Dual Implementation
 ;;
@@ -426,9 +430,9 @@
       this))
 
   (extract-tangent [_ t mode]
-    (cond (not= mode ::dual) (->Completed {})
-          (= t tag)          tangent
-          :else              0))
+    (cond (not= mode FORWARD-MODE) REVERSE-EMPTY
+          (= t tag)                tangent
+          :else                    0))
 
   v/IKind
   (kind [_] ::dual)

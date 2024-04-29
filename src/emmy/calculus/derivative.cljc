@@ -262,7 +262,7 @@
     (let [tag    (d/fresh-tag)
           lifted (d/bundle-element x 1 tag)]
       (-> (d/with-active-tag tag f [lifted])
-          (d/extract-tangent tag ::d/dual)))))
+          (d/extract-tangent tag d/FORWARD-MODE)))))
 
 ;; The result of applying the derivative `(D f)` of a multivariable function `f`
 ;; to a sequence of `args` is a structure of the same shape as `args` with all
@@ -435,19 +435,42 @@
 ;; implementation for the components. I vote to back out this `::s/structure`
 ;; installation.
 
+(def ^:dynamic *mode* d/FORWARD-MODE)
+
 (doseq [t [::v/function ::s/structure]]
   (defmethod g/partial-derivative [t v/seqtype] [f selectors]
-    (multivariate f selectors))
+    (if (= *mode* d/FORWARD-MODE)
+      (multivariate f selectors)
+      (tape/gradient f selectors)))
 
   (defmethod g/partial-derivative [t nil] [f _]
-    (multivariate f [])))
+    (if (= *mode* d/FORWARD-MODE)
+      (multivariate f [])
+      (tape/gradient f []))))
 
 ;; ## Operators
 ;;
 ;; This section exposes various differential operators as [[o/Operator]]
 ;; instances.
 
-(def D
+(def ^{:arglists '([f])}
+  D-forward
+  (o/make-operator
+   (fn [x]
+     (binding [*mode* d/FORWARD-MODE]
+       (g/partial-derivative x [])))
+   g/derivative-symbol))
+
+(def ^{:arglists '([f])}
+  D-reverse
+  (o/make-operator
+   (fn [x]
+     (binding [*mode* d/REVERSE-MODE]
+       (g/partial-derivative x [])))
+   g/derivative-symbol))
+
+(def ^{:arglists '([f])}
+  D
   "Derivative operator. Takes some function `f` and returns a function whose value
   at some point can multiply an increment in the arguments to produce the best
   linear estimate of the increment in the function value.
@@ -460,8 +483,7 @@
   The related [[emmy.env/Grad]] returns a function that produces a structure of
   the opposite orientation as [[D]]. Both of these functions use forward-mode
   automatic differentiation."
-  (o/make-operator #(g/partial-derivative % [])
-                   g/derivative-symbol))
+  D-forward)
 
 (defn D-as-matrix [F]
   (fn [s]
@@ -470,13 +492,28 @@
      ((D F) s)
      s)))
 
-(defn partial
+(defn partial-forward
+  [& selectors]
+  (o/make-operator
+   (fn [x]
+     (binding [*mode* d/FORWARD-MODE]
+       (g/partial-derivative x selectors)))
+   `(~'partial ~@selectors)))
+
+(defn partial-reverse
+  [& selectors]
+  (o/make-operator
+   (fn [x]
+     (binding [*mode* d/REVERSE-MODE]
+       (g/partial-derivative x selectors)))
+   `(~'partial ~@selectors)))
+
+(def ^{:arglists '([& selectors])}
+  partial
   "Returns an operator that, when applied to a function `f`, produces a function
   that computes the partial derivative of `f` at the (zero-based) slot index
   provided via `selectors`."
-  [& selectors]
-  (o/make-operator #(g/partial-derivative % selectors)
-                   `(~'partial ~@selectors)))
+  partial-forward)
 
 ;; ## Derivative Utilities
 ;;
