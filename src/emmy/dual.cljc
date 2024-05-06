@@ -3,12 +3,12 @@
 ^#:nextjournal.clerk
 {:toc true
  :visibility :hide-ns}
-(ns emmy.differential
+(ns emmy.dual
   "This namespace contains an implementation of [[Dual]], a type that forms the
   basis for the forward-mode automatic differentiation implementation in emmy.
 
-  See [[emmy.calculus.derivative]] for a fleshed-out derivative
-  implementation using [[Dual]]."
+  See [[emmy.calculus.derivative]] for a fleshed-out derivative implementation
+  using [[Dual]]."
   (:refer-clojure :exclude [compare])
   (:require [emmy.function]  ;; for the side effect of making kind: MultiFn -> ::v/function
             [emmy.generic :as g]
@@ -432,7 +432,7 @@
   #?(:clj (equals [a b] (equiv a b)))
   #?(:cljs (valueOf [_] (.valueOf primal)))
   (toString [_]
-    (str "#emmy.tape.Dual"
+    (str "#emmy.dual.Dual"
          {:tag     tag
           :primal  primal
           :tangent tangent}))

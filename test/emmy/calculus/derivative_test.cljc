@@ -7,7 +7,7 @@
             [emmy.abstract.number :refer [literal-number]]
             [emmy.calculus.derivative :as d]
             [emmy.complex :as c]
-            [emmy.differential :as sd]
+            [emmy.dual :as sd]
             [emmy.expression :as x]
             [emmy.function :as f]
             [emmy.generic :as g :refer [acos asin atan cos sin tan
@@ -1342,9 +1342,9 @@
     ;; space.
     ;;
     ;; Doing work inside a continuation means you're actually working
-    ;; with [[emmy.differential/Dual]] instances whose tangents can interact.
-    ;; Once you break out of the continuation, as in "bug two", the two
-    ;; components separately drop their tangents, so they can't talk anymore.
+    ;; with [[emmy.dual/Dual]] instances whose tangents can interact. Once you
+    ;; break out of the continuation, as in "bug two", the two components
+    ;; separately drop their tangents, so they can't talk anymore.
     ;;
     ;; The "linear" comment matters because if you only combine the dropped-down
     ;; pieces linearly, then their tangents wouldn't have interacted anyway, so

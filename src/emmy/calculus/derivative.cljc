@@ -7,7 +7,7 @@
   "This namespace implements a number of differential operators like [[D]], and
   the machinery to apply [[D]] to various structures."
   (:refer-clojure :exclude [partial])
-  (:require [emmy.differential :as d]
+  (:require [emmy.dual :as d]
             [emmy.expression :as x]
             [emmy.function :as f]
             [emmy.generic :as g]
@@ -23,16 +23,15 @@
 
 ;; ## IPerturbed Implementation for Functions
 ;;
-;; The following section, along with [[emmy.collection]]
-;; and [[emmy.differential]], rounds out the implementations
-;; of [[emmy.differential/IPerturbed]] for native Clojure(script) data types.
-;; The function implementation is subtle, as described by [Manzyuk et al.
-;; 2019](https://arxiv.org/pdf/1211.4892.pdf).
+;; The following section, along with [[emmy.collection]] and [[emmy.dual]],
+;; rounds out the implementations of [[emmy.dual/IPerturbed]] for native
+;; Clojure(Script) data types. The function implementation is subtle, as
+;; described by [Manzyuk et al. 2019](https://arxiv.org/pdf/1211.4892.pdf).
 ;; ([[emmy.derivative.calculus-test]], in the "Amazing Bug" sections,
 ;; describes the pitfalls at length.)
 ;;
-;; [[emmy.differential]] describes how each in-progress perturbed variable
-;; in a derivative is assigned a "tag" that accumulates the variable's partial
+;; [[emmy.dual]] describes how each in-progress perturbed variable in a
+;; derivative is assigned a "tag" that accumulates the variable's partial
 ;; derivative.
 ;;
 ;; How do we interpret the case where `((D f) x)` produces a _function_?
@@ -70,16 +69,15 @@
 ;; `extract-tangent` operation with the returned function.
 ;;
 ;; The returned function needs to capture an internal reference to the
-;; original [[emmy.differential/Dual]] input. This is true for any
-;; Functor-shaped return value, like a structure or Map. However! There is a
-;; subtlety present with functions that's not present with vectors or other
-;; containers.
+;; original [[emmy.dual/Dual]] input. This is true for any Functor-shaped return
+;; value, like a structure or Map. However! There is a subtlety present with
+;; functions that's not present with vectors or other containers.
 ;;
 ;; The difference with functions is that they take _inputs_. If you contrive a
-;; situation where you can feed the original captured [[emmy.differential/Dual]]
-;; into the returned function, this can trigger "perturbation confusion", where
-;; two different layers try to extract the tangent corresponding to the SAME
-;; tag, and one is left with nothing.
+;; situation where you can feed the original captured [[emmy.dual/Dual]] into
+;; the returned function, this can trigger "perturbation confusion", where two
+;; different layers try to extract the tangent corresponding to the SAME tag,
+;; and one is left with nothing.
 ;;
 ;; If you engineer an
 ;; example (see [[emmy.calculus.derivative-test/amazing-bug]]) where:
@@ -116,9 +114,9 @@
 ;;
 ;; - it extracts the originally-injected tag when someone eventually calls the
 ;;   function
-;; - if some caller passes a new [[emmy.differential/Dual]] instance into the
-;;   function, any tags in that [[emmy.differential/Dual]] will survive on their
-;;   way back out... even if they happen to contain the originally-injected tag.
+;; - if some caller passes a new [[emmy.dual/Dual]] instance into the function,
+;;   any tags in that [[emmy.dual/Dual]] will survive on their way back out...
+;;   even if they happen to contain the originally-injected tag.
 ;;
 ;; We do this by:
 ;;
@@ -128,8 +126,8 @@
 ;;   `tag`, as requested (note now that the only instances of `tag` that can
 ;;   appear in the result come from variables captured in the function's
 ;;   closure)
-;; - remapping `fresh` back to `tag` inside the
-;;   remaining [[emmy.differential/Dual]] instance.
+;; - remapping `fresh` back to `tag` inside the remaining [[emmy.dual/Dual]]
+;;   instance.
 ;;
 ;; This last step ensures that any tangent tagged with `tag` in the input can
 ;; make it back out without tangling with closure-captured `tag` instances that
@@ -236,9 +234,8 @@
 
 ;; ## Single and Multivariable Calculus
 ;;
-;; These functions put together the pieces laid out
-;; in [[emmy.differential]] and declare an interface for taking
-;; derivatives.
+;; These functions put together the pieces laid out in [[emmy.dual]] and declare
+;; an interface for taking derivatives.
 
 (defn derivative
   "Returns a single-argument function of that, when called with an argument `x`,
@@ -249,10 +246,9 @@
   see [[emmy.numerical.derivative/D-numeric]].
 
   `f` must be built out of generic operations that know how to
-  handle [[emmy.differential/Differential]] inputs in addition to any types that
-  a normal `(f x)` call would present. This restriction does _not_ apply to
-  operations like putting `x` into a container or destructuring; just primitive
-  function calls."
+  handle [[emmy.dual/Dual]] inputs in addition to any types that a normal `(f
+  x)` call would present. This restriction does _not_ apply to operations like
+  putting `x` into a container or destructuring; just primitive function calls."
   [f]
   (fn [x]
     (let [tag    (d/fresh-tag)

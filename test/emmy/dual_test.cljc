@@ -1,11 +1,11 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
-(ns emmy.differential-test
+(ns emmy.dual-test
   (:require #?(:cljs [emmy.util :as u])
             [clojure.test :refer [is deftest testing use-fixtures]]
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
-            [emmy.differential :as d]
+            [emmy.dual :as d]
             [emmy.generators :as sg]
             [emmy.generic :as g]
             [emmy.numerical.derivative :refer [D-numeric]]
@@ -197,7 +197,7 @@
                     (g/simplify not-simple)))
                 "simplify simplifies primal and tangent")
 
-            (is (= "#emmy.tape.Dual{:tag 0, :primal (expt x 4), :tangent (* 4 (expt x 3))}"
+            (is (= "#emmy.dual.Dual{:tag 0, :primal (expt x 4), :tangent (* 4 (expt x 3))}"
                    (str (g/simplify not-simple)))
                 "str representation properly simplifies.")))))))
 

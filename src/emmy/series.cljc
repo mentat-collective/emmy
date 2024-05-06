@@ -22,7 +22,7 @@
   Doug also has a 10-line version in Haskell on [his
   website](https://www.cs.dartmouth.edu/~doug/powser.html)."
   (:refer-clojure :exclude [identity])
-  (:require [emmy.differential :as d]
+  (:require [emmy.dual :as d]
             [emmy.expression]  ;; for the effect of the defmethod of zero? for Literals
             [emmy.function :as f]
             [emmy.generic :as g]

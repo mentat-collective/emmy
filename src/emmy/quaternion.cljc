@@ -12,7 +12,7 @@
   and [[emmy.numbers]]."
   (:refer-clojure :exclude [zero?])
   (:require [emmy.complex :as sc]
-            [emmy.differential :as d]
+            [emmy.dual :as d]
             [emmy.function :as f]
             [emmy.generic :as g]
             [emmy.matrix :as m]

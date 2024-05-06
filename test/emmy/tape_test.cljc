@@ -6,7 +6,7 @@
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
             [emmy.calculus.derivative :refer [D]]
-            [emmy.differential :as d]
+            [emmy.dual :as d]
             [emmy.expression.analyze :as a]
             [emmy.generators :as sg]
             [emmy.generic :as g]

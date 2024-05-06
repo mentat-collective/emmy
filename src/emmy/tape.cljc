@@ -9,7 +9,7 @@
   AD! Don't nest [[gradient]] calls inside [[emmy.env/D]] calls."
   (:refer-clojure :exclude [compare zero?])
   (:require #?(:clj [clojure.pprint :as pprint])
-            [emmy.differential :as d]
+            [emmy.dual :as d]
             [emmy.function :as f]
             [emmy.generic :as g]
             [emmy.matrix :as matrix]
@@ -25,9 +25,9 @@
 ;;
 ;; This namespace develops an implementation of "reverse-mode" automatic
 ;; differentation, in contrast with the forward mode AD implementation
-;; in [[emmy.differential]]. These two are closely related, and the
-;; implementations could merge once I get around to reading and
-;; implementing [the YOLO paper](https://arxiv.org/abs/2204.10923).
+;; in [[emmy.dual]]. These two are closely related, and the implementations
+;; could merge once I get around to reading and implementing [the YOLO
+;; paper](https://arxiv.org/abs/2204.10923).
 ;;
 ;; The core idea of forward-mode AD is that we can use the chain rule to
 ;; mechanically build up a partial derivative by wrapping one of the dependent
@@ -57,7 +57,7 @@
 ;; First, wrap all inputs to the function in an instance of a type called
 ;; a [[TapeCell]]. This type holds
 ;;
-;;   - a "tag", used as in [[emmy.differential]] to prevent confusion
+;;   - a "tag", used as in [[emmy.dual]] to prevent confusion
 ;;     between [[TapeCell]] instances created for different nested runs of
 ;;     differentation
 ;;   - a unique ID, used to de-duplicate work in the reverse pass
@@ -332,7 +332,7 @@
 
   [<tag> <tape-or-dual-number>]
 
-  containing the tag and instance of [[emmy.differential/Dual]] or [[TapeCell]]
+  containing the tag and instance of [[emmy.dual/Dual]] or [[TapeCell]]
   associated with the inner-most call to [[with-active-tag]] in the current call
   stack.
 
@@ -359,7 +359,7 @@
 
 (defn deep-primal
   "Version of [[tape-primal]] that will descend recursively into any perturbation
-  instance returned by [[tape-primal]] or [[emmy.differential/primal]] until
+  instance returned by [[tape-primal]] or [[emmy.dual/primal]] until
   encountering a non-perturbation.
 
   Given a non-perturbation, acts as identity."
@@ -525,8 +525,8 @@
 ;; times, one for each input.
 
 ;; TODO note that [[interpret]] and [[tapify]] both need to become generic on
-;; input-walking, and [[extract]] and [[emmy.differential/extract-tangent]] need
-;; to be generic on output-walking.
+;; input-walking, and [[extract]] and [[emmy.dual/extract-tangent]] need to be
+;; generic on output-walking.
 
 (defn ^:no-doc interpret
   "Given
@@ -600,12 +600,12 @@
 ;; ## Lifted Functions
 
 ;; [[lift-1]] and [[lift-2]] "lift", or augment, unary or binary functions with
-;; the ability to handle [[emmy.differential/Dual]] and [[TapeCell]] instances
-;; in addition to whatever other types they previously supported.
+;; the ability to handle [[emmy.dual/Dual]] and [[TapeCell]] instances in
+;; addition to whatever other types they previously supported.
 ;;
-;; Forward-mode support for [[emmy.differential/Dual]] is an implementation of
-;; the single and multivariable Taylor series expansion methods discussed at the
-;; beginning of [[emmy.differential]].
+;; Forward-mode support for [[emmy.dual/Dual]] is an implementation of the
+;; single and multivariable Taylor series expansion methods discussed at the
+;; beginning of [[emmy.dual]].
 ;;
 ;; To support reverse-mode automatic differentiation, When a unary or binary
 ;; function `f` encounters a [[TapeCell]] `x` (and `y` in the binary case) it
@@ -627,13 +627,13 @@
 
 ;; There is a subtlety here, noted in the docstrings below. [[lift-1]]
 ;; and [[lift-2]] really are able to lift functions like [[clojure.core/+]] that
-;; can't accept [[emmy.differential/Dual]] and [[TapeCell]]s. But the
-;; first-order derivatives that you have to supply _do_ have to be able to take
-;; instances of these types.
+;; can't accept [[emmy.dual/Dual]] and [[TapeCell]]s. But the first-order
+;; derivatives that you have to supply _do_ have to be able to take instances of
+;; these types.
 ;;
-;; This is because, for example, the [[emmy.differential/tangent]] of [[Dual]]
-;; might still be a [[Dual]], and will hit the first-order derivative via the
-;; chain rule.
+;; This is because, for example, the [[emmy.dual/tangent]] of [[emmy.dual/Dual]]
+;; might still be an [[emmy.dual/Dual]], and will hit the first-order derivative
+;; via the chain rule.
 ;;
 ;; Magically this will all Just Work if you pass an already-lifted function, or
 ;; a function built out of already-lifted components, as `df:dx` or `df:dy`.
@@ -646,15 +646,15 @@
     single argument
 
   Returns a new unary function that operates on both the original type of
-  `f`, [[TapeCell]] and [[emmy.differential/Dual]] instances.
+  `f`, [[TapeCell]] and [[emmy.dual/Dual]] instances.
 
   If called without `df:dx`, `df:dx` defaults to `(f :dfdx)`; this will return
   the derivative registered to a generic function defined
   with [[emmy.util.def/defgeneric]].
 
   NOTE: `df:dx` has to ALREADY be able to handle [[TapeCell]]
-  and [[emmy.differential/Dual]] instances. The best way to accomplish this is
-  by building `df:dx` out of already-lifted functions, and declaring them by
+  and [[emmy.dual/Dual]] instances. The best way to accomplish this is by
+  building `df:dx` out of already-lifted functions, and declaring them by
   forward reference if you need to."
   ([f]
    (if-let [df:dx (f :dfdx)]
@@ -686,10 +686,10 @@
   - a function `df:dy`, similar to `df:dx` for the second arg
 
   Returns a new binary function that operates on both the original type of
-  `f`, [[TapeCell]] and [[emmy.differential/Differential]] instances.
+  `f`, [[TapeCell]] and [[emmy.dual/Dual]] instances.
 
   NOTE: `df:dx` and `df:dy` have to ALREADY be able to handle [[TapeCell]]
-  and [[emmy.differential/Dual]] instances. The best way to accomplish this is
+  and [[emmy.dual/Dual]] instances. The best way to accomplish this is
   by building `df:dx` and `df:dy` out of already-lifted functions, and declaring
   them by forward reference if you need to."
   ([f]
@@ -742,7 +742,7 @@
     first and second args in the binary case
 
   Returns a new any-arity function that operates on both the original type of
-  `f`, [[TapeCell]] and [[emmy.differential/Dual]] instances.
+  `f`, [[TapeCell]] and [[emmy.dual/Dual]] instances.
 
   NOTE: The n-ary case of `f` is populated by nested calls to the binary case.
   That means that this is NOT an appropriate lifting method for an n-ary
@@ -772,7 +772,7 @@
     `differential-op` (defaults to `(lift-1 generic-op)`)
 
   installs an appropriate unary implementation of `generic-op` for `::tape` and
-  `:emmy.differential/dual` instances."
+  `:emmy.dual/dual` instances."
   ([generic-op]
    (defunary generic-op (lift-1 generic-op)))
   ([generic-op differential-op]
@@ -787,7 +787,7 @@
     `differential-op` (defaults to `(lift-2 generic-op)`)
 
   installs an appropriate binary implementation of `generic-op` between
-  `::tape`, `::emmy.differential/dual` and `::v/scalar` instances."
+  `::tape`, `:emmy.dual/dual` and `:emmy.value/scalar` instances."
   ([generic-op]
    (defbinary generic-op (lift-2 generic-op)))
   ([generic-op differential-op]
