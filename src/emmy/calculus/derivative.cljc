@@ -7,7 +7,8 @@
   "This namespace implements a number of differential operators like [[D]], and
   the machinery to apply [[D]] to various structures."
   (:refer-clojure :exclude [partial])
-  (:require [emmy.dual :as d]
+  (:require [emmy.autodiff]
+            [emmy.dual :as d]
             [emmy.expression :as x]
             [emmy.function :as f]
             [emmy.generic :as g]

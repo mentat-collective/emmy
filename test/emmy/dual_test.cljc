@@ -5,12 +5,12 @@
             [clojure.test :refer [is deftest testing use-fixtures]]
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
+            [emmy.autodiff :as ad]
             [emmy.dual :as d]
             [emmy.generators :as sg]
             [emmy.generic :as g]
             [emmy.numerical.derivative :refer [D-numeric]]
             [emmy.simplify :refer [hermetic-simplify-fixture]]
-            [emmy.tape :as tape]
             [emmy.value :as v]
             [same.core :refer [ish? with-comparator]]))
 
@@ -348,7 +348,7 @@
                     (is (g/one? ((derivative g/fractional-part) x)))))))
 
   (testing "lift-n"
-    (let [*   (tape/lift-n g/* (fn [_] 1) (fn [_ y] y) (fn [x _] x))
+    (let [*   (ad/lift-n g/* (fn [_] 1) (fn [_ y] y) (fn [x _] x))
           Df7 (derivative
                (fn x**7 [x] (* x x x x x x x)))
           Df1 (derivative *)

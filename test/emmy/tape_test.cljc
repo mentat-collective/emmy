@@ -5,6 +5,7 @@
             [clojure.test :refer [is deftest testing use-fixtures]]
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
+            [emmy.autodiff :as ad]
             [emmy.calculus.derivative :refer [D]]
             [emmy.dual :as d]
             [emmy.expression.analyze :as a]
@@ -257,21 +258,21 @@
   (testing "tag-of"
     (checking "tag-of matches tape-tag for cells" 100 [tag gen/nat]
               (let [cell (t/make tag 1)]
-                (is (= (t/tag-of cell)
+                (is (= (ad/tag-of cell)
                        (t/tape-tag cell))
                     "for tape cells, these should match"))))
 
   (testing "primal-of"
     (checking "for any other type primal-of == identity" 100 [x gen/any-equatable]
-              (is (= x (t/primal-of x))))
+              (is (= x (ad/primal-of x))))
 
     (checking "vs tape-primal" 100 [tape (sg/tapecell gen/symbol)]
-              (is (= (t/primal-of tape)
+              (is (= (ad/primal-of tape)
                      (t/tape-primal tape))
                   "primal-of eq with and without tag")
 
-              (is (= (t/primal-of tape)
-                     (t/primal-of tape (t/tape-tag tape)))
+              (is (= (ad/primal-of tape)
+                     (ad/primal-of tape (t/tape-tag tape)))
                   "primal-of eq with and without tag")
 
               (is (= (t/tape-primal tape)
@@ -280,7 +281,7 @@
 
   (checking "deep-primal returns nested primal" 100 [p gen/any-equatable]
             (let [cell (t/make 0 (t/make 1 p))]
-              (is (= p (t/deep-primal cell))
+              (is (= p (ad/deep-primal cell))
                   "for tape cells, these should match"))))
 
 (deftest reverse-mode-tests
@@ -319,7 +320,7 @@
                     (is (g/one? ((t/gradient g/fractional-part) x)))))))
 
   (testing "lift-n"
-    (let [*   (t/lift-n g/* (fn [_] 1) (fn [_ y] y) (fn [x _] x))
+    (let [*   (ad/lift-n g/* (fn [_] 1) (fn [_ y] y) (fn [x _] x))
           Df7 (t/gradient
                (fn x**7 [x] (* x x x x x x x)))
           Df1 (t/gradient *)
