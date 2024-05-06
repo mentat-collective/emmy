@@ -167,7 +167,7 @@
                       "t/eq handles equality")
 
                   (is (not (t/eq (t/make 0 n) (t/make 1 n)))
-                      "t/eq is false for [[Differential]]s with diff tags"))
+                      "t/eq is false for [[emmy.tape/Tape]]s with diff tags"))
 
         (checking "compare ignores tangent parts" 100
                   [l sg/real, r sg/real]
@@ -213,10 +213,6 @@
                              [(t/make 0 (g/square 'y) []) (g/* 3 'x)]])
                     (g/simplify tape))
               "simplify simplifies all in->partial entries AND the primal ")))
-
-      (checking "d/perturbed?" 100 [tape (sg/tapecell gen/symbol)]
-                (is (d/perturbed? tape)
-                    "all tags are perturbed?"))
 
       (checking "d/extract-tangent" 100 [tag  gen/nat
                                          tape (sg/tapecell gen/symbol)]

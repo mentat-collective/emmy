@@ -280,7 +280,7 @@
   ([entry-gen]
    (gen/fmap ss/power-series* (gen/vector entry-gen))))
 
-;; ## Differential
+;; ## Dual Numbers
 
 (defn dual
   "Returns a generator that produces proper instances

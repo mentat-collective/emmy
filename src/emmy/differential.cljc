@@ -12,16 +12,14 @@
   (:refer-clojure :exclude [compare])
   (:require [emmy.function]  ;; for the side effect of making kind: MultiFn -> ::v/function
             [emmy.generic :as g]
-            [emmy.util :as u]
             [emmy.value :as v]))
 
-;; ## Differentials, Dual Numbers and Automatic Differentiation
+;; ## Dual Numbers and Automatic Differentiation
 ;;
-;; This namespace develops an implementation of a type called [[Differential]].
-;; A [[Differential]] is a generalization of a type called a ["dual
+;; This namespace develops an implementation a ["dual
 ;; number"](https://en.wikipedia.org/wiki/Dual_number).
 ;;
-;; As we'll discuss, passing these numbers as arguments to some function $f$
+;; As we'll discuss, passing dual numbers as arguments to some function $f$
 ;; built out of the [[emmy.generic]] operators allows us to build up the
 ;; _derivative_ of $f$ in parallel to our evaluation of $f$. Complex programs
 ;; are built out of simple pieces that we know how to evaluate; we can build up
@@ -30,16 +28,20 @@
 ;;
 ;; ### Forward-Mode Automatic Differentiation
 ;;
-;; For many scientific computing applications, it's valuable be able to generate
-;; a "derivative" of a function; given some tiny increment in the inputs, what
-;; tiny increment will the function produce in the output values?
+;; For many scientific computing applications, it's valuable to be able to
+;; generate a "derivative" of a function; given some tiny increment in the
+;; inputs, what tiny increment will the function produce in the output values?
 ;;
 ;; we know how to take derivatives of many of the generic functions exposed by
-;; Emmy, like [[+]], [[*]], [[emmy.generic/sin]] and friends. It turns out that
-;; we can take the derivatives of large, complicated functions by combining the
-;; derivatives of these smaller functions using the [chain
+;; Emmy, like [[emmy.generic/+]], [[emmy.generic/*]], [[emmy.generic/sin]] and
+;; friends. It turns out that we can take the derivatives of large, complicated
+;; functions by combining the derivatives of these smaller functions using
+;; the [chain
 ;; rule]((https://en.wikipedia.org/wiki/Automatic_differentiation#The_chain_rule,_forward_and_reverse_accumulation))
 ;; as a clever bookkeeping device.
+;;
+;; NOTE the two flavors are forward and reverse mode. First we'll do forward,
+;; then reverse.
 ;;
 ;; The technique of evaluating a function and its derivative in parallel is
 ;; called "forward-mode [Automatic
@@ -52,8 +54,6 @@
 ;; page](https://cljdoc.org/d/org.mentat/emmy/CURRENT/doc/calculus/automatic-differentiation)
 ;; for "how do I use this?"-style questions.
 ;;
-;; > NOTE: The other flavor of automatic differentiation (AD) is "reverse-mode
-;; > AD". See [[emmy.tape]] for an implementation of this style, coming soon!
 ;;
 ;; ### Dual Numbers and AD
 ;;
@@ -207,8 +207,8 @@
   (derivative
    (derivative f)))
 
-;; But this guess hits one of many subtle problems with the implementation of
-;; forward-mode AD. The double-call to `derivative` will expand out to this:
+;; But this guess hits a subtle problem with the implementation of forward-mode
+;; AD. The double-call to `derivative` will expand out like so:
 
 (comment
   (fn [x]
@@ -238,9 +238,10 @@
 ;;
 ;; The solution is to introduce a new $\varepsilon$ for every level, and allow
 ;; different $\varepsilon$ instances to multiply without annihilating. Each
-;; $\varepsilon$ is called a "tag". [[Differential]] (implemented below) is a
-;; generalized dual number that can track many tags at once, allowing nested
-;; derivatives like the one described above to work.
+;; $\varepsilon$ is called a "tag". By allowing dual numbers to contain dual
+;; numbers with different tags in the primal and tangent slots, and carefully
+;; managing which tag stays at the top level, we can allow nested derivatives
+;; like the one described above to work.
 ;;
 ;; This implies that `extract-tangent` needs to take a tag, to determine _which_
 ;; tangent to extract:
@@ -258,9 +259,9 @@
 ;; ### What Return Values are Allowed?
 ;;
 ;; Before we discuss the implementation of dual
-;; numbers (called [[Differential]]), [[emmy.tape/lift-1]], [[emmy.tape/lift-2]]
-;; and the rest of the machinery that makes this all possible; what sorts of
-;; objects is `f` allowed to return?
+;; numbers, [[emmy.tape/lift-1]], [[emmy.tape/lift-2]] and the rest of the
+;; machinery that makes this all possible; what sorts of objects is `f` allowed
+;; to return?
 ;;
 ;; The dual number approach is beautiful because we can bring to bear all sorts
 ;; of operations in Clojure that never even _see_ dual numbers. For example,
@@ -292,9 +293,9 @@
         (g (+ x offset))))))
 
 ;; `(derivative offset-fn)` here returns a function! Manzyuk et al. 2019 makes
-;; the reasonable claim that, if `(f x)` returns a function, then `(derivative
-;; f)` should treat `f` as a multi-argument function with its first argument
-;; curried.
+;; the reasonable claim that, if `(offset-fn x)` returns a function,
+;; then `(derivative offset-fn)` should treat `offset-fn` as a multi-argument
+;; function with its first argument curried.
 ;;
 ;; Let's say `f` takes a number `x` and returns a function `g` that maps number
 ;; => number. `(((derivative f) x) y)` should act just like the partial
@@ -328,11 +329,6 @@
 ;; that we'll use later:
 
 (defprotocol IPerturbed
-  (perturbed? [this]
-    "Returns true if the supplied object has some known non-zero tangent to be
-    extracted via [[extract-tangent]], false otherwise. (Return `false` by
-    default if you can't detect a perturbation.)")
-
   (replace-tag [this old-tag new-tag]
     "If `this` is perturbed, Returns a similar object with the perturbation
     modified by replacing any appearance of `old-tag` with `new-tag`. Else,
@@ -342,7 +338,8 @@
     "If `this` is perturbed, return the tangent component paired with the
     supplied tag. Else, returns `([[emmy.value/zero-like]] this)`.")
 
-  (extract-id [this id]))
+  (extract-id [this id]
+    "Given some "))
 
 (defrecord Completed [v->partial]
   IPerturbed
@@ -351,19 +348,12 @@
   ;; a [[Completed]] map to occur before tag replacement needs to happen.
   (replace-tag [_ old new]
     (Completed.
-     (u/map-vals #(replace-tag % old new) v->partial)))
+     (replace-tag v->partial old new)))
 
-  ;; These should be called; it would be that a [[Completed]] instance has
-  ;; escaped from a derivative call. These are meant to be an internal
-  ;; implementation detail only.
+  ;; This should never be called; it would be that a [[Completed]] instance has
+  ;; escaped from a derivative call.
   (extract-tangent [_ _ _] (assert "Impossible!"))
-
-  (extract-id [_ id]
-    (get v->partial id 0))
-
-  ;; This is called on arguments to literal functions to check if a derivative
-  ;; needs to be taken. This should never happen with a [[Completed]] instance!
-  (perturbed? [_] (assert "Impossible!")))
+  (extract-id [_ id] (get v->partial id 0)))
 
 (def FORWARD-MODE ::forward)
 (def REVERSE-MODE ::reverse)
@@ -371,23 +361,23 @@
 
 ;; `replace-tag` exists to handle subtle bugs that can arise in the case of
 ;; functional return values. See the "Amazing Bug" sections
-;; in [[emmy.calculus.derivative-test]] for detailed examples on how this
-;; might bite you.
+;; in [[emmy.calculus.derivative-test]] for detailed examples on how this might
+;; bite you.
 ;;
 ;; The default implementations are straightforward, and match the docstrings:
 
 (extend-protocol IPerturbed
   nil
-  (perturbed? [_] false)
   (replace-tag [_ _ _] nil)
+  (extract-id [_ _] 0)
   (extract-tangent [_ _ mode]
     (if (= mode FORWARD-MODE)
       0
       REVERSE-EMPTY))
 
   #?(:clj Object :cljs default)
-  (perturbed? [_] false)
   (replace-tag [this _ _] this)
+  (extract-id [_ _] 0)
   (extract-tangent [this _ mode]
     (if (= mode FORWARD-MODE)
       (g/zero-like this)
@@ -422,8 +412,6 @@
 
 (deftype Dual [tag primal tangent]
   IPerturbed
-  (perturbed? [_] true)
-
   (replace-tag [this old new]
     (if (= old tag)
       (Dual. new primal tangent)

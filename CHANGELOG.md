@@ -2,6 +2,12 @@
 
 ## [unreleased]
 
+- PR:
+
+  - deletes perturbed?
+
+  - adds extract-id, makes reverse-mode work with lots of output types
+
 - #156:
 
   - Makes forward- and reverse-mode automatic differentiation compatible with

@@ -203,7 +203,6 @@
 
 (extend-protocol d/IPerturbed
   MultiFn
-  (perturbed? [_] false)
   (replace-tag [f old new] (replace-tag-fn f old new))
   (extract-tangent [f tag mode] (extract-tangent-fn f tag mode))
   (extract-id [f id] (comp #(d/extract-id % id) f))
@@ -211,7 +210,6 @@
   #?@(:clj
       [;; In Clojure, metadata can live directly on function objects.
        Fn
-       (perturbed? [f] (:perturbed? (meta f) false))
        (replace-tag [f old new] (replace-tag-fn f old new))
        (extract-tangent [f tag mode] (extract-tangent-fn f tag mode))
        (extract-id [f id] (comp #(d/extract-id % id) f))]
@@ -221,7 +219,6 @@
        ;; function objects by setting a special property and implementing
        ;; IMeta: see [[emmy.value]].
        function
-       (perturbed? [f] (:perturbed? (meta f) false))
        (replace-tag [f old new] (replace-tag-fn f old new))
        (extract-tangent [f tag mode] (extract-tangent-fn f tag mode))
        (extract-id [f id] (comp #(d/extract-id % id) f))
@@ -231,7 +228,6 @@
        ;; metadata on a directly-visible object property, which we also
        ;; support, although such objects are not naively callable in JavaScript
        MetaFn
-       (perturbed? [f] (:perturbed? (.-meta f) false))
        (replace-tag [f old new]
                     (replace-tag-fn (.-afn f) old new))
        (extract-tangent [f tag mode]

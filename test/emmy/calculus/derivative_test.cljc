@@ -1342,10 +1342,9 @@
     ;; space.
     ;;
     ;; Doing work inside a continuation means you're actually working
-    ;; with [[emmy.differential/Differential]] instances whose tangents can
-    ;; interact. Once you break out of the continuation, as in "bug two", the
-    ;; two components separately drop their tangents, so they can't talk
-    ;; anymore.
+    ;; with [[emmy.differential/Dual]] instances whose tangents can interact.
+    ;; Once you break out of the continuation, as in "bug two", the two
+    ;; components separately drop their tangents, so they can't talk anymore.
     ;;
     ;; The "linear" comment matters because if you only combine the dropped-down
     ;; pieces linearly, then their tangents wouldn't have interacted anyway, so

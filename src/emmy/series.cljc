@@ -39,7 +39,6 @@
   (arity [_] (f/arity (first xs)))
 
   d/IPerturbed
-  (perturbed? [_] false)
   (replace-tag [s old new] (fmap #(d/replace-tag % old new) s))
   (extract-tangent [s tag mode] (fmap #(d/extract-tangent % tag mode) s))
   (extract-id [s id] (fmap #(d/extract-id % id) s))
@@ -197,7 +196,6 @@
   (arity [_] [:exactly 1])
 
   d/IPerturbed
-  (perturbed? [_] false)
   (replace-tag [s old new] (fmap #(d/replace-tag % old new) s))
   (extract-tangent [s tag mode] (fmap #(d/extract-tangent % tag mode) s))
   (extract-id [s id] (fmap #(d/extract-id % id) s))

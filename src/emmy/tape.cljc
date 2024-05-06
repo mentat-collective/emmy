@@ -130,8 +130,6 @@
   (kind [_] ::tape)
 
   d/IPerturbed
-  (perturbed? [_] true)
-
   (replace-tag [this old new]
     (if (= old tag)
       (TapeCell. new id primal in->partial)
