@@ -8,6 +8,8 @@
             [emmy.util :as u]
             [emmy.value :as v]))
 
+;; ## Implementations
+
 (defn tag-of
   "More permissive version of [[emmy.tape/tape-tag]] that returns `nil` when
   passed a non-perturbation."

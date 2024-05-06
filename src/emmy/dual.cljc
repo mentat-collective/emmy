@@ -10,8 +10,7 @@
   See [[emmy.calculus.derivative]] for a fleshed-out derivative implementation
   using [[Dual]]."
   (:refer-clojure :exclude [compare])
-  (:require [emmy.function]  ;; for the side effect of making kind: MultiFn -> ::v/function
-            [emmy.generic :as g]
+  (:require [emmy.generic :as g]
             [emmy.value :as v]))
 
 ;; ## Dual Numbers and Automatic Differentiation
