@@ -25,25 +25,6 @@
 ;; These functions put together the pieces laid out in [[emmy.dual]] and declare
 ;; an interface for taking derivatives.
 
-(defn derivative
-  "Returns a single-argument function of that, when called with an argument `x`,
-  returns the derivative of `f` at `x` using forward-mode automatic
-  differentiation.
-
-  For numerical differentiation,
-  see [[emmy.numerical.derivative/D-numeric]].
-
-  `f` must be built out of generic operations that know how to
-  handle [[emmy.dual/Dual]] inputs in addition to any types that a normal `(f
-  x)` call would present. This restriction does _not_ apply to operations like
-  putting `x` into a container or destructuring; just primitive function calls."
-  [f]
-  (fn [x]
-    (let [tag    (d/fresh-tag)
-          lifted (d/bundle-element x 1 tag)]
-      (-> (d/with-active-tag tag f [lifted])
-          (d/extract-tangent tag d/FORWARD-MODE)))))
-
 ;; The result of applying the derivative `(D f)` of a multivariable function `f`
 ;; to a sequence of `args` is a structure of the same shape as `args` with all
 ;; orientations flipped. (For a partial derivative like `((partial 0 1) f)` the
@@ -54,7 +35,7 @@
 ;;
 ;; To generate the result:
 ;;
-;; - For a single non-structural argument, return `(derivative f)`
+;; - For a single non-structural argument, return `(d/derivative f)`
 ;; - else, bundle up all arguments into a single [[s/Structure]] instance `xs`
 ;; - Generate `xs'` by replacing each entry in `xs` with `((derivative f')
 ;;   entry)`, where `f'` is a function of ONLY that entry that
@@ -82,7 +63,7 @@
    (if (v/scalar? entry)
      (letfn [(f-entry [x]
                (f (assoc-in structure path x)))]
-       ((derivative f-entry) entry))
+       ((d/derivative f-entry) entry))
      (u/illegal
       (str "non-numerical entry " entry
            " at path " path
@@ -142,9 +123,9 @@
 
              ;; non-empty selectors are only allowed for functions that receive
              ;; a structural argument. This case passes that single,
-             ;; non-structural argument on to `(derivative f)`.
+             ;; non-structural argument on to `(d/derivative f)`.
              (empty? selectors)
-             ((derivative f) input)
+             ((d/derivative f) input)
 
              ;; Any attempt to index (via non-empty selectors) into a
              ;; non-structural argument will throw.

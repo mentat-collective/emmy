@@ -679,6 +679,27 @@
    (primal a)
    (primal b)))
 
+;; ## Derivative
+
+(defn derivative
+  "Returns a single-argument function of that, when called with an argument `x`,
+  returns the derivative of `f` at `x` using forward-mode automatic
+  differentiation.
+
+  For numerical differentiation,
+  see [[emmy.numerical.derivative/D-numeric]].
+
+  `f` must be built out of generic operations that know how to handle [[Dual]]
+  inputs in addition to any types that a normal `(f x)` call would present. This
+  restriction does _not_ apply to operations like putting `x` into a container
+  or destructuring; just primitive function calls."
+  [f]
+  (fn [x]
+    (let [tag    (fresh-tag)
+          lifted (bundle-element x 1 tag)]
+      (-> (with-active-tag tag f [lifted])
+          (extract-tangent tag FORWARD-MODE)))))
+
 ;; ## Chain Rule and Lifted Functions
 ;;
 ;; For the rest of the story, please see the implementations
