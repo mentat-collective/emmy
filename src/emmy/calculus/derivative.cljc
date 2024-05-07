@@ -69,6 +69,8 @@
            " at path " path
            " in input structure " structure)))))
 
+;; TODO have this jacobian be its own thing, then augment it with multi.
+
 (defn- jacobian
   "Takes:
 
@@ -107,6 +109,8 @@
        ;; correctly into the supplied `input`, triggering this exception.
        (u/illegal (str "Bad selectors " selectors " for structure " input))))))
 
+;; TODO can we do something like this for gradient, with gradient in both slots??
+
 (defn- euclidean
   "Slightly more general version of [[jacobian]] that can handle a single
   non-structural input; dispatches to either [[jacobian]] or [[derivative]]
@@ -142,6 +146,15 @@
               (str "Selectors " selectors
                    " not allowed for non-structural input " input)))))))
 
+(defn multi [op f]
+  (-> (fn
+        ([] 0)
+        ([x] ((op f) x))
+        ([x & more]
+         ((multi op (fn [xs] (apply f xs)))
+          (matrix/seq-> (cons x more)))))
+      (f/with-arity (f/arity f) {:from ::multi})))
+
 (defn- multivariate
   "Slightly wider version of [[euclidean]]. Accepts:
 
@@ -160,15 +173,13 @@
   Single-argument functions don't transform their arguments."
   ([f] (multivariate f []))
   ([f selectors]
-   (let [d #(euclidean % selectors)
-         df (d f)
-         df* (d (fn [args] (apply f args)))]
-     (-> (fn
-           ([] 0)
-           ([x] (df x))
-           ([x & more]
-            (df* (matrix/seq-> (cons x more)))))
-         (f/with-arity (f/arity f) {:from ::multivariate})))))
+   (let [d #(euclidean % selectors)]
+     (multi d f))))
+
+(defn gradient
+  ([f] (gradient f []))
+  ([f selectors]
+   (multi #(tape/gradient % selectors) f)))
 
 ;; ## Generic [[g/partial-derivative]] Installation
 ;;
@@ -202,12 +213,12 @@
   (defmethod g/partial-derivative [t v/seqtype] [f selectors]
     (if (= *mode* d/FORWARD-MODE)
       (multivariate f selectors)
-      (tape/gradient f selectors)))
+      (gradient f selectors)))
 
   (defmethod g/partial-derivative [t nil] [f _]
     (if (= *mode* d/FORWARD-MODE)
       (multivariate f [])
-      (tape/gradient f []))))
+      (gradient f []))))
 
 ;; ## Operators
 ;;

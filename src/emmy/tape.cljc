@@ -3,16 +3,12 @@
 (ns emmy.tape
   "This namespace contains an implementation of [[TapeCell]], a type that forms
   the basis for the reverse-mode automatic differentiation implementation in
-  Emmy.
-
-  NOTE that this type currently can't handle any interaction with forward-mode
-  AD! Don't nest [[gradient]] calls inside [[emmy.env/D]] calls."
+  Emmy."
   (:refer-clojure :exclude [compare zero?])
   (:require #?(:clj [clojure.pprint :as pprint])
             [emmy.dual :as d]
             [emmy.function :as f]
             [emmy.generic :as g]
-            [emmy.matrix :as matrix]
             [emmy.structure :as s]
             [emmy.util :as u]
             [emmy.value :as v]))
@@ -514,28 +510,21 @@
   function calls."
   ([f] (gradient f []))
   ([f selectors]
-   (fn
-     ([] 0)
-     ([x]
-      (when (and (seq selectors) (not (s/structure? x)))
-        (u/illegal
-         (str "Selectors " selectors
-              " not allowed for non-structural input " x)))
+   (fn [x]
+     (when (and (seq selectors) (not (s/structure? x)))
+       (u/illegal
+        (str "Selectors " selectors
+             " not allowed for non-structural input " x)))
 
-      (let [tag       (d/fresh-tag)
-            inputs    (if (empty? selectors)
-                        (tapify x tag)
-                        (update-in x selectors tapify tag))
-            output    (d/with-active-tag tag f [inputs])
-            completed (d/extract-tangent output tag d/REVERSE-MODE)]
-        (if (empty? selectors)
-          (interpret inputs completed tag)
-          (interpret (get-in inputs selectors) completed tag))))
-     ([x & more]
-      ((gradient (fn [args]
-                   (apply f args))
-                 selectors)
-       (matrix/seq-> (cons x more)))))))
+     (let [tag       (d/fresh-tag)
+           inputs    (if (empty? selectors)
+                       (tapify x tag)
+                       (update-in x selectors tapify tag))
+           output    (d/with-active-tag tag f [inputs])
+           completed (d/extract-tangent output tag d/REVERSE-MODE)]
+       (if (empty? selectors)
+         (interpret inputs completed tag)
+         (interpret (get-in inputs selectors) completed tag))))))
 
 (defmethod g/zero-like [::tape] [_] 0)
 (defmethod g/one-like [::tape] [_] 1)
