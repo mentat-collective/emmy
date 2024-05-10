@@ -14,9 +14,9 @@
 
   For an implementation of [forward-mode automatic
   differentiation](https://en.wikipedia.org/wiki/Automatic_differentiation),
-  see [[emmy.differential]] (for the backing implementation)
-  and [[emmy.calculus.derivative]] (for the [[emmy.operator/Operator]]
-  instances that make it pleasant to use this method.)"
+  see [[emmy.dual]] (for the backing implementation)
+  and [[emmy.calculus.derivative]] (for the [[emmy.operator/Operator]] instances
+  that make it pleasant to use this method.)"
   (:require [emmy.abstract.function :as af]
             [emmy.calculus.derivative :as d]
             [emmy.expression.render :refer [->TeX]]

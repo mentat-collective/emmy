@@ -7,7 +7,6 @@
             [emmy.calculus.derivative :refer [D]]
             [emmy.collection :as collection]
             [emmy.complex :refer [complex I]]
-            [emmy.differential :as d]
             [emmy.function :as f]
             [emmy.generators :as sg]
             [emmy.generic :as g]
@@ -253,20 +252,6 @@
                     {:one (complex 1 0)
                      :two-prime (complex 2 0)}))
           " with unequal keys, we fail.")))
-
-  (checking "d/perturbed?" 100
-            [m (gen/map gen/keyword sg/any-integral)]
-            (is (not (d/perturbed? m))
-                "maps with no [[Differential]] aren't perturbed.")
-
-            (let [diff (d/bundle-element 1 1 0)]
-              (is (d/perturbed? (assoc m :key diff))
-                  "adding a perturbed entry perturbs the map.")
-
-              (is (d/perturbed?
-                   {:outer-key
-                    (assoc m :key diff)})
-                  "d/perturbed? descends into keys")))
 
   (let [m {:sin g/sin :cos g/cos}
         {D-sin :sin D-cos :cos} (D m)]

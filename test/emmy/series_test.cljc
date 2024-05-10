@@ -666,10 +666,10 @@
 
 (deftest cos-1-square-terms
   (testing "Generate terms for the power series expansion of $cos(z)-1$."
-  ;; (take 10 (g/- s/cos-series 1))
-  ;; => (0 0 -1/2 0 1/24 0 -1/720 0 1/40320 0)
-  ;; From this we can see that we may regard the expansion as a series in x^2, with a
-  ;; zero constant term.
+    ;; (take 10 (g/- s/cos-series 1))
+    ;; => (0 0 -1/2 0 1/24 0 -1/720 0 1/40320 0)
+    ;; From this we can see that we may regard the expansion as a series in x^2, with a
+    ;; zero constant term.
     (let [terms (->> (g/- s/cos-series 1)
                      (remove g/zero?)  ;; eliminate the useless zero coefficients of the odd powers of x
                      (map double)      ;; we don't want the rational arithmetic to survive

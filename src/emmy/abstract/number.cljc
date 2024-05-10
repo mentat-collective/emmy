@@ -219,12 +219,12 @@
   (memoize g/simplify))
 
 (defn ^:no-doc simplify-numerical-expression
-  "This function will only simplify instances of [[expression/Literal]]; if `x` is
-  of that type, [[simplify-numerical-expression]] acts as a memoized version
-  of [[generic/simplify]]. Else, acts as identity.
+  "This function will only simplify instances of [[emmy.expression/Literal]]; if
+  `x` is of that type, [[simplify-numerical-expression]] acts as a memoized
+  version of [[generic/simplify]]. Else, acts as identity.
 
-  This trick is used in [[emmy.calculus.manifold]] to memoize
-  simplification _only_ for non-[[differential/Differential]] types."
+  This trick is used in [[emmy.calculus.manifold]] to memoize simplification
+  _only_ for non-perturbed types."
   [x]
   (if (literal-number? x)
     (memoized-simplify x)

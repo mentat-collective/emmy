@@ -393,7 +393,9 @@
   curvature-components]
 
  [emmy.calculus.derivative
-  derivative D D-as-matrix taylor-series]
+  D D-forward D-reverse
+  partial-forward partial-reverse
+  D-as-matrix taylor-series]
 
  [emmy.calculus.form-field
   form-field? nform-field? oneform-field?

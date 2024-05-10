@@ -1,16 +1,16 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
-(ns emmy.differential-test
+(ns emmy.dual-test
   (:require #?(:cljs [emmy.util :as u])
             [clojure.test :refer [is deftest testing use-fixtures]]
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
-            [emmy.differential :as d]
+            [emmy.autodiff :as ad]
+            [emmy.dual :as d]
             [emmy.generators :as sg]
             [emmy.generic :as g]
             [emmy.numerical.derivative :refer [D-numeric]]
             [emmy.simplify :refer [hermetic-simplify-fixture]]
-            [emmy.tape :as tape]
             [emmy.value :as v]
             [same.core :refer [ish? with-comparator]]))
 
@@ -24,7 +24,7 @@
   (let [tag (d/fresh-tag)]
     (fn [x]
       (-> (f (d/bundle-element x 1 tag))
-          (d/extract-tangent tag)))))
+          (d/extract-tangent tag d/FORWARD-MODE)))))
 
 (defn nonzero [gen]
   (gen/fmap (fn [x]
@@ -197,7 +197,7 @@
                     (g/simplify not-simple)))
                 "simplify simplifies primal and tangent")
 
-            (is (= "#emmy.tape.Dual{:tag 0, :primal (expt x 4), :tangent (* 4 (expt x 3))}"
+            (is (= "#emmy.dual.Dual{:tag 0, :primal (expt x 4), :tangent (* 4 (expt x 3))}"
                    (str (g/simplify not-simple)))
                 "str representation properly simplifies.")))))))
 
@@ -348,7 +348,7 @@
                     (is (g/one? ((derivative g/fractional-part) x)))))))
 
   (testing "lift-n"
-    (let [*   (tape/lift-n g/* (fn [_] 1) (fn [_ y] y) (fn [x _] x))
+    (let [*   (ad/lift-n g/* (fn [_] 1) (fn [_ y] y) (fn [x _] x))
           Df7 (derivative
                (fn x**7 [x] (* x x x x x x x)))
           Df1 (derivative *)
