@@ -279,7 +279,7 @@ the project's open-source release.
 
 ## License
 
-Copyright © 2016-2023 Colin Smith, Sam Ritchie.
+Copyright © 2016-2024 Colin Smith, Sam Ritchie.
 
 Distributed under the [GPL v3](LICENSE) license. See [LICENSE](LICENSE).
 
