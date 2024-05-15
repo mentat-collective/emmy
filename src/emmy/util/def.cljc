@@ -86,7 +86,7 @@
        (defmulti ~f
          ~docstring
          {:arglists '~(arglists a b)}
-         v/argument-kind ~@options)
+         emmy.value/argument-kind ~@options)
        (defmethod ~f [~kwd-klass] [k#]
          (~attr k#)))))
 
