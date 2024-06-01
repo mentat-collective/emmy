@@ -437,7 +437,7 @@
   (fn [^double x ^double y]
     (< (Math/abs (- x y)) ε)))
 
-(def twopi (* 2 Math/PI))
+(def ^:const twopi (* 2 Math/PI))
 
 (defn principal-value [cuthigh]
   (let [cutlow (- cuthigh twopi)]

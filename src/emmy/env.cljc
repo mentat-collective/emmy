@@ -215,28 +215,32 @@
 
 ;; Constants
 
-(def pi
+(def ^:const pi
   "The mathematical constant [Pi](https://en.wikipedia.org/wiki/Pi)."
   Math/PI)
 
-(def -pi
+(def ^:const -pi
   "The negation of the mathematical
   constant [Pi](https://en.wikipedia.org/wiki/Pi)."
   (g/- Math/PI))
 
-(def euler
+(def ^:const tau (* 2 Math/PI))
+
+(def ^:const -tau (g/- tau))
+
+(def ^:const euler
   "The mathematical
   constant [e](https://en.wikipedia.org/wiki/E_(mathematical_constant)),
   sometimes known as Euler's Number."
   Math/E)
 
-(def euler-gamma
+(def ^:const euler-gamma
   "The mathematical constant known as the [Euler–Mascheroni
   constant](https://en.wikipedia.org/wiki/Euler%E2%80%93Mascheroni_constant) and
   sometimes as Euler's constant."
   0.57721566490153286)
 
-(def phi
+(def ^:const phi
   "The mathematical constant [𝜑](https://en.wikipedia.org/wiki/Golden_ratio), also
   known as the Golden Ratio."
   (g/divide
@@ -582,3 +586,23 @@
  [emmy.special.factorial factorial]
  [emmy.value = compare
   numerical? kind kind-predicate principal-value])
+
+(defn fparam [t]
+  [(* 6 (cos t))  (* 3 (sin t))])
+
+;; distance from a point to that parametric function
+(defn dist-from [parametric-function [x y]]
+  (fn [t]  (emmy.env/abs (- [x y] (parametric-function t) ))))
+
+;; get the point on curve at minimal distance
+(defn constrain-func [[x y]]
+  (emmy.env/minimize (dist-from fparam [x y]) 0 tau))
+
+(constrain-func (up 1 2))
+(constrain-func (up 1 -2))
+(constrain-func (up -1 1))
+(constrain-func (up -1 -1))
+(constrain-func (up -4 1))
+(constrain-func (up -4 -1))
+(constrain-func (up 5 1))
+(constrain-func (up 5 -1))

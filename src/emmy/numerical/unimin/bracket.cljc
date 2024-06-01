@@ -5,7 +5,7 @@
             [emmy.numerical.unimin.golden :as ug]
             [emmy.util :as u]))
 
-(def ^:private epsilon 1e-21)
+(def ^:private ^:const epsilon 1e-21)
 
 (defn ascending-by
   "Returns the points ordered as f(a) < f(b)"

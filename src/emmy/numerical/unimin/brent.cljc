@@ -147,6 +147,11 @@
         (or (<= fnew fx2) (= xx2 xx) (= xx2 xx1)) [[xnew fnew] x1]
         :else [x2 x1]))
 
+(def ^:private ^:const brent-error 1.0e-11)
+
+(defn- initial-brent-guess [a b]
+  (+ a (* ug/inv-phi2 (- b a))))
+
 (defn brent-min
   "Find the minimum of the function f: R -> R in the interval [a,b] using Brent's
   Method, described by Richard Brent in [Algorithms for Minimization without
@@ -183,17 +188,19 @@
   ([f a b] (brent-min f a b {}))
   ([f a b {:keys [relative-threshold
                   absolute-threshold
+                  initial-guess
                   maxiter
                   maxfun
                   callback]
-           :or {relative-threshold (g/sqrt u/machine-epsilon)
-                absolute-threshold 1.0e-11
+           :or {relative-threshold brent-error
+                absolute-threshold (g/sqrt u/machine-epsilon)
+                initial-guess (initial-brent-guess a b)
                 maxiter 1000
                 callback (constantly nil)}}]
    (let [maxfun        (or maxfun (inc maxiter))
          [a b]         [(min a b) (max a b)]
          [f-counter f] (u/counted f)
-         xmid          (* 0.5 (+ a b))
+         xmid initial-guess
          mid           [xmid (f xmid)]]
      (loop [;; a and b bound the interval in which the minimizer is searching.
             ;; `xx` is the current candidate point, and `fx` is its value.
@@ -287,11 +294,13 @@
      ([f a b] (brent-min-commons f a b {}))
      ([f a b {:keys [relative-threshold
                      absolute-threshold
+                     initial-guess
                      maxiter
                      maxfun
                      callback]
-              :or {relative-threshold (g/sqrt u/machine-epsilon)
-                   absolute-threshold 1.0e-11
+              :or {relative-threshold brent-error
+                   absolute-threshold (g/sqrt u/machine-epsilon)
+                   initial-guess (initial-brent-guess a b)
                    maxiter 1000
                    callback (constantly nil)}}]
       (let [maxfun (or maxfun (inc maxiter))
@@ -313,7 +322,7 @@
                               (f x))))
                          (MaxEval. maxfun)
                          (MaxIter. maxiter)
-                         (SearchInterval. a b)
+                         (SearchInterval. a b initial-guess)
                          GoalType/MINIMIZE])
             p  (.optimize o args)
             xx (.getPoint p)

@@ -8,10 +8,10 @@
    [clojure.core :as core]
    [goog.array :as garray]))
 
-(def ^:private ZERO (js/BigInt 0))
-(def ^:private ONE (js/BigInt 1))
-(def ^:private TEN (js/BigInt 10))
-(def ^:private -ONE (- ONE))
+(def ^:private ^:const ZERO (js/BigInt 0))
+(def ^:private ^:const ONE (js/BigInt 1))
+(def ^:private ^:const TEN (js/BigInt 10))
+(def ^:private ^:const -ONE (- ONE))
 
 (defn- bigint?
   "Returns true if x is a BigInt. There is a similar function in [[emmy.util]],

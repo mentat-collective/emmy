@@ -152,10 +152,10 @@
 
 ;; ## Trig Functions
 
-(def ^:private pi Math/PI)
-(def ^:private pi-over-4 (/ pi 4))
-(def ^:private two-pi (* 2 pi))
-(def ^:private pi-over-2 (* 2 pi-over-4))
+(def ^:private ^:const pi Math/PI)
+(def ^:private ^:const pi-over-4 (/ pi 4))
+(def ^:private ^:const two-pi (* 2 pi))
+(def ^:private ^:const pi-over-2 (* 2 pi-over-4))
 
 (defn ^:private n:zero-mod-pi? [x]
   (g/almost-integral? (/ x pi)))
