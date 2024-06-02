@@ -172,12 +172,13 @@
   point with the iteration count and the values of x and f(x) at each search
   step.
 
-  `:relative-threshold` defaults to around 1.49e8, the sqrt of the machine
-  tolerance. You won't gain any benefit attempting to set the value less than
-  the default.
+  `:relative-threshold` multiplied by each guess to determine a relative
+  threshold. Defaults to 1.0e-11.
 
   `:absolute-threshold` a smaller absolute threshold that applies when the
-  candidate minimum point is close to 0.
+  candidate minimum point is close to 0. defaults to around 1.49e8, the sqrt of
+  the machine tolerance. You won't gain any benefit attempting to set the value
+  less than the default.
 
   `:maxiter` Maximum number of iterations allowed for the minimizer. Defaults to
   1000.

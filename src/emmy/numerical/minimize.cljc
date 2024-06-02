@@ -13,7 +13,7 @@
   count and the values of x and f(x) at each search step."
   ([f a b] (minimize f a b (constantly nil)))
   ([f a b observe]
-   (b/brent-min f a b {:callback observe :relative-threshold 1e-5})))
+   (b/brent-min f a b {:callback observe})))
 
 (defn multidimensional-minimize
   "Entrypoint for multidimensional minimization routines.
