@@ -224,7 +224,7 @@
   constant [Pi](https://en.wikipedia.org/wiki/Pi)."
   (g/- Math/PI))
 
-(def ^:const tau (* 2 Math/PI))
+(def ^:const tau (g/* 2 Math/PI))
 
 (def ^:const -tau (g/- tau))
 
