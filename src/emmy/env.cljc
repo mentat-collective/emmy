@@ -586,23 +586,3 @@
  [emmy.special.factorial factorial]
  [emmy.value = compare
   numerical? kind kind-predicate principal-value])
-
-(defn fparam [t]
-  [(* 6 (cos t))  (* 3 (sin t))])
-
-;; distance from a point to that parametric function
-(defn dist-from [parametric-function [x y]]
-  (fn [t]  (emmy.env/abs (- [x y] (parametric-function t) ))))
-
-;; get the point on curve at minimal distance
-(defn constrain-func [[x y]]
-  (emmy.env/minimize (dist-from fparam [x y]) 0 tau))
-
-(constrain-func (up 1 2))
-(constrain-func (up 1 -2))
-(constrain-func (up -1 1))
-(constrain-func (up -1 -1))
-(constrain-func (up -4 1))
-(constrain-func (up -4 -1))
-(constrain-func (up 5 1))
-(constrain-func (up 5 -1))
