@@ -61,7 +61,9 @@
              (b/brent-min -1000 10 {:maxiter 5})))
         "maxiter limits the number of iterations allowed."))
 
-  (doseq [min-fn [b/brent-min b/brent-min-commons]]
+  (doseq [min-fn
+          #?(:clj  [b/brent-min b/brent-min-commons]
+             :cljs [b/brent-min])]
     (testing "custom initial-guess"
       (is (ish?
            {:result 2
