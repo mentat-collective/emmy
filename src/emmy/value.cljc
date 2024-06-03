@@ -45,7 +45,7 @@
 
 (def object-name-map (atom {}))
 
-(def seqtype #?(:clj Sequential :cljs ::seq))
+(def ^:const seqtype #?(:clj Sequential :cljs ::seq))
 
 ;; Allows multimethod dispatch to seqs in CLJS.
 #?(:cljs

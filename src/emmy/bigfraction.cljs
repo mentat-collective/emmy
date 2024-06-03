@@ -43,11 +43,9 @@
 
           :else
           (let [o-value (.valueOf other)]
-            (garray/defaultCompare this o-value))))
+            (garray/defaultCompare this o-value)))))
 
-)
-
-(def ^:private F_ONE (Fraction. ONE ONE))
+(def ^:private ^:const F_ONE (Fraction. ONE ONE))
 
 (defn division-by-zero
   "Throws JS exception used to signal an attempt to construct a fraction

@@ -181,14 +181,14 @@
 (defn ^:private n:pi-over-4-mod-pi? [x]
   (g/almost-integral? (/ (- x pi-over-4) pi)))
 
-(def ^:no-doc zero-mod-pi? #{'-pi 'pi '-two-pi 'two-pi})
-(def ^:no-doc pi-over-2-mod-2pi? #{'pi-over-2})
-(def ^:no-doc -pi-over-2-mod-2pi? #{'-pi-over-2})
-(def ^:no-doc pi-mod-2pi? #{'-pi 'pi})
-(def ^:no-doc pi-over-2-mod-pi? #{'-pi-over-2 'pi-over-2})
-(def ^:no-doc zero-mod-2pi? #{'-two-pi 'two-pi})
-(def ^:no-doc -pi-over-4-mod-pi? #{'-pi-over-4})
-(def ^:no-doc pi-over-4-mod-pi? #{'pi-over-4 '+pi-over-4})
+(def ^:no-doc ^:const zero-mod-pi? #{'-pi 'pi '-two-pi 'two-pi})
+(def ^:no-doc ^:const pi-over-2-mod-2pi? #{'pi-over-2})
+(def ^:no-doc ^:const -pi-over-2-mod-2pi? #{'-pi-over-2})
+(def ^:no-doc ^:const pi-mod-2pi? #{'-pi 'pi})
+(def ^:no-doc ^:const pi-over-2-mod-pi? #{'-pi-over-2 'pi-over-2})
+(def ^:no-doc ^:const zero-mod-2pi? #{'-two-pi 'two-pi})
+(def ^:no-doc ^:const -pi-over-4-mod-pi? #{'-pi-over-4})
+(def ^:no-doc ^:const pi-over-4-mod-pi? #{'pi-over-4 '+pi-over-4})
 
 (defn- sin
   "Implementation of sine that attempts to apply optimizations at the call site.

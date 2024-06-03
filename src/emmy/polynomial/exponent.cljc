@@ -32,7 +32,7 @@
   of a polynomial term."
   #'sorted-map)
 
-(def empty
+(def ^:const empty
   "Singleton instance of an empty exponent map."
   (make))
 

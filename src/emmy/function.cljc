@@ -149,7 +149,7 @@
         (g/one-like (apply f args)))
       (with-arity (arity f) {:from :one-like})))
 
-(def I
+(def ^:const I
   "Identity function. Returns its argument."
   identity)
 

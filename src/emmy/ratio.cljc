@@ -18,7 +18,7 @@
             [emmy.value :as v])
   #?(:clj (:import (clojure.lang Ratio))))
 
-(def ^:no-doc ratiotype
+(def ^:no-doc ^:const ratiotype
   #?(:clj Ratio :cljs bf/Fraction))
 
 (derive ratiotype ::v/real)

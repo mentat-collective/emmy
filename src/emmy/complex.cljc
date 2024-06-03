@@ -12,19 +12,19 @@
             [emmy.util :as u]
             [emmy.value :as v]))
 
-(def ZERO
+(def ^:const ZERO
   "A [[Complex]] value equal to 0 (south pole on the Riemann Sphere)."
   c/ZERO)
 
-(def ONE
+(def ^:const ONE
   "A [[Complex]] value equal to 1."
   c/ONE)
 
-(def I
+(def ^:const I
   "A [[Complex]] value equal to `i`."
   c/I)
 
-(def -I
+(def ^:const -I
   "A [[Complex]] value equal to `-i`."
   c/-I)
 
