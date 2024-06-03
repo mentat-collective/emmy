@@ -2,6 +2,25 @@
 
 ## [unreleased]
 
+- #175:
+
+  - Adds `emmy.env/{tau,-tau}` constants for the $\tau$ fans out there
+
+  - Adds `^:const` metadata to all constants, reaping small performance wins
+
+  - Updates
+    `emmy.numerical.unimin.brent/{brent-min,brent-max,brent-min-commons,brent-max-commons}`
+    to:
+
+    - take a new `:initial-guess` argument, useful if you have some idea of
+      where the minimum might lie
+
+    - swaps the relative and absolute threshold defaults to match those from
+      `scmutils`
+
+    - adjusts the initial guess from the midpoint between `a` and `b` to a
+      golden section cut (closer to `a`), to match `scmutils`
+
 - #156:
 
   - Makes forward- and reverse-mode automatic differentiation compatible with

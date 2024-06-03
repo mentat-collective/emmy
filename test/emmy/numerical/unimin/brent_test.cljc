@@ -59,7 +59,19 @@
           :fncalls 7}
          (-> (fn [x] (g/square (- x 2)))
              (b/brent-min -1000 10 {:maxiter 5})))
-        "maxiter limits the number of iterations allowed.")))
+        "maxiter limits the number of iterations allowed."))
+
+  (doseq [min-fn [b/brent-min b/brent-min-commons]]
+    (testing "custom initial-guess"
+      (is (ish?
+           {:result 2
+            :value 0
+            :iterations 5
+            :fncalls 6
+            :converged? true}
+           (-> (fn [x] (g/square (- x 2)))
+               (min-fn -1000 10 {:initial-guess 0})))
+          "A good initial-guess speeds up convergence."))))
 
 (deftest commons-ported-brent-tests
   (with-comparator (v/within 1e-7)

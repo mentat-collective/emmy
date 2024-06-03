@@ -224,9 +224,17 @@
   constant [Pi](https://en.wikipedia.org/wiki/Pi)."
   (g/- Math/PI))
 
-(def ^:const tau (g/* 2 Math/PI))
+(def ^:const tau
+  "The mathematical
+  constant [Tau](https://en.wikipedia.org/wiki/Turn_(angle)#Tau_proposals),
+  equal to $2\\pi$."
+  (g/* 2 Math/PI))
 
-(def ^:const -tau (g/- tau))
+(def ^:const -tau
+  "The negation of the mathematical
+  constant [Tau](https://en.wikipedia.org/wiki/Turn_(angle)#Tau_proposals),
+  equal to $-2\\pi$."
+  (g/- tau))
 
 (def ^:const euler
   "The mathematical
