@@ -45,7 +45,7 @@
 
 (def object-name-map (atom {}))
 
-(def seqtype #?(:clj Sequential :cljs ::seq))
+(def ^:const seqtype #?(:clj Sequential :cljs ::seq))
 
 ;; Allows multimethod dispatch to seqs in CLJS.
 #?(:cljs
@@ -437,7 +437,7 @@
   (fn [^double x ^double y]
     (< (Math/abs (- x y)) ε)))
 
-(def twopi (* 2 Math/PI))
+(def ^:const twopi (* 2 Math/PI))
 
 (defn principal-value [cuthigh]
   (let [cutlow (- cuthigh twopi)]

@@ -34,16 +34,16 @@
 ;; ratio could degenerate into you selecting the larger of the two pieces every
 ;; time, slowing your search.
 
-(def phi
+(def ^:const phi
   "$\\phi$, the golden ratio."
   (/ (+ (g/sqrt 5) 1) 2))
 
-(def inv-phi
+(def ^:const inv-phi
   "$1 \\over \\phi$. Multiply by this to scale some distance down to the
   larger-sized golden ratio piece."
   (/ (- (g/sqrt 5) 1) 2))
 
-(def inv-phi2
+(def ^:const inv-phi2
   "$1 \\over \\phi^2$. Scales down twice, compared to [[inv-phi]]."
   (- 1 inv-phi))
 

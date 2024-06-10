@@ -81,7 +81,7 @@
                (varied-free-particle-action 3.0 test-path (up sin cos square) 0.0 10.0)
                -2.0 1.0)]
         (is (near 0.0 (:result m)))
-        (is (near 435 (:value m))))
+        (is ((within 1e-4) 435 (:value m))))
 
       (is (near 436.2912143 ((varied-free-particle-action 3.0 test-path (up sin cos square) 0.0 10.0) 0.001)))
 

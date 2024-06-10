@@ -54,16 +54,16 @@
   [^Complex c]
   (str "#emmy/complex " [(.-re c) (.-im c)]))
 
-(def ZERO (Complex. 0 0))
-(def ONE (Complex. 1 0))
-(def I (Complex. 0 1))
-(def -I (Complex. 0 -1))
-(def INFINITY (Complex. ##Inf ##Inf))
-(def NAN (Complex. ##NaN ##NaN))
-(def LN2 (Math/log 2))
+(def ^:const ZERO (Complex. 0 0))
+(def ^:const ONE (Complex. 1 0))
+(def ^:const I (Complex. 0 1))
+(def ^:const -I (Complex. 0 -1))
+(def ^:const INFINITY (Complex. ##Inf ##Inf))
+(def ^:const NAN (Complex. ##NaN ##NaN))
+(def ^:const LN2 (Math/log 2))
 
-(def ^:private PI:2 (/ Math/PI 2))
-(def ^:private PI:4 (/ Math/PI 4))
+(def ^:private ^:const PI:2 (/ Math/PI 2))
+(def ^:private ^:const PI:4 (/ Math/PI 4))
 
 (defn equal?
   "Returns true if the supplied complex number `z` is equal to the value `w`. The
