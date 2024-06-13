@@ -5,5 +5,10 @@
      (cider-clojure-cli-aliases . ":test:cljs:nextjournal/clerk:dev")
 
      ;; Custom indentation:
-     (eval . (put-clojure-indent 'sci-macro :defn))
-     (eval . (put-clojure-indent 'careful-def 1)))))
+     (eval . (progn
+               ;; the require here avoids projectile errors:
+               ;;   "Symbol’s function definition is void: put-clojure-indent"
+               (require 'clojure-mode)
+               (require 'cider)
+               (put-clojure-indent 'sci-macro :defn)
+               (put-clojure-indent 'careful-def 1))))))
