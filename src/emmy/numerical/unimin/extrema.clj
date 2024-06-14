@@ -13,8 +13,9 @@
 ;; Given a function f on [a, b] and N > 0, examine f at the endpoints
 ;; xa, xb, and at N equally-separated interior points. From this form a
 ;; list of brackets (p q) in each of which a local maximum is trapped.
-;; Then apply Golden Section to all these brackets and return a list of
-;; pairs (x fx) representing the local maxima.
+;; Then apply Golden Section to all these brackets and return a map with
+;; of the following form representing the local maxima.
+;; {:result x-value :value f(x) :converged? bboolean :iterations num :fncalls num}
 
 (defn local-maxima [f xa xb n ftol]
   "Find and bracket n+1 local maxima in the given interval"
@@ -45,13 +46,21 @@
     (map locmax bracket-list)
     ))
 
+;; # Find Local Maxima
+;; Uses the result from local-maxima, above, which returns a list of maps.
+;; We get the equivalent maps of the minima by negating the function
+;; and also the :value key in each map
+
 (defn local-minima [f xa xb n ftol]
   "Find and bracket n+1 local minima in the given interval"
   (let [g #(- (f %))
-        result (local-maxima g xa xb n ftol)   ; local-maxima returns a list of maps
-        ; we need to negate the second key (:value)
+        result (local-maxima g xa xb n ftol)
         flip (fn [result-map] (update result-map :value #(- %))) ]
     (map flip result)))
+
+;; # Estimate the global maxima and minima
+;; Run through the candidate list of maps provided by
+;; local-maxima and local-minima and compare on their :value keys
 
 (defn estimate-global-max [f xa xb n ftol]
   "Get the global maximum estimate from bracketed maxima"
