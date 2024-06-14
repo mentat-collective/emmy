@@ -15,7 +15,7 @@
 ;; list of brackets (p q) in each of which a local maximum is trapped.
 ;; Then apply Golden Section to all these brackets and return a map with
 ;; of the following form representing the local maxima.
-;; {:result x-value :value f(x) :converged? bboolean :iterations num :fncalls num}
+;; {:result x-value :value f∘x :converged? boolean :iterations num :fncalls num}
 
 (defn local-maxima
   "Find and bracket n+1 local maxima in the given interval"
@@ -50,7 +50,7 @@
 ;; # Find Local Maxima
 ;; Uses the result from local-maxima, above, which returns a list of maps.
 ;; We get the equivalent maps of the minima by negating the function
-;; and also the :value key in each map
+;; and also the :value key in each map.
 
 (defn local-minima
   "Find and bracket n+1 local minima in the given interval"
