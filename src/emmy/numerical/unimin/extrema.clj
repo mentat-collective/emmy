@@ -10,7 +10,7 @@
 ;; # Find Local Maxima
 ;; Given a function f on [a, b] and N > 0, examine f at the endpoints
 ;; xa, xb, and at N equally-separated interior points. From this form a
-;; list of brackets (p q) in each of which a local maximum is trapped.
+;; list of brackets [p q] in each of which a local maximum is trapped.
 ;; Then apply Golden Section to all these brackets and return a map with
 ;; of the following form representing the local maxima.
 ;; {:result x-value :value f∘x :converged? boolean :iterations num :fncalls num}
@@ -24,10 +24,10 @@
         xi #(nth xs %)
         fi #(nth fs %)
         bracket1 (if (> (fi 0) (fi 1))
-                   (list (list (xi 0) (xi 1)))
+                   (list  [(xi 0) (xi 1)])
                    nil)
         bracket2 (if (> (fi (inc n)) (fi n))
-                   (cons (list (xi n) (xi (inc n))) bracket1)
+                   (cons  [(xi n) (xi (inc n))] bracket1)
                    bracket1)
         bracket-list (loop [i 1
                             b bracket2]
@@ -35,16 +35,14 @@
                          b
                          (if (and (<= (fi (dec i)) (fi i))
                                   (>= (fi i) (fi (inc i))))
-                           (recur (inc i) (cons (list (xi (dec i))
-                                                      (xi (inc i)))
-                                                b))
+                           (recur (inc i) (cons [(xi (dec i)) (xi (inc i))] b))
                            (recur (inc i) b))))
         locmax (fn [int]
-                 (ug/golden-section-max f (first int) (second int)
+                 (ug/golden-section-max f (int 0) (int 1)
                                         {:fn-tolerance ftol}))]
     (map locmax bracket-list)))
 
-;; # Find Local Maxima
+;; # Find Local Minima
 ;; Uses the result from local-maxima, above, which returns a list of maps.
 ;; We get the equivalent maps of the minima by negating the function
 ;; and also the :value key in each map.
