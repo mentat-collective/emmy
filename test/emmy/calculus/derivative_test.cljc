@@ -1617,3 +1617,11 @@
                   (take 2)))
           "symbolic-taylor-series keeps the arguments symbolic, even when they
           are numbers."))))
+
+(deftest vjp-test
+  (let [f (fn [[x y]] [(g/* x y) (g/sin x) (g/cos y)])
+        v (s/down 'dx 'dy 'dz)]
+    (is (g/zero?
+         (g/simplify
+          (g/- ((d/vjp f v) (s/up 'x 'y))
+               (g/* v ((D f) (s/up 'x 'y)))))))))
