@@ -52,7 +52,7 @@
   [f xa xb n ftol]
   (let [g #(- (f %))
         result (local-maxima g xa xb n ftol)
-        flip (fn [result-map] (update result-map :value #(- %))) ]
+        flip (fn [result-map] (update result-map :value -)) ]
     (map flip result)))
 
 ;; # Estimate the global maxima and minima
