@@ -17,8 +17,9 @@
 ;; of the following form representing the local maxima.
 ;; {:result x-value :value f(x) :converged? bboolean :iterations num :fncalls num}
 
-(defn local-maxima [f xa xb n ftol]
+(defn local-maxima
   "Find and bracket n+1 local maxima in the given interval"
+  [f xa xb n ftol]
   (let [h (/ (- xb xa) (inc n))
         xs (map #(if (= % (inc n)) xb (+ xa (* % h))) (range (+ n 2)))
         fs (map f xs)
@@ -51,8 +52,9 @@
 ;; We get the equivalent maps of the minima by negating the function
 ;; and also the :value key in each map
 
-(defn local-minima [f xa xb n ftol]
+(defn local-minima
   "Find and bracket n+1 local minima in the given interval"
+  [f xa xb n ftol]
   (let [g #(- (f %))
         result (local-maxima g xa xb n ftol)
         flip (fn [result-map] (update result-map :value #(- %))) ]
@@ -62,8 +64,9 @@
 ;; Run through the candidate list of maps provided by
 ;; local-maxima and local-minima and compare on their :value keys
 
-(defn estimate-global-max [f xa xb n ftol]
+(defn estimate-global-max
   "Get the global maximum estimate from bracketed maxima"
+  [f xa xb n ftol]
   (let [local-maxs (local-maxima f xa xb n ftol)]
     (loop [best-so-far (first local-maxs)
            unexamined (rest local-maxs)]
@@ -74,8 +77,9 @@
             (recur next (rest unexamined))
             (recur best-so-far (rest unexamined))))))))
 
-(defn estimate-global-min [f xa xb n ftol]
+(defn estimate-global-min
   "Get the global minimum estimate from bracketed minima"
+  [f xa xb n ftol]
   (let [local-mins (local-minima f xa xb n ftol)]
     (loop [best-so-far (first local-mins)
            unexamined (rest local-mins)]
