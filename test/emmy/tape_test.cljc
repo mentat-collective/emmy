@@ -4,8 +4,8 @@
   (:require #?(:clj [clojure.pprint :as pprint])
             [clojure.test :refer [is deftest testing use-fixtures]]
             [clojure.test.check.generators :as gen]
-            [emmy.autodiff :as ad]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
+            [emmy.autodiff :as ad]
             [emmy.calculus.derivative :refer [D]]
             [emmy.dual :as d]
             [emmy.expression.analyze :as a]

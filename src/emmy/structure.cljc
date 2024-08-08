@@ -84,6 +84,7 @@
   d/IPerturbed
   (replace-tag [s old new] (mapr #(d/replace-tag % old new) s))
   (extract-tangent [s tag mode] (mapr #(d/extract-tangent % tag mode) s))
+  (extract-id [s id] (mapr #(d/extract-id % id) s))
 
   #?@(:clj
       [Object

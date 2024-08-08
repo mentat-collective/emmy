@@ -41,6 +41,7 @@
   d/IPerturbed
   (replace-tag [s old new] (fmap #(d/replace-tag % old new) s))
   (extract-tangent [s tag mode] (fmap #(d/extract-tangent % tag mode) s))
+  (extract-id [s id] (fmap #(d/extract-id % id) s))
 
   v/IKind
   (kind [_] ::series)
@@ -197,6 +198,7 @@
   d/IPerturbed
   (replace-tag [s old new] (fmap #(d/replace-tag % old new) s))
   (extract-tangent [s tag mode] (fmap #(d/extract-tangent % tag mode) s))
+  (extract-id [s id] (fmap #(d/extract-id % id) s))
 
   v/IKind
   (kind [_] ::power-series)

@@ -131,6 +131,9 @@
   (extract-tangent [this tag mode]
     (map-coefficients #(sd/extract-tangent % tag mode) this))
 
+  (extract-id [this id]
+    (map-coefficients #(sd/extract-id % id) this))
+
   v/IKind
   (kind [_] ::polynomial)
 

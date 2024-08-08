@@ -126,6 +126,14 @@
      (d/extract-tangent k tag mode)
      m))
 
+  (extract-id [_ id]
+    (Quaternion.
+     (d/extract-id r id)
+     (d/extract-id i id)
+     (d/extract-id j id)
+     (d/extract-id k id)
+     m))
+
   v/IKind
   (kind [_] ::quaternion)
 
@@ -551,26 +559,26 @@
 
 ;; ## Constructors
 
-(def ^:const ZERO
+(def ZERO
   "The zero quaternion. All coefficients are equal to 0."
   (->Quaternion 0 0 0 0 nil))
 
-(def ^:const ONE
+(def ONE
   "The identity quaternion. The real coefficient is equal to 1, and all
   coefficients are equal to 0."
   (->Quaternion 1 0 0 0 nil))
 
-(def ^:const I
+(def I
   "Unit quaternion with `i` coefficient equal to 1, all other coefficients equal
   to 0."
   (->Quaternion 0 1 0 0 nil))
 
-(def ^:const J
+(def J
   "Unit quaternion with `j` coefficient equal to 1, all other coefficients equal
   to 0."
   (->Quaternion 0 0 1 0 nil))
 
-(def ^:const K
+(def K
   "Unit quaternion with `k` coefficient equal to 1, all other coefficients equal
   to 0."
   (->Quaternion 0 0 0 1 nil))
@@ -1382,7 +1390,7 @@
 
 ;; ### 3x3 Rotation Matrix Representations
 
-(def ^:private ^:const quarter (g// 1 4))
+(def ^:private quarter (g// 1 4))
 
 (defn from-rotation-matrix
   "Given an orthogonal 3x3 matrix M representing a rotation in 3-space, returns
