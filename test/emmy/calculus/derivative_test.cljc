@@ -34,7 +34,7 @@
     (let [tag 0
           f   (fn [x] (fn [g] (g x)))
           Df  (-> (f (sd/bundle-element 'x 1 tag))
-                  (sd/extract-tangent tag))]
+                  (sd/extract-tangent tag sd/FORWARD-MODE))]
       (is (not (sd/tag-active? tag))
           "Outside the context of a derivative, the tag is not marked as
           active.")
@@ -1094,7 +1094,7 @@
 
                   ;; go extract the original tag that we were looking for in the
                   ;; first place.
-                  (d/extract-tangent tag)
+                  (d/extract-tangent tag d/FORWARD-MODE)
 
                   ;; Sub `tag` back in so that any wrapping fn can extract it.
                   ;;

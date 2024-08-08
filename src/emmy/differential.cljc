@@ -10,8 +10,7 @@
   See [[emmy.calculus.derivative]] for a fleshed-out derivative
   implementation using [[Dual]]."
   (:refer-clojure :exclude [compare])
-  (:require [emmy.function]  ;; for the side effect of making kind: MultiFn -> ::v/function
-            [emmy.generic :as g]
+  (:require [emmy.generic :as g]
             [emmy.value :as v]))
 
 ;; ## Differentials, Dual Numbers and Automatic Differentiation
@@ -337,9 +336,14 @@
     modified by replacing any appearance of `old-tag` with `new-tag`. Else,
     return `this`.")
 
-  (extract-tangent [this tag]
+  (extract-tangent [this tag mode]
     "If `this` is perturbed, return the tangent component paired with the
-    supplied tag. Else, returns `([[emmy.value/zero-like]] this)`."))
+    supplied tag. Else, returns `([[emmy.value/zero-like]] this)`.")
+
+  (extract-id [this id]))
+
+(def FORWARD-MODE ::forward)
+(def REVERSE-MODE ::reverse)
 
 ;; `replace-tag` exists to handle subtle bugs that can arise in the case of
 ;; functional return values. See the "Amazing Bug" sections
@@ -352,12 +356,12 @@
   nil
   (perturbed? [_] false)
   (replace-tag [_ _ _] nil)
-  (extract-tangent [_ _] 0)
+  (extract-tangent [_ _ _] 0)
 
   #?(:clj Object :cljs default)
   (perturbed? [_] false)
   (replace-tag [this _ _] this)
-  (extract-tangent [this _] (g/zero-like this)))
+  (extract-tangent [this _ _] (g/zero-like this)))
 
 ;; ## Dual Implementation
 ;;
@@ -395,7 +399,7 @@
       (Dual. new primal tangent)
       this))
 
-  (extract-tangent [_ t]
+  (extract-tangent [_ t _]
     (if (= t tag) tangent 0))
 
   v/IKind

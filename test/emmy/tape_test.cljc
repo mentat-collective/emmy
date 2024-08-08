@@ -220,10 +220,10 @@
 
       (checking "d/extract-tangent" 100 [tag  gen/nat
                                          tape (sg/tapecell gen/symbol)]
-                (is (zero? (d/extract-tangent tape tag))
+                (is (zero? (d/extract-tangent tape tag d/FORWARD-MODE))
                     "extract-tangent always returns 0 for tapes")
 
-                (is (zero? (d/extract-tangent tape (t/tape-tag tape)))
+                (is (zero? (d/extract-tangent tape (t/tape-tag tape) d/FORWARD-MODE))
                     "extract-tangent always returns 0 for tapes, even for
                       their own tag"))
 

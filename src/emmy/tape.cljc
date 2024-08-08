@@ -142,7 +142,7 @@
   ;; This implementation is called if a tape ever makes it out of
   ;; forward-mode-differentiated function. If this happens, a [[TapeCell]]
   ;; should be treated like a scalar, with a 0-valued tangent component.
-  (extract-tangent [_ _] 0)
+  (extract-tangent [_ _ _] 0)
 
   ;; A [[TapeCell]] has to respond `false` to all [[emmy.value/numerical?]]
   ;; inquiries; if we didn't do this, then [[emmy.generic/*]] and friends would
@@ -489,7 +489,7 @@
   ;; These should be called; it would be that a [[Completed]] instance has
   ;; escaped from a derivative call. These are meant to be an internal
   ;; implementation detail only.
-  (extract-tangent [_ _]
+  (extract-tangent [_ _ _]
     (assert "Impossible!"))
 
   ;; This is called on arguments to literal functions to check if a derivative
