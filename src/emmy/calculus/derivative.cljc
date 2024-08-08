@@ -7,7 +7,7 @@
   "This namespace implements a number of differential operators like [[D]], and
   the machinery to apply [[D]] to various structures."
   (:refer-clojure :exclude [partial])
-  (:require [emmy.differential :as d]
+  (:require [emmy.dual :as d]
             [emmy.expression :as x]
             [emmy.function :as f]
             [emmy.generic :as g]
@@ -22,7 +22,7 @@
 ;; ## Single and Multivariable Calculus
 ;;
 ;; These functions put together the pieces laid out
-;; in [[emmy.differential]] and declare an interface for taking
+;; in [[emmy.dual]] and declare an interface for taking
 ;; derivatives.
 
 (defn derivative
@@ -34,7 +34,7 @@
   see [[emmy.numerical.derivative/D-numeric]].
 
   `f` must be built out of generic operations that know how to
-  handle [[emmy.differential/Differential]] inputs in addition to any types that
+  handle [[emmy.dual/Dual]] inputs in addition to any types that
   a normal `(f x)` call would present. This restriction does _not_ apply to
   operations like putting `x` into a container or destructuring; just primitive
   function calls."

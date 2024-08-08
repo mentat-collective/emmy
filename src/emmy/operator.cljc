@@ -3,7 +3,7 @@
 (ns emmy.operator
   (:refer-clojure :exclude [get identity name])
   (:require [clojure.core :as core]
-            [emmy.differential :as d]
+            [emmy.dual :as d]
             [emmy.function :as f]
             [emmy.generic :as g]
             [emmy.pattern.rule :refer [rule-simplifier]]

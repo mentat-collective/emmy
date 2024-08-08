@@ -6,7 +6,7 @@
 (ns emmy.structure
   (:require [clojure.string :refer [join]]
             [emmy.collection]
-            [emmy.differential :as d]
+            [emmy.dual :as d]
             [emmy.function :as f]
             [emmy.generic :as g]
             [emmy.numsymb]

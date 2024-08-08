@@ -1,11 +1,11 @@
 #_"SPDX-License-Identifier: GPL-3.0"
 
-(ns emmy.differential-test
+(ns emmy.dual-test
   (:require #?(:cljs [emmy.util :as u])
             [clojure.test :refer [is deftest testing use-fixtures]]
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
-            [emmy.differential :as d]
+            [emmy.dual :as d]
             [emmy.generators :as sg]
             [emmy.generic :as g]
             [emmy.numerical.derivative :refer [D-numeric]]
@@ -18,7 +18,7 @@
 
 (defn- derivative
   "A bare-bones derivative implementation, used for testing the functionality made
-  available by [[Dual]]. The real version lives
+  available by [[emmy.dual/Dual]]. The real version lives
   at [[emmy.calculus.derivative/derivative]]"
   [f]
   (let [tag (d/fresh-tag)]
@@ -59,7 +59,7 @@
      ;; friends. Once we implement `v/<` we can duplicate this test for those
      ;; overridden versions, which should piggyback on compare.
      (let [real-minus-rationals (gen/one-of [sg/any-integral (sg/reasonable-double)])]
-       (checking "[[Dual]] is transparent to native comparison operators" 100
+       (checking "[[emmy.dual/Dual]] is transparent to native comparison operators" 100
                  [[l-num r-num] (gen/vector real-minus-rationals 2)]
                  (let [compare-bit (v/compare l-num r-num)]
                    (doseq [l [l-num (d/bundle-element l-num 1 0)]
@@ -150,7 +150,7 @@
                       "d/eq handles equality")
 
                   (is (not (d/eq (d/bundle-element n 1 0) (d/bundle-element n 2 0)))
-                      "d/eq is false for [[Dual]]s with diff tags"))
+                      "d/eq is false for [[emmy.dual/Dual]]s with diff tags"))
 
         (checking "compare ignores tangent" 100
                   [l sg/real, r sg/real]
@@ -174,12 +174,12 @@
         (checking "compare-full takes tags into account" 100
                   [l sg/real]
                   (is (pos? (d/compare-full (d/bundle-element l 1 0) l))
-                      "a [[Dual]] with a positive tangent is ALWAYS
-                    greater than a non-[[Dual]] whatever the tangent.")
+                      "a [[emmy.dual/Dual]] with a positive tangent is ALWAYS
+                    greater than a non-[[emmy.dual/Dual]] whatever the tangent.")
 
                   (is (neg? (d/compare-full l (d/bundle-element l 1 0)))
-                      "a [[Dual]] with a positive tangent is ALWAYS
-                    greater than a non-[[Dual]] whatever the tangent."))
+                      "a [[emmy.dual/Dual]] with a positive tangent is ALWAYS
+                    greater than a non-[[emmy.dual/Dual]] whatever the tangent."))
 
         (testing "freeze, simplify, str"
           (let [not-simple (g/square

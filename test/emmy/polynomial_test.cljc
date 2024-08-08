@@ -6,7 +6,7 @@
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
             [emmy.abstract.number :as an]
             [emmy.calculus.derivative :refer [D]]
-            [emmy.differential :as sd]
+            [emmy.dual :as sd]
             [emmy.expression :as x :refer [variables-in expression-of]]
             [emmy.expression.analyze :as a]
             [emmy.function :as f]

@@ -3,7 +3,7 @@
 ^#:nextjournal.clerk
 {:toc true
  :visibility :hide-ns}
-(ns emmy.differential
+(ns emmy.dual
   "This namespace contains an implementation of [[Dual]], a type that forms the
   basis for the forward-mode automatic differentiation implementation in emmy.
 
@@ -15,8 +15,8 @@
 
 ;; ## Differentials, Dual Numbers and Automatic Differentiation
 ;;
-;; This namespace develops an implementation of a type called [[Differential]].
-;; A [[Differential]] is a generalization of a type called a ["dual
+;; This namespace develops an implementation of a type called [[Dual]].
+;; A [[Dual]] is a generalization of a type called a ["dual
 ;; number"](https://en.wikipedia.org/wiki/Dual_number).
 ;;
 ;; As we'll discuss, passing these numbers as arguments to some function $f$
@@ -236,7 +236,7 @@
 ;;
 ;; The solution is to introduce a new $\varepsilon$ for every level, and allow
 ;; different $\varepsilon$ instances to multiply without annihilating. Each
-;; $\varepsilon$ is called a "tag". [[Differential]] (implemented below) is a
+;; $\varepsilon$ is called a "tag". [[Dual]] (implemented below) is a
 ;; generalized dual number that can track many tags at once, allowing nested
 ;; derivatives like the one described above to work.
 ;;
@@ -256,7 +256,7 @@
 ;; ### What Return Values are Allowed?
 ;;
 ;; Before we discuss the implementation of dual
-;; numbers (called [[Differential]]), [[emmy.tape/lift-1]], [[emmy.tape/lift-2]]
+;; numbers (called [[Dual]]), [[emmy.tape/lift-1]], [[emmy.tape/lift-2]]
 ;; and the rest of the machinery that makes this all possible; what sorts of
 ;; objects is `f` allowed to return?
 ;;
