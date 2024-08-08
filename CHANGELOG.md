@@ -4,9 +4,13 @@
 
 - PR:
 
+  - all lifted function machinery and impls moves to `emmy.autodiff`
+  - `emmy.differential` moves to `emmy.dual`
   - deletes perturbed?
-
+  - iperturbed impl for functions moves to `emmy.function`
   - adds extract-id, makes reverse-mode work with lots of output types
+  - new `mode` arg for `extract-tangent`
+  - single `derivative` moves to `emmy.dual`
 
 - #156:
 
