@@ -2,6 +2,14 @@
 
 ## [unreleased]
 
+This PR:
+
+  - Moves the `IPerturbed` implementation for functions to `emmy.function`, out
+    of `emmy.calculus.derivative`
+
+  - Adds a new `mode` parameter to `emmy.differential/extract-tangent`, in
+    preparation for allowing reverse and forward mode across all output types
+
 - #175:
 
   - Adds `emmy.env/{tau,-tau}` constants for the $\tau$ fans out there

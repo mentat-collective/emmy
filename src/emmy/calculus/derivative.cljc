@@ -43,7 +43,7 @@
     (let [tag    (d/fresh-tag)
           lifted (d/bundle-element x 1 tag)]
       (-> (d/with-active-tag tag f [lifted])
-          (d/extract-tangent tag ::forward)))))
+          (d/extract-tangent tag d/FORWARD-MODE)))))
 
 ;; The result of applying the derivative `(D f)` of a multivariable function `f`
 ;; to a sequence of `args` is a structure of the same shape as `args` with all
