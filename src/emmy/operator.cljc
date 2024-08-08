@@ -36,8 +36,8 @@
   (perturbed? [_] false)
   (replace-tag [_ old new]
     (Operator. (d/replace-tag o old new) arity name context m))
-  (extract-tangent [_ tag]
-    (Operator. (d/extract-tangent o tag) arity name context m))
+  (extract-tangent [_ tag mode]
+    (Operator. (d/extract-tangent o tag mode) arity name context m))
 
   #?@(:clj
       [ILookup

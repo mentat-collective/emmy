@@ -84,7 +84,7 @@
   d/IPerturbed
   (perturbed? [_] (boolean (some d/perturbed? v)))
   (replace-tag [s old new] (mapr #(d/replace-tag % old new) s))
-  (extract-tangent [s tag] (mapr #(d/extract-tangent % tag) s))
+  (extract-tangent [s tag mode] (mapr #(d/extract-tangent % tag mode) s))
 
   #?@(:clj
       [Object

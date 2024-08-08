@@ -24,7 +24,7 @@
   (let [tag (d/fresh-tag)]
     (fn [x]
       (-> (f (d/bundle-element x 1 tag))
-          (d/extract-tangent tag)))))
+          (d/extract-tangent tag d/FORWARD-MODE)))))
 
 (defn nonzero [gen]
   (gen/fmap (fn [x]

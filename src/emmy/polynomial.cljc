@@ -132,8 +132,8 @@
   (replace-tag [this old new]
     (map-coefficients #(sd/replace-tag % old new) this))
 
-  (extract-tangent [this tag]
-    (map-coefficients #(sd/extract-tangent % tag) this))
+  (extract-tangent [this tag mode]
+    (map-coefficients #(sd/extract-tangent % tag mode) this))
 
   v/IKind
   (kind [_] ::polynomial)
