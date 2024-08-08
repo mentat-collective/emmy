@@ -2,7 +2,10 @@
 
 ## [unreleased]
 
-This PR:
+- #180 renames `emmy.differential` to `emmy.dual`, since the file now contains a
+  proper dual number implementation, not a truncated multivariate power series.
+
+- #179:
 
   - Moves the `IPerturbed` implementation for functions to `emmy.function`, out
     of `emmy.calculus.derivative`

@@ -7,7 +7,7 @@
   "This namespace contains implementations of various Emmy protocols for
   native Clojure collections."
   (:require [clojure.set :as cs]
-            [emmy.differential :as d]
+            [emmy.dual :as d]
             [emmy.function :as f]
             [emmy.generic :as g]
             [emmy.util :as u]

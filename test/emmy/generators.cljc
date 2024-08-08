@@ -8,7 +8,7 @@
             #?(:cljs [emmy.bigfraction :refer [Fraction]])
             [emmy.complex :as c]
             #?(:cljs [emmy.complex.impl :refer [Complex]])
-            [emmy.differential :as d]
+            [emmy.dual :as d]
             [emmy.generic :as g]
             [emmy.matrix :as m]
             [emmy.modint :as mi]
@@ -284,7 +284,7 @@
 
 (defn dual
   "Returns a generator that produces proper instances
-  of [[emmy.differential/Dual]]."
+  of [[emmy.dual/Dual]]."
   ([] (dual real))
   ([primal-gen]
    (gen/let [tag    gen/nat

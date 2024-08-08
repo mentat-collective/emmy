@@ -10,7 +10,7 @@
   (:refer-clojure :exclude [get get-in memoize with-meta name])
   (:require [clojure.core :as core]
             [clojure.core.match :refer [match]]
-            [emmy.differential :as d]
+            [emmy.dual :as d]
             [emmy.generic :as g]
             [emmy.util :as u]
             [emmy.value :as v])

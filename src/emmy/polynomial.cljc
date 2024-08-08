@@ -8,7 +8,7 @@
   (:require [clojure.set :as set]
             [clojure.string :as cs]
             [emmy.collection]
-            [emmy.differential :as sd]
+            [emmy.dual :as sd]
             [emmy.expression :as x]
             [emmy.expression.analyze :as a]
             [emmy.function :as f]

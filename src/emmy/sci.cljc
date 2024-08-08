@@ -13,7 +13,7 @@
   minimal SCI environment should select their desired namespaces from this map."
   {'emmy.algebra.fold                   (copy-ns emmy.algebra.fold (sci/create-ns 'emmy.algebra.fold))
    'emmy.complex                        (copy-ns emmy.complex (sci/create-ns 'emmy.complex))
-   'emmy.differential                   (copy-ns emmy.differential (sci/create-ns 'emmy.differential))
+   'emmy.dual                   (copy-ns emmy.dual (sci/create-ns 'emmy.dual))
    'emmy.env                            (copy-ns emmy.env (sci/create-ns 'emmy.env))
    'emmy.expression                     (copy-ns emmy.expression (sci/create-ns 'emmy.expression))
    'emmy.function                       (copy-ns emmy.function (sci/create-ns 'emmy.function))
