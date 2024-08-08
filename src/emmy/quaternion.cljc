@@ -110,12 +110,6 @@
   (arity [this] (arity this))
 
   d/IPerturbed
-  (perturbed? [_]
-    (or (d/perturbed? r)
-        (d/perturbed? i)
-        (d/perturbed? j)
-        (d/perturbed? k)))
-
   (replace-tag [_ old new]
     (Quaternion.
      (d/replace-tag r old new)

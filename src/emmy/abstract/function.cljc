@@ -12,7 +12,8 @@
   (:refer-clojure :exclude [name])
   (:require #?(:clj [clojure.pprint :as pprint])
             [emmy.abstract.number :as an]
-            [emmy.dual :as d]
+            [emmy.autodiff :as ad]
+            [emmy.dual :as dual]
             [emmy.function :as f]
             [emmy.generic :as g]
             [emmy.matrix :as m]
@@ -268,9 +269,9 @@
   [f primal-s tag]
   (fn
     ([] 0)
-    ([tangent] (d/bundle-element (apply f primal-s) tangent tag))
+    ([tangent] (dual/bundle-element (apply f primal-s) tangent tag))
     ([tangent [x path _]]
-     (let [dx (d/tangent x tag)]
+     (let [dx (dual/tangent x tag)]
        (if (g/numeric-zero? dx)
          tangent
          (let [partial (literal-partial f path)]
@@ -318,9 +319,9 @@
   that input."
   [f s tag dx]
   (let [fold-fn  (cond (tape/tape? dx) reverse-mode-fold
-                       (d/dual? dx)    forward-mode-fold
+                       (dual/dual? dx)    forward-mode-fold
                        :else           (u/illegal "No tape or differential inputs."))
-        primal-s (s/mapr (fn [x] (tape/primal-of x tag)) s)]
+        primal-s (s/mapr (fn [x] (ad/primal-of x tag)) s)]
     (s/fold-chain (fold-fn f primal-s tag) s)))
 
 (defn- check-argument-type
@@ -355,7 +356,7 @@
     (if-let [[tag dx] (s/fold-chain
                        (fn
                          ([] [])
-                         ([acc]     (apply tape/tag+perturbation acc))
+                         ([acc]     (apply ad/tag+perturbation acc))
                          ([acc [d]] (conj acc d)))
                        s)]
       (literal-derivative f s tag dx)

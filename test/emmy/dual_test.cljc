@@ -5,26 +5,16 @@
             [clojure.test :refer [is deftest testing use-fixtures]]
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
+            [emmy.autodiff :as ad]
             [emmy.dual :as d]
             [emmy.generators :as sg]
             [emmy.generic :as g]
             [emmy.numerical.derivative :refer [D-numeric]]
             [emmy.simplify :refer [hermetic-simplify-fixture]]
-            [emmy.tape :as tape]
             [emmy.value :as v]
             [same.core :refer [ish? with-comparator]]))
 
 (use-fixtures :each hermetic-simplify-fixture)
-
-(defn- derivative
-  "A bare-bones derivative implementation, used for testing the functionality made
-  available by [[emmy.dual/Dual]]. The real version lives
-  at [[emmy.calculus.derivative/derivative]]"
-  [f]
-  (let [tag (d/fresh-tag)]
-    (fn [x]
-      (-> (f (d/bundle-element x 1 tag))
-          (d/extract-tangent tag d/FORWARD-MODE)))))
 
 (defn nonzero [gen]
   (gen/fmap (fn [x]
@@ -197,7 +187,7 @@
                     (g/simplify not-simple)))
                 "simplify simplifies primal and tangent")
 
-            (is (= "#emmy.tape.Dual{:tag 0, :primal (expt x 4), :tangent (* 4 (expt x 3))}"
+            (is (= "#emmy.dual.Dual{:tag 0, :primal (expt x 4), :tangent (* 4 (expt x 3))}"
                    (str (g/simplify not-simple)))
                 "str representation properly simplifies.")))))))
 
@@ -210,11 +200,11 @@
                         (g/* x g/square)
                         (g/* x g/cube))]
                 (g x)))
-          Df (derivative f)]
-      (is (= ((derivative (g/* identity g/square)) 10)
+          Df (d/derivative f)]
+      (is (= ((d/derivative (g/* identity g/square)) 10)
              (Df 10))
           "providing 10 takes the x*g/square branch")
-      (is (= ((derivative (g/* identity g/cube)) 9)
+      (is (= ((d/derivative (g/* identity g/cube)) 9)
              (Df 9))
           "providing 9 takes the x*g/cube branch"))))
 
@@ -232,7 +222,7 @@
         "d/with-active-tag calls its fn with the supplied args.")))
 
 (deftest dual-arithmetic-tests
-  (let [Df (derivative (fn [_x]))]
+  (let [Df (d/derivative (fn [_x]))]
     (checking "derivative of nil-valued function is always zero" 100
               [x sg/real]
               (is (zero? (Df x)))))
@@ -334,7 +324,7 @@
 (deftest lifted-fn-tests
   (letfn [(breaks? [f x]
             (is (thrown? #?(:clj IllegalArgumentException :cljs js/Error)
-                         ((derivative f) x))))]
+                         ((d/derivative f) x))))]
     (checking "integer-discontinuous derivatives work" 100 [x sg/real]
               (if (v/integral? x)
                 (do (breaks? g/floor x)
@@ -342,17 +332,17 @@
                     (breaks? g/integer-part x)
                     (breaks? g/fractional-part x))
 
-                (do (is (zero? ((derivative g/floor) x)))
-                    (is (zero? ((derivative g/ceiling) x)))
-                    (is (zero? ((derivative g/integer-part) x)))
-                    (is (g/one? ((derivative g/fractional-part) x)))))))
+                (do (is (zero? ((d/derivative g/floor) x)))
+                    (is (zero? ((d/derivative g/ceiling) x)))
+                    (is (zero? ((d/derivative g/integer-part) x)))
+                    (is (g/one? ((d/derivative g/fractional-part) x)))))))
 
   (testing "lift-n"
-    (let [*   (tape/lift-n g/* (fn [_] 1) (fn [_ y] y) (fn [x _] x))
-          Df7 (derivative
+    (let [*   (ad/lift-n g/* (fn [_] 1) (fn [_ y] y) (fn [x _] x))
+          Df7 (d/derivative
                (fn x**7 [x] (* x x x x x x x)))
-          Df1 (derivative *)
-          Df0 (derivative (fn [_] (*)))]
+          Df1 (d/derivative *)
+          Df0 (d/derivative (fn [_] (*)))]
       (is (v/= '(* 7 (expt x 6))
                (g/simplify (Df7 'x)))
           "functions created with lift-n can take many args (they reduce via the
@@ -371,7 +361,7 @@
                    (g/+ (g/sin x) (g/expt x 2))
                    (g/+ (g/sin x) x)
                    (g/log (g/abs x))))
-          Df         (derivative f)
+          Df         (d/derivative f)
           Df-numeric (D-numeric f)]
       (with-comparator (v/within 1e-6)
         (checking "exercise some lifted fns" 100
@@ -385,10 +375,10 @@
                       "Does numeric match autodiff?"))))))
 
 (deftest sinc-etc-tests
-  (is (zero? ((derivative g/sinc) 0)))
-  (is (zero? ((derivative g/tanc) 0)))
-  (is (zero? ((derivative g/sinhc) 0)))
-  (is (zero? ((derivative g/tanhc) 0)))
+  (is (zero? ((d/derivative g/sinc) 0)))
+  (is (zero? ((d/derivative g/tanc) 0)))
+  (is (zero? ((d/derivative g/sinhc) 0)))
+  (is (zero? ((d/derivative g/tanhc) 0)))
 
   (letfn [(gen-double [min max]
             (gen/double*
@@ -399,68 +389,68 @@
     (with-comparator (v/within 1e-4)
       (checking "sinc" 100 [n (gen-double 1 50)]
                 (is (ish? ((D-numeric g/sinc) n)
-                          ((derivative g/sinc) n))))
+                          ((d/derivative g/sinc) n))))
 
       ;; attempting to limit to a region where we avoid the infinities at
       ;; multiples of pi/2 (other than 0).
       (checking "tanc" 100 [n (gen-double 0.01 (- (/ Math/PI 2) 0.01))]
                 (is (ish? ((D-numeric g/tanc) n)
-                          ((derivative g/tanc) n))))
+                          ((d/derivative g/tanc) n))))
 
       (checking "tanhc" 100 [n (gen-double 1 50)]
                 (is (ish? ((D-numeric g/tanhc) n)
-                          ((derivative g/tanhc) n)))))
+                          ((d/derivative g/tanhc) n)))))
 
     (with-comparator (v/within 1e-4)
       (checking "sinhc" 100 [n (gen-double 1 10)]
                 (is (ish? ((D-numeric g/sinhc) n)
-                          ((derivative g/sinhc) n)))))
+                          ((d/derivative g/sinhc) n)))))
 
     (with-comparator (v/within 1e-8)
       (checking "acot" 100 [n (gen-double 0.01 (- (/ Math/PI 2) 0.01))]
                 (is (ish? ((D-numeric g/acot) n)
-                          ((derivative g/acot) n))))
+                          ((d/derivative g/acot) n))))
 
       (checking "asec" 100 [n (gen-double 3 100)]
                 (is (ish? ((D-numeric g/asec) n)
-                          ((derivative g/asec) n))))
+                          ((d/derivative g/asec) n))))
 
       (checking "acsc" 100 [n (gen-double 3 100)]
                 (is (ish? ((D-numeric g/acsc) n)
-                          ((derivative g/acsc) n))))
+                          ((d/derivative g/acsc) n))))
 
       (checking "sech" 100 [n (gen-double 3 100)]
                 (is (ish? ((D-numeric g/sech) n)
-                          ((derivative g/sech) n))))
+                          ((d/derivative g/sech) n))))
 
       (checking "coth" 100 [n (gen-double 1 3)]
                 (is (ish? ((D-numeric g/coth) n)
-                          ((derivative g/coth) n))))
+                          ((d/derivative g/coth) n))))
 
       (checking "csch" 100 [n (gen-double 0.5 10)]
                 (is (ish? ((D-numeric g/csch) n)
-                          ((derivative g/csch) n))))
+                          ((d/derivative g/csch) n))))
 
       (checking "acosh" 100 [n (gen-double 2 10)]
                 (is (ish? ((D-numeric g/acosh) n)
-                          ((derivative g/acosh) n))))
+                          ((d/derivative g/acosh) n))))
 
       (checking "asinh" 100 [n (gen-double 2 10)]
                 (is (ish? ((D-numeric g/asinh) n)
-                          ((derivative g/asinh) n))))
+                          ((d/derivative g/asinh) n))))
 
       (checking "atanh" 100 [n (gen-double 0.1 0.9)]
                 (is (ish? ((D-numeric g/atanh) n)
-                          ((derivative g/atanh) n))))
+                          ((d/derivative g/atanh) n))))
 
       (checking "acoth" 100 [n (gen-double 2 10)]
                 (is (ish? ((D-numeric g/acoth) n)
-                          ((derivative g/acoth) n))))
+                          ((d/derivative g/acoth) n))))
 
       (checking "asech" 100 [n (gen-double 0.1 0.9)]
                 (is (ish? ((D-numeric g/asech) n)
-                          ((derivative g/asech) n))))
+                          ((d/derivative g/asech) n))))
 
       (checking "acsch" 100 [n (gen-double 2 10)]
                 (is (ish? ((D-numeric g/acsch) n)
-                          ((derivative g/acsch) n)))))))
+                          ((d/derivative g/acsch) n)))))))

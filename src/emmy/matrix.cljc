@@ -35,7 +35,6 @@
                   :else ::matrix))
 
   d/IPerturbed
-  (perturbed? [_] (boolean (core/some d/perturbed? v)))
   (replace-tag [M old new] (fmap #(d/replace-tag % old new) M))
   (extract-tangent [M tag mode] (fmap #(d/extract-tangent % tag mode) M))
 

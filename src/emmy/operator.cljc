@@ -33,7 +33,6 @@
   (arity [_] arity)
 
   d/IPerturbed
-  (perturbed? [_] false)
   (replace-tag [_ old new]
     (Operator. (d/replace-tag o old new) arity name context m))
   (extract-tangent [_ tag mode]
