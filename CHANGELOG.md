@@ -2,6 +2,14 @@
 
 ## [unreleased]
 
+- #182:
+
+  - moves the generic implementations for `TapeCell` and `Dual` to `emmy.autodiff`
+
+  - moves `emmy.calculus.derivative` to `emmy.dual/derivative`
+
+  - removes `emmy.dual/perturbed?` from `IPerturbed`, as this is no longer used.
+
 - #180 renames `emmy.differential` to `emmy.dual`, since the file now contains a
   proper dual number implementation, not a truncated multivariate power series.
 

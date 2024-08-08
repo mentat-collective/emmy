@@ -53,11 +53,6 @@
                ((D f) 'x))
             "polynomial derivatives with respect to some coefficient work!")))
 
-    (checking "perturbed?" 100
-              [p (sg/polynomial :coeffs (sg/dual))]
-              (is (sd/perturbed? p)
-                  "A polynomial with perturbed coefficients is perturbed."))
-
     (checking "polynomials are polynomial?, v/kind, misc others" 100
               [p (sg/polynomial)]
               (is (p/polynomial? p))

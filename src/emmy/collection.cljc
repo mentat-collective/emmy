@@ -57,7 +57,6 @@
   ;; perturbed. [[d/replace-tag]] and [[d/extract-tangent]] pass the buck down
   ;; the vector's elements.
   d/IPerturbed
-  (perturbed? [v] (boolean (some d/perturbed? v)))
   (replace-tag [v old new] (mapv #(d/replace-tag % old new) v))
   (extract-tangent [v tag mode] (mapv #(d/extract-tangent % tag mode) v)))
 
@@ -84,7 +83,6 @@
     (kind [xs] (type xs))
 
     d/IPerturbed
-    (perturbed? [_] false)
     (replace-tag [xs old new] (map #(d/replace-tag % old new) xs))
     (extract-tangent [xs tag mode] (map #(d/extract-tangent % tag mode) xs))))
 
@@ -178,8 +176,7 @@
        {:arity (fn [_] [:between 1 2])}
 
        d/IPerturbed
-       {:perturbed? (fn [m] (boolean (some d/perturbed? (vals m))))
-        :replace-tag (fn [m old new] (u/map-vals #(d/replace-tag % old new) m))
+       {:replace-tag (fn [m old new] (u/map-vals #(d/replace-tag % old new) m))
         :extract-tangent
         (fn [m tag mode]
           (if-let [t (:type m)]
@@ -199,7 +196,6 @@
        (arity [_] [:between 1 2])
 
        d/IPerturbed
-       (perturbed? [m] (boolean (some d/perturbed? (vals m))))
        (replace-tag [m old new] (u/map-vals #(d/replace-tag % old new) m))
        (extract-tangent [m tag mode]
          (if-let [t (:type m)]
