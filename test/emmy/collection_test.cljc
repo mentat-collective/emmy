@@ -7,7 +7,6 @@
             [emmy.calculus.derivative :refer [D]]
             [emmy.collection :as collection]
             [emmy.complex :refer [complex I]]
-            [emmy.dual :as d]
             [emmy.function :as f]
             [emmy.generators :as sg]
             [emmy.generic :as g]

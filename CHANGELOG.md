@@ -2,6 +2,26 @@
 
 ## [unreleased]
 
+- #183:
+
+  - adds `emmy.{autodiff, tape}` to `emmy.sci`'s exported namespace set
+
+  - adds `emmy.dual/extract-id` implementations for all supported output types
+    (every type that already implements `emmy.dual/IPerturbed`)
+
+  - moves `emmy.tape/Completed` to `emmy.dual/Completed`; it doesn't really make
+    sense there, but this is the only current way to remove the circular
+    dependency between `emmy.dual` and `emmy.tape`. (`tape` needs a `dual`
+    import to gain `emmy.dual/IPerturbed`.)
+
+  - simplifies the `emmy.tape/gradient` implementation down to only handle
+    single real-or-structural arguments, just like `emmy.dual/derivative`. We'll
+    share the "handle-multiple-input" implementation between the two in a
+    follow-up PR
+
+  - makes the tests in `emmy.calculus.derivative` generic on the derivative
+    implementation, so we can run all tests in forward and reverse mode.
+
 - #182:
 
   - moves the generic implementations for `TapeCell` and `Dual` to `emmy.autodiff`

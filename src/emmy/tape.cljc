@@ -3,17 +3,12 @@
 (ns emmy.tape
   "This namespace contains an implementation of [[TapeCell]], a type that forms
   the basis for the reverse-mode automatic differentiation implementation in
-  Emmy.
-
-  NOTE that this type currently can't handle any interaction with forward-mode
-  AD! Don't nest [[gradient]] calls inside [[emmy.env/D]] calls."
+  Emmy."
   (:refer-clojure :exclude [compare zero?])
   (:require #?(:clj [clojure.pprint :as pprint])
             [emmy.dual :as d]
             [emmy.function :as f]
             [emmy.generic :as g]
-            [emmy.matrix :as matrix]
-            [emmy.operator :as o]
             [emmy.structure :as s]
             [emmy.util :as u]
             [emmy.value :as v]))
@@ -26,9 +21,7 @@
 ;;
 ;; This namespace develops an implementation of "reverse-mode" automatic
 ;; differentation, in contrast with the forward mode AD implementation
-;; in [[emmy.dual]]. These two are closely related, and the
-;; implementations could merge once I get around to reading and
-;; implementing [the YOLO paper](https://arxiv.org/abs/2204.10923).
+;; in [[emmy.dual]].
 ;;
 ;; The core idea of forward-mode AD is that we can use the chain rule to
 ;; mechanically build up a partial derivative by wrapping one of the dependent
@@ -124,8 +117,7 @@
 
 ;; Here's the [[TapeCell]] type with the fields described above.
 
-(declare compare)
-
+(declare compare reverse-phase)
 
 (deftype TapeCell [tag id primal in->partial]
   v/IKind
@@ -137,10 +129,16 @@
       (TapeCell. new id primal in->partial)
       this))
 
-  ;; This implementation is called if a tape ever makes it out of
-  ;; forward-mode-differentiated function. If this happens, a [[TapeCell]]
-  ;; should be treated like a scalar, with a 0-valued tangent component.
-  (extract-tangent [_ _ _] 0)
+  ;; If called with [[emmy.dual/FORWARD-MODE]], a [[TapeCell]] should be treated
+  ;; like a scalar, with a 0-valued tangent component.
+  ;;
+  ;; Else, only respond with [[reverse-phase]] if the tags match.
+  (extract-tangent [this t mode]
+    (cond (= mode d/FORWARD-MODE) 0
+          (= t tag)               (reverse-phase this)
+          :else                   d/REVERSE-EMPTY))
+
+  (extract-id [_ _] 0)
 
   ;; A [[TapeCell]] has to respond `false` to all [[emmy.value/numerical?]]
   ;; inquiries; if we didn't do this, then [[emmy.generic/*]] and friends would
@@ -157,9 +155,9 @@
   #?(:cljs (valueOf [_] (.valueOf primal)))
   (toString [_]
     (str "#emmy.tape.TapeCell"
-         {:tag tag
-          :id id
-          :primal primal
+         {:tag         tag
+          :id          id
+          :primal      primal
           :in->partial in->partial}))
 
   #?@(:clj
@@ -413,22 +411,8 @@
 ;; called a "sensitivity" while it's being accumulated. For functions that
 ;; return, say, a map of key => perturbed value, we need to run the reverse
 ;; phase for every value; rather than store a new map at each slot, we create a
-;; new [[Completed]] type to distinguish nested maps from sensitivity maps.
-;;
-(defrecord Completed [v->partial]
-  d/IPerturbed
-  ;; NOTE that it's a problem that `replace-tag` is called on [[Completed]]
-  ;; instances now. In a future refactor I want `get` calls out of
-  ;; a [[Completed]] map to occur before tag replacement needs to happen.
-  (replace-tag [_ old new]
-    (Completed.
-     (u/map-vals #(d/replace-tag % old new) v->partial)))
-
-  ;; These should be called; it would be that a [[Completed]] instance has
-  ;; escaped from a derivative call. These are meant to be an internal
-  ;; implementation detail only.
-  (extract-tangent [_ _ _]
-    (assert "Impossible!")))
+;; new [[emmy.dual/Completed]] type to distinguish nested maps from sensitivity
+;; maps.
 
 (defn process [sensitivities tape]
   ;; Since we're processing in topological sort order, when we
@@ -450,140 +434,36 @@
 
 (defn ^:no-doc reverse-phase
   "Accepts a [[TapeCell]] `root` representing the final value, or output, of a
-  reverse-mode derivative computation, and returns a [[Completed]] instance
-  wrapping a map of
+  reverse-mode derivative computation, and returns an [[emmy.dual/Completed]]
+  instance wrapping a map of
 
   - each intermediate value seen in the computation to
   - the partial derivative of the output with respect to that value."
   [root]
   (let [nodes         (topological-sort root)
         sensitivities {(tape-id root) 1}]
-    (->Completed
+    (d/->Completed
      (reduce process sensitivities nodes))))
 
 ;; [[reverse-phase]] above operates on a single [[TapeCell]]. For structured
 ;; outputs, we need to walk the output until we hit a [[TapeCell]] instance and
 ;; call [[reverse-phase]] for each. This will result in an output-shaped
-;; structure of [[Completed]] instances.
+;; structure of [[emmy.dual/Completed]] instances.
 ;;
-;; TODO [[->partials]] really should depend on `fmap`, as should so many other
-;; things in the library. Without this we can't generically support output
-;; values like maps or quaternions. [[emmy.dual/extract-tangent]] does
-;; this for forward-mode, I believe.
-
-(declare ->partials)
-
-(defn- ->partials-fn
-  "Returns a new function that composes a 'tag extraction' step with `f`. The
-  returned fn will
-
-  - call the underlying `f`, producing `result`
-  - return `(->partials result tag)`
-
-  If called within the scope of a function waiting for the same `tag`, the
-  returned function will remap any instance of `tag` that appears in any
-  differential argument passed to it to a private `fresh` tag, to prevent
-  internal perturbation confusion. Any perturbations in the final result tagged
-  with `fresh` will be remapped in the final result back to `tag`. If called
-  _outside_ of a function waiting for `tag` no tag remapping will occur."
-  [f tag]
-  (-> (fn [& args]
-        (if (d/tag-active? tag)
-          (let [fresh (d/fresh-tag)]
-            (-> (d/with-active-tag tag f (map #(d/replace-tag % tag fresh) args))
-                (->partials tag)
-                (d/replace-tag fresh tag)))
-          (-> (d/with-active-tag tag f args)
-              (->partials tag))))
-      (f/with-arity (f/arity f))))
-
-(defn ^:no-doc ->partials
-  "Given some possibly-structured `output` of the forward pass and a `tag`,
-  returns either
-
-  - a [[Completed]] instance wrapping a map of intermediate value => partial
-    derivative, or
-  - the same structure as `output` will leaves replaced with [[Completed]]
-    instances
-
-  Pass the result to [[extract]] along with the ID of some input node to obtain
-  the partial derivative with respect to that ID."
-  [output tag]
-  (cond (and (tape? output) (= tag (tape-tag output)))
-        (reverse-phase output)
-
-        (vector? output)
-        (mapv #(->partials % tag) output)
-
-        (s/structure? output)
-        (s/mapr #(->partials % tag) output)
-
-        (f/function? output)
-        (->partials-fn output tag)
-
-        (o/operator? output)
-        (o/->Operator (->partials-fn (o/procedure output) tag)
-                      (o/arity output)
-                      (o/name output)
-                      (o/context output)
-                      (meta output))
-
-        (v/scalar? output)
-        (->Completed {})
-
-        :else (u/unsupported "Output not handled yet!")))
-
 ;; Unfortunately we require two passes over the output structure. The first one
-;; generates the maps of partials, and the second pass extracts the partial we
-;; care about.
+;; calls [[reverse-phase]] via [[emmy.dual/extract-tangent]] to generate the
+;; maps of partials (stored in an [[emmy.dual/Completed]] instance), and the
+;; second pass (via [[interpret]]) extracts the partial we care about.
 ;;
 ;; If we only have a single input, we could get away with a single pass and
 ;; combine these. But for multiple inputs, [[extract]] will be called multiple
 ;; times, one for each input.
 
-(defn ^:no-doc extract
-  "Given
-
-  - an `output` [[Completed]] instance or structure of completed instances
-  - the `id` of some variable
-
-  returns a value of the same shape as `output` with all [[Completed]] instances
-  replaced by the partial derivative associated with `id`."
-  [output id]
-  (cond (instance? Completed output)
-        (get (:v->partial output) id 0)
-
-        (vector? output)
-        (mapv #(extract % id) output)
-
-        (s/structure? output)
-        (s/mapr #(extract % id) output)
-
-        (f/function? output)
-        (comp #(extract % id) output)
-
-        (o/operator? output)
-        (o/->Operator (extract (o/procedure output) id)
-                      (o/arity output)
-                      (o/name output)
-                      (o/context output)
-                      (meta output))
-
-        :else 0))
-
-;; TODO note that [[interpret]] and [[tapify]] both need to become generic on
-;; input-walking, and [[extract]] and [[->partials]] need to be generic on
-;; output-walking.
-;;
-;; I am sure we are going to need to glom on to the [[replace-tag]] machinery as
-;; well. [[emmy.dual/extract-tangent]] is similar to what we want. Maybe
-;; we can share?
-
 (defn ^:no-doc interpret
   "Given
 
   - a perturbed input, either a [[TapeCell]] or structure of [[TapeCell]]s
-  - an `output` [[Completed]] instance or structure of completed instances
+  - an `output` [[emmy.dual/Completed]] instance or structure of completed instances
   - the `tag` for the current run of differentiation
 
   Returns a value with the same shape as `input`, but with each [[TapeCell]]
@@ -591,7 +471,7 @@
   computation at that leaf."
   [input output tag]
   (cond (and (tape? input) (= tag (tape-tag input)))
-        (extract output (tape-id input))
+        (d/extract-id output (tape-id input))
 
         (s/structure? input)
         (s/opposite input (mapv #(interpret % output tag) input))
@@ -625,7 +505,7 @@
   function calls."
   ([f] (gradient f []))
   ([f selectors]
-   (fn
+   (fn grad
      ([] 0)
      ([x]
       (when (and (seq selectors) (not (s/structure? x)))
@@ -638,17 +518,10 @@
                         (tapify x tag)
                         (update-in x selectors tapify tag))
             output    (d/with-active-tag tag f [inputs])
-            completed (->partials output tag)]
+            completed (d/extract-tangent output tag d/REVERSE-MODE)]
         (if (empty? selectors)
           (interpret inputs completed tag)
-          (interpret (get-in inputs selectors) completed tag))))
-     ([x & more]
-      ((gradient (fn [args]
-                   (apply f args))
-                 selectors)
-       (matrix/seq-> (cons x more)))))))
-
-;; ## TapeCell Generics
+          (interpret (get-in inputs selectors) completed tag)))))))
 
 (defmethod g/zero-like [::tape] [_] 0)
 (defmethod g/one-like [::tape] [_] 1)

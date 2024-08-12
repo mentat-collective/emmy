@@ -126,6 +126,14 @@
      (d/extract-tangent k tag mode)
      m))
 
+  (extract-id [_ id]
+    (Quaternion.
+     (d/extract-id r id)
+     (d/extract-id i id)
+     (d/extract-id j id)
+     (d/extract-id k id)
+     m))
+
   v/IKind
   (kind [_] ::quaternion)
 
@@ -1315,7 +1323,7 @@
 
 ;; ### Real 4x4 matrices
 
-(def ONE-matrix
+(def ^:const ONE-matrix
   "4x4 matrix representation of the quaternion [[ONE]]."
   (m/by-rows
    [1 0 0 0]
@@ -1323,7 +1331,7 @@
    [0 0 1 0]
    [0 0 0 1]))
 
-(def I-matrix
+(def ^:const I-matrix
   "4x4 matrix representation of the quaternion [[I]]."
   (m/by-rows
    [0 1 0 0]
@@ -1331,7 +1339,7 @@
    [0 0 0 -1]
    [0 0 1 0]))
 
-(def J-matrix
+(def ^:const J-matrix
   "4x4 matrix representation of the quaternion [[J]]."
   (m/by-rows
    [0 0 1 0]
@@ -1339,7 +1347,7 @@
    [-1 0 0 0]
    [0 -1 0 0]))
 
-(def K-matrix
+(def ^:const K-matrix
   "4x4 matrix representation of the quaternion [[K]]."
   (m/by-rows
    [0 0 0 1]
@@ -1364,19 +1372,19 @@
 
 ;; ### Tensor Representations of Quaternions
 
-(def ONE-tensor
+(def ^:const ONE-tensor
   "4x4 down-up tensor representation of the quaternion [[ONE]]."
   (m/->structure ONE-matrix))
 
-(def I-tensor
+(def ^:const I-tensor
   "4x4 down-up tensor representation of the quaternion [[I]]."
   (m/->structure I-matrix))
 
-(def J-tensor
+(def ^:const J-tensor
   "4x4 down-up tensor representation of the quaternion [[J]]."
   (m/->structure J-matrix))
 
-(def K-tensor
+(def ^:const K-tensor
   "4x4 down-up tensor representation of the quaternion [[K]]."
   (m/->structure K-matrix))
 
