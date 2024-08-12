@@ -278,11 +278,10 @@
   (make-integrator state-derivative state-derivative-args))
 
 (defn integrate-state-derivative
-  "A wrapper for evolve, which is more convenient when you just
-  want a vector of (time, state) pairs over the integration interval
-  instead of having to deal with a callback. Integrates the supplied
-  state derivative (and its argument package) from [0 to t1] in steps
-  of size dt"
+  "A wrapper for evolve, which is more convenient when you just want a vector of
+  states over the integration interval instead of having to deal with a
+  callback. Integrates the supplied state derivative (and its argument package)
+  from [0 to t1] in steps of size dt"
   [state-derivative state-derivative-args initial-state t1 dt]
   (let [f (make-integrator* state-derivative state-derivative-args initial-state
                             {:epsilon 1e-6
