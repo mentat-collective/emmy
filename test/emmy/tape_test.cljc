@@ -529,11 +529,11 @@
               (g/simplify
                ((t/gradient f) ['x 'y 'z])))))
 
-      #_(is (= (g/simplify
-                ((D f) ['x 'y 'z]))
-               (g/simplify
-                ((t/gradient f) ['x 'y 'z])))
-            "reverse-mode matches forward-mode.")
+      (is (= (g/simplify
+              ((D f) ['x 'y 'z]))
+             (g/simplify
+              ((t/gradient f) ['x 'y 'z])))
+          "reverse-mode matches forward-mode.")
 
       (is (= ((t/gradient f) ['x 'y 'z])
              (s/down

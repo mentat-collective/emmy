@@ -17,7 +17,10 @@
   - simplifies the `emmy.tape/gradient` implementation down to only handle
     single real-or-structural arguments, just like `emmy.dual/derivative`. We'll
     share the "handle-multiple-input" implementation between the two in a
-    follow-up PR.
+    follow-up PR
+
+  - makes the tests in `emmy.calculus.derivative` generic on the derivative
+    implementation, so we can run all tests in forward and reverse mode.
 
 - #182:
 

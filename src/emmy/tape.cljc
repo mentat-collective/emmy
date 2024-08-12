@@ -132,7 +132,7 @@
   ;; If called with [[emmy.dual/FORWARD-MODE]], a [[TapeCell]] should be treated
   ;; like a scalar, with a 0-valued tangent component.
   ;;
-  ;; Else,
+  ;; Else, only respond with [[reverse-phase]] if the tags match.
   (extract-tangent [this t mode]
     (cond (= mode d/FORWARD-MODE) 0
           (= t tag)               (reverse-phase this)
@@ -411,7 +411,8 @@
 ;; called a "sensitivity" while it's being accumulated. For functions that
 ;; return, say, a map of key => perturbed value, we need to run the reverse
 ;; phase for every value; rather than store a new map at each slot, we create a
-;; new [[Completed]] type to distinguish nested maps from sensitivity maps.
+;; new [[emmy.dual/Completed]] type to distinguish nested maps from sensitivity
+;; maps.
 
 (defn process [sensitivities tape]
   ;; Since we're processing in topological sort order, when we
@@ -433,8 +434,8 @@
 
 (defn ^:no-doc reverse-phase
   "Accepts a [[TapeCell]] `root` representing the final value, or output, of a
-  reverse-mode derivative computation, and returns a [[Completed]] instance
-  wrapping a map of
+  reverse-mode derivative computation, and returns an [[emmy.dual/Completed]]
+  instance wrapping a map of
 
   - each intermediate value seen in the computation to
   - the partial derivative of the output with respect to that value."
@@ -447,7 +448,7 @@
 ;; [[reverse-phase]] above operates on a single [[TapeCell]]. For structured
 ;; outputs, we need to walk the output until we hit a [[TapeCell]] instance and
 ;; call [[reverse-phase]] for each. This will result in an output-shaped
-;; structure of [[Completed]] instances.
+;; structure of [[emmy.dual/Completed]] instances.
 ;;
 ;; Unfortunately we require two passes over the output structure. The first one
 ;; calls [[reverse-phase]] via [[emmy.dual/extract-tangent]] to generate the
@@ -462,7 +463,7 @@
   "Given
 
   - a perturbed input, either a [[TapeCell]] or structure of [[TapeCell]]s
-  - an `output` [[Completed]] instance or structure of completed instances
+  - an `output` [[emmy.dual/Completed]] instance or structure of completed instances
   - the `tag` for the current run of differentiation
 
   Returns a value with the same shape as `input`, but with each [[TapeCell]]
