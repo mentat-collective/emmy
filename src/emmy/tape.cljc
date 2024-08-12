@@ -21,9 +21,7 @@
 ;;
 ;; This namespace develops an implementation of "reverse-mode" automatic
 ;; differentation, in contrast with the forward mode AD implementation
-;; in [[emmy.dual]]. These two are closely related, and the implementations
-;; could merge once I get around to reading and implementing [the YOLO
-;; paper](https://arxiv.org/abs/2204.10923).
+;; in [[emmy.dual]].
 ;;
 ;; The core idea of forward-mode AD is that we can use the chain rule to
 ;; mechanically build up a partial derivative by wrapping one of the dependent
@@ -131,9 +129,10 @@
       (TapeCell. new id primal in->partial)
       this))
 
-  ;; This implementation is called if a tape ever makes it out of
-  ;; forward-mode-differentiated function. If this happens, a [[TapeCell]]
-  ;; should be treated like a scalar, with a 0-valued tangent component.
+  ;; If called with [[emmy.dual/FORWARD-MODE]], a [[TapeCell]] should be treated
+  ;; like a scalar, with a 0-valued tangent component.
+  ;;
+  ;; Else,
   (extract-tangent [this t mode]
     (cond (= mode d/FORWARD-MODE) 0
           (= t tag)               (reverse-phase this)
@@ -449,20 +448,15 @@
 ;; outputs, we need to walk the output until we hit a [[TapeCell]] instance and
 ;; call [[reverse-phase]] for each. This will result in an output-shaped
 ;; structure of [[Completed]] instances.
-
-;; TODO explain ->partials going away...
 ;;
 ;; Unfortunately we require two passes over the output structure. The first one
-;; generates the maps of partials, and the second pass extracts the partial we
-;; care about.
+;; calls [[reverse-phase]] via [[emmy.dual/extract-tangent]] to generate the
+;; maps of partials (stored in an [[emmy.dual/Completed]] instance), and the
+;; second pass (via [[interpret]]) extracts the partial we care about.
 ;;
 ;; If we only have a single input, we could get away with a single pass and
 ;; combine these. But for multiple inputs, [[extract]] will be called multiple
 ;; times, one for each input.
-
-;; TODO note that [[interpret]] and [[tapify]] both need to become generic on
-;; input-walking, and [[extract]] and [[emmy.dual/extract-tangent]] need to be
-;; generic on output-walking.
 
 (defn ^:no-doc interpret
   "Given
@@ -510,21 +504,23 @@
   function calls."
   ([f] (gradient f []))
   ([f selectors]
-   (fn [x]
-     (when (and (seq selectors) (not (s/structure? x)))
-       (u/illegal
-        (str "Selectors " selectors
-             " not allowed for non-structural input " x)))
+   (fn grad
+     ([] 0)
+     ([x]
+      (when (and (seq selectors) (not (s/structure? x)))
+        (u/illegal
+         (str "Selectors " selectors
+              " not allowed for non-structural input " x)))
 
-     (let [tag       (d/fresh-tag)
-           inputs    (if (empty? selectors)
-                       (tapify x tag)
-                       (update-in x selectors tapify tag))
-           output    (d/with-active-tag tag f [inputs])
-           completed (d/extract-tangent output tag d/REVERSE-MODE)]
-       (if (empty? selectors)
-         (interpret inputs completed tag)
-         (interpret (get-in inputs selectors) completed tag))))))
+      (let [tag       (d/fresh-tag)
+            inputs    (if (empty? selectors)
+                        (tapify x tag)
+                        (update-in x selectors tapify tag))
+            output    (d/with-active-tag tag f [inputs])
+            completed (d/extract-tangent output tag d/REVERSE-MODE)]
+        (if (empty? selectors)
+          (interpret inputs completed tag)
+          (interpret (get-in inputs selectors) completed tag)))))))
 
 (defmethod g/zero-like [::tape] [_] 0)
 (defmethod g/one-like [::tape] [_] 1)

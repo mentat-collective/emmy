@@ -338,25 +338,38 @@
     supplied tag. Else, returns `([[emmy.value/zero-like]] this)`.")
 
   (extract-id [this id]
-    "Given some "))
+    "Given an instance of [[Completed]] (or a container type with [[Completed]]
+    instances at its leaves) and the `id` of an [[emmy.tape/TapeCell]], returns
+    the partial derivative associated with that [[emmy.tape/TapeCell]]'s
+    `id`.
 
-(defrecord Completed [v->partial]
+    This function is an internal implementation detail of reverse-mode automatic
+    differentiation."))
+
+;; The [[Completed]] type wraps a map of [[emmy.tape/TapeCell]] `id` to its
+;; associated partial derivative; we need the wrapper to distinguish between a
+;; pass of [[emmy.tape/reverse-phase]] over an [[emmy.tape/TapeCell]] and a pass
+;; over a map.
+;;
+;; I can't currently think of a way to hide this implementation detail!
+
+(defrecord Completed [id->partial]
   IPerturbed
   ;; NOTE that it's a problem that `replace-tag` is called on [[Completed]]
   ;; instances now. In a future refactor I want `get` calls out of
   ;; a [[Completed]] map to occur before tag replacement needs to happen.
   (replace-tag [_ old new]
     (Completed.
-     (replace-tag v->partial old new)))
+     (replace-tag id->partial old new)))
 
   ;; This should never be called; it would be that a [[Completed]] instance has
   ;; escaped from a derivative call.
   (extract-tangent [_ _ _] (assert "Impossible!"))
-  (extract-id [_ id] (get v->partial id 0)))
+  (extract-id [_ id] (get id->partial id 0)))
 
-(def FORWARD-MODE ::forward)
-(def REVERSE-MODE ::reverse)
-(def REVERSE-EMPTY (->Completed {}))
+(def ^:const FORWARD-MODE ::forward)
+(def ^:const REVERSE-MODE ::reverse)
+(def ^:const REVERSE-EMPTY (->Completed {}))
 
 ;; `replace-tag` exists to handle subtle bugs that can arise in the case of
 ;; functional return values. See the "Amazing Bug" sections

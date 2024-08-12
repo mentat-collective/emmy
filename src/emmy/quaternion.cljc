@@ -559,26 +559,26 @@
 
 ;; ## Constructors
 
-(def ZERO
+(def ^:const ZERO
   "The zero quaternion. All coefficients are equal to 0."
   (->Quaternion 0 0 0 0 nil))
 
-(def ONE
+(def ^:const ONE
   "The identity quaternion. The real coefficient is equal to 1, and all
   coefficients are equal to 0."
   (->Quaternion 1 0 0 0 nil))
 
-(def I
+(def ^:const I
   "Unit quaternion with `i` coefficient equal to 1, all other coefficients equal
   to 0."
   (->Quaternion 0 1 0 0 nil))
 
-(def J
+(def ^:const J
   "Unit quaternion with `j` coefficient equal to 1, all other coefficients equal
   to 0."
   (->Quaternion 0 0 1 0 nil))
 
-(def K
+(def ^:const K
   "Unit quaternion with `k` coefficient equal to 1, all other coefficients equal
   to 0."
   (->Quaternion 0 0 0 1 nil))
@@ -1323,7 +1323,7 @@
 
 ;; ### Real 4x4 matrices
 
-(def ONE-matrix
+(def ^:const ONE-matrix
   "4x4 matrix representation of the quaternion [[ONE]]."
   (m/by-rows
    [1 0 0 0]
@@ -1331,7 +1331,7 @@
    [0 0 1 0]
    [0 0 0 1]))
 
-(def I-matrix
+(def ^:const I-matrix
   "4x4 matrix representation of the quaternion [[I]]."
   (m/by-rows
    [0 1 0 0]
@@ -1339,7 +1339,7 @@
    [0 0 0 -1]
    [0 0 1 0]))
 
-(def J-matrix
+(def ^:const J-matrix
   "4x4 matrix representation of the quaternion [[J]]."
   (m/by-rows
    [0 0 1 0]
@@ -1347,7 +1347,7 @@
    [-1 0 0 0]
    [0 -1 0 0]))
 
-(def K-matrix
+(def ^:const K-matrix
   "4x4 matrix representation of the quaternion [[K]]."
   (m/by-rows
    [0 0 0 1]
@@ -1372,25 +1372,25 @@
 
 ;; ### Tensor Representations of Quaternions
 
-(def ONE-tensor
+(def ^:const ONE-tensor
   "4x4 down-up tensor representation of the quaternion [[ONE]]."
   (m/->structure ONE-matrix))
 
-(def I-tensor
+(def ^:const I-tensor
   "4x4 down-up tensor representation of the quaternion [[I]]."
   (m/->structure I-matrix))
 
-(def J-tensor
+(def ^:const J-tensor
   "4x4 down-up tensor representation of the quaternion [[J]]."
   (m/->structure J-matrix))
 
-(def K-tensor
+(def ^:const K-tensor
   "4x4 down-up tensor representation of the quaternion [[K]]."
   (m/->structure K-matrix))
 
 ;; ### 3x3 Rotation Matrix Representations
 
-(def ^:private quarter (g// 1 4))
+(def ^:private ^:const quarter (g// 1 4))
 
 (defn from-rotation-matrix
   "Given an orthogonal 3x3 matrix M representing a rotation in 3-space, returns

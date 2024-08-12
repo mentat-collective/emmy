@@ -53,7 +53,7 @@
   f/IArity
   (arity [_] [:between 1 2])
 
-  ;; [[d/replace-tag]] and [[d/extract-tangent]] pass the buck down the vector's
+  ;; The [[emmy.dual/IPerturbed]] functions pass the buck down the vector's
   ;; elements.
   d/IPerturbed
   (replace-tag [v old new] (mapv #(d/replace-tag % old new) v))

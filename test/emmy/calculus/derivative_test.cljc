@@ -703,8 +703,8 @@
 
     (testing "f -> Series"
       (let [F (fn [k] (series/series
-                      (fn [t] (g/* k t))
-                      (fn [t] (g/* k k t))))]
+                       (fn [t] (g/* k t))
+                       (fn [t] (g/* k k t))))]
         (is (= '((* q z) (* (expt q 2) z) 0 0) (simp4 ((F 'q) 'z))))
         (is (= '(z (* 2 q z) 0 0) (simp4 (((D F) 'q) 'z)))))))
 
@@ -1320,7 +1320,7 @@
                  (fn [g]
                    (fn [z] (g (+ x z)))))))]
       (is (ish? ((fn [y] (+ (* 3 (cos (* 3 y)))
-                           (* y (cos (* 3 y)))))
+                            (* y (cos (* 3 y)))))
                  (+ 3 Math/PI))
                 (((D f) 3)
                  (fn [g-hat f-hat]
@@ -1615,6 +1615,47 @@
                   (take 2)))
           "symbolic-taylor-series keeps the arguments symbolic, even when they
           are numbers."))))
+
+;; TODO enable when we add our gradient impl in the next PR.
+
+#_
+(deftest mixed-mode-tests
+  (testing "multiple input, vector output"
+    (let [f (fn [a b c d e f]
+              [(g/* (g/cos a) (g/cos b))
+               (g/* (g/cos c) (g/cos d))
+               (g/* (g/cos e) (g/cos f))])
+          expected (g/simplify
+                    ((d/D (d/D f)) 'a 'b 'c 'd 'e 'f))]
+      (is (= expected
+             (g/simplify
+              ((d/gradient (d/gradient f)) 'a 'b 'c 'd 'e 'f)))
+          "multivariable derivatives match (reverse-over-reverse)")))
+
+  (testing "nested reverse mode"
+    (let [f (fn [x]
+              (fn [y]
+                (g/* (g/square x) (g/square y))))]
+      (is (= ((d/D ((d/gradient f) 'x)) 'y)
+             ((d/gradient ((d/D f) 'x)) 'y)
+             ((d/gradient ((d/gradient f) 'x)) 'y))
+          "reverse-mode nests with forward-mode")))
+
+  (let [f (fn [a b c d e f]
+            [(g/* (g/cos a) (g/cos b))
+             (g/* (g/cos c) (g/cos d))
+             (g/* (g/cos e) (g/cos f))])
+        expected (g/simplify
+                  ((d/D (d/D f)) 'a 'b 'c 'd 'e 'f))]
+    (is (= expected
+           (g/simplify
+            ((d/D (d/gradient f)) 'a 'b 'c 'd 'e 'f)))
+        "forward-over-reverse")
+
+    (is (= expected
+           (g/simplify
+            ((d/gradient (d/D f)) 'a 'b 'c 'd 'e 'f)))
+        "reverse-over-forward")))
 
 (defn all-tests [D partial]
   (basic-D-tests D)
