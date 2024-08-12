@@ -1616,9 +1616,6 @@
           "symbolic-taylor-series keeps the arguments symbolic, even when they
           are numbers."))))
 
-;; TODO enable when we add our gradient impl in the next PR.
-
-#_
 (deftest mixed-mode-tests
   (testing "multiple input, vector output"
     (let [f (fn [a b c d e f]
@@ -1686,3 +1683,7 @@
 
 (deftest forward-mode-tests
   (all-tests d/D d/partial))
+
+(deftest reverse-mode-tests
+  (all-tests d/D-reverse
+             d/partial-reverse))
