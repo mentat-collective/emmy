@@ -1074,7 +1074,7 @@ defaults to `ln((1 + sqrt(1+x^2)) / x)`."
 
 ;; ## More advanced generic operations
 
-(def ^:no-doc ^:const derivative-symbol 'D)
+(def ^:no-doc derivative-symbol 'D)
 
 (defgeneric partial-derivative 2)
 (defgeneric Lie-derivative 1)
