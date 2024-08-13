@@ -237,7 +237,7 @@
 ;; implementation for the components. I vote to back out this `::s/structure`
 ;; installation.
 
-(def ^:dynamic *mode* d/FORWARD-MODE)
+(def ^:dynamic *mode* d/REVERSE-MODE)
 
 (doseq [t [::v/function ::s/structure]]
   (defmethod g/partial-derivative [t v/seqtype] [f selectors]
@@ -266,9 +266,9 @@
   the [Jacobian](https://en.wikipedia.org/wiki/Jacobian_matrix_and_determinant)
   of `f`."
   (o/make-operator
-   (fn [x]
+   (fn [f]
      (binding [*mode* d/FORWARD-MODE]
-       (g/partial-derivative x [])))
+       (g/partial-derivative f [])))
    g/derivative-symbol))
 
 (def ^{:arglists '([f])}
@@ -282,9 +282,9 @@
   the [Jacobian](https://en.wikipedia.org/wiki/Jacobian_matrix_and_determinant)
   of `f`."
   (o/make-operator
-   (fn [x]
+   (fn [f]
      (binding [*mode* d/REVERSE-MODE]
-       (g/partial-derivative x [])))
+       (g/partial-derivative f [])))
    g/derivative-symbol))
 
 (def ^{:arglists '([f])}
@@ -299,9 +299,9 @@
   of `f`.
 
   The related [[emmy.env/Grad]] returns a function that produces a structure of
-  the opposite orientation as [[D]]. Both of these functions use forward-mode
+  the opposite orientation as [[D]]. Both of these functions use reverse-mode
   automatic differentiation."
-  D-forward)
+  D-reverse)
 
 (defn D-as-matrix [F]
   (fn [s]
@@ -337,7 +337,7 @@
   "Returns an operator that, when applied to a function `f`, produces a function
   that uses forward-mode automatic differentiation to compute the partial
   derivative of `f` at the (zero-based) slot index provided via `selectors`."
-  partial-forward)
+  partial-reverse)
 
 ;; ## Derivative Utilities
 ;;

@@ -2,6 +2,15 @@
 
 ## [unreleased]
 
+- #170:
+
+  - changes `D` and `partial` to use reverse mode automatic differentiation by
+    default, and fixes all associated tests
+
+  - adds `emmy.generic/{zero?,one?,identity?}` implementations (all false) to
+    `emmy.tape/Completed`, in case some collection type tries to simplify these
+    during reverse-mode AD
+
 - #185:
 
   - adds a dynamic variable `emmy.calculus.derivative/*mode*` that allows the

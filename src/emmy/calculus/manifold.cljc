@@ -656,7 +656,6 @@
                            (g/+ (g/square x)
                                 (g/square y)
                                 (g/square z)))]
-                    (println "r is" r)
                     (when (g/zero? r)
                       (u/illegal-state "SphericalCylindrical singular"))
                     (-> rep

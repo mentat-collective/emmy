@@ -697,38 +697,38 @@
             ((H/time-independent-canonical? (H/F->CT L/p->r))
              (up 't
                  (L/coordinate-tuple 'r 'phi)
-                 (L/momentum-tuple 'p_r 'p_phi))))))
+                 (L/momentum-tuple 'p_r 'p_phi)))))))
 
-    ;; but not all transforms are canonical:
-    (testing "non-canonical-transform"
-      (with-redefs [gensym (a/monotonic-symbol-generator 1 "x")]
-        (letfn [(a-non-canonical-transform [[t theta p]]
-                  (let [x (* p (g/sin theta))
-                        p_x (* p (g/cos theta))]
-                    (up t x p_x)))]
-          (is (= '(up 0
-                      (+ (* -1 p x3) x3)
-                      (+ (* p x2) (* -1 x2)))
-                 (simplify
-                  ((H/time-independent-canonical? a-non-canonical-transform)
-                   (up 't 'theta 'p))))
-              "The genysym redef is ugly but makes this test repeatable, at
+  ;; but not all transforms are canonical:
+  (testing "non-canonical-transform"
+    (with-redefs [gensym (a/monotonic-symbol-generator 2 "x")]
+      (letfn [(a-non-canonical-transform [[t theta p]]
+                (let [x (* p (g/sin theta))
+                      p_x (* p (g/cos theta))]
+                  (up t x p_x)))]
+        (is (= '(up 0
+                    (+ (* -1 p x03) x03)
+                    (+ (* p x02) (* -1 x02)))
+               (simplify
+                ((H/time-independent-canonical? a-non-canonical-transform)
+                 (up 't 'theta 'p))))
+            "The genysym redef is ugly but makes this test repeatable, at
               least.")
 
-          (is (= '(matrix-by-rows
-                   [0 0 0]
-                   [0 0 (+ (* -1 p) 1)]
-                   [0 (+ p -1) 0])
-                 (simplify
-                  ((H/symplectic? a-non-canonical-transform)
-                   ['t 'theta 'p]))))
+        (is (= '(matrix-by-rows
+                 [0 0 0]
+                 [0 0 (+ (* -1 p) 1)]
+                 [0 (+ p -1) 0])
+               (simplify
+                ((H/symplectic? a-non-canonical-transform)
+                 ['t 'theta 'p]))))
 
-          (is (= '(matrix-by-rows
-                   [0 (+ (* -1 p) 1)]
-                   [(+ p -1) 0])
-                 (simplify
-                  ((H/symplectic-transform? a-non-canonical-transform)
-                   ['t 'theta 'p])))))))))
+        (is (= '(matrix-by-rows
+                 [0 (+ (* -1 p) 1)]
+                 [(+ p -1) 0])
+               (simplify
+                ((H/symplectic-transform? a-non-canonical-transform)
+                 ['t 'theta 'p]))))))))
 
 (deftest symplectic-tests
   (testing "unit"

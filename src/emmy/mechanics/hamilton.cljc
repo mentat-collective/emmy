@@ -224,10 +224,9 @@
                          (g/zero?
                           (g/simplify
                            (g/determinant M))))
-                  (do (println "determinant" (g/determinant M))
-                      (throw
-                       (ex-info "Legendre Transform Failure: determinant = 0"
-                                {:F F :w w})))
+                  (throw
+                   (ex-info "Legendre Transform Failure: determinant = 0"
+                            {:F F :w w}))
                   (let [v (g/solve-linear-left M (- w b))]
                     (- (* w v) (F v))))))]
       (let [Dpg (D putative-G)]
@@ -442,11 +441,12 @@
   "p.326"
   [C]
   (fn [s]
-    ((- J-func
-        (f/compose (Phi ((D C) s))
-                   J-func
-                   (Phi* ((D C) s))))
-     (s/compatible-shape s))))
+    (let [s-syms (s/compatible-shape s)]
+      ((- J-func
+          (f/compose (Phi ((D C) s))
+                     J-func
+                     (Phi* ((D C) s))))
+       s-syms))))
 
 ;; Time-Varying code
 ;;

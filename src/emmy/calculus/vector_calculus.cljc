@@ -30,10 +30,9 @@
 
   The related [[emmy.env/D]] operator returns a function that produces a
   structure of the opposite orientation as [[Grad]]. Both of these functions use
-  forward-mode automatic differentiation."
+  reverse-mode automatic differentiation."
   (-> (fn [f]
-        (f/compose s/opposite
-                   (g/partial-derivative f [])))
+        (f/compose s/opposite (d/D f)))
       (o/make-operator 'Grad)))
 
 (defn gradient

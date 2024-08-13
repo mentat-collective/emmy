@@ -50,18 +50,18 @@
                (((r/M-of-q->omega-body-of-t Euler->M) q) 't)))))
 
       (is (= '(column-matrix
-               (+ (* φdot (sin θ) (sin ψ)) (* θdot (cos ψ)))
-               (+ (* φdot (cos ψ) (sin θ)) (* -1 θdot (sin ψ)))
+               (+ (* φdot (sin ψ) (sin θ)) (* θdot (cos ψ)))
+               (+ (* φdot (sin θ) (cos ψ)) (* -1 θdot (sin ψ)))
                (+ (* φdot (cos θ)) ψdot))
              (e/freeze
               (simplify
                ((r/M->omega-body Euler->M) Euler-state))))))))
 
 (deftest section-2-9
-  (is (v/= '(+ (* A φdot (expt (sin ψ) 2) (expt (sin θ) 2))
+  (is (v/= '(+ (* A φdot (expt (sin θ) 2) (expt (sin ψ) 2))
                (* B φdot (expt (sin θ) 2) (expt (cos ψ) 2))
-               (* A θdot (sin ψ) (sin θ) (cos ψ))
-               (* -1 B θdot (sin ψ) (sin θ) (cos ψ))
+               (* A θdot (sin θ) (sin ψ) (cos ψ))
+               (* -1N B θdot (sin θ) (sin ψ) (cos ψ))
                (* C φdot (expt (cos θ) 2))
                (* C ψdot (cos θ)))
            (simplify
