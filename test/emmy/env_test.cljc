@@ -136,9 +136,9 @@
   (is (= e/-pi (e/- e/pi)))
   (is (= e/-tau (e/- e/tau)))
 
-  (let [π Math/PI
-        zero-to-two-pi (e/principal-value (* 2 π))
-        minus-pi-to-pi (e/principal-value π)]
+  (let [π e/pi
+        zero-to-two-pi (e/principal-value e/tau)
+        minus-pi-to-pi (e/principal-value e/pi)]
     (is (= (* (/ 1 2) π) (zero-to-two-pi (* (/ 1 2) π))))
     (is (= 0.0 (zero-to-two-pi 0.0)))
     (is (= (* (/ 3 2) π) (zero-to-two-pi (* (/ 3 2) π))))

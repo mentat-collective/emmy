@@ -371,6 +371,13 @@
 (def ^:const REVERSE-MODE ::reverse)
 (def ^:const REVERSE-EMPTY (->Completed {}))
 
+;; These are here to handle cases where some collection type might see instances
+;; of [[Completed]] and try and handle them during simplification.
+
+(defmethod g/zero? [Completed] [_] false)
+(defmethod g/one? [Completed] [_] false)
+(defmethod g/identity? [Completed] [_] false)
+
 ;; `replace-tag` exists to handle subtle bugs that can arise in the case of
 ;; functional return values. See the "Amazing Bug" sections
 ;; in [[emmy.calculus.derivative-test]] for detailed examples on how this might
