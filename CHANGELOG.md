@@ -2,6 +2,8 @@
 
 ## [unreleased]
 
+## [0.32.0]
+
 - #170:
 
   - changes `D` and `partial` to use reverse mode automatic differentiation by
