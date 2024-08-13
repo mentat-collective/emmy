@@ -701,14 +701,14 @@
 
     ;; but not all transforms are canonical:
     (testing "non-canonical-transform"
-      (with-redefs [gensym (a/monotonic-symbol-generator 2 "x")]
+      (with-redefs [gensym (a/monotonic-symbol-generator 1 "x")]
         (letfn [(a-non-canonical-transform [[t theta p]]
                   (let [x (* p (g/sin theta))
                         p_x (* p (g/cos theta))]
                     (up t x p_x)))]
           (is (= '(up 0
-                      (+ (* -1 p x17) x17)
-                      (+ (* p x16) (* -1 x16)))
+                      (+ (* -1 p x3) x3)
+                      (+ (* p x2) (* -1 x2)))
                  (simplify
                   ((H/time-independent-canonical? a-non-canonical-transform)
                    (up 't 'theta 'p))))
