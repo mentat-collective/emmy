@@ -6,7 +6,6 @@
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
             [emmy.abstract.number :as an]
             [emmy.calculus.derivative :refer [D]]
-            [emmy.differential :as sd]
             [emmy.expression :as x :refer [variables-in expression-of]]
             [emmy.expression.analyze :as a]
             [emmy.function :as f]
@@ -52,11 +51,6 @@
         (is (= (p/make [0 0 (g/* 2 'x)])
                ((D f) 'x))
             "polynomial derivatives with respect to some coefficient work!")))
-
-    (checking "perturbed?" 100
-              [p (sg/polynomial :coeffs (sg/dual))]
-              (is (sd/perturbed? p)
-                  "A polynomial with perturbed coefficients is perturbed."))
 
     (checking "polynomials are polynomial?, v/kind, misc others" 100
               [p (sg/polynomial)]

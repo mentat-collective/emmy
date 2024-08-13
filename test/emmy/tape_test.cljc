@@ -6,7 +6,7 @@
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
             [emmy.calculus.derivative :refer [D]]
-            [emmy.differential :as d]
+            [emmy.dual :as d]
             [emmy.expression.analyze :as a]
             [emmy.generators :as sg]
             [emmy.generic :as g]
@@ -213,10 +213,6 @@
                              [(t/make 0 (g/square 'y) []) (g/* 3 'x)]])
                     (g/simplify tape))
               "simplify simplifies all in->partial entries AND the primal ")))
-
-      (checking "d/perturbed?" 100 [tape (sg/tapecell gen/symbol)]
-                (is (d/perturbed? tape)
-                    "all tags are perturbed?"))
 
       (checking "d/extract-tangent" 100 [tag  gen/nat
                                          tape (sg/tapecell gen/symbol)]
