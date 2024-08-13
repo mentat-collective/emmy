@@ -36,7 +36,8 @@
 ;; To generate the result:
 ;;
 ;; - For a single non-structural argument, return `(d/derivative f)`
-;; - else, bundle up all arguments into a single [[s/Structure]] instance `xs`
+;; - else, bundle up all arguments into a single [[emmy.structure/Structure]]
+;;   instance `xs`
 ;; - Generate `xs'` by replacing each entry in `xs` with `((d/derivative f')
 ;;   entry)`, where `f'` is a function of ONLY that entry that
 ;;   calls `(f (assoc-in xs path entry))`. In other words, replace each entry
@@ -48,7 +49,7 @@
 ;; above.
 ;;
 ;; [[jacobian]] handles this main logic. [[jacobian]] can only take a structural
-;; input. [[euclidean]] and [[multivariate]] below widen handle, respectively,
+;; input. [[euclidean]] and [[multivariate]] below handle, respectively,
 ;; optionally-structural and multivariable arguments.
 
 (defn- deep-partial
@@ -68,8 +69,6 @@
       (str "non-numerical entry " entry
            " at path " path
            " in input structure " structure)))))
-
-;; TODO have this jacobian be its own thing, then augment it with multi.
 
 (defn- jacobian
   "Takes:
@@ -109,15 +108,13 @@
        ;; correctly into the supplied `input`, triggering this exception.
        (u/illegal (str "Bad selectors " selectors " for structure " input))))))
 
-;; TODO can we do something like this for gradient, with gradient in both slots??
-
 (defn- euclidean
-  "Slightly more general version of [[jacobian]] that can handle a single
-  non-structural input; dispatches to either [[jacobian]] or [[derivative]]
-  depending on the input type.
+  "Slightly more general version of [[jacobian]] that can handle a single input;
+  dispatches to either [[jacobian]] or [[derivative]] depending on whether or
+  not the input is structural.
 
   If you pass non-empty `selectors`, the returned function will throw if it
-  receives a non-structural, non-numerical argument."
+  receives a non-structural, non-scalar argument."
   ([f] (euclidean f []))
   ([f selectors]
    (let [selectors (vec selectors)]
@@ -146,7 +143,20 @@
               (str "Selectors " selectors
                    " not allowed for non-structural input " input)))))))
 
-(defn multi [op f]
+(defn multi
+  "Given
+
+    - some higher-order function `op` that transforms a function of a single
+      variable into another function of a single variable
+    - function `f` capable of taking multiple arguments
+
+  returns a new function that acts like `(op f)` but can take multiple
+  arguments.
+
+  When passed multiple arguments, the returned functon packages them into a
+  single `[[emmy.structure/up]]` instance. Any [[emmy.matrix/Matrix]] present in
+  the argument list will be converted into a `down` of `up`s (a row of columns)."
+  [op f]
   (-> (fn
         ([] 0)
         ([x] ((op f) x))
@@ -164,19 +174,36 @@
 
   And returns a new function that computes either the
   full [Jacobian](https://en.wikipedia.org/wiki/Jacobian_matrix_and_determinant)
-  or the entry at `selectors`.
+  or the entry at `selectors` using [forward-mode automatic
+  differentiation](https://en.wikipedia.org/wiki/Automatic_differentiation#Forward_accumulation).
 
   Any multivariable function will have its argument vector coerced into an `up`
-  structure. Any [[matrix/Matrix]] in a multiple-arg function call will be
+  structure. Any [[emmy.matrix/Matrix]] in a multiple-arg function call will be
   converted into a `down` of `up`s (a row of columns).
 
-  Single-argument functions don't transform their arguments."
+  Arguments to single-variable functions are not transformed."
   ([f] (multivariate f []))
   ([f selectors]
    (let [d #(euclidean % selectors)]
      (multi d f))))
 
 (defn gradient
+  "Accepts:
+
+  - some function `f` of potentially many arguments
+  - optionally, a sequence of selectors meant to index into the structural
+    argument, or argument vector, of `f`
+
+  And returns a new function that computes either the
+  full [Jacobian](https://en.wikipedia.org/wiki/Jacobian_matrix_and_determinant)
+  or the entry at `selectors` using [reverse-mode automatic
+  differentiation](https://en.wikipedia.org/wiki/Automatic_differentiation#Reverse_accumulation).
+
+  Any multivariable function will have its argument vector coerced into an `up`
+  structure. Any [[emmy.matrix/Matrix]] in a multiple-arg function call will be
+  converted into a `down` of `up`s (a row of columns).
+
+  Arguments to single-variable functions are not transformed."
   ([f] (gradient f []))
   ([f selectors]
    (multi #(tape/gradient % selectors) f)))
@@ -202,6 +229,9 @@
 ;; passed to the structure of functions, instead of separately for every entry
 ;; in the structure.
 ;;
+;; A dynamic variable controls whether or not this process uses forward-mode or
+;; reverse-mode AD.
+;;
 ;; TODO: I think this is going to cause problems for, say, a Structure of
 ;; PowerSeries, where there is actually a cheap `g/partial-derivative`
 ;; implementation for the components. I vote to back out this `::s/structure`
@@ -222,11 +252,19 @@
 
 ;; ## Operators
 ;;
-;; This section exposes various differential operators as [[o/Operator]]
-;; instances.
+;; This section exposes various differential operators
+;; as [[emmy.operator/Operator]] instances.
 
 (def ^{:arglists '([f])}
   D-forward
+  "Forward-mode derivative operator. Takes some function `f` and returns a
+  function whose value at some point can multiply an increment in the arguments
+  to produce the best linear estimate of the increment in the function value.
+
+  For univariate functions, [[D-forward]] computes a derivative. For vector-valued
+  functions, [[D-forward]] computes
+  the [Jacobian](https://en.wikipedia.org/wiki/Jacobian_matrix_and_determinant)
+  of `f`."
   (o/make-operator
    (fn [x]
      (binding [*mode* d/FORWARD-MODE]
@@ -235,6 +273,14 @@
 
 (def ^{:arglists '([f])}
   D-reverse
+  "Reverse-mode derivative operator. Takes some function `f` and returns a
+  function whose value at some point can multiply an increment in the arguments
+  to produce the best linear estimate of the increment in the function value.
+
+  For univariate functions, [[D-reverse]] computes a derivative. For vector-valued
+  functions, [[D-reverse]] computes
+  the [Jacobian](https://en.wikipedia.org/wiki/Jacobian_matrix_and_determinant)
+  of `f`."
   (o/make-operator
    (fn [x]
      (binding [*mode* d/REVERSE-MODE]
@@ -265,6 +311,9 @@
      s)))
 
 (defn partial-forward
+  "Returns an operator that, when applied to a function `f`, produces a function
+  that uses forward-mode automatic differentiation to compute the partial
+  derivative of `f` at the (zero-based) slot index provided via `selectors`."
   [& selectors]
   (o/make-operator
    (fn [x]
@@ -273,6 +322,9 @@
    `(~'partial ~@selectors)))
 
 (defn partial-reverse
+  "Returns an operator that, when applied to a function `f`, produces a function
+  that uses reverse-mode automatic differentiation to compute the partial
+  derivative of `f` at the (zero-based) slot index provided via `selectors`."
   [& selectors]
   (o/make-operator
    (fn [x]
@@ -283,8 +335,8 @@
 (def ^{:arglists '([& selectors])}
   partial
   "Returns an operator that, when applied to a function `f`, produces a function
-  that computes the partial derivative of `f` at the (zero-based) slot index
-  provided via `selectors`."
+  that uses forward-mode automatic differentiation to compute the partial
+  derivative of `f` at the (zero-based) slot index provided via `selectors`."
   partial-forward)
 
 ;; ## Derivative Utilities
