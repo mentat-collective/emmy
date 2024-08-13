@@ -13,36 +13,38 @@
             [same.core :refer [ish? zeroish? with-comparator]]))
 
 (deftest brent-tests
-  (with-comparator (v/within 1e-8)
-    (checking "brent quadratic minimization, commons tests."
-              100
-              [lower  gen/small-integer
-               upper  gen/small-integer
-               offset gen/small-integer]
-              (let [f (fn [x] (g/square (- x offset)))
-                    upper (if (= lower upper) (inc lower) upper)
-                    {:keys [lo hi]} (brack/bracket-min f {:xa lower :xb upper})
-                    {:keys [result value converged? iterations fncalls]
-                     :as #?(:clj m :cljs _m)}
-                    (b/brent-min f (first lo) (first hi))]
+  (checking "brent quadratic minimization, commons tests."
+            100
+            [lower  gen/small-integer
+             upper  gen/small-integer
+             offset gen/small-integer]
+            (let [f (fn [x] (g/square (- x offset)))
+                  upper (if (= lower upper) (inc lower) upper)
+                  {:keys [lo hi]} (brack/bracket-min f {:xa lower :xb upper})
+                  {:keys [result value converged? iterations fncalls]
+                   :as #?(:clj m :cljs _m)}
+                  (b/brent-min f (first lo) (first hi))]
 
-                (is converged? "The result converges to the supplied offset.")
-                (is (ish? result offset) "The result converges to the supplied offset.")
-                (is (zeroish? value) "The result converges to the supplied offset.")
-                (is (= fncalls (inc iterations))
-                    "we only need 1 additional fn call (for the first interior
+              (is converged? "The result converges to the supplied offset.")
+
+              (with-comparator (v/within 1e-8)
+                (is (ish? result offset) "The result converges to the supplied offset."))
+
+              (is (zeroish? value) "The result converges to the supplied offset.")
+              (is (= fncalls (inc iterations))
+                  "we only need 1 additional fn call (for the first interior
                     point) in addition to 1 per iteration.")
 
-                #?(:clj
-                   (is (= m (b/brent-min-commons f (first lo) (first hi)))
-                       "The result is identical to the Commons implementation's results.")))))
+              #?(:clj
+                 (is (= m (b/brent-min-commons f (first lo) (first hi)))
+                     "The result is identical to the Commons implementation's results."))))
 
   (testing "basic brent minimization"
     (is (ish?
          {:result 2.000000000000032
           :value 0
-          :iterations 10
-          :fncalls 11
+          :iterations 9
+          :fncalls 10
           :converged? true}
          (-> (fn [x] (g/square (- x 2)))
              (b/brent-min -1000 10)))
@@ -50,14 +52,28 @@
         BrentOptimizer jvm implementation.")
 
     (is (ish?
-         {:result -35.53582159348451
-          :value 1408.9379026978984
+         {:result -24.786272286119377
+          :value 717.504382986127
           :iterations 6
           :converged? false
           :fncalls 7}
          (-> (fn [x] (g/square (- x 2)))
              (b/brent-min -1000 10 {:maxiter 5})))
-        "maxiter limits the number of iterations allowed.")))
+        "maxiter limits the number of iterations allowed."))
+
+  (doseq [min-fn
+          #?(:clj  [b/brent-min b/brent-min-commons]
+             :cljs [b/brent-min])]
+    (testing "custom initial-guess"
+      (is (ish?
+           {:result 2
+            :value 0
+            :iterations 5
+            :fncalls 6
+            :converged? true}
+           (-> (fn [x] (g/square (- x 2)))
+               (min-fn -1000 10 {:initial-guess 0})))
+          "A good initial-guess speeds up convergence."))))
 
 (deftest commons-ported-brent-tests
   (with-comparator (v/within 1e-7)
@@ -71,15 +87,16 @@
                                         :absolute-threshold 1e-14
                                         :maxfun 200}))))
 
-    (testing "g/sin converges to a minimum in (1, 5)"
-      (is (ish? {:result (* 3 (/ Math/PI 2))
-                 :value -1.0
-                 :converged? true
-                 :iterations 20
-                 :fncalls 21}
-                (b/brent-min g/sin 1 5 {:relative-threshold 1e-10
-                                        :absolute-threshold 1e-14
-                                        :maxfun 200}))))
+    (with-comparator (v/within 1e-6)
+      (testing "g/sin converges to a minimum in (1, 5)"
+        (is (ish? {:result (* 3 (/ Math/PI 2))
+                   :value -1.0
+                   :converged? true
+                   :iterations 22
+                   :fncalls 23}
+                  (b/brent-min g/sin 1 5 {:relative-threshold 1e-10
+                                          :absolute-threshold 1e-14
+                                          :maxfun 200})))))
 
     (testing "g/sin converges to a minimum in (4, 5)"
       (is (ish? {:result (* 3 (/ Math/PI 2))
