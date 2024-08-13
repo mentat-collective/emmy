@@ -512,16 +512,20 @@
         (u/illegal
          (str "Selectors " selectors
               " not allowed for non-structural input " x)))
-
       (let [tag       (d/fresh-tag)
-            inputs    (if (empty? selectors)
-                        (tapify x tag)
-                        (update-in x selectors tapify tag))
-            output    (d/with-active-tag tag f [inputs])
+            input     (if-let [piece (get-in x selectors)]
+                        (if (empty? selectors)
+                          (tapify piece tag)
+                          (assoc-in x selectors (tapify piece tag)))
+                        ;; The call to `get-in` will return nil if the
+                        ;; `selectors` don't index correctly into the supplied
+                        ;; `input`, triggering this exception.
+                        (u/illegal
+                         (str "Bad selectors " selectors " for structure " x)))
+            output    (d/with-active-tag tag f [input])
             completed (d/extract-tangent output tag d/REVERSE-MODE)]
-        (if (empty? selectors)
-          (interpret inputs completed tag)
-          (interpret (get-in inputs selectors) completed tag)))))))
+        (-> (get-in input selectors)
+            (interpret completed tag)))))))
 
 (defmethod g/zero-like [::tape] [_] 0)
 (defmethod g/one-like [::tape] [_] 1)

@@ -446,13 +446,27 @@
   (testing "space"
     (let [g (af/literal-function 'g [0 0] 0)
           h (af/literal-function 'h [0 0] 0)]
-      (is (= '(+ (((partial 0) g) x y) (((partial 0) h) x y))
-             (simplify (((partial 0) (+ g h)) 'x 'y))))
-      (is (= '(+ (* (((partial 0) g) x y) (h x y)) (* (((partial 0) h) x y) (g x y)))
-             (simplify (((partial 0) (* g h)) 'x 'y))))
-      (is (= '(+ (* (((partial 0) g) x y) (h x y) (expt (g x y) (+ (h x y) -1)))
-                 (* (((partial 0) h) x y) (log (g x y)) (expt (g x y) (h x y))))
-             (simplify (((partial 0) (g/expt g h)) 'x 'y))))))
+      (is (zero?
+           (simplify
+            (g/- (g/+ (((partial 0) g) 'x 'y)
+                      (((partial 0) h) 'x 'y))
+                 (((partial 0) (+ g h)) 'x 'y)))))
+      (is (zero?
+           (simplify
+            (g/-
+             (g/+ (g/* (((partial 0) g) 'x 'y) (h 'x 'y))
+                  (g/* (((partial 0) h) 'x 'y) (g 'x 'y)))
+             (((partial 0) (* g h)) 'x 'y)))))
+      (is (zero?
+           (simplify
+            (g/-
+             (g/+ (g/* (((partial 0) g) 'x 'y)
+                       (h 'x 'y)
+                       (g/expt (g 'x 'y) (+ (h 'x 'y) -1)))
+                  (g/* (((partial 0) h) 'x 'y)
+                       (g/log (g 'x 'y))
+                       (g/expt (g 'x 'y) (h 'x 'y))))
+             (((partial 0) (g/expt g h)) 'x 'y)))))))
 
   (testing "operators"
     (is (= '(down 1 1 1 1 1 1 1 1 1 1)
@@ -485,9 +499,12 @@
           f3 (fn [x y] (* (tan x) (log y)))
           f4 (fn [x y] (* (tan x) (sin y)))
           f5 (fn [x y] (/ (tan x) (sin y)))]
-      (is (= '(down (* (log y) (cos x))
-                    (/ (sin x) y))
-             (simplify ((D f2) 'x 'y))))
+      (is (= '(down 0 0)
+             (simplify
+              (g/- (s/down
+                    (g/* (g/log 'y) (g/cos 'x))
+                    (g// (g/sin 'x) 'y))
+                   ((D f2) 'x 'y)))))
       (is (= '(down (/ (log y) (expt (cos x) 2))
                     (/ (tan x) y))
              (simplify ((D f3) 'x 'y))))
