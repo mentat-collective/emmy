@@ -283,7 +283,8 @@
 ;; ## Dual Numbers
 
 (defn dual
-  "Returns a generator that produces proper instances of [[emmy.dual/Dual]]."
+  "Returns a generator that produces proper instances
+  of [[emmy.dual/Dual]]."
   ([] (dual real))
   ([primal-gen]
    (gen/let [tag    gen/nat

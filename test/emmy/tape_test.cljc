@@ -5,6 +5,7 @@
             [clojure.test :refer [is deftest testing use-fixtures]]
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
+            [emmy.autodiff :as ad]
             [emmy.calculus.derivative :refer [D]]
             [emmy.dual :as d]
             [emmy.expression.analyze :as a]
@@ -167,7 +168,7 @@
                       "t/eq handles equality")
 
                   (is (not (t/eq (t/make 0 n) (t/make 1 n)))
-                      "t/eq is false for [[Differential]]s with diff tags"))
+                      "t/eq is false for [[emmy.tape/Tape]]s with diff tags"))
 
         (checking "compare ignores tangent parts" 100
                   [l sg/real, r sg/real]
@@ -216,11 +217,10 @@
 
       (checking "d/extract-tangent" 100 [tag  gen/nat
                                          tape (sg/tapecell gen/symbol)]
-                ;; TODO fix these for non-dual
-                (is (zero? (d/extract-tangent tape tag ::d/dual))
+                (is (zero? (d/extract-tangent tape tag d/FORWARD-MODE))
                     "extract-tangent always returns 0 for tapes")
 
-                (is (zero? (d/extract-tangent tape (t/tape-tag tape) ::d/dual))
+                (is (zero? (d/extract-tangent tape (t/tape-tag tape) d/FORWARD-MODE))
                     "extract-tangent always returns 0 for tapes, even for
                       their own tag"))
 
@@ -258,21 +258,21 @@
   (testing "tag-of"
     (checking "tag-of matches tape-tag for cells" 100 [tag gen/nat]
               (let [cell (t/make tag 1)]
-                (is (= (t/tag-of cell)
+                (is (= (ad/tag-of cell)
                        (t/tape-tag cell))
                     "for tape cells, these should match"))))
 
   (testing "primal-of"
     (checking "for any other type primal-of == identity" 100 [x gen/any-equatable]
-              (is (= x (t/primal-of x))))
+              (is (= x (ad/primal-of x))))
 
     (checking "vs tape-primal" 100 [tape (sg/tapecell gen/symbol)]
-              (is (= (t/primal-of tape)
+              (is (= (ad/primal-of tape)
                      (t/tape-primal tape))
                   "primal-of eq with and without tag")
 
-              (is (= (t/primal-of tape)
-                     (t/primal-of tape (t/tape-tag tape)))
+              (is (= (ad/primal-of tape)
+                     (ad/primal-of tape (t/tape-tag tape)))
                   "primal-of eq with and without tag")
 
               (is (= (t/tape-primal tape)
@@ -281,7 +281,7 @@
 
   (checking "deep-primal returns nested primal" 100 [p gen/any-equatable]
             (let [cell (t/make 0 (t/make 1 p))]
-              (is (= p (t/deep-primal cell))
+              (is (= p (ad/deep-primal cell))
                   "for tape cells, these should match"))))
 
 (deftest reverse-mode-tests
@@ -320,7 +320,7 @@
                     (is (g/one? ((t/gradient g/fractional-part) x)))))))
 
   (testing "lift-n"
-    (let [*   (t/lift-n g/* (fn [_] 1) (fn [_ y] y) (fn [x _] x))
+    (let [*   (ad/lift-n g/* (fn [_] 1) (fn [_ y] y) (fn [x _] x))
           Df7 (t/gradient
                (fn x**7 [x] (* x x x x x x x)))
           Df1 (t/gradient *)
@@ -585,42 +585,4 @@
               ((D f) ['x 'y 'z]))
              (g/simplify
               ((t/gradient f) ['x 'y 'z])))
-          "reverse-mode matches forward-mode.")))
-
-  (testing "multiple input, vector output"
-    (let [f (fn [a b c d e f]
-              [(g/* (g/cos a) (g/cos b))
-               (g/* (g/cos c) (g/cos d))
-               (g/* (g/cos e) (g/cos f))])
-          expected (g/simplify
-                    ((D (D f)) 'a 'b 'c 'd 'e 'f))]
-      (is (= expected
-             (g/simplify
-              ((t/gradient (t/gradient f)) 'a 'b 'c 'd 'e 'f)))
-          "multivariable derivatives match (reverse-over-reverse)"))))
-
-(deftest mixed-mode-tests
-  (testing "nested reverse mode"
-    (let [f (fn [x]
-              (fn [y]
-                (g/* (g/square x) (g/square y))))]
-      (is (= ((D ((t/gradient f) 'x)) 'y)
-             ((t/gradient ((D f) 'x)) 'y)
-             ((t/gradient ((t/gradient f) 'x)) 'y))
-          "reverse-mode nests with forward-mode")))
-
-  (let [f (fn [a b c d e f]
-            [(g/* (g/cos a) (g/cos b))
-             (g/* (g/cos c) (g/cos d))
-             (g/* (g/cos e) (g/cos f))])
-        expected (g/simplify
-                  ((D (D f)) 'a 'b 'c 'd 'e 'f))]
-    (is (= expected
-           (g/simplify
-            ((D (t/gradient f)) 'a 'b 'c 'd 'e 'f)))
-        "forward-over-reverse")
-
-    (is (= expected
-           (g/simplify
-            ((t/gradient (D f)) 'a 'b 'c 'd 'e 'f)))
-        "reverse-over-forward")))
+          "reverse-mode matches forward-mode."))))

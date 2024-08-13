@@ -132,7 +132,10 @@
        (with-out-str
          (e/print-expression (+ 'x 'x))))))
 
-(deftest pv
+(deftest pi-pv-tests
+  (is (= e/-pi (e/- e/pi)))
+  (is (= e/-tau (e/- e/tau)))
+
   (let [π Math/PI
         zero-to-two-pi (e/principal-value (* 2 π))
         minus-pi-to-pi (e/principal-value π)]
