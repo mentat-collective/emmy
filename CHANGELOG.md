@@ -2,6 +2,23 @@
 
 ## [unreleased]
 
+- #185:
+
+  - adds a dynamic variable `emmy.calculus.derivative/*mode*` that allows the
+    user to switch between forward and reverse mode automatic differentiation
+
+  - adds a new `emmy.calculus.derivative/gradient` that acts like
+    `emmy.tape/gradient` but is capable of taking multiple variables
+
+  - adds new operators `emmy.calculus.derivative/{D-forward, D-reverse}` and
+    operator-returning-functions `emmy.calculus.derivative/{partial-forward,
+    partial-reverse}` that allow the user to explicitly invoke forward-mode or
+    reverse-mode automatic differentiation. `D` and `partial` still default to
+    forward-mode
+
+  - modifies `emmy.tape/gradient` to correctly error when passed invalid
+    selectors, just like `emmy.dual/derivative`.
+
 - #183:
 
   - adds `emmy.{autodiff, tape}` to `emmy.sci`'s exported namespace set

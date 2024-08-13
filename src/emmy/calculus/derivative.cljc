@@ -143,7 +143,7 @@
               (str "Selectors " selectors
                    " not allowed for non-structural input " input)))))))
 
-(defn multi
+(defn- multi
   "Given
 
     - some higher-order function `op` that transforms a function of a single
