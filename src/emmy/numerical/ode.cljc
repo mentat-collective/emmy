@@ -17,7 +17,7 @@
               (org.apache.commons.math3.ode.sampling StepHandler))))
 
 (def ^:private near? (v/within 1e-8))
-(def ^:private default-epsilon 1e-8)
+(def ^:private ^:const default-epsilon 1e-8)
 
 (defn- flatten-into-primitive-array
   "Copy the sequence `xs` into the primitive double array `arr`."

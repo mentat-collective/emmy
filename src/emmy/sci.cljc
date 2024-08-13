@@ -12,8 +12,10 @@
   "SCI namespace map. Consumers wishing to use a more
   minimal SCI environment should select their desired namespaces from this map."
   {'emmy.algebra.fold                   (copy-ns emmy.algebra.fold (sci/create-ns 'emmy.algebra.fold))
+   'emmy.autodiff                        (copy-ns emmy.complex (sci/create-ns 'emmy.autodiff))
+
    'emmy.complex                        (copy-ns emmy.complex (sci/create-ns 'emmy.complex))
-   'emmy.differential                   (copy-ns emmy.differential (sci/create-ns 'emmy.differential))
+   'emmy.dual                           (copy-ns emmy.dual (sci/create-ns 'emmy.dual))
    'emmy.env                            (copy-ns emmy.env (sci/create-ns 'emmy.env))
    'emmy.expression                     (copy-ns emmy.expression (sci/create-ns 'emmy.expression))
    'emmy.function                       (copy-ns emmy.function (sci/create-ns 'emmy.function))
@@ -39,6 +41,8 @@
    'emmy.simplify                       (copy-ns emmy.simplify (sci/create-ns 'emmy.simplify))
    'emmy.simplify.rules                 (copy-ns emmy.simplify.rules (sci/create-ns 'emmy.simplify.rules))
    'emmy.structure                      (copy-ns emmy.structure (sci/create-ns 'emmy.structure))
+   'emmy.tape                           (copy-ns emmy.structure (sci/create-ns 'emmy.tape))
+
    'emmy.util                           (copy-ns emmy.util (sci/create-ns 'emmy.util))
    'emmy.value                          (copy-ns emmy.value (sci/create-ns 'emmy.value))
    'emmy.abstract.function              (copy-ns emmy.abstract.function (sci/create-ns 'emmy.abstract.function))

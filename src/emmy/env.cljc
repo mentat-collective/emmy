@@ -45,6 +45,7 @@
             [emmy.calculus.vector-calculus]
             [emmy.calculus.vector-field]
             [emmy.complex]
+            [emmy.dual]
             [emmy.expression]
             [emmy.expression.render :as render]
             [emmy.function :as f]
@@ -215,28 +216,40 @@
 
 ;; Constants
 
-(def pi
+(def ^:const pi
   "The mathematical constant [Pi](https://en.wikipedia.org/wiki/Pi)."
   Math/PI)
 
-(def -pi
+(def ^:const -pi
   "The negation of the mathematical
   constant [Pi](https://en.wikipedia.org/wiki/Pi)."
   (g/- Math/PI))
 
-(def euler
+(def ^:const tau
+  "The mathematical
+  constant [Tau](https://en.wikipedia.org/wiki/Turn_(angle)#Tau_proposals),
+  equal to $2\\pi$."
+  (g/* 2 Math/PI))
+
+(def ^:const -tau
+  "The negation of the mathematical
+  constant [Tau](https://en.wikipedia.org/wiki/Turn_(angle)#Tau_proposals),
+  equal to $-2\\pi$."
+  (g/- tau))
+
+(def ^:const euler
   "The mathematical
   constant [e](https://en.wikipedia.org/wiki/E_(mathematical_constant)),
   sometimes known as Euler's Number."
   Math/E)
 
-(def euler-gamma
+(def ^:const euler-gamma
   "The mathematical constant known as the [Euler–Mascheroni
   constant](https://en.wikipedia.org/wiki/Euler%E2%80%93Mascheroni_constant) and
   sometimes as Euler's constant."
   0.57721566490153286)
 
-(def phi
+(def ^:const phi
   "The mathematical constant [𝜑](https://en.wikipedia.org/wiki/Golden_ratio), also
   known as the Golden Ratio."
   (g/divide
@@ -392,8 +405,7 @@
   Riemann-curvature Riemann Ricci torsion-vector torsion
   curvature-components]
 
- [emmy.calculus.derivative
-  derivative D D-as-matrix taylor-series]
+ [emmy.calculus.derivative D D-as-matrix taylor-series]
 
  [emmy.calculus.form-field
   form-field? nform-field? oneform-field?
@@ -490,6 +502,8 @@
   basis-components->vector-field
   vector-field->basis-components
   coordinatize evolution]
+ 
+ [emmy.dual derivative]
 
  ;; Special Relativity
 

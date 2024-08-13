@@ -359,8 +359,11 @@
               :else (invert (expt' s (negate e)))))
       (u/illegal (str "No g/mul implementation registered for kind " kind)))))
 
-(def ^:no-doc relative-integer-tolerance (clojure.core/* 100 u/machine-epsilon))
-(def ^:no-doc absolute-integer-tolerance 1e-20)
+(def ^:no-doc ^:const relative-integer-tolerance
+  (clojure.core/* 100 u/machine-epsilon))
+
+(def ^:no-doc ^:const absolute-integer-tolerance
+  1e-20)
 
 (defn almost-integral?
   "Returns true if `x` is either:

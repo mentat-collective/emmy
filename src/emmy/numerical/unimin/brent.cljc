@@ -147,6 +147,25 @@
         (or (<= fnew fx2) (= xx2 xx) (= xx2 xx1)) [[xnew fnew] x1]
         :else [x2 x1]))
 
+(def ^:private ^:const default-relative-threshold
+  "The default relative threshold used by Brent's method."
+  1.0e-11)
+
+(def ^:private ^:const default-absolute-threshold
+  "The default absolute threshold used by Brent's method."
+  u/sqrt-machine-epsilon)
+
+(defn ^:no-doc initial-brent-guess
+  "Returns a initial guess for Brent's method, located at a 'golden cut' such that
+  the ratio of `(- guess a)` to `(- b guess)` is the same as the ratio of `(- b
+  guess)` to `(- b a)`:
+
+  ```
+  a---guess------b
+  ```"
+  [a b]
+  (+ a (* ug/inv-phi2 (- b a))))
+
 (defn brent-min
   "Find the minimum of the function f: R -> R in the interval [a,b] using Brent's
   Method, described by Richard Brent in [Algorithms for Minimization without
@@ -161,39 +180,45 @@
   section step every so often. (If you want the details, see `parabola-valid?`
   above.)
 
-  Supports the following optional keyword arguments:
+  [[brent-min]] supports the following optional keyword arguments:
 
-  `:callback` if supplied, the supplied fn will be invoked at each intermediate
-  point with the iteration count and the values of x and f(x) at each search
-  step.
+  - `:callback`: if supplied, the supplied fn will be invoked at each
+    intermediate point with the iteration count and the values of x and f(x) at
+    each search step.
 
-  `:relative-threshold` defaults to around 1.49e8, the sqrt of the machine
-  tolerance. You won't gain any benefit attempting to set the value less than
-  the default.
+  - `:initial-guess`: the first internal point checked by the algorithm. Defaults
+    to `([[initial-brent-guess]] a b)`.
 
-  `:absolute-threshold` a smaller absolute threshold that applies when the
-  candidate minimum point is close to 0.
+  - `:relative-threshold`: multiplied by each guess to determine a relative
+    threshold. Defaults to 1.0e-11.
 
-  `:maxiter` Maximum number of iterations allowed for the minimizer. Defaults to
-  1000.
+  - `:absolute-threshold`: a smaller absolute threshold that applies when the
+    candidate minimum point is close to 0. defaults to around 1.49e8, the sqrt of
+    the machine tolerance. You won't gain any benefit attempting to set the value
+    less than the default.
 
-  `:maxfun` Maximum number of times the function can be evaluated before
-  exiting. Defaults to `(inc maxiter)`.
+  - `:maxiter`: Maximum number of iterations allowed for the minimizer. Defaults
+    to 1000.
+
+  - `:maxfun`: Maximum number of times the function can be evaluated before
+    exiting. Defaults to `(inc maxiter)`.
   "
   ([f a b] (brent-min f a b {}))
   ([f a b {:keys [relative-threshold
                   absolute-threshold
+                  initial-guess
                   maxiter
                   maxfun
                   callback]
-           :or {relative-threshold (g/sqrt u/machine-epsilon)
-                absolute-threshold 1.0e-11
+           :or {relative-threshold default-relative-threshold
+                absolute-threshold default-absolute-threshold
+                initial-guess (initial-brent-guess a b)
                 maxiter 1000
                 callback (constantly nil)}}]
    (let [maxfun        (or maxfun (inc maxiter))
          [a b]         [(min a b) (max a b)]
          [f-counter f] (u/counted f)
-         xmid          (* 0.5 (+ a b))
+         xmid          initial-guess
          mid           [xmid (f xmid)]]
      (loop [;; a and b bound the interval in which the minimizer is searching.
             ;; `xx` is the current candidate point, and `fx` is its value.
@@ -269,7 +294,9 @@
   "For convenience, we also provide the sister-procedure for finding the maximum
   of a unimodal function using Brent's method.
 
-  Negate the function, minimize, negate the result."
+  Negate the function, minimize, negate the result.
+
+  See [[brent-min]] for all supported `opts`."
   [f a b opts]
   (let [-f (comp g/negate f)]
     (-> (brent-min -f a b opts)
@@ -287,11 +314,13 @@
      ([f a b] (brent-min-commons f a b {}))
      ([f a b {:keys [relative-threshold
                      absolute-threshold
+                     initial-guess
                      maxiter
                      maxfun
                      callback]
-              :or {relative-threshold (g/sqrt u/machine-epsilon)
-                   absolute-threshold 1.0e-11
+              :or {relative-threshold default-relative-threshold
+                   absolute-threshold default-absolute-threshold
+                   initial-guess (initial-brent-guess a b)
                    maxiter 1000
                    callback (constantly nil)}}]
       (let [maxfun (or maxfun (inc maxiter))
@@ -313,7 +342,7 @@
                               (f x))))
                          (MaxEval. maxfun)
                          (MaxIter. maxiter)
-                         (SearchInterval. a b)
+                         (SearchInterval. a b initial-guess)
                          GoalType/MINIMIZE])
             p  (.optimize o args)
             xx (.getPoint p)

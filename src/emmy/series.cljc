@@ -22,7 +22,7 @@
   Doug also has a 10-line version in Haskell on [his
   website](https://www.cs.dartmouth.edu/~doug/powser.html)."
   (:refer-clojure :exclude [identity])
-  (:require [emmy.differential :as d]
+  (:require [emmy.dual :as d]
             [emmy.expression]  ;; for the effect of the defmethod of zero? for Literals
             [emmy.function :as f]
             [emmy.generic :as g]
@@ -39,7 +39,6 @@
   (arity [_] (f/arity (first xs)))
 
   d/IPerturbed
-  (perturbed? [_] false)
   (replace-tag [s old new] (fmap #(d/replace-tag % old new) s))
   (extract-tangent [s tag mode] (fmap #(d/extract-tangent % tag mode) s))
   (extract-id [s id] (fmap #(d/extract-id % id) s))
@@ -197,7 +196,6 @@
   (arity [_] [:exactly 1])
 
   d/IPerturbed
-  (perturbed? [_] false)
   (replace-tag [s old new] (fmap #(d/replace-tag % old new) s))
   (extract-tangent [s tag mode] (fmap #(d/extract-tangent % tag mode) s))
   (extract-id [s id] (fmap #(d/extract-id % id) s))

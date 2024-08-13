@@ -2,6 +2,64 @@
 
 ## [unreleased]
 
+- #183:
+
+  - adds `emmy.{autodiff, tape}` to `emmy.sci`'s exported namespace set
+
+  - adds `emmy.dual/extract-id` implementations for all supported output types
+    (every type that already implements `emmy.dual/IPerturbed`)
+
+  - moves `emmy.tape/Completed` to `emmy.dual/Completed`; it doesn't really make
+    sense there, but this is the only current way to remove the circular
+    dependency between `emmy.dual` and `emmy.tape`. (`tape` needs a `dual`
+    import to gain `emmy.dual/IPerturbed`.)
+
+  - simplifies the `emmy.tape/gradient` implementation down to only handle
+    single real-or-structural arguments, just like `emmy.dual/derivative`. We'll
+    share the "handle-multiple-input" implementation between the two in a
+    follow-up PR
+
+  - makes the tests in `emmy.calculus.derivative` generic on the derivative
+    implementation, so we can run all tests in forward and reverse mode.
+
+- #182:
+
+  - moves the generic implementations for `TapeCell` and `Dual` to `emmy.autodiff`
+
+  - moves `emmy.calculus.derivative` to `emmy.dual/derivative`
+
+  - removes `emmy.dual/perturbed?` from `IPerturbed`, as this is no longer used.
+
+- #180 renames `emmy.differential` to `emmy.dual`, since the file now contains a
+  proper dual number implementation, not a truncated multivariate power series.
+
+- #179:
+
+  - Moves the `IPerturbed` implementation for functions to `emmy.function`, out
+    of `emmy.calculus.derivative`
+
+  - Adds a new `mode` parameter to `emmy.differential/extract-tangent`, in
+    preparation for allowing reverse and forward mode across all output types
+
+- #175:
+
+  - Adds `emmy.env/{tau,-tau}` constants for the $\tau$ fans out there
+
+  - Adds `^:const` metadata to all constants, reaping small performance wins
+
+  - Updates
+    `emmy.numerical.unimin.brent/{brent-min,brent-max,brent-min-commons,brent-max-commons}`
+    to:
+
+    - take a new `:initial-guess` argument, useful if you have some idea of
+      where the minimum might lie
+
+    - swaps the relative and absolute threshold defaults to match those from
+      `scmutils`
+
+    - adjusts the initial guess from the midpoint between `a` and `b` to a
+      golden section cut (closer to `a`), to match `scmutils`
+
 - #156:
 
   - Makes forward- and reverse-mode automatic differentiation compatible with

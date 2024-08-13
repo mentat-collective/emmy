@@ -7,7 +7,8 @@
   "This namespace implements a number of differential operators like [[D]], and
   the machinery to apply [[D]] to various structures."
   (:refer-clojure :exclude [partial])
-  (:require [emmy.differential :as d]
+  (:require [emmy.autodiff]
+            [emmy.dual :as d]
             [emmy.expression :as x]
             [emmy.function :as f]
             [emmy.generic :as g]
@@ -17,252 +18,13 @@
             [emmy.structure :as s]
             [emmy.tape :as tape]
             [emmy.util :as u]
-            [emmy.value :as v])
-  #?(:clj
-     (:import (clojure.lang Fn MultiFn))))
-
-;; ## IPerturbed Implementation for Functions
-;;
-;; The following section, along with [[emmy.collection]]
-;; and [[emmy.differential]], rounds out the implementations
-;; of [[emmy.differential/IPerturbed]] for native Clojure(script) data types.
-;; The function implementation is subtle, as described by [Manzyuk et al.
-;; 2019](https://arxiv.org/pdf/1211.4892.pdf).
-;; ([[emmy.derivative.calculus-test]], in the "Amazing Bug" sections,
-;; describes the pitfalls at length.)
-;;
-;; [[emmy.differential]] describes how each in-progress perturbed variable
-;; in a derivative is assigned a "tag" that accumulates the variable's partial
-;; derivative.
-;;
-;; How do we interpret the case where `((D f) x)` produces a _function_?
-;;
-;; [Manzyuk et al. 2019](https://arxiv.org/pdf/1211.4892.pdf) extends `D` to
-;; functions `f` of type $\mathbb{R}^n \rightarrow \alpha$, where
-;;
-;; $$\alpha::=\mathbb{R}^m \mid \alpha_{1} \rightarrow \alpha_{2}$$
-;;
-;; By viewing
-;;
-;; - `f` as a (maybe curried) multivariable function that _eventually_ must
-;;   produce an $\mathbb{R}^m$
-;; - The derivative `(D f)` as the partial derivative with respect to the first
-;;   argument of `f`
-;;
-;; A 3-level nest of functions will respond to `D` just like the flattened,
-;; non-higher-order version would respond to `(partial 0)`. In other words,
-;; these two forms should evaluate to equivalent results:
-
-^{:nextjournal.clerk/visibility {:result :hide}}
-(comment
-  (let [f (fn [x]
-            (fn [y]
-              (fn [z]
-                (g/* x y z))))]
-    ((((D f) 'x) 'y) 'z))
-  ;;=> (* y z)
-
-  (((partial 0) g/*) 'x 'y 'z))
-;;=> (* y z)
-
-
-;; To `extract-tangent` from a function, we need to compose the
-;; `extract-tangent` operation with the returned function.
-;;
-;; The returned function needs to capture an internal reference to the
-;; original [[emmy.differential/Dual]] input. This is true for any
-;; Functor-shaped return value, like a structure or Map. However! There is a
-;; subtlety present with functions that's not present with vectors or other
-;; containers.
-;;
-;; The difference with functions is that they take _inputs_. If you contrive a
-;; situation where you can feed the original captured [[emmy.differential/Dual]]
-;; into the returned function, this can trigger "perturbation confusion", where
-;; two different layers try to extract the tangent corresponding to the SAME
-;; tag, and one is left with nothing.
-;;
-;; If you engineer an
-;; example (see [[emmy.calculus.derivative-test/amazing-bug]]) where:
-;;
-;; - this function takes another function, which then receives the closed-over
-;;   `x` as an argument
-;; - you pass this function to itself, so the closed-over `x` instances can both
-;;   be multiplied
-;;
-;; Then your program isn't going to make any distinction between the instances
-;; of `x`. They're both references to the same value.
-;;
-;; HOWEVER! `((D f) x)` returns a function which, when you eventually provide
-;; all arguments, will return the sensitivity of `f` to the first argument `x`.
-;;
-;; If you perform the trick above, pass `((D f) x)` into itself, and the `x`
-;; instances meet (multiply, say) - should final return value treat them as the
-;; /same/ instance?
-;;
-;; Manzyuk et al. says _NO!_. If `((D f) x)` returns a function, that function
-;; closes over:
-;;
-;; - the value of `x`
-;; - an _intention_ to start the derivative-taking process on that isolated copy
-;;   of `x` once the final argument is supplied.
-;;
-;; How does the implementation keep the values separate?
-;;
-;; ### Tag Replacement
-;;
-;; The key to the solution lives in [[extract-tangent-fn]], called on the result
-;; of `((D f) x)` when `((D f) x)` produces a function. We have to armor the
-;; returned function so that:
-;;
-;; - it extracts the originally-injected tag when someone eventually calls the
-;;   function
-;; - if some caller passes a new [[emmy.differential/Dual]] instance into the
-;;   function, any tags in that [[emmy.differential/Dual]] will survive on their
-;;   way back out... even if they happen to contain the originally-injected tag.
-;;
-;; We do this by:
-;;
-;; - replacing any instance of the original `tag` in the returned function's
-;;   arguments with a temporary tag (let's call it `fresh`)
-;; - calling the function and extracting the tangent component associated with
-;;   `tag`, as requested (note now that the only instances of `tag` that can
-;;   appear in the result come from variables captured in the function's
-;;   closure)
-;; - remapping `fresh` back to `tag` inside the
-;;   remaining [[emmy.differential/Dual]] instance.
-;;
-;; This last step ensures that any tangent tagged with `tag` in the input can
-;; make it back out without tangling with closure-captured `tag` instances that
-;; some higher level might want.
-
-(defn- extract-tangent-fn
-  "Returns a new function that composes a 'tag extraction' step with `f`. The
-  returned fn will
-
-  - call the underlying `f`, producing `result`
-  - return `(extract-tangent result tag)`
-
-  If called within the scope of a function waiting for the same `tag`, the
-  returned function will remap any instance of `tag` that appears in any
-  differential argument passed to it to a private `fresh` tag, to prevent
-  internal perturbation confusion. Any tangent components in the final result
-  tagged with `fresh` will be remapped in the final result back to `tag`.
-
-  If called _outside_ of a function waiting for `tag` no tag remapping will
-  occur."
-  [f tag mode]
-  (-> (fn [& args]
-        (if (d/tag-active? tag)
-          (let [fresh (d/fresh-tag)]
-            (-> (d/with-active-tag tag f (map #(d/replace-tag % tag fresh) args))
-                (d/extract-tangent tag mode)
-                (d/replace-tag fresh tag)))
-          (-> (d/with-active-tag tag f args)
-              (d/extract-tangent tag mode))))
-      (f/with-arity (f/arity f))))
-
-;; NOTE: that the tag-remapping that the docstring for `extract-tag-fn`
-;; describes might _also_ have to apply to a functional argument!
-;;
-;; `replace-tag` on a function is meant to be a `replace-tag` call applied to
-;; the function's _output_. To prevent perturbation confusion inside the
-;; function, we perform a similar remapping of any occurrence of `tag` in the
-;; function's arguments.
-
-(defn- replace-tag-fn
-  "Returns a new function that composes a 'tag replacement' step with `f`.
-
-  If called within the scope of a function waiting for the same `tag`, the
-  returned function will:
-
-  - make a fresh tag, and replace all `old` tags with `fresh` in the inputs
-  - call `f`, producing `result`
-  - return `(replace-tag result old new)`
-  - remap any tangent component in the result tagged with `fresh` back to `old`.
-
-  If called _outside_ of a function waiting for `tag`, the returned function
-  will apply `f` to its arguments and call `(replace-tag result old new)` with
-  no tag-rerouting."
-  [f old new]
-  (-> (fn [& args]
-        (if (d/tag-active? old)
-          (let [fresh (d/fresh-tag)
-                args  (map #(d/replace-tag % old fresh) args)]
-            (-> (apply f args)
-                (d/replace-tag old new)
-                (d/replace-tag fresh old)))
-          (-> (apply f args)
-              (d/replace-tag old new))))
-      (f/with-arity (f/arity f))))
-
-;; ## Protocol Implementation
-;;
-;; The implementation for functions handles functions, multimethods, and, in
-;; ClojureScript, [[MetaFn]] instances. Metadata in the original function is
-;; preserved through tag replacement and extraction.
-
-(extend-protocol d/IPerturbed
-  MultiFn
-  (perturbed? [_] false)
-  (replace-tag [f old new] (replace-tag-fn f old new))
-  (extract-tangent [f tag mode] (extract-tangent-fn f tag mode))
-  (extract-id [f id] (comp #(d/extract-id % id) f))
-
-  #?@(:clj
-      [;; In Clojure, metadata can live directly on function objects.
-       Fn
-       (perturbed? [f] (:perturbed? (meta f) false))
-       (replace-tag [f old new] (replace-tag-fn f old new))
-       (extract-tangent [f tag mode] (extract-tangent-fn f tag mode))
-       (extract-id [f id] (comp #(d/extract-id % id) f))]
-
-      :cljs
-      [;; In Clojurescript, we arrange for metadata to live directly on
-       ;; function objects by setting a special property and implementing
-       ;; IMeta: see [[emmy.value]].
-       function
-       (perturbed? [f] (:perturbed? (meta f) false))
-       (replace-tag [f old new] (replace-tag-fn f old new))
-       (extract-tangent [f tag mode] (extract-tangent-fn f tag mode))
-       (extract-id [f id] (comp #(d/extract-id % id) f))
-
-       ;; The official way to get metadata onto a function in Clojurescript
-       ;; is to promote the fn to an AFn-implementing object and store the
-       ;; metadata on a directly-visible object property, which we also
-       ;; support, although such objects are not naively callable in JavaScript
-       MetaFn
-       (perturbed? [f] (:perturbed? (.-meta f) false))
-       (replace-tag [f old new]
-                    (replace-tag-fn (.-afn f) old new))
-       (extract-tangent [f tag mode]
-                        (extract-tangent-fn (.-afn f) tag mode))
-       (extract-id [f id] (comp #(d/extract-id % id) (.-afn f)))]))
+            [emmy.value :as v]))
 
 ;; ## Single and Multivariable Calculus
 ;;
 ;; These functions put together the pieces laid out
-;; in [[emmy.differential]] and declare an interface for taking
+;; in [[emmy.dual]] and declare an interface for taking
 ;; derivatives.
-
-(defn derivative
-  "Returns a single-argument function of that, when called with an argument `x`,
-  returns the derivative of `f` at `x` using forward-mode automatic
-  differentiation.
-
-  For numerical differentiation,
-  see [[emmy.numerical.derivative/D-numeric]].
-
-  `f` must be built out of generic operations that know how to
-  handle [[emmy.differential/Differential]] inputs in addition to any types that
-  a normal `(f x)` call would present. This restriction does _not_ apply to
-  operations like putting `x` into a container or destructuring; just primitive
-  function calls."
-  [f]
-  (fn [x]
-    (let [tag    (d/fresh-tag)
-          lifted (d/bundle-element x 1 tag)]
-      (-> (d/with-active-tag tag f [lifted])
-          (d/extract-tangent tag ::d/dual)))))
 
 ;; The result of applying the derivative `(D f)` of a multivariable function `f`
 ;; to a sequence of `args` is a structure of the same shape as `args` with all
@@ -274,9 +36,9 @@
 ;;
 ;; To generate the result:
 ;;
-;; - For a single non-structural argument, return `(derivative f)`
+;; - For a single non-structural argument, return `(d/derivative f)`
 ;; - else, bundle up all arguments into a single [[s/Structure]] instance `xs`
-;; - Generate `xs'` by replacing each entry in `xs` with `((derivative f')
+;; - Generate `xs'` by replacing each entry in `xs` with `((d/derivative f')
 ;;   entry)`, where `f'` is a function of ONLY that entry that
 ;;   calls `(f (assoc-in xs path entry))`. In other words, replace each entry
 ;;   with the result of the partial derivative of `f` at only that entry.
@@ -302,7 +64,7 @@
    (if (v/scalar? entry)
      (letfn [(f-entry [x]
                (f (assoc-in structure path x)))]
-       ((derivative f-entry) entry))
+       ((d/derivative f-entry) entry))
      (u/illegal
       (str "non-numerical entry " entry
            " at path " path
@@ -362,9 +124,9 @@
 
              ;; non-empty selectors are only allowed for functions that receive
              ;; a structural argument. This case passes that single,
-             ;; non-structural argument on to `(derivative f)`.
+             ;; non-structural argument on to `(d/derivative f)`.
              (empty? selectors)
-             ((derivative f) input)
+             ((d/derivative f) input)
 
              ;; Any attempt to index (via non-empty selectors) into a
              ;; non-structural argument will throw.
@@ -437,10 +199,10 @@
 
 (doseq [t [::v/function ::s/structure]]
   (defmethod g/partial-derivative [t v/seqtype] [f selectors]
-    (tape/gradient f selectors))
+    (multivariate f selectors))
 
   (defmethod g/partial-derivative [t nil] [f _]
-    (tape/gradient f [])))
+    (multivariate f [])))
 
 ;; ## Operators
 ;;
@@ -477,16 +239,6 @@
   [& selectors]
   (o/make-operator #(g/partial-derivative % selectors)
                    `(~'partial ~@selectors)))
-
-(def D-fwd
-  (o/make-operator #(multivariate % [])
-                   g/derivative-symbol))
-
-(defn partial-fwd [& selectors]
-  (o/make-operator #(multivariate % selectors)
-                   `(~'partial ~@selectors)))
-
-
 
 ;; ## Derivative Utilities
 ;;

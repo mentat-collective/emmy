@@ -6,7 +6,7 @@
 (ns emmy.structure
   (:require [clojure.string :refer [join]]
             [emmy.collection]
-            [emmy.differential :as d]
+            [emmy.dual :as d]
             [emmy.function :as f]
             [emmy.generic :as g]
             [emmy.numsymb]
@@ -82,7 +82,6 @@
     (f/seq-arity v))
 
   d/IPerturbed
-  (perturbed? [_] (boolean (some d/perturbed? v)))
   (replace-tag [s old new] (mapr #(d/replace-tag % old new) s))
   (extract-tangent [s tag mode] (mapr #(d/extract-tangent % tag mode) s))
   (extract-id [s id] (mapr #(d/extract-id % id) s))

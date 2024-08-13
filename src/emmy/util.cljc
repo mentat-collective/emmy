@@ -30,9 +30,9 @@
 (def compute-sqrt #?(:clj nt/sqrt :cljs Math/sqrt))
 (def compute-expt #?(:clj nt/expt :cljs Math/pow))
 (def compute-abs #?(:clj nt/abs :cljs Math/abs))
-(def biginttype #?(:clj BigInt :cljs js/BigInt))
-(def inttype #?(:clj Integer :cljs goog.math.Integer))
-(def longtype #?(:clj Long :cljs goog.math.Long))
+(def ^:const biginttype #?(:clj BigInt :cljs js/BigInt))
+(def ^:const inttype #?(:clj Integer :cljs goog.math.Integer))
+(def ^:const longtype #?(:clj Long :cljs goog.math.Long))
 
 (defn keyset [m]
   (into #{} (keys m)))
@@ -170,13 +170,13 @@
          sci-ns
          (merge {:copy-meta [:doc :arglists :macro :sci/macro :imported-from]} opts))))
 
-(def machine-epsilon
+(def ^:const machine-epsilon
   (loop [e 1.0]
     (if (= 1.0 (+ e 1.0))
       (* e 2.0)
       (recur (/ e 2.0)))))
 
-(def sqrt-machine-epsilon
+(def ^:const sqrt-machine-epsilon
   (Math/sqrt machine-epsilon))
 
 (defn parse-int

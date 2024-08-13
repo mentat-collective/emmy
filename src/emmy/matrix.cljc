@@ -8,7 +8,7 @@
   to the [[Matrix]] datatype."
   (:refer-clojure :exclude [get-in some])
   (:require [clojure.core :as core]
-            [emmy.differential :as d]
+            [emmy.dual :as d]
             [emmy.function :as f]
             [emmy.generic :as g]
             [emmy.polynomial :as poly]
@@ -35,7 +35,6 @@
                   :else ::matrix))
 
   d/IPerturbed
-  (perturbed? [_] (boolean (core/some d/perturbed? v)))
   (replace-tag [M old new] (fmap #(d/replace-tag % old new) M))
   (extract-tangent [M tag mode] (fmap #(d/extract-tangent % tag mode) M))
   (extract-id [M id] (fmap #(d/extract-id % id) M))
