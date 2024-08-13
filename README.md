@@ -269,7 +269,7 @@ license = {GPL-3.0},
 month = {4},
 title = {{Emmy: Functional Computer Algebra in Clojure}},
 url = {https://github.com/mentat-collective/emmy},
-version = {0.31.0},
+version = {0.32.0},
 year = {2016}
 ```
 
