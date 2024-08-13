@@ -237,7 +237,7 @@
 ;; implementation for the components. I vote to back out this `::s/structure`
 ;; installation.
 
-(def ^:dynamic *mode* d/FORWARD-MODE)
+(def ^:dynamic *mode* d/REVERSE-MODE)
 
 (doseq [t [::v/function ::s/structure]]
   (defmethod g/partial-derivative [t v/seqtype] [f selectors]
