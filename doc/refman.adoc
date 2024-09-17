@@ -1522,7 +1522,7 @@ Let's understand this in a simple case. Let `f(x,y) = x^3 y^5`:
      (expt y 5)))
 ----
 
-Then `Df(x,y)` is a down tuple with components `[2 x^2 y^5, 5 x^3 y^4]`:
+Then `Df(x,y)` is a down tuple with components `[3 x^2 y^5, 5 x^3 y^4]`:
 
 [source, clojure]
 ----
