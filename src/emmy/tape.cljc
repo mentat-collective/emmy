@@ -235,10 +235,9 @@
   all leaves recursively replaced by [[TapeCell]] instances."
   [x tag]
   (cond
-    (v/scalar? x)    (make tag x)
+    (or (v/scalar? x) (f/function? x)) (make tag x)
     (s/structure? x) (s/mapr #(tapify % tag) x)
-    (f/function? x)  (u/illegal "Function input not yet supported.")
-    :else            x))
+    :else x))
 
 ;; ### Accessors
 

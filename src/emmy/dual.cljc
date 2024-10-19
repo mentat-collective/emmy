@@ -554,7 +554,9 @@
   ([primal tag]
    (bundle-element primal 1 tag))
   ([primal tangent tag]
-   {:pre [(v/scalar? primal)]}
+   {:pre [(or (v/scalar? primal)
+              ;; TODO
+              (isa? (v/kind primal) ::v/function))]}
    (if (g/zero? tangent)
      primal
      (->Dual tag primal tangent))))
