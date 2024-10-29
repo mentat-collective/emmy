@@ -79,6 +79,8 @@
 ;; and [Functional Differential
 ;; Geometry](http://mitpress.mit.edu/books/functional-differential-geometry) by
 ;; G.J. Sussman and J. Wisdom.
+;; Note that all examples found in the textbooks
+;; are covered by Emmy's automated unit-level test cases.
 ;;
 ;; ## Quickstart
 ;;
@@ -246,6 +248,10 @@
 ;;
 ;; > Note that `Emmy` does not ship with a dependency on SCI, so you'll
 ;; > need to install your own version.
+;;
+;; ## Emmy via maria.cloud
+;; maria.cloud is a coding environment for beginners which also
+;; features an [Emmy example](https://2.maria.cloud/gist/0405c3427c88326a181b307371f939bc).
 ;;
 ;; ## Emmy via Clerk
 ;;
