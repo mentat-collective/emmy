@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: Clojars Release
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - uses: DeLaGuardo/setup-clojure@master
         with:
