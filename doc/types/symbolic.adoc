@@ -2,90 +2,126 @@
 
 == Symbolic Expressions
 
-All primitive mathematical procedures are extended to be generic over symbolic
-arguments. When given symbolic arguments these procedures construct a symbolic
-representation of the required answer. There are primitive literal numbers. We
-can make a literal number that is represented as an expression by the symbol
-`'a` as follows:
+Emmy provides powerful support for symbolic mathematics through its generic operations and literal types. This section focuses on literal numbers and other symbolic objects, demonstrating how to use them effectively in Emmy's symbolic computation environment.
+
+=== Literal Numbers
+
+To work with symbolic expressions, first require the necessary namespaces:
 
 [source, clojure]
 ----
-(literal-number 'a)
+(require '[emmy.env :as e])
 ----
 
-The literal number is an object that has the type of a number, but its
-representation as an expression is the symbol `'a`:
+Create a literal number using the `literal-number` function or simply use a Clojure symbol:
 
 [source, clojure]
 ----
-(kind (literal-number 'a))
+(e/literal-number 'a)
+;; or simply
+'a
+----
+
+Literal numbers behave like regular numbers but maintain their symbolic representation:
+
+[source, clojure]
+----
+(e/kind 'a)
 ;;=>  :emmy.expression/numeric
 
-(freeze (literal-number 'a))
+(e/freeze 'a)
 ;;=>  a
 ----
 
-Literal numbers may be manipulated, using the generic operators:
+=== Symbolic Arithmetic
+
+Emmy's generic arithmetic functions automatically work with literal numbers:
 
 [source, clojure]
 ----
-(sin (+ (literal-number 'a) 3))
-;;=> (sin (+ 3 a))
+(e/+ 'x 3)
+;;=> (+ 3 x)
+
+(e/sin (e/+ 'a 'b))
+;;=> (sin (+ a b))
 ----
 
-To make it easy to work with literal numbers, Clojure symbols are interpreted by
-the generic operations as literal numbers:
+=== Building and Using Symbolic Functions
+
+You can create functions using Emmy's generic operations and apply them to symbols:
 
 [source, clojure]
 ----
-(sin (+ 'a 3))
-;;=>  (sin (+ 3 a))
+(defn symbolic-square [x]
+  (e/* x x))
+
+(symbolic-square 'y)
+;;=> (* y y)
+
+;; Using Emmy's built-in functions
+(e/cube 'z)
+;;=> (expt z 3)
 ----
 
-We can extract the numerical expression from its type-tagged representation with
-the `freeze` procedure:
+=== Derivatives and Symbolic Manipulation
+
+Emmy's derivative operator `D` works seamlessly with symbolic expressions:
 
 [source, clojure]
 ----
-(freeze (sin (+ 'a 3)))
-;;=>  (sin (+ 3 a))
+((e/D e/sin) 'x)
+;;=> (cos x)
+
+((e/D e/cube) 'y)
+;;=> (* 3 (expt y 2))
 ----
 
-but usually we really don't want to look at raw expressions
+=== Simplification and Pretty Printing
+
+Use `simplify` to reduce complex expressions and `print-expression` for formatted output:
 
 [source, clojure]
 ----
-(freeze ((D cube) 'x))
-;;=>  (+ (* x (+ x x)) (* x x))
+(e/simplify (e/+ (e/* 'x 'x) (e/* 'x 2)))
+;;=> (+ (* 2 x) (expt x 2))
+
+(e/print-expression (e/simplify ((e/D e/cube) 'x)))
+;; 3 * x^2
 ----
 
-because they are unsimplified. We will talk about simplification later, but for
-now note that `simplify` will usually give a better form:
+=== Other Symbolic Objects
+
+Emmy supports various symbolic mathematical objects:
 
 [source, clojure]
 ----
-(simplify ((D cube) 'x))
-;;=>  (* 3 (expt x 2))
+(e/literal-vector 'v)
+(e/literal-down-tuple 'd)
+(e/literal-up-tuple 'u)
+(e/literal-matrix 'M)
+(e/literal-function 'f)
 ----
 
-and `print-expression`, which incorporates `simplify`, will attempt to format
-the expression nicely.
-
-Besides literal numbers, there are other literal mathematical objects, such as
-vectors and matrices, that can be constructed with appropriate constructors:
+These can be used in expressions and manipulated symbolically:
 
 [source, clojure]
 ----
-(literal-vector <name>)
-(literal-down-tuple <name>)
-(literal-up-tuple <name>)
-(literal-matrix <name>)
-(literal-function <name>)
+(def f (e/literal-function 'f))
+(f 'x)
+;;=> (f x)
+
+((e/D f) 'x)
+;;=> ((D f) x)
 ----
 
-WARNING: As of version `0.15.0`, most of these haven't yet been ported over to
-Clojure from `scmutils`. Stay tuned for a future release, as we have all of the
-machinery in place to do this.
+=== Integration with Emmy's CAS
 
-There are currently no simplifiers that can manipulate literal objects of these
-types into a nice form.
+Symbolic expressions in Emmy integrate seamlessly with its Computer Algebra System (CAS). You can perform complex algebraic manipulations, solve equations, and more. For advanced usage, explore the `emmy.algebra` and `emmy.calculus` namespaces.
+
+For further exploration of Emmy's symbolic capabilities, check out:
+
+- The `emmy.polynomial` namespace for working with symbolic polynomials
+- The `emmy.series` namespace for power series and Taylor expansions
+- The `emmy.abstract.function` namespace for advanced function manipulation
+
+Remember, most functions in `emmy.env` are designed to work with both numeric and symbolic inputs, allowing for flexible and powerful mathematical expressions.

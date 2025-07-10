@@ -1,3 +1,136 @@
 = Quaternions
 
-More info soon.
+= Quaternions
+
+Quaternions are an extension of complex numbers to four dimensions, providing a powerful tool for representing rotations and orientations in 3D space. Emmy's quaternion implementation offers a rich API for working with quaternions as part of its integrated computer algebra system.
+
+== Basics
+
+A quaternion `q` is represented as:
+
+[source,clojure]
+----
+q = a + bi + cj + dk
+----
+
+where `a`, `b`, `c`, and `d` are real numbers, and `i`, `j`, and `k` are imaginary units satisfying:
+
+[source,text]
+----
+i^2 = j^2 = k^2 = ijk = -1
+----
+
+=== Construction
+
+[source,clojure]
+----
+(require '[emmy.quaternion :as q])
+
+;; Create a quaternion
+(q/make 1 2 3 4)  ; => #emmy/quaternion [1 2 3 4]
+
+;; From a vector
+(q/make [1 2 3 4])
+
+;; From a complex number
+(q/make (complex 1 2))  ; => #emmy/quaternion [1 2 0 0]
+----
+
+=== Basic Operations
+
+[source,clojure]
+----
+(def q1 (q/make 1 2 3 4))
+(def q2 (q/make 2 3 4 5))
+
+(q/add q1 q2)  ; Addition
+(q/sub q1 q2)  ; Subtraction
+(q/mul q1 q2)  ; Multiplication
+(q/div q1 q2)  ; Division
+
+(q/conjugate q1)  ; Conjugate
+(q/magnitude q1)  ; Magnitude
+(q/normalize q1)  ; Normalize to unit quaternion
+----
+
+== Integration with Emmy's CAS
+
+Quaternions in Emmy seamlessly integrate with other mathematical structures:
+
+=== Complex Numbers
+
+[source,clojure]
+----
+(q/complex-1 q1)  ; Extract first complex part (a + bi)
+(q/complex-2 q1)  ; Extract second complex part (c + di)
+----
+
+=== Matrices
+
+Quaternions can be converted to and from rotation matrices:
+
+[source,clojure]
+----
+(require '[emmy.mechanics.rotation :as rot])
+
+(def q (q/make 1 2 3 4))
+(def m (q/->rotation-matrix q))
+(def q-back (q/from-rotation-matrix m))
+----
+
+=== Rotations
+
+Quaternions excel at representing 3D rotations:
+
+[source,clojure]
+----
+(def axis [1 1 1])
+(def angle (/ Math/PI 4))
+(def q-rot (q/from-angle-axis angle axis))
+
+(def v [1 0 0])
+(q/rotate-vector q-rot v)
+----
+
+== Advanced Operations
+
+Emmy's quaternion API includes various mathematical functions:
+
+[source,clojure]
+----
+(q/exp q1)   ; Exponential
+(q/log q1)   ; Natural logarithm
+(q/sin q1)   ; Sine
+(q/cos q1)   ; Cosine
+(q/tan q1)   ; Tangent
+(q/sinh q1)  ; Hyperbolic sine
+(q/cosh q1)  ; Hyperbolic cosine
+(q/tanh q1)  ; Hyperbolic tangent
+----
+
+== Symbolic Computation
+
+Emmy's quaternions support symbolic computation:
+
+[source,clojure]
+----
+(require '[emmy.env :as e])
+
+(def q-sym (q/make 'a 'b 'c 'd))
+(e/simplify (q/mul q-sym q-sym))
+----
+
+This capability allows for algebraic manipulations and derivations involving quaternions.
+
+== Performance Considerations
+
+For performance-critical applications, Emmy provides specialized functions for quaternion operations on unit quaternions (versors):
+
+[source,clojure]
+----
+(q/mul:v q1 q2)  ; Faster multiplication for unit quaternions
+(q/div:v q1 q2)  ; Faster division for unit quaternions
+----
+
+These optimized functions assume the inputs are unit quaternions and may produce incorrect results if used with non-unit quaternions.
+
