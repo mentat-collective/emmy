@@ -18,7 +18,7 @@ jobs:
           bb: latest
 
       - name: Cache kondo directory
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: ~/.clj-kondo/.cache
           key: ${{ runner.os }}-kondo
