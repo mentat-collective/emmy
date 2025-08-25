@@ -339,7 +339,7 @@
     ##-Inf "-∞"
     nil))
 
-(def ->infix
+(def ->infix-str
   "Converts an S-expression to printable infix form. Numeric exponents are
   written as superscripts. Partial derivatives get subscripts."
   (make-infix-renderer
@@ -583,6 +583,31 @@
                          (brace s))
                        v))))))))))
 
+(deftype TeXWrapper [s]
+  Object
+  (toString [_] s)
+  #?(:clj
+     (equals [_ b]
+             (and (instance? TeXWrapper b)
+                  (= s (.-s ^TeXWrapper b)))))
+
+  #?@(:cljs
+      [IEquiv
+       (-equiv [_ b]
+               (and (instance? TeXWrapper b)
+                    (= s (.-s ^TeXWrapper b))))
+
+       IPrintWithWriter
+       (-pr-writer [_ writer _]
+                   (write-all writer s))]))
+
+(defn ^:no-doc tex? [x]
+  (instance? TeXWrapper x))
+
+#?(:clj
+   (defmethod print-method TeXWrapper [^TeXWrapper f ^java.io.Writer w]
+     (.write w (.-s f))))
+
 (defn ->TeX
   "Convert the given expression to TeX format, as a string.
 
@@ -613,7 +638,7 @@
         (str "\\begin{equation}\n"
              label tex-string
              "\n\\end{equation}"))
-      tex-string)))
+      (->TeXWrapper tex-string))))
 
 (def ->JavaScript
   "Converts an S-expression to JavaScript."
