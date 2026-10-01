@@ -10,15 +10,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Install Babashka
-        uses: DeLaGuardo/setup-clojure@10.2
+        uses: DeLaGuardo/setup-clojure@13.7.0
         with:
           bb: latest
 
       - name: Cache kondo directory
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: ~/.clj-kondo/.cache
           key: ${{ runner.os }}-kondo

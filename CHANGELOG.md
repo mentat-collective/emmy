@@ -2,6 +2,21 @@
 
 ## [unreleased]
 
+- adds `emmy.expression.render/TeX-renderer`, which returns a TeX renderer
+  extended by options: `:precedence-map`, `:infix?`, `:special-handlers` and
+  `:rename-functions` are merged over the defaults, so a client can typeset its
+  own operators (for example `implies`, `union`, `subset`) without forking the
+  renderer. `->TeX` is unchanged and uses the default.
+
+- adds `:decorators` to the infix renderers: a decorator such as
+  `(color gold (or P Q))` wraps its last argument's rendered string and is
+  transparent to parenthesization, so a highlighted subterm is parenthesized
+  exactly as it would be without the highlight. Leading arguments are passed
+  unrendered.
+
+- `and` and `or` render every argument in `->TeX`, `->infix` and
+  `->JavaScript`; before, only the first two were written.
+
 ## [0.32.0]
 
 - #170:

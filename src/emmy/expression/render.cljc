@@ -63,14 +63,20 @@
     arguments, used to provide custom rendering for things like exponentiation
     which might not be rendered either as infix or prefix.
   - `rename-functions` is a map supplying replacement function names to be used
-    just before the expression is written."
+    just before the expression is written.
+  - `decorators` is a map from symbol to a function of the rendered arguments.
+    A decorator node `(op & args)` is transparent: its last argument is
+    parenthesized as if it stood directly under the decorator's parent, and the
+    decorator only wraps the rendered string (for example in a colour)."
   [& {:keys [juxtapose-multiply special-handlers infix? render-primitive
-             rename-functions parenthesize precedence-map rewrite-trig-squares]
+             rename-functions parenthesize precedence-map rewrite-trig-squares
+             decorators]
       :or {special-handlers {}
            parenthesize #(str "(" % ")")
            juxtapose-multiply " * "
            rewrite-trig-squares false
            rename-functions {}
+           decorators {}
            infix? {}}}]
   (letfn [(ratio-expr? [op [num denom]]
             (and (= '/ op)
@@ -110,6 +116,15 @@
               (z/replace loc result)
               loc))
 
+          (upper-op-of [loc]
+            ;; The operator of the nearest enclosing node that is not a
+            ;; decorator, or nil at the root.
+            (when (z/up loc)
+              (let [op (-> loc z/leftmost z/node)]
+                (if (and (decorators op) (z/left loc))
+                  (recur (z/up loc))
+                  op))))
+
           (render-unary-node [op arg upper-op]
             (case op
               (+ *) (str arg)
@@ -132,9 +147,14 @@
                                   (recur r)
                                   (z/up a'))))
                     [op & args] (z/node arg-loc)
-                    upper-op (and (z/up arg-loc)
-                                  (-> arg-loc z/leftmost z/node))]
-                (if (infix? op)
+                    upper-op (upper-op-of arg-loc)]
+                (cond
+                  (decorators op)
+                  ;; leading arguments are parameters, passed unrendered
+                  ((decorators op) (-> (vec (butlast (rest (z/node loc))))
+                                       (conj (last args))))
+
+                  (infix? op)
                   (parenthesize-if
                    (and (infix? upper-op)
                         (and (precedence<= op upper-op)
@@ -193,6 +213,7 @@
                                      (str " " op " "))]
                            (transduce (interpose sep) str args)))))
 
+                  :else
                   ;; case: op is not infix.
                   ;; The _whole_ result may need to be parenthesized, though, if it
                   ;; is part of an infix expression with an operator with very high
@@ -363,8 +384,8 @@
     'ceiling (fn [[x]] (str "⌈" x "⌉"))
     'modulo (fn [[x y]] (str x " mod " y))
     'remainder (fn [[x y]] (str x " % " y))
-    'and (fn [[x y]] (str x " ∧ " y))
-    'or  (fn [[x y]] (str x " ∨ " y))
+    'and (fn [xs] (s/join " ∧ " xs))
+    'or  (fn [xs] (s/join " ∨ " xs))
     'expt (fn [[x e]]
             (when (and (integer? e) ((complement neg?) e))
               (str x (n->superscript e))))
@@ -426,7 +447,45 @@
 (defn- displaystyle [s]
   (str "\\displaystyle{" s "}"))
 
-(def ^:no-doc ->TeX*
+(declare ->TeX*)
+
+(defn- extend-renderer
+  "Builds an infix renderer from the `base` options extended by `opts`. The maps
+  under `:precedence-map`, `:special-handlers`, `:rename-functions` and
+  `:decorators` are merged, `:infix?` sets are unioned, and any other key in
+  `opts` replaces the base value."
+  [opts & {:as base}]
+  (let [merged (reduce-kv
+                (fn [acc k v]
+                  (case k
+                    (:precedence-map :special-handlers :rename-functions :decorators)
+                    (update acc k merge v)
+                    :infix? (update acc k (fnil into #{}) v)
+                    (assoc acc k v)))
+                base
+                opts)]
+    (apply make-infix-renderer (mapcat identity merged))))
+
+(defn TeX-renderer
+  "Returns a function that renders an expression to a TeX string: the renderer
+  behind [[->TeX]], extended by the keyword options.
+
+  - `:precedence-map` operator symbol to precedence, merged over the defaults
+  - `:infix?` a set of operator symbols written infix, added to the defaults
+  - `:special-handlers` operator symbol to a function of the rendered arguments
+  - `:rename-functions` operator symbol to the name written for it
+  - `:decorators` operator symbol to a function of the rendered arguments, for
+    transparent wrappers such as colour: `(color c x)` is parenthesized as `x`
+    would be in its place
+
+  ```clojure
+  (def ->logic-TeX
+    (TeX-renderer :infix? '#{implies}
+                  :precedence-map '{implies 0}
+                  :special-handlers {'implies #(s/join \" \\\\Rightarrow \" %)}
+                  :decorators {'color (fn [[c x]] (str \"\\\\textcolor{\" c \"}{\" x \"}\"))}))
+  ```"
+  [& {:as opts}]
   (let [TeX-accent (fn [accent]
                      (fn [[_ stem]]
                        (str "\\" accent " " (maybe-brace
@@ -446,7 +505,8 @@
             (str x "^{\\prime\\prime}")))
         parenthesize
         #(str "\\left(" % "\\right)")]
-    (make-infix-renderer
+    (extend-renderer
+     opts
      ;; here we set / to a very low precedence because the fraction bar we will
      ;; use in the rendering groups things very strongly.
      :precedence-map '{D 9, partial 9,
@@ -487,12 +547,12 @@
         (str (maybe-brace x) " \\mathbin{\\%} " (maybe-brace y)))
 
       'and
-      (fn [[x y]]
-        (str x " \\land " y))
+      (fn [xs]
+        (s/join " \\land " xs))
 
       'or
-      (fn [[x y]]
-        (str x " \\lor " y))
+      (fn [xs]
+        (s/join " \\lor " xs))
 
       'not
       (fn [[x]]
@@ -583,6 +643,9 @@
                          (brace s))
                        v))))))))))
 
+(def ^:no-doc ->TeX*
+  (TeX-renderer))
+
 (defn ->TeX
   "Convert the given expression to TeX format, as a string.
 
@@ -658,6 +721,6 @@
                                         (parens)))
                           'remainder (fn [[a b]]
                                        (str a " % " b))
-                          'and (fn [[a b]] (str a " && " b))
-                          'or (fn [[a b]] (str a " || " b))
+                          'and (fn [xs] (s/join " && " xs))
+                          'or (fn [xs] (s/join " || " xs))
                           '/ render-infix-ratio}))))

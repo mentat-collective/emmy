@@ -1,0 +1,12 @@
+{:color-and-under-or "\\textcolor{gold}{P \\land Q} \\lor R",
+ :color-atom "\\textcolor{gold}{P}",
+ :color-nested
+ "\\textcolor{red}{\\textcolor{gold}{\\left(P \\lor Q\\right)}} \\land R",
+ :color-or-under-and
+ "\\textcolor{gold}{\\left(P \\lor Q\\right)} \\land R",
+ :contrapositive
+ "P \\Rightarrow Q \\Leftrightarrow \\lnot\\left(Q\\right) \\Rightarrow \\lnot\\left(P\\right)",
+ :implies-binds-loosest "P \\land Q \\Rightarrow P",
+ :implies-under-and "\\left(P \\Rightarrow Q\\right) \\land P",
+ :nary-and "P \\land Q \\land R",
+ :nary-or "P \\lor Q \\lor R \\lor S"}

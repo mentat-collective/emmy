@@ -41,6 +41,8 @@
     io.github.cognitect-labs/test-runner
     {:git/tag "v0.5.0" :git/sha "b3fd0d2"}
     org.clojure/test.check {:mvn/version "1.1.1"}
+    io.github.hive-agi/hive-test {:mvn/version "0.4.11"}
+    metosin/malli {:mvn/version "0.20.2"}
     io.github.nextjournal/clerk
     {:git/sha "1f6c5331418aaf9c5a4335fc2e6e95f07dc3af6b"}
     same/ish {:mvn/version "0.1.6"}}}

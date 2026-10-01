@@ -8,7 +8,7 @@ jobs:
   publish:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
             path: |
               .cpcache
@@ -17,7 +17,7 @@ jobs:
             key: "1"
 
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install clojure tools
         uses: DeLaGuardo/setup-clojure@4.0

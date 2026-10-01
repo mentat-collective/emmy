@@ -2,7 +2,8 @@
 
 (ns emmy.expression.render-test
   (:refer-clojure :exclude [+ - * /])
-  (:require [clojure.test :refer [is deftest testing use-fixtures]]
+  (:require [clojure.string]
+            [clojure.test :refer [is deftest testing use-fixtures]]
             [emmy.abstract.function :as af]
             [emmy.calculus.derivative :refer [D taylor-series]]
             [emmy.expression.render :as r :refer [->infix ->TeX ->JavaScript]]
@@ -429,3 +430,33 @@
 
         (is (= "\\frac{1}{2}\\,{dx}^{2}\\,{\\partial_0}^{2}f\\left(\\begin{pmatrix}\\displaystyle{x} \\cr \\cr \\displaystyle{y}\\end{pmatrix}\\right) + dx\\,dy\\,\\left(\\partial_0\\,\\partial_1\\right)\\left(f\\right)\\left(\\begin{pmatrix}\\displaystyle{x} \\cr \\cr \\displaystyle{y}\\end{pmatrix}\\right) + \\frac{1}{2}\\,{dy}^{2}\\,{\\partial_1}^{2}f\\left(\\begin{pmatrix}\\displaystyle{x} \\cr \\cr \\displaystyle{y}\\end{pmatrix}\\right) + dx\\,\\partial_0f\\left(\\begin{pmatrix}\\displaystyle{x} \\cr \\cr \\displaystyle{y}\\end{pmatrix}\\right) + dy\\,\\partial_1f\\left(\\begin{pmatrix}\\displaystyle{x} \\cr \\cr \\displaystyle{y}\\end{pmatrix}\\right) + f\\left(\\begin{pmatrix}\\displaystyle{x} \\cr \\cr \\displaystyle{y}\\end{pmatrix}\\right)"
                (s->TeX expr)))))))
+
+(deftest TeX-renderer-extension
+  (let [->logic (r/TeX-renderer
+                 :infix? '#{implies iff}
+                 :precedence-map '{implies 0 iff -1}
+                 :special-handlers {'implies #(clojure.string/join " \\Rightarrow " %)
+                                    'iff #(clojure.string/join " \\Leftrightarrow " %)}
+                 :decorators {'color (fn [[c x]] (str "\\textcolor{" c "}{" x "}"))})]
+    (testing "and/or are n-ary"
+      (is (= "a \\land b \\land c" (->TeX '(and a b c))))
+      (is (= "a \\lor b \\lor c" (->TeX '(or a b c)))))
+
+    (testing "new infix operators take their place in the precedence order"
+      (is (= "P \\land Q \\Rightarrow P" (->logic '(implies (and P Q) P))))
+      (is (= "\\left(P \\Rightarrow Q\\right) \\land P"
+             (->logic '(and (implies P Q) P))))
+      (is (= "P \\Rightarrow Q \\Leftrightarrow \\lnot\\left(Q\\right) \\Rightarrow \\lnot\\left(P\\right)"
+             (->logic '(iff (implies P Q) (implies (not Q) (not P)))))))
+
+    (testing "a decorator is transparent to parenthesization"
+      (is (= "\\textcolor{gold}{\\left(P \\lor Q\\right)} \\land R"
+             (->logic '(and (color gold (or P Q)) R))))
+      (is (= "\\textcolor{gold}{P \\land Q} \\lor R"
+             (->logic '(or (color gold (and P Q)) R))))
+      (is (= "\\textcolor{gold}{x}" (->logic '(color gold x)))
+          "its leading arguments are passed unrendered"))
+
+    (testing "the default renderer is unchanged"
+      (is (= "x + 2\\,y" (->logic '(+ x (* 2 y)))))
+      (is (= (->TeX '(+ x (* 2 y))) (->logic '(+ x (* 2 y))))))))
