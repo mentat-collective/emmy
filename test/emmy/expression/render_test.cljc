@@ -326,7 +326,12 @@
          (s->JS (up 1 (+ 'x 'y) 2))))
 
   (is (= "[[1, a], [b, 2]]"
-         (->JavaScript (down (up 1 'a) (up 'b 2))))))
+         (->JavaScript (down (up 1 'a) (up 'b 2)))))
+
+  (testing "two-argument atan renders as Math.atan2; Math.atan ignores a second argument"
+    (is (= "Math.atan(x)" (->JavaScript (g/atan 'x))))
+    (is (= "Math.atan2(y, x)" (->JavaScript (g/atan 'y 'x))))
+    (is (= "Math.atan2(y, x) + 1" (->JavaScript (+ (g/atan 'y 'x) 1))))))
 
 (deftest systematic
   (let [all-formats (juxt s->infix s->JS s->TeX)]

@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+- `emmy.expression.render/->JavaScript` renders two-argument `(atan y x)` as
+  `Math.atan2(y, x)`. It rendered `Math.atan(y, x)`, which JavaScript evaluates
+  as `Math.atan(y)`, so `:js` compiled functions were wrong whenever `x < 0`.
+
 ## [0.32.0]
 
 - #170:

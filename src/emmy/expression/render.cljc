@@ -628,7 +628,6 @@
                         'tan "Math.tan"
                         'asin "Math.asin"
                         'acos "Math.acos"
-                        'atan "Math.atan"
                         'cosh "Math.cosh"
                         'sinh "Math.sinh"
                         'tanh "Math.tanh"
@@ -649,6 +648,12 @@
                                       (str "(" x ")"))]
                          {'up make-js-vector
                           'down make-js-vector
+                          ;; `(atan y x)` is the two-argument arctangent, which
+                          ;; JavaScript calls Math.atan2; Math.atan silently
+                          ;; ignores a second argument.
+                          'atan (fn [args]
+                                  (str (if (next args) "Math.atan2" "Math.atan")
+                                       "(" (s/join ", " args) ")"))
                           'modulo (fn [[a b]]
                                     (-> (str a " % " b)
                                         (parens)
