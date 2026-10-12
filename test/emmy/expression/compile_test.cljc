@@ -33,6 +33,70 @@
                  (c/compiler-mode))
         "invalid modes throw.")))
 
+(deftest open-mode-test
+  (testing "the built-in modes are the registered modes"
+    (is (= c/valid-modes (c/registered-modes))))
+
+  (testing "a mode registered through compile-code"
+    (let [f       (fn [x] (g/+ (g/sin x) (g/square x)))
+          compile (fn [mode opts]
+                    (c/compile-fn f 1 (merge {:mode mode :cache? false
+                                              :gensym-fn (a/monotonic-symbol-generator 1)}
+                                             opts)))]
+      (defmethod c/compile-code ::code [_ code] code)
+      (try
+        (is (contains? (c/registered-modes) ::code)
+            "a new method is a new mode.")
+
+        (is (= ::code (c/validate-mode! ::code)))
+
+        (binding [c/*mode* ::code]
+          (is (= ::code (c/compiler-mode))
+              "a registered mode can be bound to *mode*."))
+
+        (let [{:keys [argv body calling-convention]} (compile ::code {})]
+          (is (= :native calling-convention))
+          (is (= '[y1] argv))
+          (is (= `(let [~'_2 2.0
+                        ~'_3 (~'expt ~'y1 ~'_2)
+                        ~'_4 (~'sin ~'y1)
+                        ~'_5 (~'+ ~'_3 ~'_4)]
+                    ~'_5)
+                 body)
+              "the method receives the body before any symbol is resolved for
+              a particular back end."))
+
+        (let [code (c/compile-state-fn
+                    (fn [] (fn [[t x]] (up 1 (g/* t x))))
+                    [] (up 0 0)
+                    {:mode ::code :cache? false
+                     :calling-convention :primitive
+                     :gensym-fn (a/monotonic-symbol-generator 1)})
+              [in out ps] (:argv code)]
+          (is (= :primitive (:calling-convention code)))
+          (is (= 3 (count (:argv code))))
+          (is (= `(let [~'y1 (aget ~in 0)
+                        ~'y2 (aget ~in 1)
+                        ~'_6 1.0
+                        ~'_7 (~'* ~'y1 ~'y2)]
+                    (doto ~out
+                      (aset 0 ~'_6)
+                      (aset 1 ~'_7)))
+                 (:body code))
+              "the primitive convention reads the first array and stores into
+              the second.")
+          (is (symbol? ps)))
+
+        (is (= ((compile :native {}) 0.5)
+               ((c/sci-eval (c/compile-code :clj (compile ::code {}))) 0.5))
+            "a code object handed to a built-in method compiles to the same
+            function.")
+        (finally
+          (remove-method c/compile-code ::code))))
+
+    (is (thrown? ExceptionInfo (c/validate-mode! ::code))
+        "an unregistered mode is invalid.")))
+
 (deftest compile-fn-test
   (testing "argv generation"
     (let [f (fn [m]

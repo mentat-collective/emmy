@@ -2,6 +2,24 @@
 
 ## [unreleased]
 
+- #199:
+
+  - opens the set of compilation modes in `emmy.expression.compile`. The final
+    step of `compile-fn` and `compile-state-fn` is now the multimethod
+    `emmy.expression.compile/compile-code`, which dispatches on the mode and
+    receives the code object (`:argv`, `:body`, `:calling-convention`,
+    `:params`, `:state-model`). Another library can target a new back end by
+    adding a method and passing its key as `:mode` (or binding `*mode*`),
+    with no change to Emmy.
+
+  - the built-in modes `:native`, `:sci`, `:source`, `:clj` and `:js` are
+    methods of `compile-code` and behave as before; `valid-modes` still names
+    them.
+
+  - adds `emmy.expression.compile/registered-modes`, the set of every mode
+    with a method. `validate-mode!`, `compiler-mode` and `set-compiler-mode!`
+    accept any registered mode.
+
 ## [0.32.0]
 
 - #170:

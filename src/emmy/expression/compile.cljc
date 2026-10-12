@@ -175,20 +175,64 @@
   :native)
 
 (def valid-modes
-  "Set of all supported compilation modes."
+  "Set of the compilation modes built into Emmy. Other libraries may register
+  more; see [[compile-code]] and [[registered-modes]]."
   #{:sci :native :source :js :clj})
+
+;; The set of modes is open. A mode is a method of [[compile-code]], so a
+;; library can target a new back end (another compiler, a shader language, a
+;; WebAssembly kernel) without a change to this namespace:
+;;
+;; ```clojure
+;; (defmethod compile-code :my-backend [_ {:keys [argv body]}]
+;;   ,,,)
+;;
+;; (compile-state-fn f params state {:mode :my-backend})
+;; ```
+
+(defmulti compile-code
+  "Compiles a code object for the compilation mode `mode`. This is the final
+  step of [[compile-state-fn]] and [[compile-fn]], and the extension point for
+  new back ends: whatever a method returns is what those functions return.
+
+  `code` is a map with keys:
+
+  - `:argv`: a vector of symbols, the argument list of the function to
+    produce. It may be nested for sequence destructuring.
+
+  - `:body`: the function body, simplified and with common subexpressions
+    bound in a `clojure.core/let`. Operators are the unresolved symbols Emmy
+    freezes expressions with (`+`, `sin`, `expt`, `up`...). Under the
+    `:primitive` calling convention the body binds its inputs with
+    `clojure.core/aget` on the first and third entries of `:argv` and stores
+    its results with `(clojure.core/doto out (clojure.core/aset i expr) ...)`,
+    `out` being the second entry.
+
+  - `:calling-convention`, `:params` and `:state-model`, as described
+    in [[compile-state-fn]]."
+  {:arglists '([mode code])}
+  (fn [mode _code] mode))
+
+(defn registered-modes
+  "Returns the set of every compilation mode with a [[compile-code]] method:
+  the built-in [[valid-modes]] plus any mode registered by another library."
+  []
+  (set (keys (methods compile-code))))
 
 (defn validate-mode!
   "Given a keyword `mode` specifying a compilation mode, returns `mode` if valid,
-  and throws otherwise."
+  and throws otherwise. A mode is valid when [[compile-code]] has a method for
+  it."
   [mode]
-  (or (valid-modes mode)
+  (if (contains? (methods compile-code) mode)
+    mode
+    (let [modes (registered-modes)]
       (throw
        (ex-info
         (str "Invalid compilation mode supplied: " mode
-             ". Please supply (or bind to `*mode*`) one of " valid-modes)
+             ". Please supply (or bind to `*mode*`) one of " modes)
         {:mode       mode
-         :valid-mode valid-modes}))))
+         :valid-mode modes})))))
 
 (defn compiler-mode
   "Validates and returns the dynamically bound compilation [[*mode*]].
@@ -490,6 +534,19 @@
    (sci-eval
     (compile->clj code))))
 
+;; The built-in modes are the first methods of [[compile-code]]:
+
+(defmethod compile-code :source [_ code]
+  #?(:clj (compile->clj code) :cljs (compile->js code)))
+
+(defmethod compile-code :clj [_ code] (compile->clj code))
+
+(defmethod compile-code :js [_ code] (compile->js code))
+
+(defmethod compile-code :native [_ code] (compile-native code))
+
+(defmethod compile-code :sci [_ code] (compile-sci code))
+
 ;; ### State Fn Interface
 ;;
 ;; Now we come to the final interface for state function compilation. Two
@@ -630,13 +687,7 @@
                                (primitive-body)
                                (cse #(gensym-fn "_"))
                                (primitive-bindings))
-             compiler      (case mode
-                             :source #?(:clj compile->clj :cljs compile->js)
-                             :clj compile->clj
-                             :js compile->js
-                             :native compile-native
-                             :sci compile-sci)
-             compiled-fn   (compiler code)]
+             compiled-fn   (compile-code mode code)]
          (log/info "compiled function in" (us/repr sw))
          (when (and cache? generic-params?)
            (swap! fn-cache assoc key compiled-fn))
